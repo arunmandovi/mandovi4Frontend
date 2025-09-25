@@ -1,0 +1,61 @@
+/* Global styles */
+.app-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364, #1b2735);
+  background-size: 300% 300%;
+  animation: globalGradient 15s ease infinite;
+  color: #fff;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Animate the gradient */
+@keyframes globalGradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Add smooth transitions for all elements */
+* {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Headings with glow */
+h1, h2, h3 {
+  color: #ffde59;
+  text-shadow: 0 0 10px rgba(255,222,89,0.8), 0 0 25px rgba(255,222,89,0.6);
+  margin-bottom: 20px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* Links */
+a {
+  color: #ffde59;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s, text-shadow 0.3s;
+}
+a:hover {
+  color: #f72585;
+  text-shadow: 0 0 8px rgba(247,37,133,0.8);
+}
+
+/* Scrollbar styling (modern touch) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.1);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #ffde59, #f72585);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #f72585, #ffde59);
+}
