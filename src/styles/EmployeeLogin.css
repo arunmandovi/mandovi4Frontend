@@ -1,0 +1,81 @@
+/* Full page container */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); /* Dark gradient */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Login form box */
+.login-form {
+  background: rgba(30, 30, 30, 0.9);
+  padding: 40px 35px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+  width: 320px;
+  text-align: center;
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+/* Heading */
+.login-form h2 {
+  margin-bottom: 25px;
+  color: #f5f5f5;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+/* Input fields */
+.login-form input {
+  width: 100%;
+  padding: 12px 14px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background-color: rgba(60, 60, 60, 0.85);
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+/* Placeholder */
+.login-form input::placeholder {
+  color: #aaa;
+}
+
+/* Glow effect on focus */
+.login-form input:focus {
+  border-color: #1dd1a1;
+  background-color: rgba(70, 70, 70, 0.95);
+  box-shadow: 0 0 8px #1dd1a1;
+}
+
+/* Submit button */
+.login-form button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #1dd1a1, #10ac84);
+  color: #121212;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.3s ease;
+}
+
+/* Hover effect */
+.login-form button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #16a085, #0e8c68);
+}
+
+/* Small animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-15px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -1,42 +1,71 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import "../styles/AdminLogin.css";
 
 function AdminLogin() {
-  const [users, setUsers] = useState([]);
+  const [form, setForm] = useState({ adminnId: "", adminnPassword: "" });
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    axios.get("http://localhost:8080/api/auth/users")
-      .then(res => setUsers(res.data));
-  }, []);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post(
+        "http://localhost:8080/api/adminn/login_adminn",
+        null, // backend expects RequestParams
+        {
+          params: {
+            adminnId: form.adminnId,
+            adminnPassword: form.adminnPassword,
+          },
+        }
+      );
 
-  const approveUser = async (id) => {
-    await axios.put(`http://localhost:8080/api/auth/approve/${id}`);
-    setUsers(users.map(u => u.id === id ? { ...u, status: "APPROVED" } : u));
+      // Save admin info if needed
+      localStorage.setItem("adminnId", res.data.adminnId);
+
+      // Redirect to AdminDashboard
+      navigate("/AdminDashboard");
+    } catch (err) {
+      console.error(err.response?.data || err);
+      alert(err.response?.data || "Admin login failed");
+    }
   };
 
   return (
-    <div>
-      <h2>Admin Panel</h2>
-      <table>
-        <thead>
-          <tr><th>ID</th><th>Username</th><th>Status</th><th>Action</th></tr>
-        </thead>
-        <tbody>
-          {users.map(u => (
-            <tr key={u.id}>
-              <td>{u.id}</td>
-              <td>{u.username}</td>
-              <td>{u.status}</td>
-              <td>
-                {u.status === "PENDING" && (
-                  <button onClick={() => approveUser(u.id)}>Approve</button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="login-container">
+      <form className="login-form" onSubmit={handleLogin}>
+        <h2>Admin Login</h2>
+
+        <input
+          type="text"
+          placeholder="Admin ID"
+          value={form.adminnId}
+          onChange={(e) => setForm({ ...form, adminnId: e.target.value })}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={form.adminnPassword}
+          onChange={(e) => setForm({ ...form, adminnPassword: e.target.value })}
+          required
+        />
+
+        <button type="submit">Login</button>
+
+        <div className="extra-buttons">
+          <button
+            type="button"
+            className="back-btn"
+            onClick={() => navigate("/")}
+          >
+            Go Back
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
+
 export default AdminLogin;

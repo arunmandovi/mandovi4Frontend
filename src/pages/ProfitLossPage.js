@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { TextField, Button, Box } from "@mui/material";
+import { Button, Box } from "@mui/material";
 import DataTable from "../components/DataTable";
 import { fetchData, uploadFile } from "../api/uploadService";
 import { apiModules } from "../config/modules";
@@ -68,7 +68,7 @@ function ProfitLossPage() {
         <Button variant="contained" onClick={() => handleFetch(false)}>
           📄 View All Data
         </Button>
-        <Button variant="outlined" color="secondary" onClick={() => navigate("/")}>
+        <Button variant="outlined" color="secondary" onClick={() => navigate("/DashboardHome")}>
           ⬅ Back to Home
         </Button>
       </Box>

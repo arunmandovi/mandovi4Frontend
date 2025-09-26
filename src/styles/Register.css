@@ -1,0 +1,102 @@
+/* Register.css - Dark Mode & Transparent Form */
+
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #121212; /* Dark background */
+}
+
+.form-box {
+  background-color: rgba(40, 40, 40, 0.85); /* Semi-transparent dark form */
+  padding: 30px 40px;
+  border-radius: 12px;
+  width: 350px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+h2 {
+  margin-bottom: 25px;
+  color: #f5f5f5; /* Light text */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 600;
+  font-size: 1.8rem;
+}
+
+.input-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #ddd; /* Light gray labels */
+  font-weight: 500;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  outline: none;
+  font-size: 1rem;
+  background-color: rgba(60, 60, 60, 0.8); /* Slightly transparent input */
+  color: #f5f5f5;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.input-group input::placeholder {
+  color: #bbb;
+}
+
+.input-group input:focus {
+  border-color: #1dd1a1; /* Highlight color on focus */
+  background-color: rgba(70, 70, 70, 0.9);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  background-color: #1dd1a1; /* Muted green button */
+  color: #121212;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+  background-color: #16a085;
+}
+
+.extra-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+.back-btn,
+.login-btn {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: rgba(60, 60, 60, 0.8);
+  color: #f5f5f5;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0 5px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.back-btn:hover,
+.login-btn:hover {
+  background-color: rgba(80, 80, 80, 0.9);
+  border-color: #777;
+}

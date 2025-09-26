@@ -1,0 +1,146 @@
+/* AdminDashboard.css */
+
+/* General container */
+.admin-dashboard {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Section headers */
+.admin-dashboard h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.admin-dashboard h3 {
+  color: #555;
+  margin-bottom: 10px;
+}
+
+/* Forms */
+.form-section {
+  margin-bottom: 30px;
+  padding: 15px 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+.form-section form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.form-section input {
+  flex: 1 1 200px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-section input:focus {
+  border-color: #4CAF50;
+}
+
+/* Buttons */
+.form-section button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.form-section button:hover {
+  background-color: #45a049;
+}
+
+/* Extra buttons */
+.form-section .extra-buttons {
+  margin-top: 10px;
+}
+
+.form-section .extra-buttons button {
+  background-color: #007BFF;
+  margin-right: 10px;
+}
+
+.form-section .extra-buttons button:hover {
+  background-color: #0069d9;
+}
+
+/* Employee Table */
+.employee-list {
+  margin-top: 20px;
+}
+
+.employee-list table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.employee-list th, .employee-list td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.employee-list th {
+  background-color: #4CAF50;
+  color: white;
+  font-weight: 600;
+}
+
+.employee-list tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.employee-list tr:hover {
+  background-color: #e8f5e9;
+}
+
+.employee-list button {
+  padding: 6px 12px;
+  background-color: #FF9800;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.employee-list button:hover {
+  background-color: #fb8c00;
+}
+
+/* Toggle Employee List Button */
+.toggle-btn {
+  padding: 10px 20px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+
+.toggle-btn:hover {
+  background-color: #1976D2;
+}

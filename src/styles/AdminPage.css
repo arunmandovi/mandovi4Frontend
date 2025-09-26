@@ -1,0 +1,70 @@
+/* Container */
+.admin-container {
+  padding: 20px;
+  min-height: 100vh;
+  background-color: #121212; /* Dark mode */
+  color: #f5f5f5;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Title */
+.admin-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #1dd1a1;
+}
+
+/* Table styles */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #1e1e1e;
+  border: 1px solid #444;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px 15px;
+  border: 1px solid #444;
+  text-align: center;
+}
+
+.admin-table th {
+  background-color: #2c2c2c;
+  font-weight: bold;
+}
+
+.admin-table tr:nth-child(even) {
+  background-color: #2a2a2a; /* Stripe effect */
+}
+
+.admin-table tr:hover {
+  background-color: #333;
+}
+
+/* Status colors */
+.pending {
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+.approved {
+  color: #1dd1a1;
+  font-weight: bold;
+}
+
+/* Approve button */
+.approve-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  background-color: #1dd1a1;
+  color: #121212;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.approve-btn:hover {
+  background-color: #16a085;
+}

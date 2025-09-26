@@ -1,0 +1,83 @@
+/* Module Lists using CSS Grid for 4 per row */
+.module-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 items per row */
+  gap: 20px;
+  padding: 0;
+  list-style: none;
+  margin-top: 30px;
+}
+
+/* Module Links - Rectangle with curve */
+.module-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;               /* shorter height for rectangle */
+  border-radius: 12px;        /* subtle curve */
+  padding: 0 20px;            /* horizontal padding for rectangle shape */
+  background: linear-gradient(45deg, #ff6f61, #ffca28, #42a5f5, #7e57c2);
+  background-size: 300% 300%;
+  animation: gradientShift 6s ease infinite;
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 1rem;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.module-link:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+/* Gradient Animation */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .module-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .module-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .module-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.logout-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.logout-button {
+  background: #ff5252;
+  color: white;
+  font-weight: bold;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-button:hover {
+  background: #d32f2f;
+  transform: scale(1.05);
+}

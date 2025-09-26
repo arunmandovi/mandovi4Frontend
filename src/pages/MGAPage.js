@@ -72,7 +72,7 @@ function MGAPage() {
         <Button variant="contained" onClick={() => handleFetch(false)}>
           📄 View All Data
         </Button>
-        <Button variant="outlined" color="secondary" onClick={() => navigate("/")}>
+        <Button variant="outlined" color="secondary" onClick={() => navigate("/DashboardHome")}>
           ⬅ Back to Home
         </Button>
       </Box>
