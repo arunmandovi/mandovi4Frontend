@@ -6,31 +6,22 @@ import "../styles/AdminDashboard.css";
 function AdminDashboard() {
   const navigate = useNavigate();
 
-  // Admin form
   const [newAdmin, setNewAdmin] = useState({ username: "", password: "" });
-
-  // Employee form
   const [newEmployee, setNewEmployee] = useState({
     employeeName: "",
     employeeId: "",
     designation: "",
     employeePassword: "",
   });
-
-  // Employee list
   const [employees, setEmployees] = useState([]);
-
-  // Toggle employee table visibility
   const [showEmployees, setShowEmployees] = useState(false);
 
-  // Fetch all employees
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/employee/all"); // Make sure endpoint exists
+      const res = await axios.get("http://localhost:8080/api/adminn/getallemployee");
       setEmployees(res.data);
     } catch (err) {
-      console.error(err);
-      alert("Failed to fetch employees");
+      handleError(err, "Failed to fetch employees");
     }
   };
 
@@ -38,49 +29,83 @@ function AdminDashboard() {
     fetchEmployees();
   }, []);
 
-  // Create Admin
+  // 🔹 Helper to handle error messages properly
+  const handleError = (err, fallbackMsg) => {
+    if (err.response?.data) {
+      const data = err.response.data;
+      if (typeof data === "string") {
+        alert(data);
+      } else if (data.message) {
+        alert(data.message);
+      } else {
+        alert(JSON.stringify(data));
+      }
+    } else {
+      alert(fallbackMsg);
+    }
+  };
+
   const handleCreateAdmin = async (e) => {
     e.preventDefault();
     try {
       await axios.post(
-        "http://localhost:8080/admin/create",
-        null,
-        { params: { username: newAdmin.username, password: newAdmin.password } }
+        "http://localhost:8080/api/adminn/new_adminn_registration",
+        newAdmin
       );
       alert("New admin created successfully!");
       setNewAdmin({ username: "", password: "" });
     } catch (err) {
-      alert(err.response?.data || "Failed to create admin");
+      handleError(err, "Failed to create admin");
     }
   };
 
-  // Create Employee
   const handleCreateEmployee = async (e) => {
     e.preventDefault();
     try {
-      const empData = {
-        employeeName: newEmployee.employeeName,
-        employeeId: newEmployee.employeeId,
-        designation: newEmployee.designation,
-        employeePassword: newEmployee.employeePassword,
-      };
-      await axios.post("http://localhost:8080/api/employee/new_emp_registration", empData);
+      await axios.post(
+        "http://localhost:8080/api/employee/new_emp_registration",
+        newEmployee
+      );
       alert("Employee created successfully!");
-      setNewEmployee({ employeeName: "", employeeId: "", designation: "", employeePassword: "" });
+      setNewEmployee({
+        employeeName: "",
+        employeeId: "",
+        designation: "",
+        employeePassword: "",
+      });
       fetchEmployees();
     } catch (err) {
-      alert(err.response?.data || "Failed to create employee");
+      handleError(err, "Failed to create employee");
     }
   };
 
-  // Approve Employee
   const approveEmployee = async (employeeId) => {
     try {
       await axios.put(`http://localhost:8080/api/employee/approve/${employeeId}`);
       alert("Employee approved!");
       fetchEmployees();
     } catch (err) {
-      alert(err.response?.data || "Failed to approve employee");
+      handleError(err, "Failed to approve employee");
+    }
+  };
+
+  const disableEmployee = async (employeeId) => {
+    try {
+      await axios.put(`http://localhost:8080/api/adminn/approve_employee/${employeeId}`);
+      alert("Employee disabled!");
+      fetchEmployees();
+    } catch (err) {
+      handleError(err, "Failed to disable employee");
+    }
+  };
+
+  const enableEmployee = async (employeeId) => {
+    try {
+      await axios.put(`http://localhost:8080/api/adminn//approve_employee/${employeeId}`);
+      alert("Employee enabled!");
+      fetchEmployees();
+    } catch (err) {
+      handleError(err, "Failed to enable employee");
     }
   };
 
@@ -141,22 +166,31 @@ function AdminDashboard() {
             type="password"
             placeholder="Employee Password"
             value={newEmployee.employeePassword}
-            onChange={(e) => setNewEmployee({ ...newEmployee, employeePassword: e.target.value })}
+            onChange={(e) =>
+              setNewEmployee({ ...newEmployee, employeePassword: e.target.value })
+            }
             required
           />
           <button type="submit">Create Employee</button>
         </form>
 
         <div style={{ marginTop: "10px" }}>
-          <button onClick={() => navigate("/EmployeeLogin")}>Go to Employee Login</button>
-          <button onClick={() => navigate(-1)} style={{ marginLeft: "10px" }}>Go Back</button>
+          <button onClick={() => navigate("/EmployeeLogin")}>
+            Go to Employee Login
+          </button>
+          <button onClick={() => navigate(-1)} style={{ marginLeft: "10px" }}>
+            Go Back
+          </button>
         </div>
       </div>
 
       <hr />
 
       {/* Toggle Employee List */}
-      <button className="toggle-btn" onClick={() => setShowEmployees(!showEmployees)}>
+      <button
+        className="toggle-btn"
+        onClick={() => setShowEmployees(!showEmployees)}
+      >
         {showEmployees ? "Hide Employees" : "View Employees"}
       </button>
 
@@ -181,8 +215,20 @@ function AdminDashboard() {
                   <td>{emp.designation}</td>
                   <td>{emp.employeeStatus}</td>
                   <td>
-                    {emp.employeeStatus !== "APPROVED" && (
-                      <button onClick={() => approveEmployee(emp.employeeId)}>Approve</button>
+                    {emp.employeeStatus === "PENDING" && (
+                      <button onClick={() => approveEmployee(emp.employeeId)}>
+                        Approve
+                      </button>
+                    )}
+                    {emp.employeeStatus === "APPROVED" && (
+                      <button onClick={() => disableEmployee(emp.employeeId)}>
+                        Disable
+                      </button>
+                    )}
+                    {emp.employeeStatus === "REJECTED" && (
+                      <button onClick={() => enableEmployee(emp.employeeId)}>
+                        Enable
+                      </button>
                     )}
                   </td>
                 </tr>

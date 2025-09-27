@@ -1,110 +1,182 @@
-import React, { useState } from "react";
-import { TextField, Button, Box } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { 
+  Box, Select, MenuItem, FormControl, InputLabel, Typography, Checkbox, ListItemText 
+} from "@mui/material";
 import DataTable from "../components/DataTable";
-import { fetchData, uploadFile } from "../api/uploadService"; // ✅ import upload
-import { apiModules } from "../config/modules";
-import { useNavigate } from "react-router-dom";
+import { fetchData } from "../api/uploadService";
 
 function BatteryTyrePage() {
-  const batteryConfig = apiModules.find((m) => m.name === "Battery & Tyre");
-  const [tableData, setTableData] = useState([]);
-  const [month, setMonth] = useState("");
-  const [year, setYear] = useState("");
-  const [file, setFile] = useState(null); // ✅ for upload
+  const [batterySummary, setBatterySummary] = useState([]);
+  const [tyreSummary, setTyreSummary] = useState([]);
+  const [batteryTyreSummary, setBatteryTyreSummary] = useState([]);
+  const [months, setMonths] = useState([]);
+  const [years, setYears] = useState([]);
+  const [groupBy, setGroupBy] = useState("city");
 
-  const navigate = useNavigate();
+  const monthOptions = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
-  // Fetch data (all or filtered)
-  const handleFetch = async (withFilter = false) => {
-    try {
-      let path = batteryConfig.get;
-      if (withFilter && month && year) {
-        path = batteryConfig.getBatteryTyreByMonthYear
-          .replace("{month}", month.toString())
-          .replace("{year}", year.toString());
+  const filterColumnsByGroup = (data) => {
+    // Sum numeric values for each group (grouped by groupBy)
+    const aggregated = {};
+
+    data.forEach(row => {
+      const key = groupBy === "city" ? row.city
+                : groupBy === "branch" ? row.branch
+                : row.city + " - " + row.branch;
+
+      if (!aggregated[key]) aggregated[key] = { ...row };
+      else {
+        Object.keys(row).forEach(k => {
+          if (k === "city" || k === "branch") return;
+          const val = Number(row[k]) || 0;
+          aggregated[key][k] = (Number(aggregated[key][k]) || 0) + val;
+        });
       }
-      const data = await fetchData(path);
-      setTableData(data);
-    } catch (err) {
-      alert("❌ Error fetching Battery & Tyre: " + err.message);
-    }
+    });
+
+    return Object.values(aggregated).map(row => {
+      const filteredRow = { ...row };
+      if (groupBy === "city") delete filteredRow.branch;
+      if (groupBy === "branch") delete filteredRow.city;
+
+      // Format numbers
+      Object.keys(filteredRow).forEach(key => {
+        if (typeof filteredRow[key] === "number") {
+          filteredRow[key] = key === "percentageProfit" 
+            ? filteredRow[key].toFixed(2) + "%" 
+            : filteredRow[key].toFixed(2);
+        }
+      });
+
+      // Calculate percentageProfit per row
+      if (row.profit && row.totalddl) {
+        filteredRow.percentageProfit = ((row.profit / row.totalddl) * 100).toFixed(2) + "%";
+      }
+
+      return filteredRow;
+    });
   };
 
-  // Upload file
-  const handleUpload = async () => {
-    if (!file) {
-      alert("⚠ Please select a file first!");
-      return;
-    }
-    try {
-      await uploadFile(batteryConfig.upload, file);
-      alert("✅ Battery & Tyre file uploaded successfully!");
-      setFile(null); // clear file after success
-    } catch (err) {
-      alert("❌ Upload failed: " + (err.response?.data || err.message));
-    }
+  const computeBatteryTyreSummary = (battery, tyre) => {
+    const totalProfitBattery = battery.reduce((sum, r) => sum + Number(r.profit || 0), 0);
+    const totalProfitTyre = tyre.reduce((sum, r) => sum + Number(r.profit || 0), 0);
+    const totalDDL_Battery = battery.reduce((sum, r) => sum + Number(r.totalddl || 0), 0);
+    const totalDDL_Tyre = tyre.reduce((sum, r) => sum + Number(r.totalddl || 0), 0);
+
+    const combinedProfit = totalProfitBattery + totalProfitTyre;
+    const combinedTotalDDL = totalDDL_Battery + totalDDL_Tyre;
+    const combinedProfitPercent = combinedTotalDDL === 0 ? 0 : (combinedProfit / combinedTotalDDL) * 100;
+
+    setBatteryTyreSummary([{
+      profit: combinedProfit.toFixed(2),
+      percentageProfit: combinedProfitPercent.toFixed(2) + "%"
+    }]);
   };
+
+  useEffect(() => {
+    const fetchDataAsync = async () => {
+      try {
+        const yearStr = years.join(",");
+        let batteryCombined = [];
+        let tyreCombined = [];
+
+        for (const month of months.length > 0 ? months : [""]) {
+          const query = `?groupBy=${groupBy}${month ? `&month=${month}` : ""}${yearStr ? `&year=${yearStr}` : ""}`;
+
+          const [batteryDataRaw, tyreDataRaw] = await Promise.all([
+            fetchData(`/api/battery_tyre/battery_summary${query}`),
+            fetchData(`/api/battery_tyre/tyre_summary${query}`)
+          ]);
+
+          const batteryData = Array.isArray(batteryDataRaw) ? batteryDataRaw : [];
+          const tyreData = Array.isArray(tyreDataRaw) ? tyreDataRaw : [];
+
+          batteryCombined = batteryCombined.concat(batteryData.map(({ oilType, ...rest }) => rest));
+          tyreCombined = tyreCombined.concat(tyreData.map(({ oilType, ...rest }) => rest));
+        }
+
+        const batteryAggregated = filterColumnsByGroup(batteryCombined);
+        const tyreAggregated = filterColumnsByGroup(tyreCombined);
+
+        setBatterySummary(batteryAggregated);
+        setTyreSummary(tyreAggregated);
+        computeBatteryTyreSummary(batteryAggregated, tyreAggregated);
+
+      } catch (err) {
+        console.error(err);
+        alert("❌ Error fetching Battery & Tyre: " + err.message);
+      }
+    };
+
+    fetchDataAsync();
+  }, [months, years, groupBy]);
 
   return (
-    <Box sx={{ p: 3 }}>
-      <h2>🔋 Battery & Tyre </h2>
-
-      {/* 🔼 Upload Section */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 2,
-          mb: 3,
-          flexWrap: "wrap",
-        }}
-      >
-        <input
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={(e) => setFile(e.target.files[0])}
-          style={{ border: "1px solid #ccc", padding: "6px", borderRadius: "6px" }}
-        />
-        <Button variant="contained" color="success" onClick={handleUpload}>
-          ⬆ Upload Excel
-        </Button>
+    <Box className="battery-container" sx={{ p: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Typography variant="h4">Battery & Tyre</Typography>
       </Box>
 
-      {/* Buttons: View All & Back */}
-      <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-        <Button variant="contained" onClick={() => handleFetch(false)}>
-          📄 View All Data
-        </Button>
-        <Button variant="outlined" color="secondary" onClick={() => navigate("/DashboardHome")}>
-          ⬅ Back to Home
-        </Button>
+      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Months</InputLabel>
+          <Select
+            multiple
+            value={months}
+            onChange={(e) => setMonths(e.target.value)}
+            renderValue={(selected) => selected.join(", ")}
+          >
+            {monthOptions.map(m => (
+              <MenuItem key={m} value={m}>
+                <Checkbox checked={months.indexOf(m) > -1} />
+                <ListItemText primary={m} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Years</InputLabel>
+          <Select
+            multiple
+            value={years}
+            onChange={(e) => setYears(e.target.value)}
+            renderValue={(selected) => selected.join(", ")}
+          >
+            {yearOptions.map(y => (
+              <MenuItem key={y} value={y}>
+                <Checkbox checked={years.indexOf(y) > -1} />
+                <ListItemText primary={y} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Group By</InputLabel>
+          <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
+            <MenuItem value="city">City</MenuItem>
+            <MenuItem value="branch">Branch</MenuItem>
+            <MenuItem value="city_branch">City & Branch</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
-      {/* Month-Year filter */}
-      <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-        <TextField
-          label="Month"
-          size="small"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-        />
-        <TextField
-          label="Year"
-          size="small"
-          value={year}
-          onChange={(e) => setYear(e.target.value)}
-        />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => handleFetch(true)}
-        >
-          🔎 Apply Filter
-        </Button>
-      </Box>
+      <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 500, overflowY: "auto" }}>
+          <DataTable data={batterySummary} title="Battery Summary" />
+        </Box>
 
-      {/* Table */}
-      <DataTable data={tableData} title="Battery & Tyre" />
+        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 500, overflowY: "auto" }}>
+          <DataTable data={tyreSummary} title="Tyre Summary" />
+        </Box>
+
+        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 200, overflowY: "auto" }}>
+          <DataTable data={batteryTyreSummary} title="Battery & Tyre Summary" />
+        </Box>
+      </Box>
     </Box>
   );
 }

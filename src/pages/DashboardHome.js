@@ -12,7 +12,7 @@ function DashboardHome() {
     <div className="home-container">
 
       <h2 className="title">
-        <u>Mandovi Excel Upload & Viewer</u>
+        <u>MANDOVI SERVICE REPORT</u>
       </h2>
 
       {/* Row 1 */}
