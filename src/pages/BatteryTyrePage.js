@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { 
-  Box, Select, MenuItem, FormControl, InputLabel, Typography, Checkbox, ListItemText 
+  Box, Button, Select, MenuItem, FormControl, InputLabel, Typography, Checkbox, ListItemText 
 } from "@mui/material";
 import DataTable from "../components/DataTable";
 import { fetchData } from "../api/uploadService";
+import { useNavigate } from "react-router-dom";
 
 function BatteryTyrePage() {
+  const navigate = useNavigate();
   const [batterySummary, setBatterySummary] = useState([]);
   const [tyreSummary, setTyreSummary] = useState([]);
   const [batteryTyreSummary, setBatteryTyreSummary] = useState([]);
@@ -40,7 +42,7 @@ function BatteryTyrePage() {
 
       // Remove unwanted columns
       delete filteredRow.oilType;
-      
+
       if (groupBy === "city") delete filteredRow.branch;
       if (groupBy === "branch") delete filteredRow.city;
 
@@ -132,6 +134,9 @@ function BatteryTyrePage() {
     <Box className="battery-container" sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Typography variant="h4">Battery & Tyre</Typography>
+        <Button variant="outlined" color="secondary" onClick={() => navigate("/DashboardHome")}>
+          ⬅ Back to Home
+        </Button>
       </Box>
 
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
