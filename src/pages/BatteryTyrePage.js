@@ -17,8 +17,8 @@ function BatteryTyrePage() {
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
+  // Aggregate data per group
   const filterColumnsByGroup = (data) => {
-    // Sum numeric values for each group (grouped by groupBy)
     const aggregated = {};
 
     data.forEach(row => {
@@ -30,49 +30,63 @@ function BatteryTyrePage() {
       else {
         Object.keys(row).forEach(k => {
           if (k === "city" || k === "branch") return;
-          const val = Number(row[k]) || 0;
-          aggregated[key][k] = (Number(aggregated[key][k]) || 0) + val;
+          aggregated[key][k] = (Number(aggregated[key][k]) || 0) + (Number(row[k]) || 0);
         });
       }
     });
 
     return Object.values(aggregated).map(row => {
       const filteredRow = { ...row };
+
+      // Remove unwanted columns
+      delete filteredRow.oilType;
+      
       if (groupBy === "city") delete filteredRow.branch;
       if (groupBy === "branch") delete filteredRow.city;
-
-      // Format numbers
-      Object.keys(filteredRow).forEach(key => {
-        if (typeof filteredRow[key] === "number") {
-          filteredRow[key] = key === "percentageProfit" 
-            ? filteredRow[key].toFixed(2) + "%" 
-            : filteredRow[key].toFixed(2);
-        }
-      });
 
       // Calculate percentageProfit per row
       if (row.profit && row.totalddl) {
         filteredRow.percentageProfit = ((row.profit / row.totalddl) * 100).toFixed(2) + "%";
       }
 
+      // Format numbers
+      Object.keys(filteredRow).forEach(k => {
+        if (typeof filteredRow[k] === "number") {
+          filteredRow[k] = filteredRow[k].toFixed(2);
+        }
+      });
+
       return filteredRow;
     });
   };
 
-  const computeBatteryTyreSummary = (battery, tyre) => {
-    const totalProfitBattery = battery.reduce((sum, r) => sum + Number(r.profit || 0), 0);
-    const totalProfitTyre = tyre.reduce((sum, r) => sum + Number(r.profit || 0), 0);
-    const totalDDL_Battery = battery.reduce((sum, r) => sum + Number(r.totalddl || 0), 0);
-    const totalDDL_Tyre = tyre.reduce((sum, r) => sum + Number(r.totalddl || 0), 0);
+  // ✅ Compute combined Battery + Tyre summary per group
+  const computeBatteryTyreSummary = (batteryRaw, tyreRaw) => {
+    const combinedData = [...batteryRaw, ...tyreRaw];
+    const aggregated = {};
 
-    const combinedProfit = totalProfitBattery + totalProfitTyre;
-    const combinedTotalDDL = totalDDL_Battery + totalDDL_Tyre;
-    const combinedProfitPercent = combinedTotalDDL === 0 ? 0 : (combinedProfit / combinedTotalDDL) * 100;
+    combinedData.forEach(row => {
+      const key = groupBy === "city" ? row.city
+                : groupBy === "branch" ? row.branch
+                : row.city + " - " + row.branch;
 
-    setBatteryTyreSummary([{
-      profit: combinedProfit.toFixed(2),
-      percentageProfit: combinedProfitPercent.toFixed(2) + "%"
-    }]);
+      if (!aggregated[key]) aggregated[key] = { profit: 0, netretailddl: 0 };
+      aggregated[key].profit += Number(row.profit || 0);
+      aggregated[key].netretailddl += Number(row.netretailddl || 0);
+    });
+
+    const summary = Object.entries(aggregated).map(([key, value]) => {
+      const denominator = value.netretailddl || 0;
+      return {
+        city: key,
+        profit: value.profit.toFixed(2),
+        percentageProfit: denominator === 0 
+          ? "0.00%" 
+          : ((value.profit / denominator) * 100).toFixed(2) + "%"
+      };
+    });
+
+    setBatteryTyreSummary(summary);
   };
 
   useEffect(() => {
@@ -93,8 +107,8 @@ function BatteryTyrePage() {
           const batteryData = Array.isArray(batteryDataRaw) ? batteryDataRaw : [];
           const tyreData = Array.isArray(tyreDataRaw) ? tyreDataRaw : [];
 
-          batteryCombined = batteryCombined.concat(batteryData.map(({ oilType, ...rest }) => rest));
-          tyreCombined = tyreCombined.concat(tyreData.map(({ oilType, ...rest }) => rest));
+          batteryCombined = batteryCombined.concat(batteryData);
+          tyreCombined = tyreCombined.concat(tyreData);
         }
 
         const batteryAggregated = filterColumnsByGroup(batteryCombined);
@@ -102,7 +116,8 @@ function BatteryTyrePage() {
 
         setBatterySummary(batteryAggregated);
         setTyreSummary(tyreAggregated);
-        computeBatteryTyreSummary(batteryAggregated, tyreAggregated);
+
+        computeBatteryTyreSummary(batteryCombined, tyreCombined);
 
       } catch (err) {
         console.error(err);
@@ -173,7 +188,7 @@ function BatteryTyrePage() {
           <DataTable data={tyreSummary} title="Tyre Summary" />
         </Box>
 
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 200, overflowY: "auto" }}>
+        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 500, overflowY: "auto" }}>
           <DataTable data={batteryTyreSummary} title="Battery & Tyre Summary" />
         </Box>
       </Box>

@@ -16,19 +16,6 @@ function AdminDashboard() {
   const [employees, setEmployees] = useState([]);
   const [showEmployees, setShowEmployees] = useState(false);
 
-  const fetchEmployees = async () => {
-    try {
-      const res = await axios.get("http://localhost:8080/api/adminn/getallemployee");
-      setEmployees(res.data);
-    } catch (err) {
-      handleError(err, "Failed to fetch employees");
-    }
-  };
-
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
-
   // 🔹 Helper to handle error messages properly
   const handleError = (err, fallbackMsg) => {
     if (err.response?.data) {
@@ -44,6 +31,35 @@ function AdminDashboard() {
       alert(fallbackMsg);
     }
   };
+
+  // 🔹 Fetch employees and normalize response into an array
+  const fetchEmployees = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:8080/api/adminn/getallemployee"
+      );
+
+      console.log("API response:", res.data);
+
+      // Normalize: always ensure employees is an array
+      let employeeList = [];
+      if (Array.isArray(res.data)) {
+        employeeList = res.data;
+      } else if (Array.isArray(res.data.employee)) {
+        employeeList = res.data.employee;
+      } else if (res.data.employee) {
+        employeeList = [res.data.employee];
+      }
+
+      setEmployees(employeeList);
+    } catch (err) {
+      handleError(err, "Failed to fetch employees");
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
 
   const handleCreateAdmin = async (e) => {
     e.preventDefault();
@@ -81,7 +97,9 @@ function AdminDashboard() {
 
   const approveEmployee = async (employeeId) => {
     try {
-      await axios.put(`http://localhost:8080/api/employee/approve/${employeeId}`);
+      await axios.put(
+        `http://localhost:8080/api/employee/approve/${employeeId}`
+      );
       alert("Employee approved!");
       fetchEmployees();
     } catch (err) {
@@ -91,7 +109,9 @@ function AdminDashboard() {
 
   const disableEmployee = async (employeeId) => {
     try {
-      await axios.put(`http://localhost:8080/api/adminn/approve_employee/${employeeId}`);
+      await axios.put(
+        `http://localhost:8080/api/adminn/approve_employee/${employeeId}`
+      );
       alert("Employee disabled!");
       fetchEmployees();
     } catch (err) {
@@ -101,7 +121,9 @@ function AdminDashboard() {
 
   const enableEmployee = async (employeeId) => {
     try {
-      await axios.put(`http://localhost:8080/api/adminn//approve_employee/${employeeId}`);
+      await axios.put(
+        `http://localhost:8080/api/adminn/approve_employee/${employeeId}`
+      );
       alert("Employee enabled!");
       fetchEmployees();
     } catch (err) {
@@ -121,14 +143,18 @@ function AdminDashboard() {
             type="text"
             placeholder="Admin Username"
             value={newAdmin.username}
-            onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })}
+            onChange={(e) =>
+              setNewAdmin({ ...newAdmin, username: e.target.value })
+            }
             required
           />
           <input
             type="password"
             placeholder="Admin Password"
             value={newAdmin.password}
-            onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
+            onChange={(e) =>
+              setNewAdmin({ ...newAdmin, password: e.target.value })
+            }
             required
           />
           <button type="submit">Create Admin</button>
@@ -145,21 +171,27 @@ function AdminDashboard() {
             type="text"
             placeholder="Employee Name"
             value={newEmployee.employeeName}
-            onChange={(e) => setNewEmployee({ ...newEmployee, employeeName: e.target.value })}
+            onChange={(e) =>
+              setNewEmployee({ ...newEmployee, employeeName: e.target.value })
+            }
             required
           />
           <input
             type="text"
             placeholder="Employee ID"
             value={newEmployee.employeeId}
-            onChange={(e) => setNewEmployee({ ...newEmployee, employeeId: e.target.value })}
+            onChange={(e) =>
+              setNewEmployee({ ...newEmployee, employeeId: e.target.value })
+            }
             required
           />
           <input
             type="text"
             placeholder="Designation"
             value={newEmployee.designation}
-            onChange={(e) => setNewEmployee({ ...newEmployee, designation: e.target.value })}
+            onChange={(e) =>
+              setNewEmployee({ ...newEmployee, designation: e.target.value })
+            }
             required
           />
           <input
@@ -167,7 +199,10 @@ function AdminDashboard() {
             placeholder="Employee Password"
             value={newEmployee.employeePassword}
             onChange={(e) =>
-              setNewEmployee({ ...newEmployee, employeePassword: e.target.value })
+              setNewEmployee({
+                ...newEmployee,
+                employeePassword: e.target.value,
+              })
             }
             required
           />
@@ -197,44 +232,48 @@ function AdminDashboard() {
       {/* Employee Table */}
       {showEmployees && (
         <div className="employee-list">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>ID</th>
-                <th>Designation</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {employees.map((emp) => (
-                <tr key={emp.employeeId}>
-                  <td>{emp.employeeName}</td>
-                  <td>{emp.employeeId}</td>
-                  <td>{emp.designation}</td>
-                  <td>{emp.employeeStatus}</td>
-                  <td>
-                    {emp.employeeStatus === "PENDING" && (
-                      <button onClick={() => approveEmployee(emp.employeeId)}>
-                        Approve
-                      </button>
-                    )}
-                    {emp.employeeStatus === "APPROVED" && (
-                      <button onClick={() => disableEmployee(emp.employeeId)}>
-                        Disable
-                      </button>
-                    )}
-                    {emp.employeeStatus === "REJECTED" && (
-                      <button onClick={() => enableEmployee(emp.employeeId)}>
-                        Enable
-                      </button>
-                    )}
-                  </td>
+          {employees.length === 0 ? (
+            <p>No employees found.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>ID</th>
+                  <th>Designation</th>
+                  <th>Status</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {employees.map((emp) => (
+                  <tr key={emp.employeeId}>
+                    <td>{emp.employeeName}</td>
+                    <td>{emp.employeeId}</td>
+                    <td>{emp.designation}</td>
+                    <td>{emp.employeeStatus}</td>
+                    <td>
+                      {emp.employeeStatus === "PENDING" && (
+                        <button onClick={() => approveEmployee(emp.employeeId)}>
+                          Approve
+                        </button>
+                      )}
+                      {emp.employeeStatus === "APPROVED" && (
+                        <button onClick={() => disableEmployee(emp.employeeId)}>
+                          Disable
+                        </button>
+                      )}
+                      {emp.employeeStatus === "REJECTED" && (
+                        <button onClick={() => enableEmployee(emp.employeeId)}>
+                          Enable
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
     </div>
