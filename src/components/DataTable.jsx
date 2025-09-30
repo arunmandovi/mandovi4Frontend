@@ -11,8 +11,8 @@ export default function DataTable({ data, title }) {
     );
   }
 
-  // ✅ Column header rename map
-  const columnRenameMap = {
+  // ✅ Column header rename map for Battery&Tyre
+  const columnRenameBatteryMap = {
     totalQty: "QTY",
     totalDDL: "Net Retail DDL",
     totalSelling: "Net Retail Selling",
@@ -48,10 +48,11 @@ export default function DataTable({ data, title }) {
   // ✅ Dynamically build columns
   const columns = Object.keys(formattedData[0]).map((key) => ({
     field: key,
-    headerName: columnRenameMap[key] || key.toUpperCase(),
+    headerName: columnRenameBatteryMap[key] || key.toUpperCase(),
     flex: 1,
     minWidth: 120,
   }));
+  
 
   return (
     <Box sx={{ height: 500, width: "100%", display: "flex", flexDirection: "column" }}>

@@ -13,7 +13,7 @@ function EmployeeLogin() {
       // send as query params since backend expects @RequestParam
       await axios.post(
         "http://localhost:8080/api/employee/login_employee",
-        null, // no body needed
+        null, // no body
         {
           params: {
             employeeId: form.employeeId,
@@ -21,6 +21,7 @@ function EmployeeLogin() {
           },
         }
       );
+      // ✅ Go to DashboardHome (which defaults to Battery & Tyre)
       navigate("/DashboardHome");
     } catch (err) {
       alert(err.response?.data || "Login failed");

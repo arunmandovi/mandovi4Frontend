@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { 
-  Box, Button, Select, MenuItem, FormControl, InputLabel, Typography, Checkbox, ListItemText 
+  Box, Select, MenuItem, FormControl, InputLabel, Typography, Checkbox, ListItemText 
 } from "@mui/material";
 import DataTable from "../components/DataTable";
 import { fetchData } from "../api/uploadService";
@@ -19,10 +19,9 @@ function BatteryTyrePage() {
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
-  // Aggregate data per group
+  // Aggregate data by group
   const filterColumnsByGroup = (data) => {
     const aggregated = {};
-
     data.forEach(row => {
       const key = groupBy === "city" ? row.city
                 : groupBy === "branch" ? row.branch
@@ -31,7 +30,7 @@ function BatteryTyrePage() {
       if (!aggregated[key]) aggregated[key] = { ...row };
       else {
         Object.keys(row).forEach(k => {
-          if (k === "city" || k === "branch") return;
+          if (k === "city" || k === "branch" || k === "oilType") return;
           aggregated[key][k] = (Number(aggregated[key][k]) || 0) + (Number(row[k]) || 0);
         });
       }
@@ -39,30 +38,17 @@ function BatteryTyrePage() {
 
     return Object.values(aggregated).map(row => {
       const filteredRow = { ...row };
-
-      // Remove unwanted columns
-      delete filteredRow.oilType;
-
       if (groupBy === "city") delete filteredRow.branch;
       if (groupBy === "branch") delete filteredRow.city;
-
-      // Calculate percentageProfit per row
-      if (row.profit && row.totalddl) {
-        filteredRow.percentageProfit = ((row.profit / row.totalddl) * 100).toFixed(2) + "%";
-      }
-
-      // Format numbers
+      delete filteredRow.oilType;
       Object.keys(filteredRow).forEach(k => {
-        if (typeof filteredRow[k] === "number") {
-          filteredRow[k] = filteredRow[k].toFixed(2);
-        }
+        if (typeof filteredRow[k] === "number") filteredRow[k] = filteredRow[k].toFixed(2);
       });
-
       return filteredRow;
     });
   };
 
-  // ✅ Compute combined Battery + Tyre summary per group
+  // Compute combined Battery & Tyre summary
   const computeBatteryTyreSummary = (batteryRaw, tyreRaw) => {
     const combinedData = [...batteryRaw, ...tyreRaw];
     const aggregated = {};
@@ -91,26 +77,28 @@ function BatteryTyrePage() {
     setBatteryTyreSummary(summary);
   };
 
+  // Fetch data whenever months, years, or groupBy change
   useEffect(() => {
     const fetchDataAsync = async () => {
       try {
-        const yearStr = years.join(",");
         let batteryCombined = [];
         let tyreCombined = [];
 
-        for (const month of months.length > 0 ? months : [""]) {
-          const query = `?groupBy=${groupBy}${month ? `&month=${month}` : ""}${yearStr ? `&year=${yearStr}` : ""}`;
+        // If no month/year selected, fetch all
+        const selectedMonths = months.length > 0 ? months : [""];
+        const selectedYears = years.length > 0 ? years : [""];
+        
+        for (const month of selectedMonths) {
+          for (const year of selectedYears) {
+            const query = `?groupBy=${groupBy}${month ? `&month=${month}` : ""}${year ? `&year=${year}` : ""}`;
+            const [batteryDataRaw, tyreDataRaw] = await Promise.all([
+              fetchData(`/api/battery_tyre/battery_summary${query}`),
+              fetchData(`/api/battery_tyre/tyre_summary${query}`)
+            ]);
 
-          const [batteryDataRaw, tyreDataRaw] = await Promise.all([
-            fetchData(`/api/battery_tyre/battery_summary${query}`),
-            fetchData(`/api/battery_tyre/tyre_summary${query}`)
-          ]);
-
-          const batteryData = Array.isArray(batteryDataRaw) ? batteryDataRaw : [];
-          const tyreData = Array.isArray(tyreDataRaw) ? tyreDataRaw : [];
-
-          batteryCombined = batteryCombined.concat(batteryData);
-          tyreCombined = tyreCombined.concat(tyreData);
+            if (Array.isArray(batteryDataRaw)) batteryCombined = batteryCombined.concat(batteryDataRaw);
+            if (Array.isArray(tyreDataRaw)) tyreCombined = tyreCombined.concat(tyreDataRaw);
+          }
         }
 
         const batteryAggregated = filterColumnsByGroup(batteryCombined);
@@ -118,7 +106,6 @@ function BatteryTyrePage() {
 
         setBatterySummary(batteryAggregated);
         setTyreSummary(tyreAggregated);
-
         computeBatteryTyreSummary(batteryCombined, tyreCombined);
 
       } catch (err) {
@@ -133,10 +120,7 @@ function BatteryTyrePage() {
   return (
     <Box className="battery-container" sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h4">Battery & Tyre</Typography>
-        <Button variant="outlined" color="secondary" onClick={() => navigate("/DashboardHome")}>
-          ⬅ Back to Home
-        </Button>
+        <Typography variant="h4">BATTERY & TYRE REPORT</Typography>
       </Box>
 
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
@@ -184,17 +168,19 @@ function BatteryTyrePage() {
         </FormControl>
       </Box>
 
-      <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 500, overflowY: "auto" }}>
-          <DataTable data={batterySummary} title="Battery Summary" />
-        </Box>
+      <Box sx={{ overflowX: "auto", width: "100%" }}>
+        <Box sx={{ display: "flex", gap: 3, flexWrap: "nowrap", minWidth: "1000px" }}>
+          <Box sx={{ flex: 1 }}>
+            <DataTable data={batterySummary} title="Battery Summary" />
+          </Box>
 
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 500, overflowY: "auto" }}>
-          <DataTable data={tyreSummary} title="Tyre Summary" />
-        </Box>
+          <Box sx={{ flex: 1 }}>
+            <DataTable data={tyreSummary} title="Tyre Summary" />
+          </Box>
 
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 500, overflowY: "auto" }}>
-          <DataTable data={batteryTyreSummary} title="Battery & Tyre Summary" />
+          <Box sx={{ flex: 1 }}>
+            <DataTable data={batteryTyreSummary} title="Battery & Tyre Summary" />
+          </Box>
         </Box>
       </Box>
     </Box>
