@@ -2,7 +2,7 @@ import * as React from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box, Typography } from "@mui/material";
 
-export default function DataTable({ data, title }) {
+export default function DataTable({ data, title, hiddenColumns = [] }) {
   if (!data || data.length === 0) {
     return (
       <Typography variant="body1" color="text.secondary">
@@ -11,7 +11,7 @@ export default function DataTable({ data, title }) {
     );
   }
 
-  // ✅ Column header rename map for Battery&Tyre
+  // Column header rename map
   const columnRenameBatteryMap = {
     totalQty: "QTY",
     totalDDL: "Net Retail DDL",
@@ -19,7 +19,7 @@ export default function DataTable({ data, title }) {
     percentageProfit: "PROFIT%",
   };
 
-  // ✅ Format numeric values before rendering
+  // Format numeric values before rendering
   const formattedData = data.map((row) => {
     const newRow = { ...row };
 
@@ -28,7 +28,7 @@ export default function DataTable({ data, title }) {
       newRow.totalQty = parseInt(newRow.totalQty, 10);
     }
 
-    // totalDDL & totalSelling with Indian number format
+    // totalDDL, totalSelling, profit with Indian number format
     ["totalDDL", "totalSelling", "profit"].forEach((col) => {
       if (newRow[col] !== undefined && !isNaN(Number(newRow[col]))) {
         newRow[col] = Number(newRow[col]).toLocaleString("en-IN", {
@@ -45,14 +45,15 @@ export default function DataTable({ data, title }) {
     return newRow;
   });
 
-  // ✅ Dynamically build columns
-  const columns = Object.keys(formattedData[0]).map((key) => ({
-    field: key,
-    headerName: columnRenameBatteryMap[key] || key.toUpperCase(),
-    flex: 1,
-    minWidth: 120,
-  }));
-  
+  // Dynamically build columns, hide any columns passed via hiddenColumns
+  const columns = Object.keys(formattedData[0])
+    .filter((key) => !hiddenColumns.includes(key))
+    .map((key) => ({
+      field: key,
+      headerName: columnRenameBatteryMap[key] || key.toUpperCase(),
+      flex: 1,
+      minWidth: 120,
+    }));
 
   return (
     <Box sx={{ height: 500, width: "100%", display: "flex", flexDirection: "column" }}>

@@ -65,8 +65,15 @@ function BatteryTyrePage() {
 
     const summary = Object.entries(aggregated).map(([key, value]) => {
       const denominator = value.netretailddl || 0;
+
+      // ✅ Fix: dynamic column key based on groupBy
+      const groupKey =
+        groupBy === "city" ? { city: key } :
+        groupBy === "branch" ? { branch: key } :
+        { city_branch: key };
+
       return {
-        city: key,
+        ...groupKey,
         profit: value.profit.toFixed(2),
         percentageProfit: denominator === 0 
           ? "0.00%" 
@@ -87,7 +94,7 @@ function BatteryTyrePage() {
         // If no month/year selected, fetch all
         const selectedMonths = months.length > 0 ? months : [""];
         const selectedYears = years.length > 0 ? years : [""];
-        
+
         for (const month of selectedMonths) {
           for (const year of selectedYears) {
             const query = `?groupBy=${groupBy}${month ? `&month=${month}` : ""}${year ? `&year=${year}` : ""}`;
