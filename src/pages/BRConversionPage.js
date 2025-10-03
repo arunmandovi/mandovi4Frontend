@@ -252,7 +252,7 @@ function BRConversionPage() {
         </FormControl>
       </Box>
 
-      <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+      <Box sx={{ display: "flex", gap: 0.1, flexWrap: "wrap" }}>
         {/* BR Conversion Tables */}
         <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
           <DataTable data={filterData(brArenaSummary)} title="BR Arena Summary" />

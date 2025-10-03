@@ -176,7 +176,7 @@ function BatteryTyrePage() {
       </Box>
 
       <Box sx={{ overflowX: "auto", width: "100%" }}>
-        <Box sx={{ display: "flex", gap: 3, flexWrap: "nowrap", minWidth: "1000px" }}>
+        <Box sx={{ display: "flex", gap: 0.1, flexWrap: "nowrap", minWidth: "1000px" }}>
           <Box sx={{ flex: 1 }}>
             <DataTable data={batterySummary} title="Battery Summary" />
           </Box>
