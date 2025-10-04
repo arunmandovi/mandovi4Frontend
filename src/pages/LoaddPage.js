@@ -16,20 +16,24 @@ function LoaddPage() {
   const [serviceSummary, setServiceSummary] = useState([]);
   const [bodyShopSummary, setBodyShopSummary] = useState([]);
   const [freeServiceSummary, setFreeServiceSummary] = useState([]);
-  const [pmsSummary, setPmsSummary] = useState([]); // PMS Summary
+  const [pmsSummary, setPmsSummary] = useState([]);
+  const [fprSummary, setFprSummary] = useState([]);
+  const [runningRepairSummary, setRunningRepairSummary] = useState([]);
+  const [othersSummary, setOthersSummary] = useState([]);
+  const [bsFprSummary, setBsFprSummary] = useState([]); // 🆕 new state
+
   const [months, setMonths] = useState([]);
   const [years, setYears] = useState([]);
   const [groupBy, setGroupBy] = useState("city");
   const [qtr, setQtr] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
 
-  const monthOptions = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const qtrOptions = ["Qtr1","Qtr2","Qtr3","Qtr4"];
-  const halfYearOptions = ["H1","H2"];
+  const monthOptions = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const qtrOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
+  const halfYearOptions = ["H1", "H2"];
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
-  // Aggregate rows based on groupBy keys
   const aggregateData = (data, keys) => {
     const map = {};
     data.forEach(row => {
@@ -37,7 +41,6 @@ function LoaddPage() {
       if (!map[key]) {
         map[key] = { ...row };
       } else {
-        // Sum numeric fields
         ["previousServiceLoadd", "currentServiceLoadd", "growth"].forEach(col => {
           if (row[col] !== undefined && !isNaN(row[col])) {
             map[key][col] = (map[key][col] || 0) + Number(row[col]);
@@ -48,18 +51,16 @@ function LoaddPage() {
     return Object.values(map);
   };
 
-  // Format summary data with FY labels
   const formatSummaryData = (data) => {
     const keys = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
     const aggregated = aggregateData(data, keys);
 
-    return aggregated.map((row) => {
+    return aggregated.map(row => {
       const formattedRow = { ...row };
       if (row.previousServiceLoadd !== undefined && row.currentServiceLoadd !== undefined) {
         formattedRow["2024-25"] = Number(row.previousServiceLoadd).toLocaleString("en-IN");
         formattedRow["2025-26"] = Number(row.currentServiceLoadd).toLocaleString("en-IN");
         formattedRow["Growth %"] = row.growth !== null ? row.growth.toFixed(2) + "%" : "0%";
-
         delete formattedRow.previousServiceLoadd;
         delete formattedRow.currentServiceLoadd;
         delete formattedRow.growth;
@@ -68,7 +69,6 @@ function LoaddPage() {
     });
   };
 
-  // Sort rows by specific city order
   const sortByCityOrder = (data) => {
     const cityOrder = ["Bangalore", "Mysore", "Mangalore"];
     return data.sort((a, b) => {
@@ -83,13 +83,47 @@ function LoaddPage() {
     });
   };
 
-  // Fetch all summaries
+  const synchronizeRows = (tablesData, keyColumns) => {
+    const allKeys = new Set();
+    tablesData.forEach(table => {
+      table.forEach(row => {
+        const key = keyColumns.map(k => row[k]).join("_");
+        allKeys.add(key);
+      });
+    });
+
+    const keysArray = Array.from(allKeys);
+    return tablesData.map(table => {
+      const map = {};
+      table.forEach(row => {
+        const key = keyColumns.map(k => row[k]).join("_");
+        map[key] = row;
+      });
+
+      return keysArray.map(key => {
+        if (map[key]) return map[key];
+        const emptyRow = {};
+        keyColumns.forEach((col, i) => {
+          emptyRow[col] = key.split("_")[i];
+        });
+        emptyRow["2024-25"] = 0;
+        emptyRow["2025-26"] = 0;
+        emptyRow["Growth %"] = "0%";
+        return emptyRow;
+      });
+    });
+  };
+
   const fetchSummaries = async () => {
     try {
       let combinedService = [];
       let combinedBodyShop = [];
       let combinedFreeService = [];
       let combinedPMS = [];
+      let combinedFPR = [];
+      let combinedRunningRepair = [];
+      let combinedOthers = [];
+      let combinedBSFpr = []; // 🆕 new variable
 
       const monthsList = months.length > 0 ? months : [""];
       const yearsList = years.length > 0 ? years : [""];
@@ -118,18 +152,67 @@ function LoaddPage() {
 
               const pmsData = await fetchData(`/api/loadd/loadd_pms${query}`);
               if (Array.isArray(pmsData)) combinedPMS = combinedPMS.concat(pmsData);
+
+              const fprData = await fetchData(`/api/loadd/loadd_fpr${query}`);
+              if (Array.isArray(fprData)) combinedFPR = combinedFPR.concat(fprData);
+
+              const runningRepairData = await fetchData(`/api/loadd/loadd_running_repair${query}`);
+              if (Array.isArray(runningRepairData)) combinedRunningRepair = combinedRunningRepair.concat(runningRepairData);
+
+              const othersData = await fetchData(`/api/loadd/loadd_others${query}`);
+              if (Array.isArray(othersData)) combinedOthers = combinedOthers.concat(othersData);
+
+              const bsFprData = await fetchData(`/api/loadd/loadd_bs_fpr${query}`);
+              if (Array.isArray(bsFprData)) combinedBSFpr = combinedBSFpr.concat(bsFprData);
             }
           }
         }
       }
 
-      setServiceSummary(sortByCityOrder(formatSummaryData(combinedService)));
-      setBodyShopSummary(sortByCityOrder(formatSummaryData(combinedBodyShop)));
-      setFreeServiceSummary(sortByCityOrder(formatSummaryData(combinedFreeService)));
-      setPmsSummary(sortByCityOrder(formatSummaryData(combinedPMS)));
+      let formattedService = sortByCityOrder(formatSummaryData(combinedService));
+      let formattedBodyShop = sortByCityOrder(formatSummaryData(combinedBodyShop));
+      let formattedFreeService = sortByCityOrder(formatSummaryData(combinedFreeService));
+      let formattedPMS = sortByCityOrder(formatSummaryData(combinedPMS));
+      let formattedFPR = sortByCityOrder(formatSummaryData(combinedFPR));
+      let formattedRunningRepair = sortByCityOrder(formatSummaryData(combinedRunningRepair));
+      let formattedOthers = sortByCityOrder(formatSummaryData(combinedOthers));
+      let formattedBSFpr = sortByCityOrder(formatSummaryData(combinedBSFpr));
+
+      const keyColumns = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
+      [
+        formattedService,
+        formattedBodyShop,
+        formattedFreeService,
+        formattedPMS,
+        formattedFPR,
+        formattedRunningRepair,
+        formattedOthers,
+        formattedBSFpr,
+      ] = synchronizeRows(
+        [
+          formattedService,
+          formattedBodyShop,
+          formattedFreeService,
+          formattedPMS,
+          formattedFPR,
+          formattedRunningRepair,
+          formattedOthers,
+          formattedBSFpr,
+        ],
+        keyColumns
+      );
+
+      setServiceSummary(formattedService);
+      setBodyShopSummary(formattedBodyShop);
+      setFreeServiceSummary(formattedFreeService);
+      setPmsSummary(formattedPMS);
+      setFprSummary(formattedFPR);
+      setRunningRepairSummary(formattedRunningRepair);
+      setOthersSummary(formattedOthers);
+      setBsFprSummary(formattedBSFpr);
     } catch (err) {
       console.error(err);
-      alert("❌ Error fetching Load Summaries: " + err.message);
+      alert("❌ Error fetching Loadd Summaries: " + err.message);
     }
   };
 
@@ -137,7 +220,6 @@ function LoaddPage() {
     fetchSummaries();
   }, [months, years, groupBy, qtr, halfYear]);
 
-  // Hide unwanted columns
   const hiddenColumns = ["qtrWise", "halfYear", "channel"];
   if (groupBy === "city") hiddenColumns.push("branch");
   if (groupBy === "branch") hiddenColumns.push("city");
@@ -155,8 +237,9 @@ function LoaddPage() {
         LOAD SUMMARY REPORT
       </Typography>
 
-      {/* Filters */}
+      {/* 🔹 Filters */}
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+        {/* Month */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Months</InputLabel>
           <Select
@@ -174,6 +257,7 @@ function LoaddPage() {
           </Select>
         </FormControl>
 
+        {/* Year */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Years</InputLabel>
           <Select
@@ -191,6 +275,7 @@ function LoaddPage() {
           </Select>
         </FormControl>
 
+        {/* Group By */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Group By</InputLabel>
           <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
@@ -200,6 +285,7 @@ function LoaddPage() {
           </Select>
         </FormControl>
 
+        {/* Quarter */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Quarter</InputLabel>
           <Select
@@ -217,6 +303,7 @@ function LoaddPage() {
           </Select>
         </FormControl>
 
+        {/* Half Year */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Half Year</InputLabel>
           <Select
@@ -235,22 +322,38 @@ function LoaddPage() {
         </FormControl>
       </Box>
 
-      {/* Tables Side by Side */}
+      {/* 🔹 Data Tables */}
       <Box sx={{ display: "flex", gap: 0.1, flexWrap: "wrap" }}>
         <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(serviceSummary)} title="Load Service Summary" />
+          <DataTable data={filterData(serviceSummary)} title="Service Load" />
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(bodyShopSummary)} title="Load BodyShop Summary" />
+          <DataTable data={filterData(bodyShopSummary)} title="BodyShop Load" />
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(freeServiceSummary)} title="Load Free Service Summary" />
+          <DataTable data={filterData(freeServiceSummary)} title="Free Service Load" />
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(pmsSummary)} title="Load PMS Summary" />
+          <DataTable data={filterData(pmsSummary)} title="PMS Load" />
+        </Box>
+
+        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
+          <DataTable data={filterData(fprSummary)} title="FPR Load" />
+        </Box>
+
+        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
+          <DataTable data={filterData(runningRepairSummary)} title="Running Repair Load" />
+        </Box>
+
+        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
+          <DataTable data={filterData(othersSummary)} title="Others Load" />
+        </Box>
+
+        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
+          <DataTable data={filterData(bsFprSummary)} title="% BS Load on FPR Load" />
         </Box>
       </Box>
     </Box>
