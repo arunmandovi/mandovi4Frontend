@@ -212,7 +212,7 @@ function LoaddPage() {
       setBsFprSummary(formattedBSFpr);
     } catch (err) {
       console.error(err);
-      alert("❌ Error fetching Loadd Summaries: " + err.message);
+      alert("❌ Error fetching Load Summaries: " + err.message);
     }
   };
 
