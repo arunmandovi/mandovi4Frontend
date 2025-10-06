@@ -36,7 +36,7 @@ function BatteryTyrePage() {
       }
     });
 
-    return Object.values(aggregated).map(row => {
+    let result = Object.values(aggregated).map(row => {
       const filteredRow = { ...row };
       if (groupBy === "city") delete filteredRow.branch;
       if (groupBy === "branch") delete filteredRow.city;
@@ -46,6 +46,28 @@ function BatteryTyrePage() {
       });
       return filteredRow;
     });
+
+    // ✅ Sort by city order when grouped by "city_branch"
+    if (groupBy === "city_branch") {
+      const cityOrder = ["Bangalore", "Mysore", "Mangalore"];
+      result.sort((a, b) => {
+        const cityA = (a.city || a.city_branch?.split(" - ")[0] || "").toLowerCase();
+        const cityB = (b.city || b.city_branch?.split(" - ")[0] || "").toLowerCase();
+        const orderA = cityOrder.findIndex(c => c.toLowerCase() === cityA);
+        const orderB = cityOrder.findIndex(c => c.toLowerCase() === cityB);
+        if (orderA === orderB) {
+          const branchA = (a.branch || a.city_branch?.split(" - ")[1] || "").toLowerCase();
+          const branchB = (b.branch || b.city_branch?.split(" - ")[1] || "").toLowerCase();
+          return branchA.localeCompare(branchB);
+        }
+        if (orderA === -1 && orderB === -1) return cityA.localeCompare(cityB);
+        if (orderA === -1) return 1;
+        if (orderB === -1) return -1;
+        return orderA - orderB;
+      });
+    }
+
+    return result;
   };
 
   // Compute combined Battery & Tyre summary
@@ -63,10 +85,9 @@ function BatteryTyrePage() {
       aggregated[key].netretailddl += Number(row.netretailddl || 0);
     });
 
-    const summary = Object.entries(aggregated).map(([key, value]) => {
+    let summary = Object.entries(aggregated).map(([key, value]) => {
       const denominator = value.netretailddl || 0;
 
-      // ✅ Fix: dynamic column key based on groupBy
       const groupKey =
         groupBy === "city" ? { city: key } :
         groupBy === "branch" ? { branch: key } :
@@ -81,6 +102,26 @@ function BatteryTyrePage() {
       };
     });
 
+    // ✅ Sort city_branch summary too
+    if (groupBy === "city_branch") {
+      const cityOrder = ["Bangalore", "Mysore", "Mangalore"];
+      summary.sort((a, b) => {
+        const cityA = (a.city_branch?.split(" - ")[0] || "").toLowerCase();
+        const cityB = (b.city_branch?.split(" - ")[0] || "").toLowerCase();
+        const orderA = cityOrder.findIndex(c => c.toLowerCase() === cityA);
+        const orderB = cityOrder.findIndex(c => c.toLowerCase() === cityB);
+        if (orderA === orderB) {
+          const branchA = (a.city_branch?.split(" - ")[1] || "").toLowerCase();
+          const branchB = (b.city_branch?.split(" - ")[1] || "").toLowerCase();
+          return branchA.localeCompare(branchB);
+        }
+        if (orderA === -1 && orderB === -1) return cityA.localeCompare(cityB);
+        if (orderA === -1) return 1;
+        if (orderB === -1) return -1;
+        return orderA - orderB;
+      });
+    }
+
     setBatteryTyreSummary(summary);
   };
 
@@ -91,7 +132,6 @@ function BatteryTyrePage() {
         let batteryCombined = [];
         let tyreCombined = [];
 
-        // If no month/year selected, fetch all
         const selectedMonths = months.length > 0 ? months : [""];
         const selectedYears = years.length > 0 ? years : [""];
 
