@@ -16,7 +16,6 @@ function MCPPage() {
   const [mcpSummary, setMCPSummary] = useState([]);
 
   const [months, setMonths] = useState([]);
-  const [years, setYears] = useState([]);
   const [groupBy, setGroupBy] = useState("city");
   const [qtr, setQtr] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
@@ -122,8 +121,8 @@ function MCPPage() {
                 (q ? `&qtrWise=${q}` : "") +
                 (h ? `&halfYear=${h}` : "");
 
-              const serviceData = await fetchData(`/api/mcp/mcp_summary${query}`);
-              if (Array.isArray(serviceData)) mcpSummary = mcpSummary.concat(serviceData);
+              const mcpSummaryData = await fetchData(`/api/mcp/mcp_summary${query}`);
+              if (Array.isArray(mcpSummaryData)) mcpSummary = mcpSummary.concat(mcpSummaryData);
             }
         }
       }
@@ -149,7 +148,7 @@ function MCPPage() {
 
   useEffect(() => {
     fetchSummaries();
-  }, [months, years, groupBy, qtr, halfYear]);
+  }, [months,  groupBy, qtr, halfYear]);
 
   const hiddenColumns = ["qtrWise", "halfYear", "channel"];
   if (groupBy === "city") hiddenColumns.push("branch");
@@ -188,23 +187,6 @@ function MCPPage() {
           </Select>
         </FormControl>
 
-        {/* Year */}
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Years</InputLabel>
-          <Select
-            multiple
-            value={years}
-            onChange={(e) => setYears(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {yearOptions.map((y) => (
-              <MenuItem key={y} value={y}>
-                <Checkbox checked={years.indexOf(y) > -1} />
-                <ListItemText primary={y} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
 
         {/* Group By */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
