@@ -20,7 +20,7 @@ function LoaddPage() {
   const [fprSummary, setFprSummary] = useState([]);
   const [runningRepairSummary, setRunningRepairSummary] = useState([]);
   const [othersSummary, setOthersSummary] = useState([]);
-  const [bsFprSummary, setBsFprSummary] = useState([]); // 🆕 new state
+  const [bsFprSummary, setBsFprSummary] = useState([]);
 
   const [months, setMonths] = useState([]);
   const [groupBy, setGroupBy] = useState("city");
@@ -33,6 +33,38 @@ function LoaddPage() {
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
+  // ✅ Helper to add Grand Total row
+  const addGrandTotalRow = (data) => {
+    if (!data || data.length === 0) return data;
+
+    let totalPrev = 0, totalCurr = 0, totalGrowth = 0, count = 0;
+
+    data.forEach(row => {
+      const prev = Number(String(row["2024-25"]).replace(/,/g, "")) || 0;
+      const curr = Number(String(row["2025-26"]).replace(/,/g, "")) || 0;
+      const growth = parseFloat(String(row["Growth %"]).replace("%", "")) || 0;
+
+      totalPrev += prev;
+      totalCurr += curr;
+      totalGrowth += growth;
+      count++;
+    });
+
+    const avgGrowth = count > 0 ? (totalGrowth / count).toFixed(2) + "%" : "0%";
+
+    const totalLabelKey = Object.keys(data[0])[0];
+
+    const grandTotalRow = {
+      [totalLabelKey]: "Grand Total",
+      "2024-25": totalPrev.toLocaleString("en-IN"),
+      "2025-26": totalCurr.toLocaleString("en-IN"),
+      "Growth %": avgGrowth,
+    };
+
+    return [...data, grandTotalRow];
+  };
+
+  // --- Core helpers ---
   const aggregateData = (data, keys) => {
     const map = {};
     data.forEach(row => {
@@ -122,45 +154,45 @@ function LoaddPage() {
       let combinedFPR = [];
       let combinedRunningRepair = [];
       let combinedOthers = [];
-      let combinedBSFpr = []; // 🆕 new variable
+      let combinedBSFpr = [];
 
       const monthsList = months.length > 0 ? months : [""];
       const qtrList = qtr.length > 0 ? qtr : [""];
       const halfList = halfYear.length > 0 ? halfYear : [""];
 
       for (const m of monthsList) {
-          for (const q of qtrList) {
-            for (const h of halfList) {
-              const query =
-                `?groupBy=${groupBy}` +
-                (m ? `&month=${m}` : "") +
-                (q ? `&qtrWise=${q}` : "") +
-                (h ? `&halfYear=${h}` : "");
+        for (const q of qtrList) {
+          for (const h of halfList) {
+            const query =
+              `?groupBy=${groupBy}` +
+              (m ? `&month=${m}` : "") +
+              (q ? `&qtrWise=${q}` : "") +
+              (h ? `&halfYear=${h}` : "");
 
-              const serviceData = await fetchData(`/api/loadd/loadd_service${query}`);
-              if (Array.isArray(serviceData)) combinedService = combinedService.concat(serviceData);
+            const serviceData = await fetchData(`/api/loadd/loadd_service${query}`);
+            if (Array.isArray(serviceData)) combinedService = combinedService.concat(serviceData);
 
-              const bodyShopData = await fetchData(`/api/loadd/loadd_bodyshop${query}`);
-              if (Array.isArray(bodyShopData)) combinedBodyShop = combinedBodyShop.concat(bodyShopData);
+            const bodyShopData = await fetchData(`/api/loadd/loadd_bodyshop${query}`);
+            if (Array.isArray(bodyShopData)) combinedBodyShop = combinedBodyShop.concat(bodyShopData);
 
-              const freeServiceData = await fetchData(`/api/loadd/loadd_freeservice${query}`);
-              if (Array.isArray(freeServiceData)) combinedFreeService = combinedFreeService.concat(freeServiceData);
+            const freeServiceData = await fetchData(`/api/loadd/loadd_freeservice${query}`);
+            if (Array.isArray(freeServiceData)) combinedFreeService = combinedFreeService.concat(freeServiceData);
 
-              const pmsData = await fetchData(`/api/loadd/loadd_pms${query}`);
-              if (Array.isArray(pmsData)) combinedPMS = combinedPMS.concat(pmsData);
+            const pmsData = await fetchData(`/api/loadd/loadd_pms${query}`);
+            if (Array.isArray(pmsData)) combinedPMS = combinedPMS.concat(pmsData);
 
-              const fprData = await fetchData(`/api/loadd/loadd_fpr${query}`);
-              if (Array.isArray(fprData)) combinedFPR = combinedFPR.concat(fprData);
+            const fprData = await fetchData(`/api/loadd/loadd_fpr${query}`);
+            if (Array.isArray(fprData)) combinedFPR = combinedFPR.concat(fprData);
 
-              const runningRepairData = await fetchData(`/api/loadd/loadd_running_repair${query}`);
-              if (Array.isArray(runningRepairData)) combinedRunningRepair = combinedRunningRepair.concat(runningRepairData);
+            const runningRepairData = await fetchData(`/api/loadd/loadd_running_repair${query}`);
+            if (Array.isArray(runningRepairData)) combinedRunningRepair = combinedRunningRepair.concat(runningRepairData);
 
-              const othersData = await fetchData(`/api/loadd/loadd_others${query}`);
-              if (Array.isArray(othersData)) combinedOthers = combinedOthers.concat(othersData);
+            const othersData = await fetchData(`/api/loadd/loadd_others${query}`);
+            if (Array.isArray(othersData)) combinedOthers = combinedOthers.concat(othersData);
 
-              const bsFprData = await fetchData(`/api/loadd/loadd_bs_fpr${query}`);
-              if (Array.isArray(bsFprData)) combinedBSFpr = combinedBSFpr.concat(bsFprData);
-            }
+            const bsFprData = await fetchData(`/api/loadd/loadd_bs_fpr${query}`);
+            if (Array.isArray(bsFprData)) combinedBSFpr = combinedBSFpr.concat(bsFprData);
+          }
         }
       }
 
@@ -197,14 +229,15 @@ function LoaddPage() {
         keyColumns
       );
 
-      setServiceSummary(formattedService);
-      setBodyShopSummary(formattedBodyShop);
-      setFreeServiceSummary(formattedFreeService);
-      setPmsSummary(formattedPMS);
-      setFprSummary(formattedFPR);
-      setRunningRepairSummary(formattedRunningRepair);
-      setOthersSummary(formattedOthers);
-      setBsFprSummary(formattedBSFpr);
+      // ✅ Add Grand Total row
+      setServiceSummary(addGrandTotalRow(formattedService));
+      setBodyShopSummary(addGrandTotalRow(formattedBodyShop));
+      setFreeServiceSummary(addGrandTotalRow(formattedFreeService));
+      setPmsSummary(addGrandTotalRow(formattedPMS));
+      setFprSummary(addGrandTotalRow(formattedFPR));
+      setRunningRepairSummary(addGrandTotalRow(formattedRunningRepair));
+      setOthersSummary(addGrandTotalRow(formattedOthers));
+      setBsFprSummary(addGrandTotalRow(formattedBSFpr));
     } catch (err) {
       console.error(err);
       alert("❌ Error fetching Load Summaries: " + err.message);
@@ -232,9 +265,8 @@ function LoaddPage() {
         LOAD SUMMARY REPORT
       </Typography>
 
-      {/* 🔹 Filters */}
+      {/* Filters */}
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-        {/* Month */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Months</InputLabel>
           <Select
@@ -252,7 +284,6 @@ function LoaddPage() {
           </Select>
         </FormControl>
 
-        {/* Group By */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Group By</InputLabel>
           <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
@@ -262,7 +293,6 @@ function LoaddPage() {
           </Select>
         </FormControl>
 
-        {/* Quarter */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Quarter</InputLabel>
           <Select
@@ -280,7 +310,6 @@ function LoaddPage() {
           </Select>
         </FormControl>
 
-        {/* Half Year */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Half Year</InputLabel>
           <Select
@@ -299,7 +328,7 @@ function LoaddPage() {
         </FormControl>
       </Box>
 
-      {/* 🔹 Data Tables */}
+      {/* Tables */}
       <Box sx={{ display: "flex", gap: 0.1, flexWrap: "wrap" }}>
         <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
           <DataTable data={filterData(serviceSummary)} title="Service Load" />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Box, Select, MenuItem, FormControl, InputLabel, Typography, Checkbox, ListItemText 
+import {
+  Box, Select, MenuItem, FormControl, InputLabel, Typography, Checkbox, ListItemText
 } from "@mui/material";
 import DataTable from "../components/DataTable";
 import { fetchData } from "../api/uploadService";
@@ -19,13 +19,53 @@ function BatteryTyrePage() {
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
+  // ✅ Helper function: Add Grand Total row
+  const addGrandTotalRow = (data) => {
+    if (!data || data.length === 0) return data;
+
+    const totalRow = {};
+    const numericKeys = new Set();
+
+    // Identify numeric or percentage columns
+    Object.keys(data[0]).forEach((key) => {
+      const val = data[0][key];
+      if (typeof val === "string" && val.replace(/[,\d.%]/g, "").trim() === "")
+        numericKeys.add(key);
+    });
+
+    // Sum numeric columns
+    data.forEach((row) => {
+      if (row[Object.keys(data[0])[0]] === "Grand Total") return; // skip if already total
+      numericKeys.forEach((key) => {
+        const num = Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
+        totalRow[key] = (totalRow[key] || 0) + num;
+      });
+    });
+
+    // Format totals
+    const formattedTotals = {};
+    Object.entries(totalRow).forEach(([key, val]) => {
+      if (key.toLowerCase().includes("percentage")) {
+        formattedTotals[key] = val.toFixed(2) + "%";
+      } else {
+        formattedTotals[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+      }
+    });
+
+    // Add Grand Total label
+    const firstKey = Object.keys(data[0])[0];
+    formattedTotals[firstKey] = "Grand Total";
+
+    return [...data, formattedTotals];
+  };
+
   // Aggregate data by group
   const filterColumnsByGroup = (data) => {
     const aggregated = {};
     data.forEach(row => {
       const key = groupBy === "city" ? row.city
-                : groupBy === "branch" ? row.branch
-                : row.city + " - " + row.branch;
+        : groupBy === "branch" ? row.branch
+        : row.city + " - " + row.branch;
 
       if (!aggregated[key]) aggregated[key] = { ...row };
       else {
@@ -47,7 +87,7 @@ function BatteryTyrePage() {
       return filteredRow;
     });
 
-    // ✅ Sort by city order when grouped by "city_branch"
+    // ✅ Sort city order when grouped by "city_branch"
     if (groupBy === "city_branch") {
       const cityOrder = ["Bangalore", "Mysore", "Mangalore"];
       result.sort((a, b) => {
@@ -77,8 +117,8 @@ function BatteryTyrePage() {
 
     combinedData.forEach(row => {
       const key = groupBy === "city" ? row.city
-                : groupBy === "branch" ? row.branch
-                : row.city + " - " + row.branch;
+        : groupBy === "branch" ? row.branch
+        : row.city + " - " + row.branch;
 
       if (!aggregated[key]) aggregated[key] = { profit: 0, netretailddl: 0 };
       aggregated[key].profit += Number(row.profit || 0);
@@ -96,8 +136,8 @@ function BatteryTyrePage() {
       return {
         ...groupKey,
         profit: value.profit.toFixed(2),
-        percentageProfit: denominator === 0 
-          ? "0.00%" 
+        percentageProfit: denominator === 0
+          ? "0.00%"
           : ((value.profit / denominator) * 100).toFixed(2) + "%"
       };
     });
@@ -122,7 +162,7 @@ function BatteryTyrePage() {
       });
     }
 
-    setBatteryTyreSummary(summary);
+    return addGrandTotalRow(summary);
   };
 
   // Fetch data whenever months, years, or groupBy change
@@ -148,12 +188,13 @@ function BatteryTyrePage() {
           }
         }
 
-        const batteryAggregated = filterColumnsByGroup(batteryCombined);
-        const tyreAggregated = filterColumnsByGroup(tyreCombined);
+        const batteryAggregated = addGrandTotalRow(filterColumnsByGroup(batteryCombined));
+        const tyreAggregated = addGrandTotalRow(filterColumnsByGroup(tyreCombined));
+        const batteryTyreAggregated = computeBatteryTyreSummary(batteryCombined, tyreCombined);
 
         setBatterySummary(batteryAggregated);
         setTyreSummary(tyreAggregated);
-        computeBatteryTyreSummary(batteryCombined, tyreCombined);
+        setBatteryTyreSummary(batteryTyreAggregated);
 
       } catch (err) {
         console.error(err);
@@ -171,6 +212,7 @@ function BatteryTyrePage() {
       </Box>
 
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+        {/* Months Filter */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Months</InputLabel>
           <Select
@@ -188,6 +230,7 @@ function BatteryTyrePage() {
           </Select>
         </FormControl>
 
+        {/* Years Filter */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Years</InputLabel>
           <Select
@@ -205,6 +248,7 @@ function BatteryTyrePage() {
           </Select>
         </FormControl>
 
+        {/* Group By Filter */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Group By</InputLabel>
           <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
@@ -220,11 +264,9 @@ function BatteryTyrePage() {
           <Box sx={{ flex: 1 }}>
             <DataTable data={batterySummary} title="Battery Summary" />
           </Box>
-
           <Box sx={{ flex: 1 }}>
             <DataTable data={tyreSummary} title="Tyre Summary" />
           </Box>
-
           <Box sx={{ flex: 1 }}>
             <DataTable data={batteryTyreSummary} title="Battery & Tyre Summary" />
           </Box>

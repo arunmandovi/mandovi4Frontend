@@ -26,14 +26,15 @@ function MCPPage() {
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
+  // 🔹 Helper: Aggregate rows by key columns
   const aggregateData = (data, keys) => {
     const map = {};
-    data.forEach(row => {
-      const key = keys.map(k => row[k]).join("_");
+    data.forEach((row) => {
+      const key = keys.map((k) => row[k]).join("_");
       if (!map[key]) {
         map[key] = { ...row };
       } else {
-        ["MCP No", "AMOUNT"].forEach(col => {
+        ["mcp", "amount"].forEach((col) => {
           if (row[col] !== undefined && !isNaN(row[col])) {
             map[key][col] = (map[key][col] || 0) + Number(row[col]);
           }
@@ -43,11 +44,12 @@ function MCPPage() {
     return Object.values(map);
   };
 
+  // 🔹 Format data and compute display columns
   const formatSummaryData = (data) => {
     const keys = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
     const aggregated = aggregateData(data, keys);
 
-    return aggregated.map(row => {
+    return aggregated.map((row) => {
       const formattedRow = { ...row };
       if (row.mcp !== undefined && row.amount !== undefined) {
         formattedRow["MCP NO"] = Number(row.mcp).toLocaleString("en-IN");
@@ -59,6 +61,7 @@ function MCPPage() {
     });
   };
 
+  // 🔹 Maintain custom city order
   const sortByCityOrder = (data) => {
     const cityOrder = ["Bangalore", "Mysore", "Mangalore"];
     return data.sort((a, b) => {
@@ -73,73 +76,67 @@ function MCPPage() {
     });
   };
 
-  const synchronizeRows = (tablesData, keyColumns) => {
-    const allKeys = new Set();
-    tablesData.forEach(table => {
-      table.forEach(row => {
-        const key = keyColumns.map(k => row[k]).join("_");
-        allKeys.add(key);
+  // 🔹 Add a Grand Total row
+  const addGrandTotalRow = (data) => {
+    if (!data || data.length === 0) return data;
+
+    const totalRow = {};
+    const numericKeys = new Set();
+
+    // detect numeric columns
+    Object.keys(data[0]).forEach((key) => {
+      const sample = data[0][key];
+      if (typeof sample === "string" && sample.replace(/[,\d.%]/g, "").trim() === "")
+        numericKeys.add(key);
+    });
+
+    // sum totals
+    data.forEach((row) => {
+      numericKeys.forEach((key) => {
+        const num = Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
+        totalRow[key] = (totalRow[key] || 0) + num;
       });
     });
 
-    const keysArray = Array.from(allKeys);
-    return tablesData.map(table => {
-      const map = {};
-      table.forEach(row => {
-        const key = keyColumns.map(k => row[k]).join("_");
-        map[key] = row;
-      });
-
-      return keysArray.map(key => {
-        if (map[key]) return map[key];
-        const emptyRow = {};
-        keyColumns.forEach((col, i) => {
-          emptyRow[col] = key.split("_")[i];
-        });
-        emptyRow["2024-25"] = 0;
-        emptyRow["2025-26"] = 0;
-        emptyRow["Growth %"] = "0%";
-        return emptyRow;
-      });
+    // format total row
+    const formattedTotals = {};
+    Object.entries(totalRow).forEach(([key, val]) => {
+      formattedTotals[key] = val.toLocaleString("en-IN");
     });
+
+    const totalLabelKey = Object.keys(data[0])[0];
+    formattedTotals[totalLabelKey] = "Grand Total";
+
+    return [...data, formattedTotals];
   };
 
+  // 🔹 Fetch data from API
   const fetchSummaries = async () => {
     try {
-      let mcpSummary = [];
+      let allMCP = [];
 
       const monthsList = months.length > 0 ? months : [""];
       const qtrList = qtr.length > 0 ? qtr : [""];
       const halfList = halfYear.length > 0 ? halfYear : [""];
 
       for (const m of monthsList) {
-          for (const q of qtrList) {
-            for (const h of halfList) {
-              const query =
-                `?groupBy=${groupBy}` +
-                (m ? `&month=${m}` : "") +
-                (q ? `&qtrWise=${q}` : "") +
-                (h ? `&halfYear=${h}` : "");
+        for (const q of qtrList) {
+          for (const h of halfList) {
+            const query =
+              `?groupBy=${groupBy}` +
+              (m ? `&month=${m}` : "") +
+              (q ? `&qtrWise=${q}` : "") +
+              (h ? `&halfYear=${h}` : "");
 
-              const mcpSummaryData = await fetchData(`/api/mcp/mcp_summary${query}`);
-              if (Array.isArray(mcpSummaryData)) mcpSummary = mcpSummary.concat(mcpSummaryData);
-            }
+            const mcpData = await fetchData(`/api/mcp/mcp_summary${query}`);
+            if (Array.isArray(mcpData)) allMCP = allMCP.concat(mcpData);
+          }
         }
       }
 
-      let formattedMCPSummary = sortByCityOrder(formatSummaryData(mcpSummary));
-
-      const keyColumns = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
-      [
-        formattedMCPSummary,
-      ] = synchronizeRows(
-        [
-          formattedMCPSummary,
-        ],
-        keyColumns
-      );
-
-      setMCPSummary(formattedMCPSummary);
+      let formattedMCP = sortByCityOrder(formatSummaryData(allMCP));
+      formattedMCP = addGrandTotalRow(formattedMCP);
+      setMCPSummary(formattedMCP);
     } catch (err) {
       console.error(err);
       alert("❌ Error fetching MCP Summaries: " + err.message);
@@ -148,8 +145,9 @@ function MCPPage() {
 
   useEffect(() => {
     fetchSummaries();
-  }, [months,  groupBy, qtr, halfYear]);
+  }, [months, groupBy, qtr, halfYear]);
 
+  // 🔹 Hide unwanted columns
   const hiddenColumns = ["qtrWise", "halfYear", "channel"];
   if (groupBy === "city") hiddenColumns.push("branch");
   if (groupBy === "branch") hiddenColumns.push("city");
@@ -186,7 +184,6 @@ function MCPPage() {
             ))}
           </Select>
         </FormControl>
-
 
         {/* Group By */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -235,12 +232,11 @@ function MCPPage() {
         </FormControl>
       </Box>
 
-      {/* 🔹 Data Tables */}
-      <Box sx={{ display: "flex", gap: 0.1, flexWrap: "wrap" }}>
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(mcpSummary)} title="MCP" />
+      {/* 🔹 Data Table */}
+      <Box sx={{ display: "flex", flexWrap: "wrap" }}>
+        <Box sx={{ flex: 1, minWidth: 400, maxHeight: 600, overflowY: "auto" }}>
+          <DataTable data={filterData(mcpSummary)} title="MCP Summary" />
         </Box>
-
       </Box>
     </Box>
   );

@@ -23,6 +23,46 @@ function BRConversionPage() {
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
+  // ✅ Add Grand Total helper
+  const addGrandTotalRow = (data) => {
+    if (!data || data.length === 0) return data;
+
+    const totalRow = {};
+    const numericKeys = new Set();
+
+    // Identify numeric columns
+    Object.keys(data[0]).forEach((key) => {
+      const sample = data[0][key];
+      if (typeof sample === "string" && sample.replace(/[,\d.%]/g, "").trim() === "")
+        numericKeys.add(key);
+    });
+
+    // Sum numeric columns
+    data.forEach((row) => {
+      if (row[Object.keys(data[0])[0]] === "Grand Total") return; // skip previous total rows
+      numericKeys.forEach((key) => {
+        const num = Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
+        totalRow[key] = (totalRow[key] || 0) + num;
+      });
+    });
+
+    // Format totals
+    const formattedTotals = {};
+    Object.entries(totalRow).forEach(([key, val]) => {
+      if (key.toLowerCase().includes("percentage")) {
+        formattedTotals[key] = val.toFixed(2) + "%";
+      } else {
+        formattedTotals[key] = val.toLocaleString("en-IN");
+      }
+    });
+
+    // Add label
+    const totalLabelKey = Object.keys(data[0])[0];
+    formattedTotals[totalLabelKey] = "Grand Total";
+
+    return [...data, formattedTotals];
+  };
+
   // Aggregate rows by group
   const aggregateData = (data, groupByKey) => {
     const aggregated = {};
@@ -49,16 +89,16 @@ function BRConversionPage() {
     const halfList = halfYear.length > 0 ? halfYear : [""];
 
     for (const m of monthsList) {
-        for (const q of qtrList) {
-          for (const h of halfList) {
-            const query = `?groupBy=${groupBy}`
-              + (m ? `&month=${m}` : "")
-              + (q ? `&qtr_wise=${q}` : "")
-              + (h ? `&half_year=${h}` : "");
+      for (const q of qtrList) {
+        for (const h of halfList) {
+          const query = `?groupBy=${groupBy}`
+            + (m ? `&month=${m}` : "")
+            + (q ? `&qtr_wise=${q}` : "")
+            + (h ? `&half_year=${h}` : "");
 
-            const data = await fetchData(`/api/br_conversion/${endpoint}${query}`);
-            if (Array.isArray(data)) combinedResults = combinedResults.concat(data);
-          }
+          const data = await fetchData(`/api/br_conversion/${endpoint}${query}`);
+          if (Array.isArray(data)) combinedResults = combinedResults.concat(data);
+        }
       }
     }
 
@@ -93,7 +133,11 @@ function BRConversionPage() {
 
   // Compute combined BR Conversion summary
   const computeCombinedSummary = (arenaData, nexaData) => {
-    const combined = [...arenaData, ...nexaData];
+    // remove any Grand Total rows before combining
+    const filteredArena = arenaData.filter(r => r[Object.keys(arenaData[0])[0]] !== "Grand Total");
+    const filteredNexa = nexaData.filter(r => r[Object.keys(nexaData[0])[0]] !== "Grand Total");
+
+    const combined = [...filteredArena, ...filteredNexa];
     const aggregated = {};
 
     combined.forEach(row => {
@@ -119,7 +163,11 @@ function BRConversionPage() {
 
   // Compute combined Revenue summary
   const computeCombinedRevenueSummary = (arenaData, nexaData) => {
-    const combined = [...arenaData, ...nexaData];
+    // remove any Grand Total rows before combining
+    const filteredArena = arenaData.filter(r => r[Object.keys(arenaData[0])[0]] !== "Grand Total");
+    const filteredNexa = nexaData.filter(r => r[Object.keys(nexaData[0])[0]] !== "Grand Total");
+
+    const combined = [...filteredArena, ...filteredNexa];
     const aggregated = {};
 
     combined.forEach(row => {
@@ -148,15 +196,24 @@ function BRConversionPage() {
     try {
       const arenaData = await fetchBRSummary("br_conversion_arena");
       const nexaData = await fetchBRSummary("br_conversion_nexa");
-      setBrArenaSummary(arenaData);
-      setBrNexaSummary(nexaData);
-      setBrCombinedSummary(computeCombinedSummary(arenaData, nexaData));
 
-      const revenueArena = await fetchBRSummary("br_conversion_revenue_arena", true);
-      const revenueNexa = await fetchBRSummary("br_conversion_revenue_nexa", true);
+      const brArena = addGrandTotalRow(arenaData);
+      const brNexa = addGrandTotalRow(nexaData);
+      const brCombined = addGrandTotalRow(computeCombinedSummary(arenaData, nexaData));
+
+      const revenueArenaData = await fetchBRSummary("br_conversion_revenue_arena", true);
+      const revenueNexaData = await fetchBRSummary("br_conversion_revenue_nexa", true);
+
+      const revenueArena = addGrandTotalRow(revenueArenaData);
+      const revenueNexa = addGrandTotalRow(revenueNexaData);
+      const revenueCombined = addGrandTotalRow(computeCombinedRevenueSummary(revenueArenaData, revenueNexaData));
+
+      setBrArenaSummary(brArena);
+      setBrNexaSummary(brNexa);
+      setBrCombinedSummary(brCombined);
       setRevenueArenaSummary(revenueArena);
       setRevenueNexaSummary(revenueNexa);
-      setRevenueCombinedSummary(computeCombinedRevenueSummary(revenueArena, revenueNexa));
+      setRevenueCombinedSummary(revenueCombined);
     } catch (err) {
       console.error(err);
       alert("❌ Error fetching BR Conversion Summary: " + err.message);

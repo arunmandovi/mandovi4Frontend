@@ -32,6 +32,7 @@ function MSGPPage() {
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
+  // 🔹 Aggregate Data
   const aggregateData = (data, keys) => {
     const map = {};
     data.forEach(row => {
@@ -49,6 +50,7 @@ function MSGPPage() {
     return Object.values(map);
   };
 
+  // 🔹 Format Summary Data
   const formatSummaryData = (data) => {
     const keys = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
     const aggregated = aggregateData(data, keys);
@@ -67,7 +69,7 @@ function MSGPPage() {
     });
   };
 
-   // 🔹 City priority helper (case-insensitive, trims)
+  // 🔹 City Priority
   const CITY_PRIORITY = {
     "bangalore": 0,
     "mysore": 1,
@@ -79,30 +81,24 @@ function MSGPPage() {
     return CITY_PRIORITY.hasOwnProperty(c) ? CITY_PRIORITY[c] : 99;
   };
 
-  // 🔹 Final stable sort used AFTER synchronization
   const sortByCityOrder = (data) => {
     return data.sort((a, b) => {
-      // If grouped by city & branch, first compare city priority, then branch
       if (groupBy === "city_branch") {
         const pa = getCityPriority(a.city);
         const pb = getCityPriority(b.city);
         if (pa !== pb) return pa - pb;
-        // if same priority or both 99, sort by city name then branch name
         const cityCompare = (a.city || "").localeCompare(b.city || "");
         if (cityCompare !== 0) return cityCompare;
         return (a.branch || "").localeCompare(b.branch || "");
       }
-
-      // Otherwise (groupBy city or branch), prioritize cities and then alphabetical
       const pa = getCityPriority(a.city);
       const pb = getCityPriority(b.city);
       if (pa !== pb) return pa - pb;
-
-      // if both have same priority (including 99), sort alphabetically by city (fallback)
       return (a.city || "").localeCompare(b.city || "");
     });
   };
 
+  // 🔹 Synchronize Missing Rows Across Tables
   const synchronizeRows = (tablesData, keyColumns) => {
     const allKeys = new Set();
     tablesData.forEach(table => {
@@ -134,51 +130,67 @@ function MSGPPage() {
     });
   };
 
+  // 🔹 Add Grand Total Row
+  const addGrandTotalRow = (data) => {
+    if (!data || data.length === 0) return data;
+
+    const totalRow = {};
+    ["2024-25", "2025-26"].forEach(col => {
+      totalRow[col] = data.reduce((sum, row) =>
+        sum + Number(String(row[col]).replace(/,/g, "")), 0
+      );
+      totalRow[col] = totalRow[col].toLocaleString("en-IN");
+    });
+
+    totalRow["Growth %"] = "0%";
+    totalRow[Object.keys(data[0])[0]] = "Grand Total";
+    return [...data, totalRow];
+  };
+
+  // 🔹 Fetch Data
   const fetchSummaries = async () => {
     try {
       let combinedService = [];
       let combinedBodyShop = [];
       let combinedFreeService = [];
       let combinedPMS = [];
-      let combinedFPR = [];
       let combinedRunningRepair = [];
       let combinedOthers = [];
-      let combinedBSFpr = []; // 🆕 new variable
 
       const monthsList = months.length > 0 ? months : [""];
       const qtrList = qtr.length > 0 ? qtr : [""];
       const halfList = halfYear.length > 0 ? halfYear : [""];
 
       for (const m of monthsList) {
-          for (const q of qtrList) {
-            for (const h of halfList) {
-              const query =
-                `?groupBy=${groupBy}` +
-                (m ? `&month=${m}` : "") +
-                (q ? `&qtrWise=${q}` : "") +
-                (h ? `&halfYear=${h}` : "");
+        for (const q of qtrList) {
+          for (const h of halfList) {
+            const query =
+              `?groupBy=${groupBy}` +
+              (m ? `&month=${m}` : "") +
+              (q ? `&qtrWise=${q}` : "") +
+              (h ? `&halfYear=${h}` : "");
 
-              const serviceBodyShopData = await fetchData(`/api/msgp/msgp_service_bodyshop${query}`);
-              if (Array.isArray(serviceBodyShopData)) combinedService = combinedService.concat(serviceBodyShopData);
+            const serviceBodyShopData = await fetchData(`/api/msgp/msgp_service_bodyshop${query}`);
+            if (Array.isArray(serviceBodyShopData)) combinedService = combinedService.concat(serviceBodyShopData);
 
-              const serviceData = await fetchData(`/api/msgp/msgp_service${query}`);
-              if (Array.isArray(serviceData)) combinedService = combinedService.concat(serviceData);
+            const serviceData = await fetchData(`/api/msgp/msgp_service${query}`);
+            if (Array.isArray(serviceData)) combinedService = combinedService.concat(serviceData);
 
-              const bodyShopData = await fetchData(`/api/msgp/msgp_bodyshop${query}`);
-              if (Array.isArray(bodyShopData)) combinedBodyShop = combinedBodyShop.concat(bodyShopData);
+            const bodyShopData = await fetchData(`/api/msgp/msgp_bodyshop${query}`);
+            if (Array.isArray(bodyShopData)) combinedBodyShop = combinedBodyShop.concat(bodyShopData);
 
-              const freeServiceData = await fetchData(`/api/msgp/msgp_freeservice${query}`);
-              if (Array.isArray(freeServiceData)) combinedFreeService = combinedFreeService.concat(freeServiceData);
+            const freeServiceData = await fetchData(`/api/msgp/msgp_freeservice${query}`);
+            if (Array.isArray(freeServiceData)) combinedFreeService = combinedFreeService.concat(freeServiceData);
 
-              const pmsData = await fetchData(`/api/msgp/msgp_pms${query}`);
-              if (Array.isArray(pmsData)) combinedPMS = combinedPMS.concat(pmsData);
+            const pmsData = await fetchData(`/api/msgp/msgp_pms${query}`);
+            if (Array.isArray(pmsData)) combinedPMS = combinedPMS.concat(pmsData);
 
-              const runningRepairData = await fetchData(`/api/msgp/msgp_running_repair${query}`);
-              if (Array.isArray(runningRepairData)) combinedRunningRepair = combinedRunningRepair.concat(runningRepairData);
+            const runningRepairData = await fetchData(`/api/msgp/msgp_running_repair${query}`);
+            if (Array.isArray(runningRepairData)) combinedRunningRepair = combinedRunningRepair.concat(runningRepairData);
 
-              const othersData = await fetchData(`/api/msgp/msgp_others${query}`);
-              if (Array.isArray(othersData)) combinedOthers = combinedOthers.concat(othersData);
-            }
+            const othersData = await fetchData(`/api/msgp/msgp_others${query}`);
+            if (Array.isArray(othersData)) combinedOthers = combinedOthers.concat(othersData);
+          }
         }
       }
 
@@ -187,10 +199,8 @@ function MSGPPage() {
       let formattedBodyShop = sortByCityOrder(formatSummaryData(combinedBodyShop));
       let formattedFreeService = sortByCityOrder(formatSummaryData(combinedFreeService));
       let formattedPMS = sortByCityOrder(formatSummaryData(combinedPMS));
-      let formattedFPR = sortByCityOrder(formatSummaryData(combinedFPR));
       let formattedRunningRepair = sortByCityOrder(formatSummaryData(combinedRunningRepair));
       let formattedOthers = sortByCityOrder(formatSummaryData(combinedOthers));
-      let formattedBSFpr = sortByCityOrder(formatSummaryData(combinedBSFpr));
 
       const keyColumns = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
       [
@@ -199,10 +209,8 @@ function MSGPPage() {
         formattedBodyShop,
         formattedFreeService,
         formattedPMS,
-        formattedFPR,
         formattedRunningRepair,
-        formattedOthers,
-        formattedBSFpr,
+        formattedOthers
       ] = synchronizeRows(
         [
           formattedServiceBodyShop,
@@ -210,21 +218,19 @@ function MSGPPage() {
           formattedBodyShop,
           formattedFreeService,
           formattedPMS,
-          formattedFPR,
           formattedRunningRepair,
-          formattedOthers,
-          formattedBSFpr,
+          formattedOthers
         ],
         keyColumns
       );
 
-      setServiceBodyShopSummary(formattedServiceBodyShop);
-      setServiceSummary(formattedService);
-      setBodyShopSummary(formattedBodyShop);
-      setFreeServiceSummary(formattedFreeService);
-      setPmsSummary(formattedPMS);
-      setRunningRepairSummary(formattedRunningRepair);
-      setOthersSummary(formattedOthers);
+      setServiceBodyShopSummary(addGrandTotalRow(formattedServiceBodyShop));
+      setServiceSummary(addGrandTotalRow(formattedService));
+      setBodyShopSummary(addGrandTotalRow(formattedBodyShop));
+      setFreeServiceSummary(addGrandTotalRow(formattedFreeService));
+      setPmsSummary(addGrandTotalRow(formattedPMS));
+      setRunningRepairSummary(addGrandTotalRow(formattedRunningRepair));
+      setOthersSummary(addGrandTotalRow(formattedOthers));
     } catch (err) {
       console.error(err);
       alert("❌ Error fetching MSGP Summaries: " + err.message);
@@ -252,9 +258,8 @@ function MSGPPage() {
         MSGP SUMMARY REPORT
       </Typography>
 
-      {/* 🔹 Filters */}
+      {/* Filters */}
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-        {/* Month */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Months</InputLabel>
           <Select
@@ -272,7 +277,6 @@ function MSGPPage() {
           </Select>
         </FormControl>
 
-        {/* Group By */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Group By</InputLabel>
           <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
@@ -282,7 +286,6 @@ function MSGPPage() {
           </Select>
         </FormControl>
 
-        {/* Quarter */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Quarter</InputLabel>
           <Select
@@ -300,7 +303,6 @@ function MSGPPage() {
           </Select>
         </FormControl>
 
-        {/* Half Year */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Half Year</InputLabel>
           <Select
@@ -319,9 +321,9 @@ function MSGPPage() {
         </FormControl>
       </Box>
 
-      {/* 🔹 Data Tables */}
+      {/* Data Tables */}
       <Box sx={{ display: "flex", gap: 0.1, flexWrap: "wrap" }}>
-         <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
+        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
           <DataTable data={filterData(serviceBodyShopSummary)} title="SERVICE + BODYSHOP" />
         </Box>
 
@@ -347,7 +349,7 @@ function MSGPPage() {
 
         <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
           <DataTable data={filterData(othersSummary)} title="OTHERS SERVICE" />
-      </Box>
+        </Box>
       </Box>
     </Box>
   );

@@ -19,11 +19,12 @@ function MGAPage() {
   const [qtr, setQtr] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
 
-  const monthOptions = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthOptions = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
   const qtrOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
   // 🔹 Aggregate Data
   const aggregateData = (data, keys) => {
@@ -34,6 +35,7 @@ function MGAPage() {
         map[key] = { ...row };
       } else {
         [
+          "MGA LOAD",
           "MGA VALUE",
           "MGA/VEH",
           "MGA Shortfall/Veh",
@@ -48,7 +50,45 @@ function MGAPage() {
     return Object.values(map);
   };
 
-  // 🔹 Format & Rename Headers
+  // 🔹 Add Grand Total Row
+  const addGrandTotalRow = (data) => {
+    if (!data || data.length === 0) return data;
+
+    const totalRow = {};
+    const numericKeys = new Set();
+
+    // Identify numeric columns
+    Object.keys(data[0]).forEach((key) => {
+      const sample = data[0][key];
+      if (
+        typeof sample === "string" &&
+        sample.replace(/[,\d.%]/g, "").trim() === ""
+      )
+        numericKeys.add(key);
+    });
+
+    // Sum numeric columns
+    data.forEach((row) => {
+      numericKeys.forEach((key) => {
+        const num = Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
+        totalRow[key] = (totalRow[key] || 0) + num;
+      });
+    });
+
+    // Format totals
+    const formattedTotals = {};
+    Object.entries(totalRow).forEach(([key, val]) => {
+      formattedTotals[key] = val.toLocaleString("en-IN");
+    });
+
+    // Add label for total row
+    const totalLabelKey = Object.keys(data[0])[0];
+    formattedTotals[totalLabelKey] = "Grand Total";
+
+    return [...data, formattedTotals];
+  };
+
+  // 🔹 Format Data
   const formatSummaryData = (data) => {
     const keys = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
     const aggregated = aggregateData(data, keys);
@@ -71,11 +111,11 @@ function MGAPage() {
     });
   };
 
-  // 🔹 City priority helper (case-insensitive, trims)
+  // 🔹 City priority for sorting
   const CITY_PRIORITY = {
-    "bangalore": 0,
-    "mysore": 1,
-    "mangalore": 2
+    bangalore: 0,
+    mysore: 1,
+    mangalore: 2,
   };
   const getCityPriority = (city) => {
     if (!city && city !== "") return 99;
@@ -83,26 +123,19 @@ function MGAPage() {
     return CITY_PRIORITY.hasOwnProperty(c) ? CITY_PRIORITY[c] : 99;
   };
 
-  // 🔹 Final stable sort used AFTER synchronization
   const finalSortByCityPriority = (data) => {
     return data.sort((a, b) => {
-      // If grouped by city & branch, first compare city priority, then branch
       if (groupBy === "city_branch") {
         const pa = getCityPriority(a.city);
         const pb = getCityPriority(b.city);
         if (pa !== pb) return pa - pb;
-        // if same priority or both 99, sort by city name then branch name
         const cityCompare = (a.city || "").localeCompare(b.city || "");
         if (cityCompare !== 0) return cityCompare;
         return (a.branch || "").localeCompare(b.branch || "");
       }
-
-      // Otherwise (groupBy city or branch), prioritize cities and then alphabetical
       const pa = getCityPriority(a.city);
       const pb = getCityPriority(b.city);
       if (pa !== pb) return pa - pb;
-
-      // if both have same priority (including 99), sort alphabetically by city (fallback)
       return (a.city || "").localeCompare(b.city || "");
     });
   };
@@ -139,7 +172,7 @@ function MGAPage() {
     });
   };
 
-  // 🔹 Fetch MGA Summary
+  // 🔹 Fetch Data
   const fetchSummaries = async () => {
     try {
       let mgaSummary = [];
@@ -155,23 +188,22 @@ function MGAPage() {
               (m ? `&month=${m}` : "") +
               (q ? `&qtrWise=${q}` : "") +
               (h ? `&halfYear=${h}` : "");
-
             const mgaSummaryData = await fetchData(`/api/mga/mga_summary${query}`);
-            if (Array.isArray(mgaSummaryData)) mgaSummary = mgaSummary.concat(mgaSummaryData);
+            if (Array.isArray(mgaSummaryData))
+              mgaSummary = mgaSummary.concat(mgaSummaryData);
           }
         }
       }
 
-      // Format, synchronize, then do the final priority sort
-      let formattedMGASummary = formatSummaryData(mgaSummary);
-
+      let formatted = formatSummaryData(mgaSummary);
       const keyColumns = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
-      [formattedMGASummary] = synchronizeRows([formattedMGASummary], keyColumns);
+      [formatted] = synchronizeRows([formatted], keyColumns);
+      formatted = finalSortByCityPriority(formatted);
 
-      // Final sort after synchronization (this guarantees order)
-      formattedMGASummary = finalSortByCityPriority(formattedMGASummary);
+      // ✅ Add single Grand Total row at end
+      formatted = addGrandTotalRow(formatted);
 
-      setMGASummary(formattedMGASummary);
+      setMGASummary(formatted);
     } catch (err) {
       console.error(err);
       alert("❌ Error fetching MGA Summaries: " + err.message);
@@ -182,7 +214,7 @@ function MGAPage() {
     fetchSummaries();
   }, [months, groupBy, qtr, halfYear]);
 
-  // 🔹 Hide irrelevant columns
+  // 🔹 Hide columns
   const hiddenColumns = ["qtrWise", "halfYear", "channel"];
   if (groupBy === "city") hiddenColumns.push("branch");
   if (groupBy === "branch") hiddenColumns.push("city");
