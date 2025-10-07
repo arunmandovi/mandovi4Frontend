@@ -23,7 +23,6 @@ function LoaddPage() {
   const [bsFprSummary, setBsFprSummary] = useState([]); // 🆕 new state
 
   const [months, setMonths] = useState([]);
-  const [years, setYears] = useState([]);
   const [groupBy, setGroupBy] = useState("city");
   const [qtr, setQtr] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
@@ -126,18 +125,15 @@ function LoaddPage() {
       let combinedBSFpr = []; // 🆕 new variable
 
       const monthsList = months.length > 0 ? months : [""];
-      const yearsList = years.length > 0 ? years : [""];
       const qtrList = qtr.length > 0 ? qtr : [""];
       const halfList = halfYear.length > 0 ? halfYear : [""];
 
       for (const m of monthsList) {
-        for (const y of yearsList) {
           for (const q of qtrList) {
             for (const h of halfList) {
               const query =
                 `?groupBy=${groupBy}` +
                 (m ? `&month=${m}` : "") +
-                (y ? `&year=${y}` : "") +
                 (q ? `&qtrWise=${q}` : "") +
                 (h ? `&halfYear=${h}` : "");
 
@@ -165,7 +161,6 @@ function LoaddPage() {
               const bsFprData = await fetchData(`/api/loadd/loadd_bs_fpr${query}`);
               if (Array.isArray(bsFprData)) combinedBSFpr = combinedBSFpr.concat(bsFprData);
             }
-          }
         }
       }
 
@@ -218,7 +213,7 @@ function LoaddPage() {
 
   useEffect(() => {
     fetchSummaries();
-  }, [months, years, groupBy, qtr, halfYear]);
+  }, [months, groupBy, qtr, halfYear]);
 
   const hiddenColumns = ["qtrWise", "halfYear", "channel"];
   if (groupBy === "city") hiddenColumns.push("branch");
@@ -252,24 +247,6 @@ function LoaddPage() {
               <MenuItem key={m} value={m}>
                 <Checkbox checked={months.indexOf(m) > -1} />
                 <ListItemText primary={m} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* Year */}
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Years</InputLabel>
-          <Select
-            multiple
-            value={years}
-            onChange={(e) => setYears(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {yearOptions.map((y) => (
-              <MenuItem key={y} value={y}>
-                <Checkbox checked={years.indexOf(y) > -1} />
-                <ListItemText primary={y} />
               </MenuItem>
             ))}
           </Select>

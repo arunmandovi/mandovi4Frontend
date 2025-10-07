@@ -13,7 +13,6 @@ function BRConversionPage() {
   const [revenueNexaSummary, setRevenueNexaSummary] = useState([]);
   const [revenueCombinedSummary, setRevenueCombinedSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [years, setYears] = useState([]);
   const [groupBy, setGroupBy] = useState("city");
   const [qtr, setQtr] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
@@ -46,24 +45,20 @@ function BRConversionPage() {
   const fetchBRSummary = async (endpoint, isRevenue = false) => {
     let combinedResults = [];
     const monthsList = months.length > 0 ? months : [""];
-    const yearsList = years.length > 0 ? years : [""];
     const qtrList = qtr.length > 0 ? qtr : [""];
     const halfList = halfYear.length > 0 ? halfYear : [""];
 
     for (const m of monthsList) {
-      for (const y of yearsList) {
         for (const q of qtrList) {
           for (const h of halfList) {
             const query = `?groupBy=${groupBy}`
               + (m ? `&month=${m}` : "")
-              + (y ? `&year=${y}` : "")
               + (q ? `&qtr_wise=${q}` : "")
               + (h ? `&half_year=${h}` : "");
 
             const data = await fetchData(`/api/br_conversion/${endpoint}${query}`);
             if (Array.isArray(data)) combinedResults = combinedResults.concat(data);
           }
-        }
       }
     }
 
@@ -170,7 +165,7 @@ function BRConversionPage() {
 
   useEffect(() => {
     fetchAllData();
-  }, [months, years, groupBy, qtr, halfYear]);
+  }, [months, groupBy, qtr, halfYear]);
 
   // Hide unwanted columns
   const hiddenColumns = ["qtr_wise", "half_year", "channel"];
@@ -197,19 +192,6 @@ function BRConversionPage() {
               <MenuItem key={m} value={m}>
                 <Checkbox checked={months.indexOf(m) > -1} />
                 <ListItemText primary={m} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* Years */}
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Years</InputLabel>
-          <Select multiple value={years} onChange={(e) => setYears(e.target.value)} renderValue={(selected) => selected.join(", ")}>
-            {yearOptions.map(y => (
-              <MenuItem key={y} value={y}>
-                <Checkbox checked={years.indexOf(y) > -1} />
-                <ListItemText primary={y} />
               </MenuItem>
             ))}
           </Select>
