@@ -1,288 +1,253 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  FormControl,
-  InputLabel,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
   Checkbox,
   ListItemText,
-  Typography,
 } from "@mui/material";
 import DataTable from "../components/DataTable";
 import { fetchData } from "../api/uploadService";
 
 function LabourPage() {
-  const [serviceSummary, setServiceSummary] = useState([]);
-  const [bodyShopSummary, setBodyShopSummary] = useState([]);
-  const [srbrSummary, setSrBrSummary] = useState([]);
-  const [freeServiceSummary, setFreeServiceSummary] = useState([]);
-  const [pmsSummary, setPmsSummary] = useState([]);
-  const [fprSummary, setFprSummary] = useState([]);
-  const [runningRepairSummary, setRunningRepairSummary] = useState([]);
-  const [othersSummary, setOthersSummary] = useState([]);
-
+  const [labourSummary, setLabourSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [quarters, setQuarters] = useState([]);
+  const [halfYears, setHalfYears] = useState([]);
   const [groupBy, setGroupBy] = useState("city");
-  const [qtr, setQtr] = useState([]);
-  const [halfYear, setHalfYear] = useState([]);
 
   const monthOptions = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   ];
-  const qtrOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
+
+  const quarterOptions = ["Q1", "Q2", "Q3", "Q4"];
   const halfYearOptions = ["H1", "H2"];
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
-  // 🔹 Add Grand Total Row Helper
-  const addGrandTotalRow = (data) => {
-    if (!data || data.length === 0) return data;
+  // ✅ Column header rename map
+  const columnRenameMap = {
+    city: "City",
+    branch: "Branch",
+    previousService: "Service 2024-25",
+    currentService: "Service 2025-25",
+    growthService: "Service Growth %",
+    previousBodyShop: "BodyShop 2024-25",
+    currentBodyShop: "BodyShop 2025-26",
+    growthBodyShop: "BodyShop Growth %",
+    previousSrBr: "SR&BR 2024-25",
+    currentSrBr: "SR&BR 2025-26",
+    growthSrBr: "SR&BR Growth %",
+    previousFreeService: "Free Service 2024-25",
+    currentFreeService: "Free Service 2025-26",
+    growthFreeService: "Free Service Growth %",
+    previousPMS: "PMS 2024-25",
+    currentPMS: "PMS 2025-26",
+    growthPMS: "PMS Growth %",
+    previousFPR: "FPR 2024-25",
+    currentFPR: "FPR 2025-26",
+    growthFPR: "FPR Growth %",
+    previousRunningRepair: "RR 2024-25",
+    currentRunningRepair: "RR 2025-26",
+    growthRunningRepair: "RR Growth %",
+    previousOthers: "Others 2024-25",
+    currentOthers: "Others 2025-26",
+    growthOthers: "Others Growth %",
+  };
 
-    const totalRow = {};
-    let growthSum = 0;
-    let growthCount = 0;
+  // ✅ Format numeric + %
+  const formatNumericValues = (data) => {
+    return data.map((row) => {
+      const formatted = {};
+      for (const key in row) {
+        const val = row[key];
+        if (key.toLowerCase().includes("growth")) {
+          const num =
+            typeof val === "number"
+              ? val
+              : parseFloat(String(val).replace("%", ""));
+          formatted[key] = !isNaN(num) ? num.toFixed(2) + "%" : val;
+        } else if (typeof val === "number") {
+          formatted[key] = val.toLocaleString("en-IN", {
+            maximumFractionDigits: 2,
+          });
+        } else if (
+          typeof val === "string" &&
+          !isNaN(parseFloat(val)) &&
+          val.trim() !== ""
+        ) {
+          formatted[key] = parseFloat(val).toLocaleString("en-IN", {
+            maximumFractionDigits: 2,
+          });
+        } else {
+          formatted[key] = val;
+        }
+      }
+      return formatted;
+    });
+  };
 
-    data.forEach((row) => {
-      Object.entries(row).forEach(([key, value]) => {
-        if (typeof value === "string") {
-          const num = Number(value.replace(/[,%]/g, "").replace(/,/g, ""));
-          if (!isNaN(num)) {
-            if (key.toLowerCase().includes("growth")) {
-              growthSum += num;
-              growthCount++;
-            } else {
-              totalRow[key] = (totalRow[key] || 0) + num;
+  // ✅ Combine multiple datasets (sum numeric values)
+  const combineDataSets = (dataSets, keyField) => {
+    const combined = {};
+
+    dataSets.forEach((data) => {
+      data.forEach((row) => {
+        const key = row[keyField];
+        if (!combined[key]) combined[key] = { ...row };
+        else {
+          Object.keys(row).forEach((col) => {
+            const val1 = Number(String(combined[key][col]).replace(/[,()%]/g, "")) || 0;
+            const val2 = Number(String(row[col]).replace(/[,()%]/g, "")) || 0;
+            if (!isNaN(val1) && !isNaN(val2)) {
+              combined[key][col] = val1 + val2;
             }
-          }
+          });
         }
       });
     });
 
-    // format totals
-    const formattedTotals = {};
-    Object.entries(totalRow).forEach(([key, val]) => {
-      formattedTotals[key] = val.toLocaleString("en-IN");
+    return Object.values(combined);
+  };
+
+  // ✅ Add Grand Total Row
+  const addGrandTotalRow = (data) => {
+    if (!data || data.length === 0) return data;
+
+    const totalRow = {};
+    const numericKeys = new Set();
+
+    Object.keys(data[0]).forEach((key) => {
+      const val = data[0][key];
+      if (typeof val === "string" && val.replace(/[,\d.%]/g, "").trim() === "")
+        numericKeys.add(key);
     });
 
-    // average growth %
-    const avgGrowth =
-      growthCount > 0 ? (growthSum / growthCount).toFixed(2) + "%" : "0%";
-    formattedTotals["Growth %"] = avgGrowth;
+    data.forEach((row) => {
+      if (row[Object.keys(data[0])[0]] === "Grand Total") return;
+      numericKeys.forEach((key) => {
+        const num =
+          Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
+        totalRow[key] = (totalRow[key] || 0) + num;
+      });
+    });
 
-    // first key (city/branch/city_branch)
+    const formattedTotals = {};
+    Object.entries(totalRow).forEach(([key, val]) => {
+      if (key.toLowerCase().includes("percentage")) {
+        formattedTotals[key] = val.toFixed(2) + "%";
+      } else {
+        formattedTotals[key] = val.toLocaleString("en-IN", {
+          maximumFractionDigits: 2,
+        });
+      }
+    });
+
     const firstKey = Object.keys(data[0])[0];
     formattedTotals[firstKey] = "Grand Total";
 
     return [...data, formattedTotals];
   };
 
-  const aggregateData = (data, keys) => {
-    const map = {};
-    data.forEach((row) => {
-      const key = keys.map((k) => row[k]).join("_");
-      if (!map[key]) {
-        map[key] = { ...row };
-      } else {
-        ["previousLabour", "currentLabour", "growth"].forEach((col) => {
-          if (row[col] !== undefined && !isNaN(row[col])) {
-            map[key][col] = (map[key][col] || 0) + Number(row[col]);
-          }
-        });
-      }
-    });
-    return Object.values(map);
-  };
-
-  const formatSummaryData = (data) => {
-    const keys = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
-    const aggregated = aggregateData(data, keys);
-
-    return aggregated.map((row) => {
-      const formattedRow = { ...row };
-      if (row.previousLabour !== undefined && row.currentLabour !== undefined) {
-        formattedRow["2024-25"] = Number(row.previousLabour).toLocaleString("en-IN");
-        formattedRow["2025-26"] = Number(row.currentLabour).toLocaleString("en-IN");
-        formattedRow["Growth %"] =
-          row.growth !== null ? row.growth.toFixed(2) + "%" : "0%";
-        delete formattedRow.previousLabour;
-        delete formattedRow.currentLabour;
-        delete formattedRow.growth;
-      }
-      return formattedRow;
-    });
-  };
-
-  const sortByCityOrder = (data) => {
-    const cityOrder = ["Bangalore", "Mysore", "Mangalore"];
-    return data.sort((a, b) => {
-      if (!a.city) return 1;
-      if (!b.city) return -1;
-      const indexA = cityOrder.indexOf(a.city);
-      const indexB = cityOrder.indexOf(b.city);
-      if (indexA === -1 && indexB === -1) return a.city.localeCompare(b.city);
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    });
-  };
-
-  const synchronizeRows = (tablesData, keyColumns) => {
-    const allKeys = new Set();
-    tablesData.forEach((table) => {
-      table.forEach((row) => {
-        const key = keyColumns.map((k) => row[k]).join("_");
-        allKeys.add(key);
-      });
-    });
-
-    const keysArray = Array.from(allKeys);
-    return tablesData.map((table) => {
-      const map = {};
-      table.forEach((row) => {
-        const key = keyColumns.map((k) => row[k]).join("_");
-        map[key] = row;
-      });
-
-      return keysArray.map((key) => {
-        if (map[key]) return map[key];
-        const emptyRow = {};
-        keyColumns.forEach((col, i) => {
-          emptyRow[col] = key.split("_")[i];
-        });
-        emptyRow["2024-25"] = 0;
-        emptyRow["2025-26"] = 0;
-        emptyRow["Growth %"] = "0%";
-        return emptyRow;
-      });
-    });
-  };
-
-  const fetchSummaries = async () => {
-    try {
-      let combinedService = [];
-      let combinedBodyShop = [];
-      let combinedSrBr = [];
-      let combinedFreeService = [];
-      let combinedPMS = [];
-      let combinedFPR = [];
-      let combinedRunningRepair = [];
-      let combinedOthers = [];
-
-      const monthsList = months.length > 0 ? months : [""];
-      const qtrList = qtr.length > 0 ? qtr : [""];
-      const halfList = halfYear.length > 0 ? halfYear : [""];
-
-      for (const m of monthsList) {
-        for (const q of qtrList) {
-          for (const h of halfList) {
-            const query =
-              `?groupBy=${groupBy}` +
-              (m ? `&month=${m}` : "") +
-              (q ? `&qtrWise=${q}` : "") +
-              (h ? `&halfYear=${h}` : "");
-
-            const serviceData = await fetchData(`/api/labour/labour_service${query}`);
-            if (Array.isArray(serviceData)) combinedService = combinedService.concat(serviceData);
-
-            const bodyShopData = await fetchData(`/api/labour/labour_bodyshop${query}`);
-            if (Array.isArray(bodyShopData)) combinedBodyShop = combinedBodyShop.concat(bodyShopData);
-
-            const srbrData = await fetchData(`/api/labour/labour_srbr${query}`);
-            if (Array.isArray(srbrData)) combinedSrBr = combinedSrBr.concat(srbrData);
-
-            const freeServiceData = await fetchData(`/api/labour/labour_freeservice${query}`);
-            if (Array.isArray(freeServiceData)) combinedFreeService = combinedFreeService.concat(freeServiceData);
-
-            const pmsData = await fetchData(`/api/labour/labour_pms${query}`);
-            if (Array.isArray(pmsData)) combinedPMS = combinedPMS.concat(pmsData);
-
-            const fprData = await fetchData(`/api/labour/labour_fpr${query}`);
-            if (Array.isArray(fprData)) combinedFPR = combinedFPR.concat(fprData);
-
-            const runningRepairData = await fetchData(`/api/labour/labour_running_repair${query}`);
-            if (Array.isArray(runningRepairData)) combinedRunningRepair = combinedRunningRepair.concat(runningRepairData);
-
-            const othersData = await fetchData(`/api/labour/labour_others${query}`);
-            if (Array.isArray(othersData)) combinedOthers = combinedOthers.concat(othersData);
-          }
-        }
-      }
-
-      let formattedService = sortByCityOrder(formatSummaryData(combinedService));
-      let formattedBodyShop = sortByCityOrder(formatSummaryData(combinedBodyShop));
-      let formattedSrBr = sortByCityOrder(formatSummaryData(combinedSrBr));
-      let formattedFreeService = sortByCityOrder(formatSummaryData(combinedFreeService));
-      let formattedPMS = sortByCityOrder(formatSummaryData(combinedPMS));
-      let formattedFPR = sortByCityOrder(formatSummaryData(combinedFPR));
-      let formattedRunningRepair = sortByCityOrder(formatSummaryData(combinedRunningRepair));
-      let formattedOthers = sortByCityOrder(formatSummaryData(combinedOthers));
-
-      const keyColumns = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
-      [
-        formattedService,
-        formattedBodyShop,
-        formattedSrBr,
-        formattedFreeService,
-        formattedPMS,
-        formattedFPR,
-        formattedRunningRepair,
-        formattedOthers,
-      ] = synchronizeRows(
-        [
-          formattedService,
-          formattedBodyShop,
-          formattedSrBr,
-          formattedFreeService,
-          formattedPMS,
-          formattedFPR,
-          formattedRunningRepair,
-          formattedOthers,
-        ],
-        keyColumns
-      );
-
-      // 🔹 Add Grand Totals
-      setServiceSummary(addGrandTotalRow(formattedService));
-      setBodyShopSummary(addGrandTotalRow(formattedBodyShop));
-      setSrBrSummary(addGrandTotalRow(formattedSrBr));
-      setFreeServiceSummary(addGrandTotalRow(formattedFreeService));
-      setPmsSummary(addGrandTotalRow(formattedPMS));
-      setFprSummary(addGrandTotalRow(formattedFPR));
-      setRunningRepairSummary(addGrandTotalRow(formattedRunningRepair));
-      setOthersSummary(addGrandTotalRow(formattedOthers));
-    } catch (err) {
-      console.error(err);
-      alert("❌ Error fetching Labour Summaries: " + err.message);
-    }
-  };
-
+  // ✅ Fetch BR Conversion summary (multi-selection aware)
   useEffect(() => {
-    fetchSummaries();
-  }, [months, groupBy, qtr, halfYear]);
+    const fetchLabourSummary = async () => {
+      try {
+        let responses = [];
 
-  const hiddenColumns = ["qtrWise", "halfYear", "channel"];
-  if (groupBy === "city") hiddenColumns.push("branch");
-  if (groupBy === "branch") hiddenColumns.push("city");
+        // Determine which filters are selected
+        const activeMonths = months.length > 0 ? months : [];
+        const activeQuarters = quarters.length > 0 ? quarters : [];
+        const activeHalfYears = halfYears.length > 0 ? halfYears : [];
 
-  const filterData = (data) =>
-    data.map((row) => {
-      const filteredRow = { ...row };
-      hiddenColumns.forEach((col) => delete filteredRow[col]);
-      return filteredRow;
+        // 🔹 No filter selected → fetch all
+        if (
+          activeMonths.length === 0 &&
+          activeQuarters.length === 0 &&
+          activeHalfYears.length === 0
+        ) {
+          const query = `?groupBy=${groupBy}`;
+          const data = await fetchData(
+            `/api/labour/labour_summary${query}`
+          );
+          responses.push(data);
+        }
+
+        // 🔹 For each selected month
+        for (const m of activeMonths) {
+          const query = `?groupBy=${groupBy}&month=${m}`;
+          const data = await fetchData(
+            `/api/labour/labour_summary${query}`
+          );
+          responses.push(data);
+        }
+
+        // 🔹 For each selected quarter
+        for (const q of activeQuarters) {
+          const query = `?groupBy=${groupBy}&qtrWise=${q}`;
+          const data = await fetchData(
+            `/api/labour/labour_summary${query}`
+          );
+          responses.push(data);
+        }
+
+        // 🔹 For each selected half-year
+        for (const h of activeHalfYears) {
+          const query = `?groupBy=${groupBy}&halfYear=${h}`;
+          const data = await fetchData(
+            `/api/labour/labour_summary${query}`
+          );
+          responses.push(data);
+        }
+
+        // Combine all responses
+        const validData = responses.filter((r) => Array.isArray(r));
+        const combinedData =
+          validData.length > 1
+            ? combineDataSets(validData, groupBy)
+            : validData[0] || [];
+
+        // Format + Add Total
+        const formatted = formatNumericValues(combinedData);
+        const withTotal = addGrandTotalRow(formatted);
+        setLabourSummary(withTotal);
+      } catch (error) {
+        console.error(error);
+        alert("❌ Error fetching Labour Summary: " + error.message);
+      }
+    };
+
+    fetchLabourSummary();
+  }, [months, quarters, halfYears, groupBy]);
+
+  // ✅ Rename columns dynamically
+  const renamedData = labourSummary.map((row) => {
+    const newRow = {};
+    Object.keys(row).forEach((key) => {
+      const newKey = columnRenameMap[key] || key;
+      newRow[newKey] = row[key];
     });
+    return newRow;
+  });
+
+  // ✅ Hide columns dynamically
+  const hiddenColumns = [];
+  if (groupBy === "city") hiddenColumns.push("Branch");
+  if (groupBy === "branch") hiddenColumns.push("City");
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box className="battery-container" sx={{ p: 3 }}>
       <Typography variant="h4" sx={{ mb: 3 }}>
-        LABOUR SUMMARY REPORT
+        Labour Report
       </Typography>
 
-      {/* 🔹 Filters */}
+      {/* Filters */}
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+        {/* Month Filter */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Months</InputLabel>
+          <InputLabel>Month</InputLabel>
           <Select
             multiple
             value={months}
@@ -298,6 +263,43 @@ function LabourPage() {
           </Select>
         </FormControl>
 
+        {/* Quarter Filter */}
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Quarter</InputLabel>
+          <Select
+            multiple
+            value={quarters}
+            onChange={(e) => setQuarters(e.target.value)}
+            renderValue={(selected) => selected.join(", ")}
+          >
+            {quarterOptions.map((q) => (
+              <MenuItem key={q} value={q}>
+                <Checkbox checked={quarters.indexOf(q) > -1} />
+                <ListItemText primary={q} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* Half-Year Filter */}
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Half Year</InputLabel>
+          <Select
+            multiple
+            value={halfYears}
+            onChange={(e) => setHalfYears(e.target.value)}
+            renderValue={(selected) => selected.join(", ")}
+          >
+            {halfYearOptions.map((h) => (
+              <MenuItem key={h} value={h}>
+                <Checkbox checked={halfYears.indexOf(h) > -1} />
+                <ListItemText primary={h} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* Group By Filter */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Group By</InputLabel>
           <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
@@ -306,68 +308,15 @@ function LabourPage() {
             <MenuItem value="city_branch">City & Branch</MenuItem>
           </Select>
         </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Quarter</InputLabel>
-          <Select
-            multiple
-            value={qtr}
-            onChange={(e) => setQtr(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {qtrOptions.map((q) => (
-              <MenuItem key={q} value={q}>
-                <Checkbox checked={qtr.indexOf(q) > -1} />
-                <ListItemText primary={q} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Half Year</InputLabel>
-          <Select
-            multiple
-            value={halfYear}
-            onChange={(e) => setHalfYear(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {halfYearOptions.map((h) => (
-              <MenuItem key={h} value={h}>
-                <Checkbox checked={halfYear.indexOf(h) > -1} />
-                <ListItemText primary={h} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
       </Box>
 
-      {/* 🔹 Tables */}
-      <Box sx={{ display: "flex", gap: 0.1, flexWrap: "wrap" }}>
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(serviceSummary)} title="Service Labour" />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(bodyShopSummary)} title="BodyShop Labour" />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(srbrSummary)} title="SR & BR Labour" />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(freeServiceSummary)} title="Free Service Labour" />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(pmsSummary)} title="PMS Labour" />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(fprSummary)} title="FPR Labour" />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(runningRepairSummary)} title="Running Repair Labour" />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(othersSummary)} title="Others Labour" />
-        </Box>
+      {/* DataTable */}
+      <Box sx={{ overflowX: "auto", width: "100%" }}>
+        <DataTable
+          data={renamedData}
+          title="Battery & Tyre Summary"
+          hiddenColumns={hiddenColumns}
+        />
       </Box>
     </Box>
   );
