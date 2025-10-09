@@ -27,7 +27,6 @@ function BatteryTyrePage() {
   const quarterOptions = ["Q1", "Q2", "Q3", "Q4"];
   const halfYearOptions = ["H1", "H2"];
 
-  // ✅ Column header rename map
   const columnRenameMap = {
     city: "City",
     branch: "Branch",
@@ -42,23 +41,24 @@ function BatteryTyrePage() {
     tyreProfit: "Tyre Profit",
     tyrePercentageProfit: "Tyre Profit %",
     batteryTyreProfit: "Battery & Tyre Profit",
-    batteryTyrePercentageProfit: "Battery & Tyre Profit %"
+    batteryTyrePercentageProfit: "Battery & Tyre Profit %",
   };
 
-  // ✅ Format numbers to 2 decimal places
   const formatNumericValues = (data) => {
     return data.map((row) => {
       const formatted = {};
       for (const key in row) {
         const val = row[key];
-        if (typeof val === "number") {
-          formatted[key] = val.toFixed(2);
-        } else if (
-          typeof val === "string" &&
-          !isNaN(parseFloat(val)) &&
-          val.trim() !== ""
-        ) {
-          formatted[key] = parseFloat(val).toFixed(2);
+        if (key.toLowerCase().includes("percentage")) {
+          const num =
+            typeof val === "number"
+              ? val
+              : parseFloat(String(val).replace("%", ""));
+          formatted[key] = !isNaN(num) ? num.toFixed(2) + "%" : val;
+        } else if (typeof val === "number") {
+          formatted[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        } else if (typeof val === "string" && !isNaN(parseFloat(val)) && val.trim() !== "") {
+          formatted[key] = parseFloat(val).toLocaleString("en-IN", { maximumFractionDigits: 2 });
         } else {
           formatted[key] = val;
         }
@@ -67,7 +67,26 @@ function BatteryTyrePage() {
     });
   };
 
-  // ✅ Helper function: Add Grand Total row
+  const combineDataSets = (dataSets, keyField) => {
+    const combined = {};
+    dataSets.forEach((data) => {
+      data.forEach((row) => {
+        const key = row[keyField];
+        if (!combined[key]) combined[key] = { ...row };
+        else {
+          Object.keys(row).forEach((col) => {
+            const val1 = Number(String(combined[key][col]).replace(/[,()%]/g, "")) || 0;
+            const val2 = Number(String(row[col]).replace(/[,()%]/g, "")) || 0;
+            if (!isNaN(val1) && !isNaN(val2)) {
+              combined[key][col] = val1 + val2;
+            }
+          });
+        }
+      });
+    });
+    return Object.values(combined);
+  };
+
   const addGrandTotalRow = (data) => {
     if (!data || data.length === 0) return data;
 
@@ -83,8 +102,7 @@ function BatteryTyrePage() {
     data.forEach((row) => {
       if (row[Object.keys(data[0])[0]] === "Grand Total") return;
       numericKeys.forEach((key) => {
-        const num =
-          Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
+        const num = Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
         totalRow[key] = (totalRow[key] || 0) + num;
       });
     });
@@ -94,9 +112,7 @@ function BatteryTyrePage() {
       if (key.toLowerCase().includes("percentage")) {
         formattedTotals[key] = val.toFixed(2) + "%";
       } else {
-        formattedTotals[key] = val.toLocaleString("en-IN", {
-          maximumFractionDigits: 2,
-        });
+        formattedTotals[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
       }
     });
 
@@ -106,29 +122,70 @@ function BatteryTyrePage() {
     return [...data, formattedTotals];
   };
 
-  // ✅ Fetch Battery + Tyre summary (single API)
+  // ✅ Custom city priority sorting
+  const sortByCityPriority = (data) => {
+    const priorityCities = ["Bangalore", "Mysore", "Mangalore"];
+    return data.sort((a, b) => {
+      const cityA = a.city || "";
+      const cityB = b.city || "";
+      const indexA = priorityCities.indexOf(cityA);
+      const indexB = priorityCities.indexOf(cityB);
+
+      // Both cities are in priority list → sort by priority
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
+      // Only A is in priority → A comes first
+      if (indexA !== -1) return -1;
+
+      // Only B is in priority → B comes first
+      if (indexB !== -1) return 1;
+
+      // Neither → leave original order
+      return 0;
+    });
+  };
+
   useEffect(() => {
     const fetchBatteryTyreSummary = async () => {
       try {
-        const selectedMonth = months.length > 0 ? months[0] : "";
-        const selectedQuarter = quarters.length > 0 ? quarters[0] : "";
-        const selectedHalfYear = halfYears.length > 0 ? halfYears[0] : "";
+        let responses = [];
+        const activeMonths = months.length > 0 ? months : [];
+        const activeQuarters = quarters.length > 0 ? quarters : [];
+        const activeHalfYears = halfYears.length > 0 ? halfYears : [];
 
-        const query = `?groupBy=${groupBy}${
-          selectedMonth ? `&month=${selectedMonth}` : ""
-        }${selectedQuarter ? `&qtrWise=${selectedQuarter}` : ""}${
-          selectedHalfYear ? `&halfYear=${selectedHalfYear}` : ""
-        }`;
-
-        const data = await fetchData(`/api/battery_tyre/battery_tyre_summary${query}`);
-
-        if (Array.isArray(data)) {
-          const formatted = formatNumericValues(data);
-          const withTotal = addGrandTotalRow(formatted);
-          setBatteryTyreSummary(withTotal);
-        } else {
-          setBatteryTyreSummary([]);
+        if (activeMonths.length === 0 && activeQuarters.length === 0 && activeHalfYears.length === 0) {
+          const query = `?groupBy=${groupBy}`;
+          const data = await fetchData(`/api/battery_tyre/battery_tyre_summary${query}`);
+          responses.push(data);
         }
+
+        for (const m of activeMonths) {
+          const query = `?groupBy=${groupBy}&month=${m}`;
+          const data = await fetchData(`/api/battery_tyre/battery_tyre_summary${query}`);
+          responses.push(data);
+        }
+
+        for (const q of activeQuarters) {
+          const query = `?groupBy=${groupBy}&qtrWise=${q}`;
+          const data = await fetchData(`/api/battery_tyre/battery_tyre_summary${query}`);
+          responses.push(data);
+        }
+
+        for (const h of activeHalfYears) {
+          const query = `?groupBy=${groupBy}&halfYear=${h}`;
+          const data = await fetchData(`/api/battery_tyre/battery_tyre_summary${query}`);
+          responses.push(data);
+        }
+
+        const validData = responses.filter((r) => Array.isArray(r));
+        let combinedData = validData.length > 1 ? combineDataSets(validData, groupBy) : validData[0] || [];
+
+        // 🔹 Apply priority sorting for cities first
+        combinedData = sortByCityPriority(combinedData);
+
+        const formatted = formatNumericValues(combinedData);
+        const withTotal = addGrandTotalRow(formatted);
+        setBatteryTyreSummary(withTotal);
       } catch (error) {
         console.error(error);
         alert("❌ Error fetching Battery & Tyre Summary: " + error.message);
@@ -138,7 +195,6 @@ function BatteryTyrePage() {
     fetchBatteryTyreSummary();
   }, [months, quarters, halfYears, groupBy]);
 
-  // ✅ Rename column headers dynamically
   const renamedData = batteryTyreSummary.map((row) => {
     const newRow = {};
     Object.keys(row).forEach((key) => {
@@ -148,7 +204,6 @@ function BatteryTyrePage() {
     return newRow;
   });
 
-  // ✅ Hide unused columns dynamically
   const hiddenColumns = [];
   if (groupBy === "city") hiddenColumns.push("Branch");
   if (groupBy === "branch") hiddenColumns.push("City");
@@ -159,9 +214,7 @@ function BatteryTyrePage() {
         BATTERY & TYRE REPORT
       </Typography>
 
-      {/* Filters */}
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-        {/* Month Filter */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Month</InputLabel>
           <Select
@@ -179,7 +232,6 @@ function BatteryTyrePage() {
           </Select>
         </FormControl>
 
-        {/* Quarter Filter */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Quarter</InputLabel>
           <Select
@@ -197,7 +249,6 @@ function BatteryTyrePage() {
           </Select>
         </FormControl>
 
-        {/* Half-Year Filter */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Half Year</InputLabel>
           <Select
@@ -215,7 +266,6 @@ function BatteryTyrePage() {
           </Select>
         </FormControl>
 
-        {/* Group By Filter */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Group By</InputLabel>
           <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
@@ -226,7 +276,6 @@ function BatteryTyrePage() {
         </FormControl>
       </Box>
 
-      {/* DataTable Display */}
       <Box sx={{ overflowX: "auto", width: "100%" }}>
         <DataTable
           data={renamedData}
