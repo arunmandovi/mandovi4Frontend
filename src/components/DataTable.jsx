@@ -16,6 +16,7 @@ export default function DataTable({ data, title, hiddenColumns = [] }) {
     totalQty: "QTY",
     totalDDL: "Net Retail DDL",
     totalSelling: "Net Retail Selling",
+    profit: "Profit",
     percentageProfit: "PROFIT%",
   };
 
@@ -32,13 +33,16 @@ export default function DataTable({ data, title, hiddenColumns = [] }) {
     ["totalDDL", "totalSelling", "profit"].forEach((col) => {
       if (newRow[col] !== undefined && !isNaN(Number(newRow[col]))) {
         newRow[col] = Number(newRow[col]).toLocaleString("en-IN", {
-          maximumFractionDigits: 0,
+          maximumFractionDigits: 2,
         });
       }
     });
 
     // percentageProfit with 2 decimals + %
-    if (newRow.percentageProfit !== undefined && !isNaN(Number(newRow.percentageProfit))) {
+    if (
+      newRow.percentageProfit !== undefined &&
+      !isNaN(Number(newRow.percentageProfit))
+    ) {
       newRow.percentageProfit = Number(newRow.percentageProfit).toFixed(2) + "%";
     }
 
@@ -56,8 +60,18 @@ export default function DataTable({ data, title, hiddenColumns = [] }) {
     }));
 
   return (
-    <Box sx={{ height: 500, width: "100%", display: "flex", flexDirection: "column" }}>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold", color: "text.primary" }}>
+    <Box
+      sx={{
+        height: "85vh", // ✅ increased from 70vh → 85vh for a bigger visible area
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Typography
+        variant="h6"
+        sx={{ mb: 2, fontWeight: "bold", color: "text.primary" }}
+      >
         {title}
       </Typography>
 
@@ -71,10 +85,14 @@ export default function DataTable({ data, title, hiddenColumns = [] }) {
           borderRadius: 1,
           border: "1px solid #ddd",
           backgroundColor: "#fff",
+          overflowY: "auto",
           "& .MuiDataGrid-columnHeaders": {
             backgroundColor: "#f5f5f5",
             fontWeight: "bold",
             borderBottom: "2px solid #ddd",
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
           },
           "& .MuiDataGrid-columnHeader": {
             backgroundColor: "#e8f0fe",
