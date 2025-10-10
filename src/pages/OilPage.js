@@ -1,196 +1,261 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  FormControl,
-  InputLabel,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
   Checkbox,
   ListItemText,
-  Typography,
 } from "@mui/material";
 import DataTable from "../components/DataTable";
 import { fetchData } from "../api/uploadService";
 
 function OilPage() {
-  const [qtySummary, setQtySummary] = useState([]);
-  const [percentageQtySummary, setPercentageQtySummary] = useState([]);
-  const [profitSummary, setProfitSummary] = useState([]);
-
+  const [oilSummary, setOilSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [quarters, setQuarters] = useState([]);
+  const [halfYears, setHalfYears] = useState([]);
   const [groupBy, setGroupBy] = useState("city");
-  const [qtr, setQtr] = useState([]);
-  const [halfYear, setHalfYear] = useState([]);
 
   const monthOptions = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   ];
-  const qtrOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
+
+  const quarterOptions = ["Q1", "Q2", "Q3", "Q4"];
   const halfYearOptions = ["H1", "H2"];
 
-  // --- Column rename mapping ---
-  const columnMap = {
-    city: "CITY",
-    branch: "BRANCH",
-    fullSynthetic: "FULL SYNTHETIC",
-    semiSynthetic: "SEMI SYNTHETIC",
-    fullSemiSynthetic: "FULL & SEMI SYNTHETIC",
-    mineral: "MINERAL",
-    grandTotal: "GRAND TOTAL",
+  const columnRenameMap = {
+    city: "City",
+    branch: "Branch",
+    fullSyntheticQTY: "Full Synthetic QTY",
+    semiSyntheticQTY: "Semi Synthetice QTY",
+    mineralQTY: "Mineral QTY",
+    grandTotal: "Grand Total of QTY",
+    fullSyntheticPercentageQTY: "Full Synthetic QTY %",
+    semiSyntheticPercentageQTY: "Semi Synthetic QTY %",
+    fullSemiSyntheticPercentageQTY: "Full & Semi Synthetic QTY %",
+    fullSyntheticProfit: "Full Synthetic Profit",
+    semiSyntheticProfit: "Semi Synthetic Profit",
+    fullSemiSyntheticProfit: "Full & Semi Synthetic Profit",
+    mineralProfit: "Mineral Profit",
+    profitTotal: "Grand Total of Profit",
   };
 
-  // --- Add Grand Total row ---
-  const addGrandTotalRow = (data) => {
-    if (!data || data.length === 0) return data;
-
-    const labelKey = Object.keys(data[0])[0];
-    const numericKeys = Object.keys(data[0]).filter(
-      (k) => k !== labelKey && !isNaN(parseFloat(data[0][k]?.toString().replace(/,/g, "")))
-    );
-
-    const totalRow = {};
-    numericKeys.forEach((key) => {
-      totalRow[key] = data.reduce((sum, row) => {
-        const val = parseFloat(row[key]?.toString().replace(/,/g, "")) || 0;
-        return sum + val;
-      }, 0);
-    });
-
-    const grandTotalRow = { [labelKey]: "Grand Total" };
-    numericKeys.forEach((key) => {
-      grandTotalRow[key] = totalRow[key].toLocaleString("en-IN", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    });
-
-    return [...data, grandTotalRow];
-  };
-
-  // --- Format numbers ---
-  const formatSummaryData = (data) => {
+  const formatNumericValues = (data) => {
     return data.map((row) => {
-      const formatted = { ...row };
-      Object.keys(row).forEach((key) => {
+      const formatted = {};
+      for (const key in row) {
         const val = row[key];
-        if (typeof val === "number") {
-          formatted[key] = val.toLocaleString("en-IN", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          });
+        if (key.toLowerCase().includes("percentage")) {
+          const num =
+            typeof val === "number"
+              ? val
+              : parseFloat(String(val).replace("%", ""));
+          formatted[key] = !isNaN(num) ? num.toFixed(2) + "%" : val;
+        } else if (typeof val === "number") {
+          formatted[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        } else if (typeof val === "string" && !isNaN(parseFloat(val)) && val.trim() !== "") {
+          formatted[key] = parseFloat(val).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        } else {
+          formatted[key] = val;
         }
-      });
+      }
       return formatted;
     });
   };
 
-  // --- Rename columns for display ---
-  const renameColumns = (data) => {
-    return data.map((row) => {
-      const newRow = {};
-      for (const key in row) {
-        const newKey = columnMap[key] || key;
-        newRow[newKey] = row[key];
-      }
-      return newRow;
-    });
-  };
-
-  // --- City sorting order ---
-  const sortByCityOrder = (data) => {
-    const cityOrder = ["Bangalore", "Mysore", "Mangalore"];
-    return data.sort((a, b) => {
-      if (!a.city && !a.CITY) return 1;
-      if (!b.city && !b.CITY) return -1;
-      const cityA = a.city || a.CITY;
-      const cityB = b.city || b.CITY;
-      const idxA = cityOrder.indexOf(cityA);
-      const idxB = cityOrder.indexOf(cityB);
-      if (idxA === -1 && idxB === -1) return cityA.localeCompare(cityB);
-      if (idxA === -1) return 1;
-      if (idxB === -1) return -1;
-      return idxA - idxB;
-    });
-  };
-
-  // --- Fetch all summaries ---
-  const fetchSummaries = async () => {
-    try {
-      let combinedQty = [];
-      let combinedPercentage = [];
-      let combinedProfit = [];
-
-      const monthsList = months.length > 0 ? months : [""];
-      const qtrList = qtr.length > 0 ? qtr : [""];
-      const halfList = halfYear.length > 0 ? halfYear : [""];
-
-      for (const m of monthsList) {
-        for (const q of qtrList) {
-          for (const h of halfList) {
-            const query =
-              `?groupBy=${groupBy}` +
-              (m ? `&month=${m}` : "") +
-              (q ? `&qtrWise=${q}` : "") +
-              (h ? `&halfYear=${h}` : "");
-
-            const qtyData = await fetchData(`/api/oil/oil_qty${query}`);
-            if (Array.isArray(qtyData)) combinedQty = combinedQty.concat(qtyData);
-
-            const percentageData = await fetchData(`/api/oil/oil_percentage_qty${query}`);
-            if (Array.isArray(percentageData)) combinedPercentage = combinedPercentage.concat(percentageData);
-
-            const profitData = await fetchData(`/api/oil/oil_profit${query}`);
-            if (Array.isArray(profitData)) combinedProfit = combinedProfit.concat(profitData);
-          }
+  const combineDataSets = (dataSets, keyField) => {
+    const combined = {};
+    dataSets.forEach((data) => {
+      data.forEach((row) => {
+        const key = row[keyField];
+        if (!combined[key]) combined[key] = { ...row };
+        else {
+          Object.keys(row).forEach((col) => {
+            const val1 = Number(String(combined[key][col]).replace(/[,()%]/g, "")) || 0;
+            const val2 = Number(String(row[col]).replace(/[,()%]/g, "")) || 0;
+            if (!isNaN(val1) && !isNaN(val2)) {
+              combined[key][col] = val1 + val2;
+            }
+          });
         }
+      });
+    });
+    return Object.values(combined);
+  };
+
+    // ✅ Updated Grand Total Row Calculation
+const addGrandTotalRow = (data) => {
+  if (!data || data.length === 0) return data;
+
+  const totalRow = {};
+  const numericKeys = new Set();
+
+  // Identify numeric keys
+  Object.keys(data[0]).forEach((key) => {
+    const val = data[0][key];
+    if (typeof val === "number" || (!isNaN(parseFloat(val)) && val !== "")) {
+      numericKeys.add(key);
+    }
+  });
+
+  // Sum all numeric values across rows
+  data.forEach((row) => {
+    if (row[Object.keys(data[0])[0]] === "Grand Total") return;
+
+    numericKeys.forEach((key) => {
+      const raw = row[key];
+      let num = 0;
+      if (typeof raw === "number") num = raw;
+      else if (typeof raw === "string") {
+        const parsed = parseFloat(raw.replace("%", "").replace(/,/g, ""));
+        if (!isNaN(parsed)) num = parsed;
+      }
+      totalRow[key] = (totalRow[key] || 0) + num;
+    });
+  });
+
+  const formattedTotals = {};
+  const allKeys = Object.keys(data[0]);
+  const firstKey = allKeys[0];
+
+  allKeys.forEach((key) => {
+    const val = totalRow[key];
+
+    if (key.toLowerCase().includes("percentage")) {
+      let sum = 0;
+
+      // ✅ Custom logic for specific percentage columns
+      if (key.includes("fullSyntheticPercentageQTY")) {
+        const fsQty = totalRow["fullSyntheticQTY"] || 0;
+        const gt = totalRow["grandTotal"] || 0;
+        sum = fsQty * 100 / gt;
+      } else if (key.includes("semiSyntheticPercentageQTY")) {
+        const ssQty = totalRow["semiSyntheticQTY"] || 0;
+        const gt = totalRow["grandTotal"] || 0;
+        sum = ssQty * 100 / gt;
+      } else if (key.includes("fullSemiSyntheticPercentageQTY")) {
+        const fsQty = totalRow["fullSyntheticQTY"] || 0;
+        const ssQty = totalRow["semiSyntheticQTY"] || 0;
+        const gt = totalRow["grandTotal"] || 0;
+        sum = (fsQty + ssQty) * 100 / gt;
+      } else {
+        sum = val;
       }
 
-      const formattedQty = sortByCityOrder(formatSummaryData(combinedQty));
-      const formattedPercentage = sortByCityOrder(formatSummaryData(combinedPercentage));
-      const formattedProfit = sortByCityOrder(formatSummaryData(combinedProfit));
-
-      // Add grand total row, rename columns, then set state
-      setQtySummary(filterData(renameColumns(addGrandTotalRow(formattedQty))));
-      setPercentageQtySummary(filterData(renameColumns(addGrandTotalRow(formattedPercentage))));
-      setProfitSummary(filterData(renameColumns(addGrandTotalRow(formattedProfit))));
-    } catch (err) {
-      console.error("❌ Error fetching Oil summaries:", err);
-      alert("Error fetching Oil summaries: " + err.message);
+      formattedTotals[key] =
+        sum.toLocaleString("en-IN", { maximumFractionDigits: 2 }) + "%";
+    } else {
+      if (typeof val === "number" && !isNaN(val)) {
+        formattedTotals[key] = val.toLocaleString("en-IN", {
+          maximumFractionDigits: 2,
+        });
+      } else {
+        formattedTotals[key] = val || "";
+      }
     }
+  });
+
+  formattedTotals[firstKey] = "Grand Total";
+  return [...data, formattedTotals];
+};
+
+  const sortByCityPriority = (data) => {
+    const priorityCities = ["Bangalore", "Mysore", "Mangalore"];
+    return data.sort((a, b) => {
+      const cityA = a.city || "";
+      const cityB = b.city || "";
+      const indexA = priorityCities.indexOf(cityA);
+      const indexB = priorityCities.indexOf(cityB);
+
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return 0;
+    });
   };
 
   useEffect(() => {
-    fetchSummaries();
-  }, [months, groupBy, qtr, halfYear]);
+    const fetchOilSummary = async () => {
+      try {
+        let responses = [];
+        const activeMonths = months.length > 0 ? months : [];
+        const activeQuarters = quarters.length > 0 ? quarters : [];
+        const activeHalfYears = halfYears.length > 0 ? halfYears : [];
 
-  // --- Dynamically hide unused columns based on groupBy ---
-  const getHiddenColumns = () => {
-    const hidden = ["qtrWise", "halfYear", "channel"];
-    if (groupBy === "city") hidden.push("BRANCH"); // renamed key
-    if (groupBy === "branch") hidden.push("CITY"); // renamed key
-    return hidden;
-  };
+        if (
+          activeMonths.length === 0 &&
+          activeQuarters.length === 0 &&
+          activeHalfYears.length === 0
+        ) {
+          const query = `?groupBy=${groupBy}`;
+          const data = await fetchData(`/api/oil/oil_summary${query}`);
+          responses.push(data);
+        }
 
-  const filterData = (data) => {
-    const hiddenColumns = getHiddenColumns();
-    return data.map((row) => {
-      const filtered = { ...row };
-      hiddenColumns.forEach((c) => delete filtered[c]);
-      return filtered;
+        for (const m of activeMonths) {
+          const query = `?groupBy=${groupBy}&month=${m}`;
+          const data = await fetchData(`/api/oil/oil_summary${query}`);
+          responses.push(data);
+        }
+
+        for (const q of activeQuarters) {
+          const query = `?groupBy=${groupBy}&qtrWise=${q}`;
+          const data = await fetchData(`/api/oil/oil_summary${query}`);
+          responses.push(data);
+        }
+
+        for (const h of activeHalfYears) {
+          const query = `?groupBy=${groupBy}&halfYear=${h}`;
+          const data = await fetchData(`/api/oil/oil_summary${query}`);
+          responses.push(data);
+        }
+
+        const validData = responses.filter((r) => Array.isArray(r));
+        let combinedData =
+          validData.length > 1
+            ? combineDataSets(validData, groupBy)
+            : validData[0] || [];
+
+        combinedData = sortByCityPriority(combinedData);
+
+        const formatted = formatNumericValues(combinedData);
+        const withTotal = addGrandTotalRow(formatted);
+        setOilSummary(withTotal);
+      } catch (error) {
+        console.error(error);
+        alert("❌ Error fetching Summary: " + error.message);
+      }
+    };
+
+    fetchOilSummary();
+  }, [months, quarters, halfYears, groupBy]);
+
+  const renamedData = oilSummary.map((row) => {
+    const newRow = {};
+    Object.keys(row).forEach((key) => {
+      const newKey = columnRenameMap[key] || key;
+      newRow[newKey] = row[key];
     });
-  };
+    return newRow;
+  });
+
+  const hiddenColumns = [];
+  if (groupBy === "city") hiddenColumns.push("Branch");
+  if (groupBy === "branch") hiddenColumns.push("City");
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box className="battery-container" sx={{ p: 3 }}>
       <Typography variant="h4" sx={{ mb: 3 }}>
-        OIL SUMMARY REPORT
+        Oil REPORT
       </Typography>
 
-      {/* Filters */}
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Months</InputLabel>
+          <InputLabel>Month</InputLabel>
           <Select
             multiple
             value={months}
@@ -207,25 +272,16 @@ function OilPage() {
         </FormControl>
 
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Group By</InputLabel>
-          <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
-            <MenuItem value="city">City</MenuItem>
-            <MenuItem value="branch">Branch</MenuItem>
-            <MenuItem value="city_branch">City & Branch</MenuItem>
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Quarter</InputLabel>
           <Select
             multiple
-            value={qtr}
-            onChange={(e) => setQtr(e.target.value)}
+            value={quarters}
+            onChange={(e) => setQuarters(e.target.value)}
             renderValue={(selected) => selected.join(", ")}
           >
-            {qtrOptions.map((q) => (
+            {quarterOptions.map((q) => (
               <MenuItem key={q} value={q}>
-                <Checkbox checked={qtr.indexOf(q) > -1} />
+                <Checkbox checked={quarters.indexOf(q) > -1} />
                 <ListItemText primary={q} />
               </MenuItem>
             ))}
@@ -236,33 +292,31 @@ function OilPage() {
           <InputLabel>Half Year</InputLabel>
           <Select
             multiple
-            value={halfYear}
-            onChange={(e) => setHalfYear(e.target.value)}
+            value={halfYears}
+            onChange={(e) => setHalfYears(e.target.value)}
             renderValue={(selected) => selected.join(", ")}
           >
             {halfYearOptions.map((h) => (
               <MenuItem key={h} value={h}>
-                <Checkbox checked={halfYear.indexOf(h) > -1} />
+                <Checkbox checked={halfYears.indexOf(h) > -1} />
                 <ListItemText primary={h} />
               </MenuItem>
             ))}
           </Select>
         </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Group By</InputLabel>
+          <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
+            <MenuItem value="city">City</MenuItem>
+            <MenuItem value="branch">Branch</MenuItem>
+            <MenuItem value="city_branch">City & Branch</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
-      {/* Tables */}
-      <Box sx={{ display: "flex", gap: 0.1, flexWrap: "wrap" }}>
-        <Box sx={{ flex: 1, minWidth: 350, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={qtySummary} title="Qty Summary" />
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 350, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={percentageQtySummary} title="Qty % Summary" />
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 350, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={profitSummary} title="Profit Summary" />
-        </Box>
+      <Box sx={{ overflowX: "auto", width: "100%" }}>
+        <DataTable data={renamedData} title="Oil Summary" hiddenColumns={hiddenColumns} />
       </Box>
     </Box>
   );
