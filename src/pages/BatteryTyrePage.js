@@ -87,50 +87,72 @@ function BatteryTyrePage() {
     return Object.values(combined);
   };
 
-  // ✅ Updated Grand Total to calculate average for % columns
-  const addGrandTotalRow = (data) => {
-    if (!data || data.length === 0) return data;
+  // ✅ Updated Grand Total Row Calculation
+const addGrandTotalRow = (data) => {
+  if (!data || data.length === 0) return data;
 
-    const totalRow = {};
-    const numericKeys = new Set();
-    const percentageKeys = new Set();
+  const totalRow = {};
+  const numericKeys = new Set();
 
-    Object.keys(data[0]).forEach((key) => {
-      const val = data[0][key];
-      if (typeof val === "string" && val.replace(/[,\d.%]/g, "").trim() === "")
-        numericKeys.add(key);
-      if (key.toLowerCase().includes("percentage")) percentageKeys.add(key);
-    });
+  // Identify numeric keys
+  Object.keys(data[0]).forEach((key) => {
+    const val = data[0][key];
+    if (typeof val === "number" || (!isNaN(parseFloat(val)) && val !== "")) {
+      numericKeys.add(key);
+    }
+  });
 
-    const countRows = data.length;
+  // Sum all numeric values across rows
+  data.forEach((row) => {
+    if (row[Object.keys(data[0])[0]] === "Grand Total") return;
 
-    data.forEach((row) => {
-      if (row[Object.keys(data[0])[0]] === "Grand Total") return;
-      numericKeys.forEach((key) => {
-        const num = Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
-        if (percentageKeys.has(key)) {
-          totalRow[key] = (totalRow[key] || 0) + num;
-        } else {
-          totalRow[key] = (totalRow[key] || 0) + num;
-        }
-      });
-    });
-
-    const formattedTotals = {};
-    Object.entries(totalRow).forEach(([key, val]) => {
-      if (percentageKeys.has(key)) {
-        const avg = val / countRows;
-        formattedTotals[key] = avg.toFixed(2) + "%";
-      } else {
-        formattedTotals[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    numericKeys.forEach((key) => {
+      const raw = row[key];
+      let num = 0;
+      if (typeof raw === "number") num = raw;
+      else if (typeof raw === "string") {
+        const parsed = parseFloat(raw.replace("%", "").replace(/,/g, ""));
+        if (!isNaN(parsed)) num = parsed;
       }
+      totalRow[key] = (totalRow[key] || 0) + num;
     });
+  });
 
-    const firstKey = Object.keys(data[0])[0];
-    formattedTotals[firstKey] = "Grand Total";
+  // ✅ Compute formatted totals
+  const formattedTotals = {};
+  const allKeys = Object.keys(data[0]);
+  const firstKey = allKeys[0];
 
-    return [...data, formattedTotals];
-  };
+  allKeys.forEach((key, idx) => {
+    if (key.toLowerCase().includes("percentage")) {
+      // Take previous two columns for sum logic
+      const prevKey = allKeys[idx - 3];
+      const currKey = allKeys[idx - 1];
+
+      const prevVal =
+        Number(String(totalRow[prevKey]).replace(/[,()%]/g, "")) || 0;
+      const currVal =
+        Number(String(totalRow[currKey]).replace(/[,()%]/g, "")) || 0;
+
+      const sum = currVal * 100 / prevVal;
+      formattedTotals[key] =
+        sum.toLocaleString("en-IN", { maximumFractionDigits: 2 }) + "%";
+    } else {
+      const val = totalRow[key];
+      if (typeof val === "number" && !isNaN(val)) {
+        formattedTotals[key] = val.toLocaleString("en-IN", {
+          maximumFractionDigits: 2,
+        });
+      } else {
+        formattedTotals[key] = val || "";
+      }
+    }
+  });
+
+  formattedTotals[firstKey] = "Grand Total";
+
+  return [...data, formattedTotals];
+};
 
   // ✅ Custom city priority sorting
   const sortByCityPriority = (data) => {

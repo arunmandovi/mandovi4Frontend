@@ -99,21 +99,22 @@ function LabourPage() {
     return Object.values(combined);
   };
 
+  //Grand Total
   const addGrandTotalRow = (data) => {
   if (!data || data.length === 0) return data;
 
   const totalRow = {};
   const numericKeys = new Set();
-  const percentageKeys = new Set();
 
+  // Identify numeric keys
   Object.keys(data[0]).forEach((key) => {
     const val = data[0][key];
-    if (typeof val === "number" || (!isNaN(parseFloat(val)) && val !== "")) numericKeys.add(key);
-    if (typeof val === "string" && val.includes("%")) percentageKeys.add(key);
+    if (typeof val === "number" || (!isNaN(parseFloat(val)) && val !== "")) {
+      numericKeys.add(key);
+    }
   });
 
-  const countRows = data.length;
-
+  // Sum all numeric values
   data.forEach((row) => {
     if (row[Object.keys(data[0])[0]] === "Grand Total") return;
 
@@ -125,26 +126,41 @@ function LabourPage() {
         const parsed = parseFloat(raw.replace("%", "").replace(/,/g, ""));
         if (!isNaN(parsed)) num = parsed;
       }
-
-      if (percentageKeys.has(key)) {
-        totalRow[key] = (totalRow[key] || 0) + num;
-      } else {
-        totalRow[key] = (totalRow[key] || 0) + num;
-      }
+      totalRow[key] = (totalRow[key] || 0) + num;
     });
   });
 
+  // ✅ Compute final Grand Total row
   const formattedTotals = {};
-  Object.entries(totalRow).forEach(([key, val]) => {
-    if (percentageKeys.has(key)) {
-      const avg = val / countRows;
-      formattedTotals[key] = avg.toFixed(2) + "%";
+  const allKeys = Object.keys(data[0]);
+  const firstKey = allKeys[0];
+
+  allKeys.forEach((key, idx) => {
+    if (key.toLowerCase().includes("growth")) {
+      // Take previous two numeric columns
+      const prevKey = allKeys[idx - 2];
+      const currKey = allKeys[idx - 1];
+
+      const prevVal =
+        Number(String(totalRow[prevKey]).replace(/[,()%]/g, "")) || 0;
+      const currVal =
+        Number(String(totalRow[currKey]).replace(/[,()%]/g, "")) || 0;
+
+      const sum = (currVal-prevVal)*100/prevVal;
+      formattedTotals[key] =
+        sum.toLocaleString("en-IN", { maximumFractionDigits: 2 }) + "%";
     } else {
-      formattedTotals[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+      const val = totalRow[key];
+      if (typeof val === "number" && !isNaN(val)) {
+        formattedTotals[key] = val.toLocaleString("en-IN", {
+          maximumFractionDigits: 2,
+        });
+      } else {
+        formattedTotals[key] = val || "";
+      }
     }
   });
 
-  const firstKey = Object.keys(data[0])[0];
   formattedTotals[firstKey] = "Grand Total";
 
   return [...data, formattedTotals];

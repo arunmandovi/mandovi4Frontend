@@ -34,7 +34,7 @@ function MSGPPage() {
     currentSRBS: "Service & BodyShop 2025-26",
     growthSRBS: "Service & BodyShop Growth %",
     previousService: "Service 2024-25",
-    currentService: "Service 2025-25",
+    currentService: "Service 2025-26",
     growthService: "Service Growth %",
     previousBodyShop: "BodyShop 2024-25",
     currentBodyShop: "BodyShop 2025-26",
@@ -96,70 +96,69 @@ function MSGPPage() {
     return Object.values(combined);
   };
 
-  // ✅ Updated Grand Total to always include nulls in average count
-   const addGrandTotalRow = (data) => {
-  if (!data || data.length === 0) return data;
+  // ✅ New logic — % columns = sum of previous two columns + "%" at end
+  const addGrandTotalRow = (data) => {
+    if (!data || data.length === 0) return data;
 
-  const totalRow = {};
-  const percentageKeys = new Set();
-  const allKeys = Object.keys(data[0]);
+    const totalRow = {};
+    const numericKeys = new Set();
 
-  // ✅ Identify percentage columns robustly
-  data.forEach((row) => {
-    Object.entries(row).forEach(([key, value]) => {
-      if (value === null || value === undefined) return;
-      const valStr = String(value);
-      if (valStr.includes("%") || key.toLowerCase().includes("percentage") || key.toLowerCase().includes("profit%")) {
-        percentageKeys.add(key);
+    Object.keys(data[0]).forEach((key) => {
+      const val = data[0][key];
+      if (typeof val === "number" || (!isNaN(parseFloat(val)) && val !== "")) {
+        numericKeys.add(key);
       }
     });
-  });
 
-  const countRows = data.filter(
-    (row) => row[allKeys[0]] !== "Grand Total"
-  ).length;
+    data.forEach((row) => {
+      if (row[Object.keys(data[0])[0]] === "Grand Total") return;
 
-  // ✅ Compute sums
-  data.forEach((row) => {
-    if (row[allKeys[0]] === "Grand Total") return;
-
-    allKeys.forEach((key) => {
-      const raw = row[key];
-      let num = 0;
-
-      if (typeof raw === "number") num = raw;
-      else if (typeof raw === "string") {
-        const parsed = parseFloat(raw.replace(/[% ,]/g, ""));
-        if (!isNaN(parsed)) num = parsed;
-      }
-
-      totalRow[key] = (totalRow[key] || 0) + (isNaN(num) ? 0 : num);
-    });
-  });
-
-  // ✅ Format totals
-  const formattedTotals = {};
-  Object.entries(totalRow).forEach(([key, val]) => {
-    if (percentageKeys.has(key)) {
-      // average across ALL rows, including nulls
-      const avg = val / countRows;
-      formattedTotals[key] = avg.toFixed(2) + "%";
-    } else if (!isNaN(val)) {
-      formattedTotals[key] = val.toLocaleString("en-IN", {
-        maximumFractionDigits: 2,
+      numericKeys.forEach((key) => {
+        const raw = row[key];
+        let num = 0;
+        if (typeof raw === "number") num = raw;
+        else if (typeof raw === "string") {
+          const parsed = parseFloat(raw.replace("%", "").replace(/,/g, ""));
+          if (!isNaN(parsed)) num = parsed;
+        }
+        totalRow[key] = (totalRow[key] || 0) + num;
       });
-    } else {
-      formattedTotals[key] = val;
-    }
-  });
+    });
 
-  const firstKey = allKeys[0];
-  formattedTotals[firstKey] = "Grand Total";
+    const formattedTotals = {};
+    const allKeys = Object.keys(data[0]);
+    const firstKey = allKeys[0];
 
-  return [...data, formattedTotals];
-};
+    allKeys.forEach((key, idx) => {
+      if (key.toLowerCase().includes("growth")) {
+        const prevKey = allKeys[idx - 2];
+        const currKey = allKeys[idx - 1];
 
-  // ✅ Custom city priority sorting
+        const prevVal =
+          Number(String(totalRow[prevKey]).replace(/[,()%]/g, "")) || 0;
+        const currVal =
+          Number(String(totalRow[currKey]).replace(/[,()%]/g, "")) || 0;
+
+        const sum = (currVal - prevVal) * 100 / prevVal;
+        formattedTotals[key] =
+          sum.toLocaleString("en-IN", { maximumFractionDigits: 2 }) + "%";
+      } else {
+        const val = totalRow[key];
+        if (typeof val === "number" && !isNaN(val)) {
+          formattedTotals[key] = val.toLocaleString("en-IN", {
+            maximumFractionDigits: 2,
+          });
+        } else {
+          formattedTotals[key] = val || "";
+        }
+      }
+    });
+
+    formattedTotals[firstKey] = "Grand Total";
+
+    return [...data, formattedTotals];
+  };
+
   const sortByCityPriority = (data) => {
     const priorityCities = ["Bangalore", "Mysore", "Mangalore"];
     return data.sort((a, b) => {
@@ -217,7 +216,7 @@ function MSGPPage() {
         setMSGPSummary(withTotal);
       } catch (error) {
         console.error(error);
-        alert("❌ Error fetching  Summary: " + error.message);
+        alert("❌ Error fetching Summary: " + error.message);
       }
     };
 
@@ -306,11 +305,7 @@ function MSGPPage() {
       </Box>
 
       <Box sx={{ overflowX: "auto", width: "100%" }}>
-        <DataTable
-          data={renamedData}
-          title="MSGP Summary"
-          hiddenColumns={hiddenColumns}
-        />
+        <DataTable data={renamedData} title="MSGP Summary" hiddenColumns={hiddenColumns} />
       </Box>
     </Box>
   );

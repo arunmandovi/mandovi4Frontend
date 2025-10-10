@@ -35,11 +35,11 @@ function MSGPProfitPage() {
     profitServiceBodyShop: "Service&BodyShop Profit",
     percentageProfitServiceBodyShop: "Service&BodyShop Profit %",
     netRetailDDLService: "Service Net Retail DDL",
-    netRetailSellingService: "Service Net Reatail Selling",
+    netRetailSellingService: "Service Net Retail Selling",
     profitService: "Service Profit",
     percentageProfitService: "Service Profit %",
     netRetailDDLBodyShop: "BodyShop Net Retail DDL",
-    netRetailSellingBodyShop: "BodySHop Net Retail Selling",
+    netRetailSellingBodyShop: "BodyShop Net Retail Selling",
     profitBodyShop: "BodyShop Profit",
     percentageProfitBodyShop: "BodyShop Profit %",
   };
@@ -49,7 +49,7 @@ function MSGPProfitPage() {
       const formatted = {};
       for (const key in row) {
         const val = row[key];
-        if (key.toLowerCase().includes("growth")) {
+        if (key.toLowerCase().includes("percentage")) {
           const num =
             typeof val === "number"
               ? val
@@ -87,70 +87,74 @@ function MSGPProfitPage() {
     return Object.values(combined);
   };
 
-  // ✅ Updated Grand Total to always include nulls in average count
+  // ✅ Updated Grand Total Logic (handles "growth" columns = sum of previous 2 columns)
+    // ✅ Updated Grand Total Row Calculation
 const addGrandTotalRow = (data) => {
   if (!data || data.length === 0) return data;
 
   const totalRow = {};
-  const percentageKeys = new Set();
-  const allKeys = Object.keys(data[0]);
+  const numericKeys = new Set();
 
-  // ✅ Identify percentage columns robustly
-  data.forEach((row) => {
-    Object.entries(row).forEach(([key, value]) => {
-      if (value === null || value === undefined) return;
-      const valStr = String(value);
-      if (valStr.includes("%") || key.toLowerCase().includes("percentage") || key.toLowerCase().includes("profit%")) {
-        percentageKeys.add(key);
-      }
-    });
-  });
-
-  const countRows = data.filter(
-    (row) => row[allKeys[0]] !== "Grand Total"
-  ).length;
-
-  // ✅ Compute sums
-  data.forEach((row) => {
-    if (row[allKeys[0]] === "Grand Total") return;
-
-    allKeys.forEach((key) => {
-      const raw = row[key];
-      let num = 0;
-
-      if (typeof raw === "number") num = raw;
-      else if (typeof raw === "string") {
-        const parsed = parseFloat(raw.replace(/[% ,]/g, ""));
-        if (!isNaN(parsed)) num = parsed;
-      }
-
-      totalRow[key] = (totalRow[key] || 0) + (isNaN(num) ? 0 : num);
-    });
-  });
-
-  // ✅ Format totals
-  const formattedTotals = {};
-  Object.entries(totalRow).forEach(([key, val]) => {
-    if (percentageKeys.has(key)) {
-      // average across ALL rows, including nulls
-      const avg = val / countRows;
-      formattedTotals[key] = avg.toFixed(2) + "%";
-    } else if (!isNaN(val)) {
-      formattedTotals[key] = val.toLocaleString("en-IN", {
-        maximumFractionDigits: 2,
-      });
-    } else {
-      formattedTotals[key] = val;
+  // Identify numeric keys
+  Object.keys(data[0]).forEach((key) => {
+    const val = data[0][key];
+    if (typeof val === "number" || (!isNaN(parseFloat(val)) && val !== "")) {
+      numericKeys.add(key);
     }
   });
 
+  // Sum all numeric values across rows
+  data.forEach((row) => {
+    if (row[Object.keys(data[0])[0]] === "Grand Total") return;
+
+    numericKeys.forEach((key) => {
+      const raw = row[key];
+      let num = 0;
+      if (typeof raw === "number") num = raw;
+      else if (typeof raw === "string") {
+        const parsed = parseFloat(raw.replace("%", "").replace(/,/g, ""));
+        if (!isNaN(parsed)) num = parsed;
+      }
+      totalRow[key] = (totalRow[key] || 0) + num;
+    });
+  });
+
+  // ✅ Compute formatted totals
+  const formattedTotals = {};
+  const allKeys = Object.keys(data[0]);
   const firstKey = allKeys[0];
+
+  allKeys.forEach((key, idx) => {
+    if (key.toLowerCase().includes("percentage")) {
+      // Take previous two columns for sum logic
+      const prevKey = allKeys[idx - 3];
+      const currKey = allKeys[idx - 1];
+
+      const prevVal =
+        Number(String(totalRow[prevKey]).replace(/[,()%]/g, "")) || 0;
+      const currVal =
+        Number(String(totalRow[currKey]).replace(/[,()%]/g, "")) || 0;
+
+      const sum = currVal * 100 / prevVal;
+      formattedTotals[key] =
+        sum.toLocaleString("en-IN", { maximumFractionDigits: 2 }) + "%";
+    } else {
+      const val = totalRow[key];
+      if (typeof val === "number" && !isNaN(val)) {
+        formattedTotals[key] = val.toLocaleString("en-IN", {
+          maximumFractionDigits: 2,
+        });
+      } else {
+        formattedTotals[key] = val || "";
+      }
+    }
+  });
+
   formattedTotals[firstKey] = "Grand Total";
 
   return [...data, formattedTotals];
 };
 
-  // ✅ Custom city priority sorting
   const sortByCityPriority = (data) => {
     const priorityCities = ["Bangalore", "Mysore", "Mangalore"];
     return data.sort((a, b) => {
@@ -174,7 +178,11 @@ const addGrandTotalRow = (data) => {
         const activeQuarters = quarters.length > 0 ? quarters : [];
         const activeHalfYears = halfYears.length > 0 ? halfYears : [];
 
-        if (activeMonths.length === 0 && activeQuarters.length === 0 && activeHalfYears.length === 0) {
+        if (
+          activeMonths.length === 0 &&
+          activeQuarters.length === 0 &&
+          activeHalfYears.length === 0
+        ) {
           const query = `?groupBy=${groupBy}`;
           const data = await fetchData(`/api/msgp_profit/msgp_profit_summary${query}`);
           responses.push(data);
@@ -199,7 +207,10 @@ const addGrandTotalRow = (data) => {
         }
 
         const validData = responses.filter((r) => Array.isArray(r));
-        let combinedData = validData.length > 1 ? combineDataSets(validData, groupBy) : validData[0] || [];
+        let combinedData =
+          validData.length > 1
+            ? combineDataSets(validData, groupBy)
+            : validData[0] || [];
 
         combinedData = sortByCityPriority(combinedData);
 
@@ -208,7 +219,7 @@ const addGrandTotalRow = (data) => {
         setMSGPProfitSummary(withTotal);
       } catch (error) {
         console.error(error);
-        alert("❌ Error fetching  Summary: " + error.message);
+        alert("❌ Error fetching Summary: " + error.message);
       }
     };
 
@@ -297,11 +308,7 @@ const addGrandTotalRow = (data) => {
       </Box>
 
       <Box sx={{ overflowX: "auto", width: "100%" }}>
-        <DataTable
-          data={renamedData}
-          title="MSGP Profit Summary"
-          hiddenColumns={hiddenColumns}
-        />
+        <DataTable data={renamedData} title="MSGP Profit Summary" hiddenColumns={hiddenColumns} />
       </Box>
     </Box>
   );
