@@ -87,30 +87,40 @@ function BatteryTyrePage() {
     return Object.values(combined);
   };
 
+  // ✅ Updated Grand Total to calculate average for % columns
   const addGrandTotalRow = (data) => {
     if (!data || data.length === 0) return data;
 
     const totalRow = {};
     const numericKeys = new Set();
+    const percentageKeys = new Set();
 
     Object.keys(data[0]).forEach((key) => {
       const val = data[0][key];
       if (typeof val === "string" && val.replace(/[,\d.%]/g, "").trim() === "")
         numericKeys.add(key);
+      if (key.toLowerCase().includes("percentage")) percentageKeys.add(key);
     });
+
+    const countRows = data.length;
 
     data.forEach((row) => {
       if (row[Object.keys(data[0])[0]] === "Grand Total") return;
       numericKeys.forEach((key) => {
         const num = Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
-        totalRow[key] = (totalRow[key] || 0) + num;
+        if (percentageKeys.has(key)) {
+          totalRow[key] = (totalRow[key] || 0) + num;
+        } else {
+          totalRow[key] = (totalRow[key] || 0) + num;
+        }
       });
     });
 
     const formattedTotals = {};
     Object.entries(totalRow).forEach(([key, val]) => {
-      if (key.toLowerCase().includes("percentage")) {
-        formattedTotals[key] = val.toFixed(2) + "%";
+      if (percentageKeys.has(key)) {
+        const avg = val / countRows;
+        formattedTotals[key] = avg.toFixed(2) + "%";
       } else {
         formattedTotals[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
       }
@@ -131,16 +141,9 @@ function BatteryTyrePage() {
       const indexA = priorityCities.indexOf(cityA);
       const indexB = priorityCities.indexOf(cityB);
 
-      // Both cities are in priority list → sort by priority
       if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-
-      // Only A is in priority → A comes first
       if (indexA !== -1) return -1;
-
-      // Only B is in priority → B comes first
       if (indexB !== -1) return 1;
-
-      // Neither → leave original order
       return 0;
     });
   };
@@ -180,7 +183,6 @@ function BatteryTyrePage() {
         const validData = responses.filter((r) => Array.isArray(r));
         let combinedData = validData.length > 1 ? combineDataSets(validData, groupBy) : validData[0] || [];
 
-        // 🔹 Apply priority sorting for cities first
         combinedData = sortByCityPriority(combinedData);
 
         const formatted = formatNumericValues(combinedData);

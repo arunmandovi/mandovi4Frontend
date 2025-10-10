@@ -61,7 +61,7 @@ function LoaddPage() {
       const formatted = {};
       for (const key in row) {
         const val = row[key];
-        if (key.toLowerCase().includes("percentage")) {
+        if (key.toLowerCase().includes("growth")) {
           const num =
             typeof val === "number"
               ? val
@@ -99,40 +99,57 @@ function LoaddPage() {
     return Object.values(combined);
   };
 
+  // ✅ Updated Grand Total to calculate average for % columns
   const addGrandTotalRow = (data) => {
-    if (!data || data.length === 0) return data;
+  if (!data || data.length === 0) return data;
 
-    const totalRow = {};
-    const numericKeys = new Set();
+  const totalRow = {};
+  const numericKeys = new Set();
+  const percentageKeys = new Set();
 
-    Object.keys(data[0]).forEach((key) => {
-      const val = data[0][key];
-      if (typeof val === "string" && val.replace(/[,\d.%]/g, "").trim() === "")
-        numericKeys.add(key);
-    });
+  Object.keys(data[0]).forEach((key) => {
+    const val = data[0][key];
+    if (typeof val === "number" || (!isNaN(parseFloat(val)) && val !== "")) numericKeys.add(key);
+    if (typeof val === "string" && val.includes("%")) percentageKeys.add(key);
+  });
 
-    data.forEach((row) => {
-      if (row[Object.keys(data[0])[0]] === "Grand Total") return;
-      numericKeys.forEach((key) => {
-        const num = Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
+  const countRows = data.length;
+
+  data.forEach((row) => {
+    if (row[Object.keys(data[0])[0]] === "Grand Total") return;
+
+    numericKeys.forEach((key) => {
+      const raw = row[key];
+      let num = 0;
+      if (typeof raw === "number") num = raw;
+      else if (typeof raw === "string") {
+        const parsed = parseFloat(raw.replace("%", "").replace(/,/g, ""));
+        if (!isNaN(parsed)) num = parsed;
+      }
+
+      if (percentageKeys.has(key)) {
         totalRow[key] = (totalRow[key] || 0) + num;
-      });
-    });
-
-    const formattedTotals = {};
-    Object.entries(totalRow).forEach(([key, val]) => {
-      if (key.toLowerCase().includes("percentage")) {
-        formattedTotals[key] = val.toFixed(2) + "%";
       } else {
-        formattedTotals[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        totalRow[key] = (totalRow[key] || 0) + num;
       }
     });
+  });
 
-    const firstKey = Object.keys(data[0])[0];
-    formattedTotals[firstKey] = "Grand Total";
+  const formattedTotals = {};
+  Object.entries(totalRow).forEach(([key, val]) => {
+    if (percentageKeys.has(key)) {
+      const avg = val / countRows;
+      formattedTotals[key] = avg.toFixed(2) + "%";
+    } else {
+      formattedTotals[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    }
+  });
 
-    return [...data, formattedTotals];
-  };
+  const firstKey = Object.keys(data[0])[0];
+  formattedTotals[firstKey] = "Grand Total";
+
+  return [...data, formattedTotals];
+};
 
   // ✅ Custom city priority sorting
   const sortByCityPriority = (data) => {
@@ -143,16 +160,9 @@ function LoaddPage() {
       const indexA = priorityCities.indexOf(cityA);
       const indexB = priorityCities.indexOf(cityB);
 
-      // Both cities are in priority list → sort by priority
       if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-
-      // Only A is in priority → A comes first
       if (indexA !== -1) return -1;
-
-      // Only B is in priority → B comes first
       if (indexB !== -1) return 1;
-
-      // Neither → leave original order
       return 0;
     });
   };
@@ -179,7 +189,7 @@ function LoaddPage() {
 
         for (const q of activeQuarters) {
           const query = `?groupBy=${groupBy}&qtrWise=${q}`;
-          const data = await fetchData(`/api/loaddloadd_summary${query}`);
+          const data = await fetchData(`/api/loadd/loadd_summary${query}`);
           responses.push(data);
         }
 
@@ -192,7 +202,6 @@ function LoaddPage() {
         const validData = responses.filter((r) => Array.isArray(r));
         let combinedData = validData.length > 1 ? combineDataSets(validData, groupBy) : validData[0] || [];
 
-        // 🔹 Apply priority sorting for cities first
         combinedData = sortByCityPriority(combinedData);
 
         const formatted = formatNumericValues(combinedData);
@@ -200,7 +209,7 @@ function LoaddPage() {
         setLoaddSummary(withTotal);
       } catch (error) {
         console.error(error);
-        alert("❌ Error fetching Load Summary: " + error.message);
+        alert("❌ Error fetching  Summary: " + error.message);
       }
     };
 
