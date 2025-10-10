@@ -96,53 +96,64 @@ function MSGPPage() {
     return Object.values(combined);
   };
 
-  // ✅ Updated Grand Total to calculate average for % columns
-  const addGrandTotalRow = (data) => {
+  // ✅ Updated Grand Total to always include nulls in average count
+   const addGrandTotalRow = (data) => {
   if (!data || data.length === 0) return data;
 
   const totalRow = {};
-  const numericKeys = new Set();
   const percentageKeys = new Set();
+  const allKeys = Object.keys(data[0]);
 
-  Object.keys(data[0]).forEach((key) => {
-    const val = data[0][key];
-    if (typeof val === "number" || (!isNaN(parseFloat(val)) && val !== "")) numericKeys.add(key);
-    if (typeof val === "string" && val.includes("%")) percentageKeys.add(key);
-  });
-
-  const countRows = data.length;
-
+  // ✅ Identify percentage columns robustly
   data.forEach((row) => {
-    if (row[Object.keys(data[0])[0]] === "Grand Total") return;
-
-    numericKeys.forEach((key) => {
-      const raw = row[key];
-      let num = 0;
-      if (typeof raw === "number") num = raw;
-      else if (typeof raw === "string") {
-        const parsed = parseFloat(raw.replace("%", "").replace(/,/g, ""));
-        if (!isNaN(parsed)) num = parsed;
-      }
-
-      if (percentageKeys.has(key)) {
-        totalRow[key] = (totalRow[key] || 0) + num;
-      } else {
-        totalRow[key] = (totalRow[key] || 0) + num;
+    Object.entries(row).forEach(([key, value]) => {
+      if (value === null || value === undefined) return;
+      const valStr = String(value);
+      if (valStr.includes("%") || key.toLowerCase().includes("percentage") || key.toLowerCase().includes("profit%")) {
+        percentageKeys.add(key);
       }
     });
   });
 
+  const countRows = data.filter(
+    (row) => row[allKeys[0]] !== "Grand Total"
+  ).length;
+
+  // ✅ Compute sums
+  data.forEach((row) => {
+    if (row[allKeys[0]] === "Grand Total") return;
+
+    allKeys.forEach((key) => {
+      const raw = row[key];
+      let num = 0;
+
+      if (typeof raw === "number") num = raw;
+      else if (typeof raw === "string") {
+        const parsed = parseFloat(raw.replace(/[% ,]/g, ""));
+        if (!isNaN(parsed)) num = parsed;
+      }
+
+      totalRow[key] = (totalRow[key] || 0) + (isNaN(num) ? 0 : num);
+    });
+  });
+
+  // ✅ Format totals
   const formattedTotals = {};
   Object.entries(totalRow).forEach(([key, val]) => {
     if (percentageKeys.has(key)) {
+      // average across ALL rows, including nulls
       const avg = val / countRows;
       formattedTotals[key] = avg.toFixed(2) + "%";
+    } else if (!isNaN(val)) {
+      formattedTotals[key] = val.toLocaleString("en-IN", {
+        maximumFractionDigits: 2,
+      });
     } else {
-      formattedTotals[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+      formattedTotals[key] = val;
     }
   });
 
-  const firstKey = Object.keys(data[0])[0];
+  const firstKey = allKeys[0];
   formattedTotals[firstKey] = "Grand Total";
 
   return [...data, formattedTotals];

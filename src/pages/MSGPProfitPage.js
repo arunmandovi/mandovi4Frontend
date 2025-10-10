@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  FormControl,
-  InputLabel,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
   Checkbox,
   ListItemText,
-  Typography,
 } from "@mui/material";
 import DataTable from "../components/DataTable";
 import { fetchData } from "../api/uploadService";
@@ -15,162 +15,228 @@ import { fetchData } from "../api/uploadService";
 function MSGPProfitPage() {
   const [msgpProfitSummary, setMSGPProfitSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [quarters, setQuarters] = useState([]);
+  const [halfYears, setHalfYears] = useState([]);
   const [groupBy, setGroupBy] = useState("city");
-  const [qtr, setQtr] = useState([]);
-  const [halfYear, setHalfYear] = useState([]);
 
-  const monthOptions = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const qtrOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
+  const monthOptions = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  const quarterOptions = ["Q1", "Q2", "Q3", "Q4"];
   const halfYearOptions = ["H1", "H2"];
 
-  // 🔹 Helper: Aggregate rows by key columns
-  const aggregateData = (data, keys) => {
-    const map = {};
-    data.forEach((row) => {
-      const key = keys.map((k) => row[k]).join("_");
-      if (!map[key]) {
-        map[key] = { ...row };
-      } else {
-        ["netRetailDDL", "netRetailSelling", "profit", "percentageProfit"].forEach((col) => {
-          if (row[col] !== undefined && !isNaN(row[col])) {
-            map[key][col] = (map[key][col] || 0) + Number(row[col]);
-          }
-        });
-      }
-    });
-    return Object.values(map);
+  const columnRenameMap = {
+    city: "City",
+    branch: "Branch",
+    netRetailDDLServiceBodyShop: "Service&BodyShop Net Retail DDL",
+    netRetailSellingServiceBodyShop: "Service&BodyShop Net Retail Selling",
+    profitServiceBodyShop: "Service&BodyShop Profit",
+    percentageProfitServiceBodyShop: "Service&BodyShop Profit %",
+    netRetailDDLService: "Service Net Retail DDL",
+    netRetailSellingService: "Service Net Reatail Selling",
+    profitService: "Service Profit",
+    percentageProfitService: "Service Profit %",
+    netRetailDDLBodyShop: "BodyShop Net Retail DDL",
+    netRetailSellingBodyShop: "BodySHop Net Retail Selling",
+    profitBodyShop: "BodyShop Profit",
+    percentageProfitBodyShop: "BodyShop Profit %",
   };
 
-  // 🔹 Format data and compute display columns
-  const formatSummaryData = (data) => {
-    const keys = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
-    const aggregated = aggregateData(data, keys);
-
-    return aggregated.map((row) => {
-      const formattedRow = { ...row };
-      formattedRow["Net Retail DDL"] = Number(row.netRetailDDL || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      formattedRow["Net Retail Selling"] = Number(row.netRetailSelling || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      formattedRow["Profit"] = Number(row.profit || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      formattedRow["Profit %"] = Number(row.percentageProfit || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-      delete formattedRow.netRetailDDL;
-      delete formattedRow.netRetailSelling;
-      delete formattedRow.profit;
-      delete formattedRow.percentageProfit;
-
-      return formattedRow;
-    });
-  };
-
-  // 🔹 Maintain custom city order
-  const sortByCityOrder = (data) => {
-    const cityOrder = ["Bangalore", "Mysore", "Mangalore"];
-    return data.sort((a, b) => {
-      if (!a.city) return 1;
-      if (!b.city) return -1;
-      const indexA = cityOrder.indexOf(a.city);
-      const indexB = cityOrder.indexOf(b.city);
-      if (indexA === -1 && indexB === -1) return a.city.localeCompare(b.city);
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    });
-  };
-
-  // 🔹 Add a Grand Total row
-  const addGrandTotalRow = (data) => {
-    if (!data || data.length === 0) return data;
-
-    const totalRow = {};
-    const numericKeys = new Set();
-
-    // detect numeric columns
-    Object.keys(data[0]).forEach((key) => {
-      const sample = data[0][key];
-      if (typeof sample === "string" && sample.replace(/[,\d.%]/g, "").trim() === "")
-        numericKeys.add(key);
-    });
-
-    // sum totals
-    data.forEach((row) => {
-      numericKeys.forEach((key) => {
-        const num = Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
-        totalRow[key] = (totalRow[key] || 0) + num;
-      });
-    });
-
-    // format total row with 2 decimals
-    const formattedTotals = {};
-    Object.entries(totalRow).forEach(([key, val]) => {
-      formattedTotals[key] = val.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    });
-
-    const totalLabelKey = Object.keys(data[0])[0];
-    formattedTotals[totalLabelKey] = "Grand Total";
-
-    return [...data, formattedTotals];
-  };
-
-  // 🔹 Fetch data from API
-  const fetchSummaries = async () => {
-    try {
-      let allMSGPProfit = [];
-
-      const monthsList = months.length > 0 ? months : [""];
-      const qtrList = qtr.length > 0 ? qtr : [""];
-      const halfList = halfYear.length > 0 ? halfYear : [""];
-
-      for (const m of monthsList) {
-        for (const q of qtrList) {
-          for (const h of halfList) {
-            const query =
-              `?groupBy=${groupBy}` +
-              (m ? `&month=${m}` : "") +
-              (q ? `&qtrWise=${q}` : "") +
-              (h ? `&halfYear=${h}` : "");
-
-            const msgpProfitData = await fetchData(`/api/msgp_profit/msgp_profit_summary${query}`);
-            if (Array.isArray(msgpProfitData)) allMSGPProfit = allMSGPProfit.concat(msgpProfitData);
-          }
+  const formatNumericValues = (data) => {
+    return data.map((row) => {
+      const formatted = {};
+      for (const key in row) {
+        const val = row[key];
+        if (key.toLowerCase().includes("growth")) {
+          const num =
+            typeof val === "number"
+              ? val
+              : parseFloat(String(val).replace("%", ""));
+          formatted[key] = !isNaN(num) ? num.toFixed(2) + "%" : val;
+        } else if (typeof val === "number") {
+          formatted[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        } else if (typeof val === "string" && !isNaN(parseFloat(val)) && val.trim() !== "") {
+          formatted[key] = parseFloat(val).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        } else {
+          formatted[key] = val;
         }
       }
+      return formatted;
+    });
+  };
 
-      let formattedMSGPProfit = sortByCityOrder(formatSummaryData(allMSGPProfit));
-      formattedMSGPProfit = addGrandTotalRow(formattedMSGPProfit);
-      setMSGPProfitSummary(formattedMSGPProfit);
-    } catch (err) {
-      console.error(err);
-      alert("❌ Error fetching MSGP Profit Summaries: " + err.message);
+  const combineDataSets = (dataSets, keyField) => {
+    const combined = {};
+    dataSets.forEach((data) => {
+      data.forEach((row) => {
+        const key = row[keyField];
+        if (!combined[key]) combined[key] = { ...row };
+        else {
+          Object.keys(row).forEach((col) => {
+            const val1 = Number(String(combined[key][col]).replace(/[,()%]/g, "")) || 0;
+            const val2 = Number(String(row[col]).replace(/[,()%]/g, "")) || 0;
+            if (!isNaN(val1) && !isNaN(val2)) {
+              combined[key][col] = val1 + val2;
+            }
+          });
+        }
+      });
+    });
+    return Object.values(combined);
+  };
+
+  // ✅ Updated Grand Total to always include nulls in average count
+const addGrandTotalRow = (data) => {
+  if (!data || data.length === 0) return data;
+
+  const totalRow = {};
+  const percentageKeys = new Set();
+  const allKeys = Object.keys(data[0]);
+
+  // ✅ Identify percentage columns robustly
+  data.forEach((row) => {
+    Object.entries(row).forEach(([key, value]) => {
+      if (value === null || value === undefined) return;
+      const valStr = String(value);
+      if (valStr.includes("%") || key.toLowerCase().includes("percentage") || key.toLowerCase().includes("profit%")) {
+        percentageKeys.add(key);
+      }
+    });
+  });
+
+  const countRows = data.filter(
+    (row) => row[allKeys[0]] !== "Grand Total"
+  ).length;
+
+  // ✅ Compute sums
+  data.forEach((row) => {
+    if (row[allKeys[0]] === "Grand Total") return;
+
+    allKeys.forEach((key) => {
+      const raw = row[key];
+      let num = 0;
+
+      if (typeof raw === "number") num = raw;
+      else if (typeof raw === "string") {
+        const parsed = parseFloat(raw.replace(/[% ,]/g, ""));
+        if (!isNaN(parsed)) num = parsed;
+      }
+
+      totalRow[key] = (totalRow[key] || 0) + (isNaN(num) ? 0 : num);
+    });
+  });
+
+  // ✅ Format totals
+  const formattedTotals = {};
+  Object.entries(totalRow).forEach(([key, val]) => {
+    if (percentageKeys.has(key)) {
+      // average across ALL rows, including nulls
+      const avg = val / countRows;
+      formattedTotals[key] = avg.toFixed(2) + "%";
+    } else if (!isNaN(val)) {
+      formattedTotals[key] = val.toLocaleString("en-IN", {
+        maximumFractionDigits: 2,
+      });
+    } else {
+      formattedTotals[key] = val;
     }
+  });
+
+  const firstKey = allKeys[0];
+  formattedTotals[firstKey] = "Grand Total";
+
+  return [...data, formattedTotals];
+};
+
+  // ✅ Custom city priority sorting
+  const sortByCityPriority = (data) => {
+    const priorityCities = ["Bangalore", "Mysore", "Mangalore"];
+    return data.sort((a, b) => {
+      const cityA = a.city || "";
+      const cityB = b.city || "";
+      const indexA = priorityCities.indexOf(cityA);
+      const indexB = priorityCities.indexOf(cityB);
+
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return 0;
+    });
   };
 
   useEffect(() => {
-    fetchSummaries();
-  }, [months, groupBy, qtr, halfYear]);
+    const fetchMSGPProfitSummary = async () => {
+      try {
+        let responses = [];
+        const activeMonths = months.length > 0 ? months : [];
+        const activeQuarters = quarters.length > 0 ? quarters : [];
+        const activeHalfYears = halfYears.length > 0 ? halfYears : [];
 
-  // 🔹 Hide unwanted columns
-  const hiddenColumns = ["qtrWise", "halfYear", "channel"];
-  if (groupBy === "city") hiddenColumns.push("branch");
-  if (groupBy === "branch") hiddenColumns.push("city");
+        if (activeMonths.length === 0 && activeQuarters.length === 0 && activeHalfYears.length === 0) {
+          const query = `?groupBy=${groupBy}`;
+          const data = await fetchData(`/api/msgp_profit/msgp_profit_summary${query}`);
+          responses.push(data);
+        }
 
-  const filterData = (data) =>
-    data.map((row) => {
-      const filteredRow = { ...row };
-      hiddenColumns.forEach((col) => delete filteredRow[col]);
-      return filteredRow;
+        for (const m of activeMonths) {
+          const query = `?groupBy=${groupBy}&month=${m}`;
+          const data = await fetchData(`/api/msgp_profit/msgp_profit_summary${query}`);
+          responses.push(data);
+        }
+
+        for (const q of activeQuarters) {
+          const query = `?groupBy=${groupBy}&qtrWise=${q}`;
+          const data = await fetchData(`/api/msgp_profit/msgp_profit_summary${query}`);
+          responses.push(data);
+        }
+
+        for (const h of activeHalfYears) {
+          const query = `?groupBy=${groupBy}&halfYear=${h}`;
+          const data = await fetchData(`/api/msgp_profit/msgp_profit_summary${query}`);
+          responses.push(data);
+        }
+
+        const validData = responses.filter((r) => Array.isArray(r));
+        let combinedData = validData.length > 1 ? combineDataSets(validData, groupBy) : validData[0] || [];
+
+        combinedData = sortByCityPriority(combinedData);
+
+        const formatted = formatNumericValues(combinedData);
+        const withTotal = addGrandTotalRow(formatted);
+        setMSGPProfitSummary(withTotal);
+      } catch (error) {
+        console.error(error);
+        alert("❌ Error fetching  Summary: " + error.message);
+      }
+    };
+
+    fetchMSGPProfitSummary();
+  }, [months, quarters, halfYears, groupBy]);
+
+  const renamedData = msgpProfitSummary.map((row) => {
+    const newRow = {};
+    Object.keys(row).forEach((key) => {
+      const newKey = columnRenameMap[key] || key;
+      newRow[newKey] = row[key];
     });
+    return newRow;
+  });
+
+  const hiddenColumns = [];
+  if (groupBy === "city") hiddenColumns.push("Branch");
+  if (groupBy === "branch") hiddenColumns.push("City");
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box className="battery-container" sx={{ p: 3 }}>
       <Typography variant="h4" sx={{ mb: 3 }}>
-        MSGP Profit SUMMARY REPORT
+        MSGP Profit REPORT
       </Typography>
 
-      {/* 🔹 Filters */}
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-        {/* Month */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Months</InputLabel>
+          <InputLabel>Month</InputLabel>
           <Select
             multiple
             value={months}
@@ -186,7 +252,40 @@ function MSGPProfitPage() {
           </Select>
         </FormControl>
 
-        {/* Group By */}
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Quarter</InputLabel>
+          <Select
+            multiple
+            value={quarters}
+            onChange={(e) => setQuarters(e.target.value)}
+            renderValue={(selected) => selected.join(", ")}
+          >
+            {quarterOptions.map((q) => (
+              <MenuItem key={q} value={q}>
+                <Checkbox checked={quarters.indexOf(q) > -1} />
+                <ListItemText primary={q} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Half Year</InputLabel>
+          <Select
+            multiple
+            value={halfYears}
+            onChange={(e) => setHalfYears(e.target.value)}
+            renderValue={(selected) => selected.join(", ")}
+          >
+            {halfYearOptions.map((h) => (
+              <MenuItem key={h} value={h}>
+                <Checkbox checked={halfYears.indexOf(h) > -1} />
+                <ListItemText primary={h} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Group By</InputLabel>
           <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
@@ -195,49 +294,14 @@ function MSGPProfitPage() {
             <MenuItem value="city_branch">City & Branch</MenuItem>
           </Select>
         </FormControl>
-
-        {/* Quarter */}
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Quarter</InputLabel>
-          <Select
-            multiple
-            value={qtr}
-            onChange={(e) => setQtr(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {qtrOptions.map((q) => (
-              <MenuItem key={q} value={q}>
-                <Checkbox checked={qtr.indexOf(q) > -1} />
-                <ListItemText primary={q} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* Half Year */}
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Half Year</InputLabel>
-          <Select
-            multiple
-            value={halfYear}
-            onChange={(e) => setHalfYear(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {halfYearOptions.map((h) => (
-              <MenuItem key={h} value={h}>
-                <Checkbox checked={halfYear.indexOf(h) > -1} />
-                <ListItemText primary={h} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
       </Box>
 
-      {/* 🔹 Data Table */}
-      <Box sx={{ display: "flex", flexWrap: "wrap" }}>
-        <Box sx={{ flex: 1, minWidth: 400, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(msgpProfitSummary)} title="MSGP Profit Summary" />
-        </Box>
+      <Box sx={{ overflowX: "auto", width: "100%" }}>
+        <DataTable
+          data={renamedData}
+          title="MSGP Profit Summary"
+          hiddenColumns={hiddenColumns}
+        />
       </Box>
     </Box>
   );

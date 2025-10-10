@@ -99,7 +99,6 @@ function LabourPage() {
     return Object.values(combined);
   };
 
-  // ✅ Updated Grand Total to calculate average for % columns
   const addGrandTotalRow = (data) => {
   if (!data || data.length === 0) return data;
 
