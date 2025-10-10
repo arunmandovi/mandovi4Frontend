@@ -314,7 +314,7 @@ function LabourPage() {
       <Box sx={{ overflowX: "auto", width: "100%" }}>
         <DataTable
           data={renamedData}
-          title="Battery & Tyre Summary"
+          title="Labour Summary"
           hiddenColumns={hiddenColumns}
         />
       </Box>

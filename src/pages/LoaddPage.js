@@ -1,274 +1,234 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  FormControl,
-  InputLabel,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
   Checkbox,
   ListItemText,
-  Typography,
 } from "@mui/material";
 import DataTable from "../components/DataTable";
 import { fetchData } from "../api/uploadService";
 
 function LoaddPage() {
-  const [serviceSummary, setServiceSummary] = useState([]);
-  const [bodyShopSummary, setBodyShopSummary] = useState([]);
-  const [freeServiceSummary, setFreeServiceSummary] = useState([]);
-  const [pmsSummary, setPmsSummary] = useState([]);
-  const [fprSummary, setFprSummary] = useState([]);
-  const [runningRepairSummary, setRunningRepairSummary] = useState([]);
-  const [othersSummary, setOthersSummary] = useState([]);
-  const [bsFprSummary, setBsFprSummary] = useState([]);
-
+  const [loaddSummary, setLoaddSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [quarters, setQuarters] = useState([]);
+  const [halfYears, setHalfYears] = useState([]);
   const [groupBy, setGroupBy] = useState("city");
-  const [qtr, setQtr] = useState([]);
-  const [halfYear, setHalfYear] = useState([]);
 
-  const monthOptions = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const qtrOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
+  const monthOptions = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  const quarterOptions = ["Q1", "Q2", "Q3", "Q4"];
   const halfYearOptions = ["H1", "H2"];
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
-  // ✅ Helper to add Grand Total row
+  const columnRenameMap = {
+    city: "City",
+    branch: "Branch",
+    previousService: "Service 2024-25",
+    currentService: "Service 2025-25",
+    growthService: "Service Growth %",
+    previousBodyShop: "BodyShop 2024-25",
+    currentBodyShop: "BodyShop 2025-26",
+    growthBodyShop: "BodyShop Growth %",
+    previousFreeService: "Free Service 2024-25",
+    currentFreeService: "Free Service 2025-26",
+    growthFreeService: "Free Service Growth %",
+    previousPMS: "PMS 2024-25",
+    currentPMS: "PMS 2025-26",
+    growthPMS: "PMS Growth %",
+    previousFPR: "FPR 2024-25",
+    currentFPR: "FPR 2025-26",
+    growthFPR: "FPR Growth %",
+    previousRunningRepair: "RR 2024-25",
+    currentRunningRepair: "RR 2025-26",
+    growthRunningRepair: "RR Growth %",
+    previousOthers: "Others 2024-25",
+    currentOthers: "Others 2025-26",
+    growthOthers: "Others Growth %",
+    previousBSFPR: "% BS on FPR 2024-25",
+    currentBSFPR: "% BS on FPR 2025-26",
+    growthBSFPR: "% BS on FPR Growth %",
+  };
+
+  const formatNumericValues = (data) => {
+    return data.map((row) => {
+      const formatted = {};
+      for (const key in row) {
+        const val = row[key];
+        if (key.toLowerCase().includes("percentage")) {
+          const num =
+            typeof val === "number"
+              ? val
+              : parseFloat(String(val).replace("%", ""));
+          formatted[key] = !isNaN(num) ? num.toFixed(2) + "%" : val;
+        } else if (typeof val === "number") {
+          formatted[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        } else if (typeof val === "string" && !isNaN(parseFloat(val)) && val.trim() !== "") {
+          formatted[key] = parseFloat(val).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        } else {
+          formatted[key] = val;
+        }
+      }
+      return formatted;
+    });
+  };
+
+  const combineDataSets = (dataSets, keyField) => {
+    const combined = {};
+    dataSets.forEach((data) => {
+      data.forEach((row) => {
+        const key = row[keyField];
+        if (!combined[key]) combined[key] = { ...row };
+        else {
+          Object.keys(row).forEach((col) => {
+            const val1 = Number(String(combined[key][col]).replace(/[,()%]/g, "")) || 0;
+            const val2 = Number(String(row[col]).replace(/[,()%]/g, "")) || 0;
+            if (!isNaN(val1) && !isNaN(val2)) {
+              combined[key][col] = val1 + val2;
+            }
+          });
+        }
+      });
+    });
+    return Object.values(combined);
+  };
+
   const addGrandTotalRow = (data) => {
     if (!data || data.length === 0) return data;
 
-    let totalPrev = 0, totalCurr = 0, totalGrowth = 0, count = 0;
+    const totalRow = {};
+    const numericKeys = new Set();
 
-    data.forEach(row => {
-      const prev = Number(String(row["2024-25"]).replace(/,/g, "")) || 0;
-      const curr = Number(String(row["2025-26"]).replace(/,/g, "")) || 0;
-      const growth = parseFloat(String(row["Growth %"]).replace("%", "")) || 0;
-
-      totalPrev += prev;
-      totalCurr += curr;
-      totalGrowth += growth;
-      count++;
+    Object.keys(data[0]).forEach((key) => {
+      const val = data[0][key];
+      if (typeof val === "string" && val.replace(/[,\d.%]/g, "").trim() === "")
+        numericKeys.add(key);
     });
 
-    const avgGrowth = count > 0 ? (totalGrowth / count).toFixed(2) + "%" : "0%";
+    data.forEach((row) => {
+      if (row[Object.keys(data[0])[0]] === "Grand Total") return;
+      numericKeys.forEach((key) => {
+        const num = Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
+        totalRow[key] = (totalRow[key] || 0) + num;
+      });
+    });
 
-    const totalLabelKey = Object.keys(data[0])[0];
-
-    const grandTotalRow = {
-      [totalLabelKey]: "Grand Total",
-      "2024-25": totalPrev.toLocaleString("en-IN"),
-      "2025-26": totalCurr.toLocaleString("en-IN"),
-      "Growth %": avgGrowth,
-    };
-
-    return [...data, grandTotalRow];
-  };
-
-  // --- Core helpers ---
-  const aggregateData = (data, keys) => {
-    const map = {};
-    data.forEach(row => {
-      const key = keys.map(k => row[k]).join("_");
-      if (!map[key]) {
-        map[key] = { ...row };
+    const formattedTotals = {};
+    Object.entries(totalRow).forEach(([key, val]) => {
+      if (key.toLowerCase().includes("percentage")) {
+        formattedTotals[key] = val.toFixed(2) + "%";
       } else {
-        ["previousServiceLoadd", "currentServiceLoadd", "growth"].forEach(col => {
-          if (row[col] !== undefined && !isNaN(row[col])) {
-            map[key][col] = (map[key][col] || 0) + Number(row[col]);
-          }
-        });
+        formattedTotals[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
       }
     });
-    return Object.values(map);
+
+    const firstKey = Object.keys(data[0])[0];
+    formattedTotals[firstKey] = "Grand Total";
+
+    return [...data, formattedTotals];
   };
 
-  const formatSummaryData = (data) => {
-    const keys = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
-    const aggregated = aggregateData(data, keys);
-
-    return aggregated.map(row => {
-      const formattedRow = { ...row };
-      if (row.previousServiceLoadd !== undefined && row.currentServiceLoadd !== undefined) {
-        formattedRow["2024-25"] = Number(row.previousServiceLoadd).toLocaleString("en-IN");
-        formattedRow["2025-26"] = Number(row.currentServiceLoadd).toLocaleString("en-IN");
-        formattedRow["Growth %"] = row.growth !== null ? row.growth.toFixed(2) + "%" : "0%";
-        delete formattedRow.previousServiceLoadd;
-        delete formattedRow.currentServiceLoadd;
-        delete formattedRow.growth;
-      }
-      return formattedRow;
-    });
-  };
-
-  const sortByCityOrder = (data) => {
-    const cityOrder = ["Bangalore", "Mysore", "Mangalore"];
+  // ✅ Custom city priority sorting
+  const sortByCityPriority = (data) => {
+    const priorityCities = ["Bangalore", "Mysore", "Mangalore"];
     return data.sort((a, b) => {
-      if (!a.city) return 1;
-      if (!b.city) return -1;
-      const indexA = cityOrder.indexOf(a.city);
-      const indexB = cityOrder.indexOf(b.city);
-      if (indexA === -1 && indexB === -1) return a.city.localeCompare(b.city);
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
+      const cityA = a.city || "";
+      const cityB = b.city || "";
+      const indexA = priorityCities.indexOf(cityA);
+      const indexB = priorityCities.indexOf(cityB);
+
+      // Both cities are in priority list → sort by priority
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
+      // Only A is in priority → A comes first
+      if (indexA !== -1) return -1;
+
+      // Only B is in priority → B comes first
+      if (indexB !== -1) return 1;
+
+      // Neither → leave original order
+      return 0;
     });
-  };
-
-  const synchronizeRows = (tablesData, keyColumns) => {
-    const allKeys = new Set();
-    tablesData.forEach(table => {
-      table.forEach(row => {
-        const key = keyColumns.map(k => row[k]).join("_");
-        allKeys.add(key);
-      });
-    });
-
-    const keysArray = Array.from(allKeys);
-    return tablesData.map(table => {
-      const map = {};
-      table.forEach(row => {
-        const key = keyColumns.map(k => row[k]).join("_");
-        map[key] = row;
-      });
-
-      return keysArray.map(key => {
-        if (map[key]) return map[key];
-        const emptyRow = {};
-        keyColumns.forEach((col, i) => {
-          emptyRow[col] = key.split("_")[i];
-        });
-        emptyRow["2024-25"] = 0;
-        emptyRow["2025-26"] = 0;
-        emptyRow["Growth %"] = "0%";
-        return emptyRow;
-      });
-    });
-  };
-
-  const fetchSummaries = async () => {
-    try {
-      let combinedService = [];
-      let combinedBodyShop = [];
-      let combinedFreeService = [];
-      let combinedPMS = [];
-      let combinedFPR = [];
-      let combinedRunningRepair = [];
-      let combinedOthers = [];
-      let combinedBSFpr = [];
-
-      const monthsList = months.length > 0 ? months : [""];
-      const qtrList = qtr.length > 0 ? qtr : [""];
-      const halfList = halfYear.length > 0 ? halfYear : [""];
-
-      for (const m of monthsList) {
-        for (const q of qtrList) {
-          for (const h of halfList) {
-            const query =
-              `?groupBy=${groupBy}` +
-              (m ? `&month=${m}` : "") +
-              (q ? `&qtrWise=${q}` : "") +
-              (h ? `&halfYear=${h}` : "");
-
-            const serviceData = await fetchData(`/api/loadd/loadd_service${query}`);
-            if (Array.isArray(serviceData)) combinedService = combinedService.concat(serviceData);
-
-            const bodyShopData = await fetchData(`/api/loadd/loadd_bodyshop${query}`);
-            if (Array.isArray(bodyShopData)) combinedBodyShop = combinedBodyShop.concat(bodyShopData);
-
-            const freeServiceData = await fetchData(`/api/loadd/loadd_freeservice${query}`);
-            if (Array.isArray(freeServiceData)) combinedFreeService = combinedFreeService.concat(freeServiceData);
-
-            const pmsData = await fetchData(`/api/loadd/loadd_pms${query}`);
-            if (Array.isArray(pmsData)) combinedPMS = combinedPMS.concat(pmsData);
-
-            const fprData = await fetchData(`/api/loadd/loadd_fpr${query}`);
-            if (Array.isArray(fprData)) combinedFPR = combinedFPR.concat(fprData);
-
-            const runningRepairData = await fetchData(`/api/loadd/loadd_running_repair${query}`);
-            if (Array.isArray(runningRepairData)) combinedRunningRepair = combinedRunningRepair.concat(runningRepairData);
-
-            const othersData = await fetchData(`/api/loadd/loadd_others${query}`);
-            if (Array.isArray(othersData)) combinedOthers = combinedOthers.concat(othersData);
-
-            const bsFprData = await fetchData(`/api/loadd/loadd_bs_fpr${query}`);
-            if (Array.isArray(bsFprData)) combinedBSFpr = combinedBSFpr.concat(bsFprData);
-          }
-        }
-      }
-
-      let formattedService = sortByCityOrder(formatSummaryData(combinedService));
-      let formattedBodyShop = sortByCityOrder(formatSummaryData(combinedBodyShop));
-      let formattedFreeService = sortByCityOrder(formatSummaryData(combinedFreeService));
-      let formattedPMS = sortByCityOrder(formatSummaryData(combinedPMS));
-      let formattedFPR = sortByCityOrder(formatSummaryData(combinedFPR));
-      let formattedRunningRepair = sortByCityOrder(formatSummaryData(combinedRunningRepair));
-      let formattedOthers = sortByCityOrder(formatSummaryData(combinedOthers));
-      let formattedBSFpr = sortByCityOrder(formatSummaryData(combinedBSFpr));
-
-      const keyColumns = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
-      [
-        formattedService,
-        formattedBodyShop,
-        formattedFreeService,
-        formattedPMS,
-        formattedFPR,
-        formattedRunningRepair,
-        formattedOthers,
-        formattedBSFpr,
-      ] = synchronizeRows(
-        [
-          formattedService,
-          formattedBodyShop,
-          formattedFreeService,
-          formattedPMS,
-          formattedFPR,
-          formattedRunningRepair,
-          formattedOthers,
-          formattedBSFpr,
-        ],
-        keyColumns
-      );
-
-      // ✅ Add Grand Total row
-      setServiceSummary(addGrandTotalRow(formattedService));
-      setBodyShopSummary(addGrandTotalRow(formattedBodyShop));
-      setFreeServiceSummary(addGrandTotalRow(formattedFreeService));
-      setPmsSummary(addGrandTotalRow(formattedPMS));
-      setFprSummary(addGrandTotalRow(formattedFPR));
-      setRunningRepairSummary(addGrandTotalRow(formattedRunningRepair));
-      setOthersSummary(addGrandTotalRow(formattedOthers));
-      setBsFprSummary(addGrandTotalRow(formattedBSFpr));
-    } catch (err) {
-      console.error(err);
-      alert("❌ Error fetching Load Summaries: " + err.message);
-    }
   };
 
   useEffect(() => {
-    fetchSummaries();
-  }, [months, groupBy, qtr, halfYear]);
+    const fetchLoaddSummary = async () => {
+      try {
+        let responses = [];
+        const activeMonths = months.length > 0 ? months : [];
+        const activeQuarters = quarters.length > 0 ? quarters : [];
+        const activeHalfYears = halfYears.length > 0 ? halfYears : [];
 
-  const hiddenColumns = ["qtrWise", "halfYear", "channel"];
-  if (groupBy === "city") hiddenColumns.push("branch");
-  if (groupBy === "branch") hiddenColumns.push("city");
+        if (activeMonths.length === 0 && activeQuarters.length === 0 && activeHalfYears.length === 0) {
+          const query = `?groupBy=${groupBy}`;
+          const data = await fetchData(`/api/loadd/loadd_summary${query}`);
+          responses.push(data);
+        }
 
-  const filterData = (data) =>
-    data.map((row) => {
-      const filteredRow = { ...row };
-      hiddenColumns.forEach((col) => delete filteredRow[col]);
-      return filteredRow;
+        for (const m of activeMonths) {
+          const query = `?groupBy=${groupBy}&month=${m}`;
+          const data = await fetchData(`/api/loadd/loadd_summary${query}`);
+          responses.push(data);
+        }
+
+        for (const q of activeQuarters) {
+          const query = `?groupBy=${groupBy}&qtrWise=${q}`;
+          const data = await fetchData(`/api/loaddloadd_summary${query}`);
+          responses.push(data);
+        }
+
+        for (const h of activeHalfYears) {
+          const query = `?groupBy=${groupBy}&halfYear=${h}`;
+          const data = await fetchData(`/api/loadd/loadd_summary${query}`);
+          responses.push(data);
+        }
+
+        const validData = responses.filter((r) => Array.isArray(r));
+        let combinedData = validData.length > 1 ? combineDataSets(validData, groupBy) : validData[0] || [];
+
+        // 🔹 Apply priority sorting for cities first
+        combinedData = sortByCityPriority(combinedData);
+
+        const formatted = formatNumericValues(combinedData);
+        const withTotal = addGrandTotalRow(formatted);
+        setLoaddSummary(withTotal);
+      } catch (error) {
+        console.error(error);
+        alert("❌ Error fetching Load Summary: " + error.message);
+      }
+    };
+
+    fetchLoaddSummary();
+  }, [months, quarters, halfYears, groupBy]);
+
+  const renamedData = loaddSummary.map((row) => {
+    const newRow = {};
+    Object.keys(row).forEach((key) => {
+      const newKey = columnRenameMap[key] || key;
+      newRow[newKey] = row[key];
     });
+    return newRow;
+  });
+
+  const hiddenColumns = [];
+  if (groupBy === "city") hiddenColumns.push("Branch");
+  if (groupBy === "branch") hiddenColumns.push("City");
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box className="battery-container" sx={{ p: 3 }}>
       <Typography variant="h4" sx={{ mb: 3 }}>
-        LOAD SUMMARY REPORT
+        LOAD REPORT
       </Typography>
 
-      {/* Filters */}
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Months</InputLabel>
+          <InputLabel>Month</InputLabel>
           <Select
             multiple
             value={months}
@@ -285,25 +245,16 @@ function LoaddPage() {
         </FormControl>
 
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Group By</InputLabel>
-          <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
-            <MenuItem value="city">City</MenuItem>
-            <MenuItem value="branch">Branch</MenuItem>
-            <MenuItem value="city_branch">City & Branch</MenuItem>
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Quarter</InputLabel>
           <Select
             multiple
-            value={qtr}
-            onChange={(e) => setQtr(e.target.value)}
+            value={quarters}
+            onChange={(e) => setQuarters(e.target.value)}
             renderValue={(selected) => selected.join(", ")}
           >
-            {qtrOptions.map((q) => (
+            {quarterOptions.map((q) => (
               <MenuItem key={q} value={q}>
-                <Checkbox checked={qtr.indexOf(q) > -1} />
+                <Checkbox checked={quarters.indexOf(q) > -1} />
                 <ListItemText primary={q} />
               </MenuItem>
             ))}
@@ -314,53 +265,35 @@ function LoaddPage() {
           <InputLabel>Half Year</InputLabel>
           <Select
             multiple
-            value={halfYear}
-            onChange={(e) => setHalfYear(e.target.value)}
+            value={halfYears}
+            onChange={(e) => setHalfYears(e.target.value)}
             renderValue={(selected) => selected.join(", ")}
           >
             {halfYearOptions.map((h) => (
               <MenuItem key={h} value={h}>
-                <Checkbox checked={halfYear.indexOf(h) > -1} />
+                <Checkbox checked={halfYears.indexOf(h) > -1} />
                 <ListItemText primary={h} />
               </MenuItem>
             ))}
           </Select>
         </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Group By</InputLabel>
+          <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
+            <MenuItem value="city">City</MenuItem>
+            <MenuItem value="branch">Branch</MenuItem>
+            <MenuItem value="city_branch">City & Branch</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
-      {/* Tables */}
-      <Box sx={{ display: "flex", gap: 0.1, flexWrap: "wrap" }}>
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(serviceSummary)} title="Service Load" />
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(bodyShopSummary)} title="BodyShop Load" />
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(freeServiceSummary)} title="Free Service Load" />
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(pmsSummary)} title="PMS Load" />
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(fprSummary)} title="FPR Load" />
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(runningRepairSummary)} title="Running Repair Load" />
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(othersSummary)} title="Others Load" />
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 300, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(bsFprSummary)} title="% BS Load on FPR Load" />
-        </Box>
+      <Box sx={{ overflowX: "auto", width: "100%" }}>
+        <DataTable
+          data={renamedData}
+          title="Load Summary"
+          hiddenColumns={hiddenColumns}
+        />
       </Box>
     </Box>
   );

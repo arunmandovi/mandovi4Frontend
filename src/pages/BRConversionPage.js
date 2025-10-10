@@ -308,7 +308,7 @@ function BRConversionPage() {
       <Box sx={{ overflowX: "auto", width: "100%" }}>
         <DataTable
           data={renamedData}
-          title="Battery & Tyre Summary"
+          title="BR Conversion Summary"
           hiddenColumns={hiddenColumns}
         />
       </Box>
