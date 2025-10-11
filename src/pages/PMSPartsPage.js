@@ -92,7 +92,7 @@ function PMSPartsPage() {
 
     // ✅ Label under city column
     const totalLabelKey = Object.keys(data[0])[0];
-    formattedTotals[totalLabelKey] = "Average";
+    formattedTotals[totalLabelKey] = "Grand Total";
 
     return [...data, formattedTotals];
   };
