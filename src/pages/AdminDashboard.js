@@ -6,7 +6,6 @@ import "../styles/AdminDashboard.css";
 function AdminDashboard() {
   const navigate = useNavigate();
 
-  // ✅ Updated admin state
   const [newAdmin, setNewAdmin] = useState({
     adminnName: "",
     adminnId: "",
@@ -26,44 +25,29 @@ function AdminDashboard() {
   const [adminn, setAdminn] = useState([]);
   const [showAdminn, setShowAdminn] = useState(false);
 
-  // 🔹 Helper to handle error messages properly
+  // ✅ Common error handler
   const handleError = (err, fallbackMsg) => {
     if (err.response?.data) {
       const data = err.response.data;
-      if (typeof data === "string") {
-        alert(data);
-      } else if (data.message) {
-        alert(data.message);
-      } else {
-        alert(JSON.stringify(data));
-      }
+      if (typeof data === "string") alert(data);
+      else if (data.message) alert(data.message);
+      else alert(JSON.stringify(data));
     } else {
       alert(fallbackMsg);
     }
   };
 
-  // 🔹 Fetch employees and normalize response into an array
+  // ✅ Fetch Employees
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:8080/api/adminn/getallemployee"
-      );
+      const res = await axios.get("http://localhost:8080/api/adminn/getallemployee");
+      console.log("Employee API Response:", res.data);
 
-      console.log("API response:", res.data);
-
-      // Normalize: always ensure employees is an array
-      let employeeList = [];
-      if (Array.isArray(res.data)) {
-        employeeList = res.data;
-      } else if (Array.isArray(res.data.employee)) {
-        employeeList = res.data.employee;
-      } else if (res.data.employee) {
-        employeeList = [res.data.employee];
-      }
-
-      setEmployees(employeeList);
+      if (Array.isArray(res.data)) setEmployees(res.data);
+      else setEmployees([]);
     } catch (err) {
       handleError(err, "Failed to fetch employees");
+      setEmployees([]);
     }
   };
 
@@ -71,28 +55,17 @@ function AdminDashboard() {
     fetchEmployees();
   }, []);
 
-   // 🔹 Fetch adminns and normalize response into an array
+  // ✅ Fetch Admins
   const fetchAdminns = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:8080/api/adminn/getalladminn"
-      );
+      const res = await axios.get("http://localhost:8080/api/adminn/getalladminn");
+      console.log("Admin API Response:", res.data);
 
-      console.log("API response:", res.data);
-
-      // Normalize: always ensure adminns is an array
-      let adminnList = [];
-      if (Array.isArray(res.data)) {
-        adminnList = res.data;
-      } else if (Array.isArray(res.data.employee)) {
-        adminnList = res.data.employee;
-      } else if (res.data.employee) {
-        adminnList = [res.data.employee];
-      }
-
-      setAdminn(adminnList);
+      if (Array.isArray(res.data)) setAdminn(res.data);
+      else setAdminn([]);
     } catch (err) {
-      handleError(err, "Failed to fetch Admin");
+      handleError(err, "Failed to fetch admins");
+      setAdminn([]);
     }
   };
 
@@ -104,25 +77,20 @@ function AdminDashboard() {
   const handleCreateAdmin = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(
-        "http://localhost:8080/api/adminn/new_adminn_registration",
-        newAdmin
-      );
+      await axios.post("http://localhost:8080/api/adminn/new_adminn_registration", newAdmin);
       alert("New admin created successfully!");
       setNewAdmin({ adminnName: "", adminnId: "", branch: "", adminnPassword: "" });
+      fetchAdminns();
     } catch (err) {
       handleError(err, "Failed to create admin");
     }
   };
 
-  // Create Employee
+  // ✅ Create Employee
   const handleCreateEmployee = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(
-        "http://localhost:8080/api/employee/new_emp_registration",
-        newEmployee
-      );
+      await axios.post("http://localhost:8080/api/employee/new_emp_registration", newEmployee);
       alert("Employee created successfully!");
       setNewEmployee({
         employeeName: "",
@@ -136,13 +104,10 @@ function AdminDashboard() {
     }
   };
 
-
-  // Disable Employee
+  // ✅ Enable / Disable functions
   const disableEmployee = async (employeeId) => {
     try {
-      await axios.put(
-        `http://localhost:8080/api/adminn/disable_employee/${employeeId}`
-      );
+      await axios.put(`http://localhost:8080/api/adminn/disable_employee/${employeeId}`);
       alert("Employee disabled!");
       fetchEmployees();
     } catch (err) {
@@ -150,12 +115,9 @@ function AdminDashboard() {
     }
   };
 
-  // Enable Employee
   const enableEmployee = async (employeeId) => {
     try {
-      await axios.put(
-        `http://localhost:8080/api/adminn/enable_employee/${employeeId}`
-      );
+      await axios.put(`http://localhost:8080/api/adminn/enable_employee/${employeeId}`);
       alert("Employee enabled!");
       fetchEmployees();
     } catch (err) {
@@ -163,35 +125,52 @@ function AdminDashboard() {
     }
   };
 
-  // Disable Admin
   const disableAdminn = async (adminnId) => {
     try {
-      await axios.put(
-        `http://localhost:8080/api/adminn/disable_adminn/${adminnId}`
-      );
+      await axios.put(`http://localhost:8080/api/adminn/disable_adminn/${adminnId}`);
       alert("Admin disabled!");
       fetchAdminns();
     } catch (err) {
-      handleError(err, "Failed to disable Admin");
+      handleError(err, "Failed to disable admin");
     }
   };
 
-  // Enable Admin
   const enableAdminn = async (adminnId) => {
     try {
-      await axios.put(
-        `http://localhost:8080/api/adminn/enable_adminn/${adminnId}`
-      );
+      await axios.put(`http://localhost:8080/api/adminn/enable_adminn/${adminnId}`);
       alert("Admin enabled!");
       fetchAdminns();
     } catch (err) {
-      handleError(err, "Failed to enable Admin");
+      handleError(err, "Failed to enable admin");
     }
   };
 
   return (
     <div className="admin-dashboard">
-      <h2>Admin Dashboard</h2>
+      {/* ✅ Top bar with Upload Files button */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "20px",
+        }}
+      >
+        <h2>Admin Dashboard</h2>
+        <button
+          style={{
+            backgroundColor: "#1976d2",
+            color: "white",
+            padding: "8px 16px",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+          }}
+          onClick={() => navigate("/batterytyre-upload")}
+        >
+          📁 Upload Files
+        </button>
+      </div>
 
       {/* Admin Form */}
       <div className="form-section">
@@ -201,27 +180,21 @@ function AdminDashboard() {
             type="text"
             placeholder="Admin Name"
             value={newAdmin.adminnName}
-            onChange={(e) =>
-              setNewAdmin({ ...newAdmin, adminnName: e.target.value })
-            }
+            onChange={(e) => setNewAdmin({ ...newAdmin, adminnName: e.target.value })}
             required
           />
           <input
             type="text"
             placeholder="Admin ID"
             value={newAdmin.adminnId}
-            onChange={(e) =>
-              setNewAdmin({ ...newAdmin, adminnId: e.target.value })
-            }
+            onChange={(e) => setNewAdmin({ ...newAdmin, adminnId: e.target.value })}
             required
           />
-           <input
+          <input
             type="text"
-            placeholder="Branch Name"
+            placeholder="Branch"
             value={newAdmin.branch}
-            onChange={(e) =>
-              setNewAdmin({ ...newAdmin, branch: e.target.value })
-            }
+            onChange={(e) => setNewAdmin({ ...newAdmin, branch: e.target.value })}
             required
           />
           <input
@@ -247,27 +220,21 @@ function AdminDashboard() {
             type="text"
             placeholder="Employee Name"
             value={newEmployee.employeeName}
-            onChange={(e) =>
-              setNewEmployee({ ...newEmployee, employeeName: e.target.value })
-            }
+            onChange={(e) => setNewEmployee({ ...newEmployee, employeeName: e.target.value })}
             required
           />
           <input
             type="text"
             placeholder="Employee ID"
             value={newEmployee.employeeId}
-            onChange={(e) =>
-              setNewEmployee({ ...newEmployee, employeeId: e.target.value })
-            }
+            onChange={(e) => setNewEmployee({ ...newEmployee, employeeId: e.target.value })}
             required
           />
           <input
             type="text"
             placeholder="Designation"
             value={newEmployee.designation}
-            onChange={(e) =>
-              setNewEmployee({ ...newEmployee, designation: e.target.value })
-            }
+            onChange={(e) => setNewEmployee({ ...newEmployee, designation: e.target.value })}
             required
           />
           <input
@@ -275,10 +242,7 @@ function AdminDashboard() {
             placeholder="Employee Password"
             value={newEmployee.employeePassword}
             onChange={(e) =>
-              setNewEmployee({
-                ...newEmployee,
-                employeePassword: e.target.value,
-              })
+              setNewEmployee({ ...newEmployee, employeePassword: e.target.value })
             }
             required
           />
@@ -298,14 +262,10 @@ function AdminDashboard() {
       <hr />
 
       {/* Toggle Employee List */}
-      <button
-        className="toggle-btn"
-        onClick={() => setShowEmployees(!showEmployees)}
-      >
+      <button className="toggle-btn" onClick={() => setShowEmployees(!showEmployees)}>
         {showEmployees ? "Hide Employees" : "View Employees"}
       </button>
 
-      {/* Employee Table */}
       {showEmployees && (
         <div className="employee-list">
           {employees.length === 0 ? (
@@ -329,12 +289,11 @@ function AdminDashboard() {
                     <td>{emp.designation}</td>
                     <td>{emp.employeeStatus}</td>
                     <td>
-                      {emp.employeeStatus === "APPROVED" && (
+                      {emp.employeeStatus === "APPROVED" ? (
                         <button onClick={() => disableEmployee(emp.employeeId)}>
                           Disable
                         </button>
-                      )}
-                      {emp.employeeStatus === "PENDING" && (
+                      ) : (
                         <button onClick={() => enableEmployee(emp.employeeId)}>
                           Enable
                         </button>
@@ -349,18 +308,14 @@ function AdminDashboard() {
       )}
 
       {/* Toggle Admin List */}
-      <button
-        className="toggle-btn"
-        onClick={() => setShowAdminn(!showAdminn)}
-      >
-        {showAdminn ? "Hide Admin" : "View Admin"}
+      <button className="toggle-btn" onClick={() => setShowAdminn(!showAdminn)}>
+        {showAdminn ? "Hide Admins" : "View Admins"}
       </button>
 
-      {/* Admin Table */}
       {showAdminn && (
         <div className="employee-list">
           {adminn.length === 0 ? (
-            <p>No employees found.</p>
+            <p>No admins found.</p>
           ) : (
             <table>
               <thead>
@@ -380,12 +335,11 @@ function AdminDashboard() {
                     <td>{adm.branch}</td>
                     <td>{adm.adminnStatus}</td>
                     <td>
-                      {adm.adminnStatus === "APPROVED" && (
+                      {adm.adminnStatus === "APPROVED" ? (
                         <button onClick={() => disableAdminn(adm.adminnId)}>
                           Disable
                         </button>
-                      )}
-                      {adm.adminnStatus === "PENDING" && (
+                      ) : (
                         <button onClick={() => enableAdminn(adm.adminnId)}>
                           Enable
                         </button>

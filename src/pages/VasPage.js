@@ -15,17 +15,12 @@ import { fetchData } from "../api/uploadService";
 function VASPage() {
   const [vasSummary, setVASSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [quarters, setQuarters] = useState([]);
-  const [halfYears, setHalfYears] = useState([]);
   const [groupBy, setGroupBy] = useState("city");
 
   const monthOptions = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   ];
-
-  const quarterOptions = ["Q1", "Q2", "Q3", "Q4"];
-  const halfYearOptions = ["H1", "H2"];
 
   const columnRenameMap = {
     city: "City",
@@ -60,7 +55,7 @@ function VASPage() {
     percentageAgeRatMesh: "Rat Mesh %age",
     noOfVehiclesACEvaporator: "AC Evaporator No. Of Vehicles",
     amountACEvaporator: "AC Evaporator Amount",
-    percentageACEvaporator: "AC Evapopratoe &age",
+    percentageACEvaporator: "AC Evaporator %age",
     noOfVehiclesACVent: "AC Vent No. Of Vehicles",
     amountACVent: "AC Vent Amount",
     percentageAgeACVent: "AC Vent %age",
@@ -69,18 +64,20 @@ function VASPage() {
     percentageAgePlasticRestorer: "Plastic Restorer %age",
   };
 
-  // Format numbers for readability
+  // ✅ Format numbers for readability (adds % where needed)
   const formatNumericValues = (data) => {
     return data.map((row) => {
       const formatted = {};
       for (const key in row) {
         const val = row[key];
-        if (key.toLowerCase().includes("growth")) {
+        if (key.toLowerCase().includes("percentage") || key.toLowerCase().includes("%age")) {
           const num =
             typeof val === "number"
               ? val
               : parseFloat(String(val).replace("%", ""));
-          formatted[key] = !isNaN(num) ? num.toFixed(2) + "%" : val;
+          formatted[key] = !isNaN(num)
+            ? num.toFixed(2) + "%"
+            : val;
         } else if (typeof val === "number") {
           formatted[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
         } else if (typeof val === "string" && !isNaN(parseFloat(val)) && val.trim() !== "") {
@@ -93,7 +90,7 @@ function VASPage() {
     });
   };
 
-  // Combine multiple API results (month/quarter/half-year)
+  // Combine multiple API results (month)
   const combineDataSets = (dataSets, keyField) => {
     const combined = {};
     dataSets.forEach((data) => {
@@ -114,26 +111,24 @@ function VASPage() {
     return Object.values(combined);
   };
 
-  // Grand Total Row shows AVERAGES
+  // ✅ Grand Total Row — shows SUM for numeric values, keeps % symbol
   const addGrandTotalRow = (data, groupBy) => {
     if (!data || data.length === 0) return data;
 
     const totalRow = {};
     const numericKeys = new Set();
 
-    // Identify numeric columns (based on first row keys)
+    // Identify numeric columns
     Object.keys(data[0]).forEach((key) => {
       const val = data[0][key];
-      if (typeof val === "number" || (!isNaN(parseFloat(String(val || ""))) && String(val).trim() !== "")) {
+      if (typeof val === "number" || (!isNaN(parseFloat(val)) && val !== "")) {
         numericKeys.add(key);
       }
     });
 
     // Sum all numeric values
     data.forEach((row) => {
-      // skip if already grand total
-      const firstKey = Object.keys(data[0])[0];
-      if (row[firstKey] === "Grand Total") return;
+      if (row[Object.keys(data[0])[0]] === "Grand Total") return;
       numericKeys.forEach((key) => {
         const raw = row[key];
         let num = 0;
@@ -146,18 +141,18 @@ function VASPage() {
       });
     });
 
-    const count = data.length;
     const formattedTotals = {};
     const allKeys = Object.keys(data[0]);
     const firstKey = allKeys[0];
 
     allKeys.forEach((key) => {
-      let val = totalRow[key];
+      const val = totalRow[key];
       if (numericKeys.has(key)) {
-        const avg = val / count;
-        formattedTotals[key] = avg.toLocaleString("en-IN", {
-          maximumFractionDigits: 2,
-        });
+        if (key.toLowerCase().includes("percentage") || key.toLowerCase().includes("%age")) {
+          formattedTotals[key] = val.toFixed(2) + "%";
+        } else {
+          formattedTotals[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        }
       } else {
         formattedTotals[key] = "";
       }
@@ -167,7 +162,7 @@ function VASPage() {
     return [...data, formattedTotals];
   };
 
-  // Prioritize city order
+  // Sort by city priority
   const sortByCityPriority = (data) => {
     const priorityCities = ["Bangalore", "Mysore", "Mangalore"];
     return data.sort((a, b) => {
@@ -188,14 +183,8 @@ function VASPage() {
       try {
         let responses = [];
         const activeMonths = months.length > 0 ? months : [];
-        const activeQuarters = quarters.length > 0 ? quarters : [];
-        const activeHalfYears = halfYears.length > 0 ? halfYears : [];
 
-        if (
-          activeMonths.length === 0 &&
-          activeQuarters.length === 0 &&
-          activeHalfYears.length === 0
-        ) {
+        if (activeMonths.length === 0) {
           const query = `?groupBy=${groupBy}`;
           const data = await fetchData(`/api/vas/vas_summary${query}`);
           responses.push(data);
@@ -203,18 +192,6 @@ function VASPage() {
 
         for (const m of activeMonths) {
           const query = `?groupBy=${groupBy}&month=${m}`;
-          const data = await fetchData(`/api/vas/vas_summary${query}`);
-          responses.push(data);
-        }
-
-        for (const q of activeQuarters) {
-          const query = `?groupBy=${groupBy}&qtrWise=${q}`;
-          const data = await fetchData(`/api/vas/vas_summary${query}`);
-          responses.push(data);
-        }
-
-        for (const h of activeHalfYears) {
-          const query = `?groupBy=${groupBy}&halfYear=${h}`;
           const data = await fetchData(`/api/vas/vas_summary${query}`);
           responses.push(data);
         }
@@ -236,58 +213,37 @@ function VASPage() {
     };
 
     fetchVASSummary();
-  }, [months, quarters, halfYears, groupBy]);
+  }, [months, groupBy]);
 
-  // ---------- NEW: robust renaming + array/numeric-key handling ----------
+  // Rename columns
   const buildRenamedData = (rawRows) => {
     if (!Array.isArray(rawRows) || rawRows.length === 0) return [];
-
-    // find first meaningful row to infer structure
-    const firstNonEmpty = rawRows.find((r) => {
-      if (r == null) return false;
-      if (Array.isArray(r)) return r.length > 0;
-      if (typeof r === "object") return Object.keys(r).length > 0;
-      return false;
-    });
-
+    const firstNonEmpty = rawRows.find((r) => r && Object.keys(r).length > 0);
     if (!firstNonEmpty) return [];
 
-    // base header keys we try to map from (preserve declared order)
     const declaredKeys = Object.keys(columnRenameMap);
-
-    // If rows are arrays OR object with numeric keys, we'll map indices to declaredKeys (plus extras)
-    const isArrayLike = Array.isArray(firstNonEmpty) ||
+    const isArrayLike =
+      Array.isArray(firstNonEmpty) ||
       (typeof firstNonEmpty === "object" &&
         Object.keys(firstNonEmpty).every((k) => /^[0-9]+$/.test(k)));
 
-    // prepare header "original keys" sequence to map indices -> keys
     let headerOriginalKeys = [];
-
     if (isArrayLike) {
-      // attempt to construct headerOriginalKeys from declaredKeys first
-      // but if row length is larger, append fallback keys
       const length = Array.isArray(firstNonEmpty)
         ? firstNonEmpty.length
         : Object.keys(firstNonEmpty).length;
-
       headerOriginalKeys = declaredKeys.slice(0, length);
-      // if declaredKeys shorter, append 'colN' placeholders
       if (headerOriginalKeys.length < length) {
         for (let i = headerOriginalKeys.length; i < length; i++) {
           headerOriginalKeys.push(`col${i}`);
         }
       }
     } else {
-      // object with string keys -> use keys as-is (preserve order)
       headerOriginalKeys = Object.keys(firstNonEmpty);
     }
 
-    // Now map every raw row into { renamedKey: value, ... }
     const renamed = rawRows.map((row) => {
-      // handle null/undefined
-      if (row == null) return {};
-
-      // array row
+      if (!row) return {};
       if (Array.isArray(row)) {
         const obj = {};
         for (let i = 0; i < row.length; i++) {
@@ -298,12 +254,10 @@ function VASPage() {
         return obj;
       }
 
-      // object with numeric keys (like {'0':..., '1':...})
       const keys = Object.keys(row);
-      const allNumericKeys = keys.length > 0 && keys.every((k) => /^[0-9]+$/.test(k));
+      const allNumericKeys = keys.every((k) => /^[0-9]+$/.test(k));
       if (allNumericKeys) {
         const obj = {};
-        // sort numeric keys in index order
         const sorted = keys.map((k) => parseInt(k, 10)).sort((a, b) => a - b);
         sorted.forEach((idx) => {
           const origKey = headerOriginalKeys[idx] || `col${idx}`;
@@ -313,16 +267,29 @@ function VASPage() {
         return obj;
       }
 
-      // normal object with descriptive keys (e.g., { city: 'Bangalore', ... })
       const obj = {};
       Object.entries(row).forEach(([k, v]) => {
         const newKey = columnRenameMap[k] || k;
         obj[newKey] = v;
       });
       return obj;
+      return renamed.map((row) => {
+      const formatted = {};
+      Object.entries(row).forEach(([key, val]) => {
+        const lowerKey = key.toLowerCase();
+        if (lowerKey.includes("%") || lowerKey.includes("percentage") || lowerKey.includes("age")) {
+          const num = parseFloat(String(val).replace("%", "").replace(/,/g, ""));
+          formatted[key] = !isNaN(num) ? num.toFixed(2) + "%" : val;
+        } else if (!isNaN(parseFloat(val)) && val !== "") {
+          formatted[key] = parseFloat(val).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        } else {
+          formatted[key] = val;
+        }
+      });
+      return formatted;
+    });
     });
 
-    // ensure every row has same keys (use union of keys from all rows, keep order)
     const unionKeys = [];
     renamed.forEach((r) => {
       Object.keys(r).forEach((k) => {
@@ -330,15 +297,13 @@ function VASPage() {
       });
     });
 
-    const normalized = renamed.map((r) => {
+    return renamed.map((r) => {
       const out = {};
       unionKeys.forEach((k) => {
         out[k] = k in r ? r[k] : "";
       });
       return out;
     });
-
-    return normalized;
   };
 
   const renamedData = buildRenamedData(vasSummary);
@@ -373,40 +338,6 @@ function VASPage() {
         </FormControl>
 
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Quarter</InputLabel>
-          <Select
-            multiple
-            value={quarters}
-            onChange={(e) => setQuarters(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {quarterOptions.map((q) => (
-              <MenuItem key={q} value={q}>
-                <Checkbox checked={quarters.indexOf(q) > -1} />
-                <ListItemText primary={q} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Half Year</InputLabel>
-          <Select
-            multiple
-            value={halfYears}
-            onChange={(e) => setHalfYears(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {halfYearOptions.map((h) => (
-              <MenuItem key={h} value={h}>
-                <Checkbox checked={halfYears.indexOf(h) > -1} />
-                <ListItemText primary={h} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Group By</InputLabel>
           <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
             <MenuItem value="city">City</MenuItem>
@@ -418,7 +349,11 @@ function VASPage() {
 
       {/* Data Table */}
       <Box sx={{ overflowX: "auto", width: "100%" }}>
-        <DataTable data={renamedData} title="VAS Summary" hiddenColumns={hiddenColumns} />
+        <DataTable
+          data={renamedData}
+          title="VAS Summary"
+          hiddenColumns={hiddenColumns}
+        />
       </Box>
     </Box>
   );

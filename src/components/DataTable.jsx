@@ -11,117 +11,67 @@ export default function DataTable({ data, title, hiddenColumns = [] }) {
     );
   }
 
-  // Column header rename map
-  const columnRenameBatteryMap = {
-    totalQty: "QTY",
-    totalDDL: "Net Retail DDL",
-    totalSelling: "Net Retail Selling",
-    profit: "Profit",
-    percentageProfit: "PROFIT%",
-  };
+  // 🔹 Dynamically generate columns from object keys
+  const allKeys = Object.keys(data[0]);
 
-  // Format numeric values before rendering
-  const formattedData = data.map((row) => {
-    const newRow = { ...row };
-
-    // totalQty as integer
-    if (newRow.totalQty !== undefined && !isNaN(newRow.totalQty)) {
-      newRow.totalQty = parseInt(newRow.totalQty, 10);
-    }
-
-    // totalDDL, totalSelling, profit with Indian number format
-    ["totalDDL", "totalSelling", "profit"].forEach((col) => {
-      if (newRow[col] !== undefined && !isNaN(Number(newRow[col]))) {
-        newRow[col] = Number(newRow[col]).toLocaleString("en-IN", {
-          maximumFractionDigits: 2,
-        });
-      }
-    });
-
-    // percentageProfit with 2 decimals + %
-    if (
-      newRow.percentageProfit !== undefined &&
-      !isNaN(Number(newRow.percentageProfit))
-    ) {
-      newRow.percentageProfit = Number(newRow.percentageProfit).toFixed(2) + "%";
-    }
-
-    return newRow;
-  });
-
-  // Dynamically build columns, hide any columns passed via hiddenColumns
-  const columns = Object.keys(formattedData[0])
+  const columns = allKeys
     .filter((key) => !hiddenColumns.includes(key))
     .map((key) => ({
       field: key,
-      headerName: columnRenameBatteryMap[key] || key.toUpperCase(),
+      headerName: key,
       flex: 1,
-      minWidth: 120,
+      minWidth: 150,
+      sortable: false,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => {
+        const value = params.value;
+        // keep % aligned right
+        if (typeof value === "string" && value.includes("%")) {
+          return (
+            <Box sx={{ textAlign: "right", width: "100%" }}>{value}</Box>
+          );
+        }
+        return value;
+      },
     }));
 
-  return (
-    <Box
-      sx={{
-        height: "85vh", // ✅ increased from 70vh → 85vh for a bigger visible area
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <Typography
-        variant="h6"
-        sx={{ mb: 2, fontWeight: "bold", color: "text.primary" }}
-      >
-        {title}
-      </Typography>
+  // 🔹 Generate rows for DataGrid
+  const rows = data.map((row, index) => ({
+    id: index + 1,
+    ...row,
+  }));
 
+  return (
+    <Box sx={{ height: "auto", width: "100%", backgroundColor: "#fff" }}>
+      {title && (
+        <Typography
+          variant="h6"
+          sx={{
+            mb: 2,
+            fontWeight: 600,
+            textAlign: "center",
+            textTransform: "uppercase",
+          }}
+        >
+          {title}
+        </Typography>
+      )}
       <DataGrid
-        rows={formattedData.map((row, i) => ({ id: i, ...row }))}
+        rows={rows}
         columns={columns}
-        disableRowSelectionOnClick
-        pagination={false}
-        autoHeight={false}
+        disableColumnMenu
+        autoHeight
+        hideFooter
         sx={{
-          borderRadius: 1,
-          border: "1px solid #ddd",
-          backgroundColor: "#fff",
-          overflowY: "auto",
           "& .MuiDataGrid-columnHeaders": {
             backgroundColor: "#f5f5f5",
             fontWeight: "bold",
-            borderBottom: "2px solid #ddd",
-            position: "sticky",
-            top: 0,
-            zIndex: 1,
-          },
-          "& .MuiDataGrid-columnHeader": {
-            backgroundColor: "#e8f0fe",
-            borderRadius: "6px",
-            margin: "2px",
-            padding: "6px",
             textAlign: "center",
-            transition: "all 0.2s ease-in-out",
-            fontWeight: "600",
-            border: "1px solid #90caf9",
-            cursor: "pointer",
-            lineHeight: "1.2rem",
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-          },
-          "& .MuiDataGrid-columnHeader:hover": {
-            backgroundColor: "#d0e3ff",
-            borderColor: "#42a5f5",
-            boxShadow: "0px 2px 4px rgba(0,0,0,0.1)",
-          },
-          "& .MuiDataGrid-columnHeader:active": {
-            backgroundColor: "#bbdefb",
-            transform: "scale(0.98)",
           },
           "& .MuiDataGrid-cell": {
-            fontSize: "0.85rem",
-          },
-          "& .MuiDataGrid-row:hover": {
-            backgroundColor: "#fafafa",
+            borderBottom: "1px solid #e0e0e0",
+            padding: "6px 8px",
           },
         }}
       />
