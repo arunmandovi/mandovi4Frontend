@@ -16,25 +16,26 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  Tooltip,
   Legend,
   ResponsiveContainer,
-  Tooltip,
   LabelList,
 } from "recharts";
 import { fetchData } from "../api/uploadService";
+import { useNavigate } from "react-router-dom";
 
 function LoaddPage() {
-  const [loaddSummary, setLoaddSummary] = useState([]);
+  const navigate = useNavigate(); // For navigation
+  const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [groupBy, setGroupBy] = useState("city");
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
   const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"
+    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+    "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
 
-  const growthKeys = [
+  const growthOptions = [
     "Service Growth %",
     "BodyShop Growth %",
     "Free Service Growth %",
@@ -45,7 +46,6 @@ function LoaddPage() {
     "% BS on FPR Growth %",
   ];
 
-  // Mapping human-readable button labels to API keys
   const growthKeyMap = {
     "Service Growth %": "growthService",
     "BodyShop Growth %": "growthBodyShop",
@@ -57,61 +57,107 @@ function LoaddPage() {
     "% BS on FPR Growth %": "growthBSFPR",
   };
 
+  // ---------- Fetch city summary ----------
   useEffect(() => {
-    const fetchLoaddSummary = async () => {
+    const fetchCitySummary = async () => {
       try {
-        let responses = [];
-        const activeMonths = months.length > 0 ? months : monthOptions;
-
+        const activeMonths = months.length ? months : monthOptions;
+        const combined = [];
         for (const m of activeMonths) {
-          const query = `?groupBy=${groupBy}&month=${m}`;
+          const query = `?groupBy=city&month=${m}`;
           const data = await fetchData(`/api/loadd/loadd_summary${query}`);
-          responses.push({ month: m, data });
+          combined.push({ month: m, data: data || [] });
         }
-
-        setLoaddSummary(responses);
-      } catch (error) {
-        console.error(error);
-        alert("❌ Error fetching Summary: " + error.message);
+        setSummary(combined);
+      } catch (err) {
+        console.error("fetchCitySummary error:", err);
       }
     };
+    fetchCitySummary();
+  }, [months]);
 
-    fetchLoaddSummary();
-  }, [months, groupBy]);
+  // ---------- Helpers ----------
+  const readCityName = (row) => {
+    if (!row) return "";
+    return (
+      row.city ||
+      row.City ||
+      row.cityName ||
+      row.CityName ||
+      row.name ||
+      row.Name ||
+      ""
+    ).toString().trim();
+  };
 
-  // Prepare chart data: one object per month, keys = cities
-  const chartData = loaddSummary.map(({ month, data }) => {
-    const entry = { month };
+  const readGrowthValue = (row, apiKey) => {
+    if (!row || !apiKey) return undefined;
+    const candidates = [
+      apiKey,
+      apiKey.toLowerCase(),
+      apiKey.toUpperCase(),
+      apiKey.replace(/([A-Z])/g, "_$1").toLowerCase(),
+      "value",
+      "growth",
+      "val",
+    ];
+    for (const key of candidates) {
+      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
+        return row[key];
+    }
+    for (const key of Object.keys(row)) {
+      const v = row[key];
+      if (typeof v === "number") return v;
+      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
+    }
+    return undefined;
+  };
+
+  const buildChartData = (summaryArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
-    (data || []).forEach((r) => {
-      const city = r.city || r.City;
-      if (city && selectedGrowth && r[apiKey] !== undefined && r[apiKey] !== null) {
-        entry[city] = parseFloat(r[apiKey].toString().replace("%", "")) || 0;
-      }
+    const citySet = new Set();
+    summaryArr.forEach(({ data }) => {
+      (data || []).forEach((row) => citySet.add(readCityName(row)));
     });
-    return entry;
-  });
+    const allCities = Array.from(citySet);
 
-  // All unique cities
-  const allCities = Array.from(
-    new Set(loaddSummary.flatMap(({ data }) => (data || []).map(r => r.city || r.City)))
-  );
+    const result = summaryArr.map(({ month, data }) => {
+      const entry = { month };
+      allCities.forEach((c) => (entry[c] = 0));
+      (data || []).forEach((row) => {
+        const city = readCityName(row);
+        const val = readGrowthValue(row, apiKey);
+        const parsed = parseFloat(String(val).replace("%", "").trim());
+        entry[city] = isNaN(parsed) ? 0 : parsed;
+      });
+      return entry;
+    });
+    return { data: result, keys: allCities };
+  };
 
+  const { data: chartData, keys: cityKeys } = buildChartData(summary);
+
+  // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        LOAD REPORT
-      </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Typography variant="h4">
+          LOAD REPORT (City-wise)
+        </Typography>
+        
+      </Box>
 
-      {/* Month Filter */}
-      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Month</InputLabel>
+      {/* Filters */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Select Month(s)</InputLabel>
           <Select
             multiple
             value={months}
             onChange={(e) => setMonths(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
+            renderValue={(selected) =>
+              selected && selected.length ? selected.join(", ") : "All"
+            }
           >
             {monthOptions.map((m) => (
               <MenuItem key={m} value={m}>
@@ -121,73 +167,96 @@ function LoaddPage() {
             ))}
           </Select>
         </FormControl>
-
-        {/* Group By */}
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Group By</InputLabel>
-          <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
-            <MenuItem value="city">City</MenuItem>
-            <MenuItem value="branch">Branch</MenuItem>
-            <MenuItem value="city_branch">City & Branch</MenuItem>
-          </Select>
-        </FormControl>
       </Box>
 
-      {/* Growth Buttons */}
-      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-        {growthKeys.map((key) => (
+      {/* Growth buttons */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
+        {growthOptions.map((g) => (
           <Button
-            key={key}
-            variant={selectedGrowth === key ? "contained" : "outlined"}
-            onClick={() => setSelectedGrowth(key)}
+            key={g}
+            variant={selectedGrowth === g ? "contained" : "outlined"}
+            onClick={() => setSelectedGrowth(g)}
           >
-            {key.replace(" Growth %", "")}
+            {g.replace(" Growth %", "")}
           </Button>
         ))}
       </Box>
 
-      {/* Chart */}
-      {selectedGrowth ? (
-        <Box sx={{ width: "100%", height: 500 }}>
-          <ResponsiveContainer>
+      {!selectedGrowth ? (
+        <Typography>👆 Select a growth type to view the chart below</Typography>
+      ) : (
+        <Box
+          sx={{
+            mt: 2,
+            width: "100%",
+            height: 520,
+            background: "#fff",
+            borderRadius: 2,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            p: 2,
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            {selectedGrowth}
+          </Typography>
+
+          <ResponsiveContainer width="100%" height="92%">
             <LineChart
               data={chartData}
-              margin={{ top: 30, right: 50, left: 20, bottom: 60 }}
+              margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 13, fontWeight: 600 }}
-              />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis
-                tick={{ fontSize: 13, fontWeight: 600 }}
-                label={{ value: "Growth %", angle: -90, position: "insideLeft", fontSize: 14 }}
+                tick={{ fontSize: 12 }}
+                label={{
+                  value: "Growth %",
+                  angle: -90,
+                  position: "insideLeft",
+                }}
               />
-              <Tooltip />
+              <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
               <Legend />
-              {allCities.map((city, idx) => (
+
+              {cityKeys.map((key, idx) => (
                 <Line
-                  key={city}
+                  key={key}
+                  dataKey={key}
                   type="monotone"
-                  dataKey={city}
-                  stroke={`hsl(${(idx * 70) % 360}, 70%, 50%)`}
-                  strokeWidth={3}
-                  dot={{ r: 4 }}
+                  stroke={`hsl(${(idx * 60) % 360}, 70%, 45%)`}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  isAnimationActive={false}
                 >
+                  {/* Always show value on each point formatted as xx.xx% */}
                   <LabelList
-                    dataKey={city}
-                    formatter={(value) => `${value}%`}
+                    dataKey={key}
                     position="top"
+                    fontSize={11}
+                    formatter={(val) =>
+                      isNaN(val) ? "" : `${val.toFixed(2)}%`
+                    }
+                    content={(props) => {
+                      const { x, y, value } = props;
+                      if (value == null) return null;
+                      return (
+                        <text
+                          x={x}
+                          y={y - 5}
+                          textAnchor="middle"
+                          fontSize={11}
+                          fill="#333"
+                        >
+                          {`${Number(value).toFixed(2)}%`}
+                        </text>
+                      );
+                    }}
                   />
                 </Line>
               ))}
             </LineChart>
           </ResponsiveContainer>
         </Box>
-      ) : (
-        <Typography variant="body1" sx={{ mt: 2 }}>
-          👆 Select any growth type above to view its Month-wise City chart.
-        </Typography>
       )}
     </Box>
   );

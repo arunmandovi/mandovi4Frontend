@@ -21,10 +21,10 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import { fetchData } from "../api/uploadService";
+import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function MSGPProfitPage() {
+function LoaddBranchWisePage() {
   const navigate = useNavigate(); // For navigation
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -36,44 +36,54 @@ function MSGPProfitPage() {
   ];
 
   const growthOptions = [
-    "Service&BodyShop Profit %",
-    "Service Profit %",
-    "BodyShop Profit %",
+    "Service Growth %",
+    "BodyShop Growth %",
+    "Free Service Growth %",
+    "PMS Growth %",
+    "FPR Growth %",
+    "RR Growth %",
+    "Others Growth %",
+    "% BS on FPR Growth %",
   ];
 
   const growthKeyMap = {
-    "Service&BodyShop Profit %": "percentageProfitServiceBodyShop",
-    "Service Profit %": "percentageProfitService",
-    "BodyShop Profit %": "percentageProfitBodyShop",
+    "Service Growth %": "growthService",
+    "BodyShop Growth %": "growthBodyShop",
+    "Free Service Growth %": "growthFreeService",
+    "PMS Growth %": "growthPMS",
+    "FPR Growth %": "growthFPR",
+    "RR Growth %": "growthRR",
+    "Others Growth %": "growthOthers",
+    "% BS on FPR Growth %": "growthBSFPR",
   };
 
-  // ---------- Fetch city summary ----------
+  // ---------- Fetch branch summary ----------
   useEffect(() => {
-    const fetchCitySummary = async () => {
+    const fetchCityBranchSummary = async () => {
       try {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
         for (const m of activeMonths) {
-          const query = `?groupBy=city&month=${m}`;
-          const data = await fetchData(`/api/msgp_profit/msgp_profit_summary${query}`);
+          const query = `?groupBy=city_branch&month=${m}`;
+          const data = await fetchData(`/api/loadd/loadd_summary${query}`);
           combined.push({ month: m, data: data || [] });
         }
         setSummary(combined);
       } catch (err) {
-        console.error("fetchCitySummary error:", err);
+        console.error("fetchCityBranchSummary error:", err);
       }
     };
-    fetchCitySummary();
+    fetchCityBranchSummary();
   }, [months]);
 
   // ---------- Helpers ----------
-  const readCityName = (row) => {
+  const readCityBranchName = (row) => {
     if (!row) return "";
     return (
-      row.city ||
-      row.City ||
-      row.cityName ||
-      row.CityName ||
+      row.city_branch ||
+      row.city_branch ||
+      row.city_branchName ||
+      row.City_branchName ||
       row.name ||
       row.Name ||
       ""
@@ -105,36 +115,42 @@ function MSGPProfitPage() {
 
   const buildChartData = (summaryArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
-    const citySet = new Set();
+    const cityBranchSet = new Set();
     summaryArr.forEach(({ data }) => {
-      (data || []).forEach((row) => citySet.add(readCityName(row)));
+      (data || []).forEach((row) => cityBranchSet.add(readCityBranchName(row)));
     });
-    const allCities = Array.from(citySet);
+    const allCities = Array.from(cityBranchSet);
 
     const result = summaryArr.map(({ month, data }) => {
       const entry = { month };
       allCities.forEach((c) => (entry[c] = 0));
       (data || []).forEach((row) => {
-        const city = readCityName(row);
+        const city_branch = readCityBranchName(row);
         const val = readGrowthValue(row, apiKey);
         const parsed = parseFloat(String(val).replace("%", "").trim());
-        entry[city] = isNaN(parsed) ? 0 : parsed;
+        entry[city_branch] = isNaN(parsed) ? 0 : parsed;
       });
       return entry;
     });
     return { data: result, keys: allCities };
   };
 
-  const { data: chartData, keys: cityKeys } = buildChartData(summary);
+  const { data: chartData, keys: cityBranchKeys } = buildChartData(summary);
 
   // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Typography variant="h4">
-          MSGP PROFIT REPORT (City-wise)
+          LOAD REPORT (Branch-wise)
         </Typography>
-        
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => navigate("/loadd")}
+        >
+          City-wise View
+        </Button>
       </Box>
 
       {/* Filters */}
@@ -208,7 +224,7 @@ function MSGPProfitPage() {
               <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
               <Legend />
 
-              {cityKeys.map((key, idx) => (
+              {cityBranchKeys.map((key, idx) => (
                 <Line
                   key={key}
                   dataKey={key}
@@ -252,4 +268,4 @@ function MSGPProfitPage() {
   );
 }
 
-export default MSGPProfitPage;
+export default LoaddBranchWisePage;

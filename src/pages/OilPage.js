@@ -8,259 +8,146 @@ import {
   Typography,
   Checkbox,
   ListItemText,
+  Button,
 } from "@mui/material";
-import DataTable from "../components/DataTable";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LabelList,
+} from "recharts";
 import { fetchData } from "../api/uploadService";
+import { useNavigate } from "react-router-dom";
 
 function OilPage() {
-  const [oilSummary, setOilSummary] = useState([]);
+  const navigate = useNavigate(); // For navigation
+  const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [quarters, setQuarters] = useState([]);
-  const [halfYears, setHalfYears] = useState([]);
-  const [groupBy, setGroupBy] = useState("city");
+  const [selectedGrowth, setSelectedGrowth] = useState(null);
 
   const monthOptions = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+    "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
 
-  const quarterOptions = ["Q1", "Q2", "Q3", "Q4"];
-  const halfYearOptions = ["H1", "H2"];
+  const growthOptions = [
+    "Full Synthetic QTY %",
+    "Semi Synthetic QTY %",
+    "Full & Semi Synthetic QTY %",
+  ];
 
-  const columnRenameMap = {
-    city: "City",
-    branch: "Branch",
-    fullSyntheticQTY: "Full Synthetic QTY",
-    semiSyntheticQTY: "Semi Synthetice QTY",
-    mineralQTY: "Mineral QTY",
-    grandTotal: "Grand Total of QTY",
-    fullSyntheticPercentageQTY: "Full Synthetic QTY %",
-    semiSyntheticPercentageQTY: "Semi Synthetic QTY %",
-    fullSemiSyntheticPercentageQTY: "Full & Semi Synthetic QTY %",
-    fullSyntheticProfit: "Full Synthetic Profit",
-    semiSyntheticProfit: "Semi Synthetic Profit",
-    fullSemiSyntheticProfit: "Full & Semi Synthetic Profit",
-    mineralProfit: "Mineral Profit",
-    profitTotal: "Grand Total of Profit",
+  const growthKeyMap = {
+    "Full Synthetic QTY %": "fullSyntheticPercentageQTY",
+    "Semi Synthetic QTY %": "semiSyntheticPercentageQTY",
+    "Full & Semi Synthetic QTY %": "fullSemiSyntheticPercentageQTY",
   };
 
-  const formatNumericValues = (data) => {
-    return data.map((row) => {
-      const formatted = {};
-      for (const key in row) {
-        const val = row[key];
-        if (key.toLowerCase().includes("percentage")) {
-          const num =
-            typeof val === "number"
-              ? val
-              : parseFloat(String(val).replace("%", ""));
-          formatted[key] = !isNaN(num) ? num.toFixed(2) + "%" : val;
-        } else if (typeof val === "number") {
-          formatted[key] = val.toLocaleString("en-IN", { maximumFractionDigits: 2 });
-        } else if (typeof val === "string" && !isNaN(parseFloat(val)) && val.trim() !== "") {
-          formatted[key] = parseFloat(val).toLocaleString("en-IN", { maximumFractionDigits: 2 });
-        } else {
-          formatted[key] = val;
-        }
-      }
-      return formatted;
-    });
-  };
-
-  const combineDataSets = (dataSets, keyField) => {
-    const combined = {};
-    dataSets.forEach((data) => {
-      data.forEach((row) => {
-        const key = row[keyField];
-        if (!combined[key]) combined[key] = { ...row };
-        else {
-          Object.keys(row).forEach((col) => {
-            const val1 = Number(String(combined[key][col]).replace(/[,()%]/g, "")) || 0;
-            const val2 = Number(String(row[col]).replace(/[,()%]/g, "")) || 0;
-            if (!isNaN(val1) && !isNaN(val2)) {
-              combined[key][col] = val1 + val2;
-            }
-          });
-        }
-      });
-    });
-    return Object.values(combined);
-  };
-
-    // ✅ Updated Grand Total Row Calculation
-const addGrandTotalRow = (data) => {
-  if (!data || data.length === 0) return data;
-
-  const totalRow = {};
-  const numericKeys = new Set();
-
-  // Identify numeric keys
-  Object.keys(data[0]).forEach((key) => {
-    const val = data[0][key];
-    if (typeof val === "number" || (!isNaN(parseFloat(val)) && val !== "")) {
-      numericKeys.add(key);
-    }
-  });
-
-  // Sum all numeric values across rows
-  data.forEach((row) => {
-    if (row[Object.keys(data[0])[0]] === "Grand Total") return;
-
-    numericKeys.forEach((key) => {
-      const raw = row[key];
-      let num = 0;
-      if (typeof raw === "number") num = raw;
-      else if (typeof raw === "string") {
-        const parsed = parseFloat(raw.replace("%", "").replace(/,/g, ""));
-        if (!isNaN(parsed)) num = parsed;
-      }
-      totalRow[key] = (totalRow[key] || 0) + num;
-    });
-  });
-
-  const formattedTotals = {};
-  const allKeys = Object.keys(data[0]);
-  const firstKey = allKeys[0];
-
-  allKeys.forEach((key) => {
-    const val = totalRow[key];
-
-    if (key.toLowerCase().includes("percentage")) {
-      let sum = 0;
-
-      // ✅ Custom logic for specific percentage columns
-      if (key.includes("fullSyntheticPercentageQTY")) {
-        const fsQty = totalRow["fullSyntheticQTY"] || 0;
-        const gt = totalRow["grandTotal"] || 0;
-        sum = fsQty * 100 / gt;
-      } else if (key.includes("semiSyntheticPercentageQTY")) {
-        const ssQty = totalRow["semiSyntheticQTY"] || 0;
-        const gt = totalRow["grandTotal"] || 0;
-        sum = ssQty * 100 / gt;
-      } else if (key.includes("fullSemiSyntheticPercentageQTY")) {
-        const fsQty = totalRow["fullSyntheticQTY"] || 0;
-        const ssQty = totalRow["semiSyntheticQTY"] || 0;
-        const gt = totalRow["grandTotal"] || 0;
-        sum = (fsQty + ssQty) * 100 / gt;
-      } else {
-        sum = val;
-      }
-
-      formattedTotals[key] =
-        sum.toLocaleString("en-IN", { maximumFractionDigits: 2 }) + "%";
-    } else {
-      if (typeof val === "number" && !isNaN(val)) {
-        formattedTotals[key] = val.toLocaleString("en-IN", {
-          maximumFractionDigits: 2,
-        });
-      } else {
-        formattedTotals[key] = val || "";
-      }
-    }
-  });
-
-  formattedTotals[firstKey] = "Grand Total";
-  return [...data, formattedTotals];
-};
-
-  const sortByCityPriority = (data) => {
-    const priorityCities = ["Bangalore", "Mysore", "Mangalore"];
-    return data.sort((a, b) => {
-      const cityA = a.city || "";
-      const cityB = b.city || "";
-      const indexA = priorityCities.indexOf(cityA);
-      const indexB = priorityCities.indexOf(cityB);
-
-      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-      if (indexA !== -1) return -1;
-      if (indexB !== -1) return 1;
-      return 0;
-    });
-  };
-
+  // ---------- Fetch city summary ----------
   useEffect(() => {
-    const fetchOilSummary = async () => {
+    const fetchCitySummary = async () => {
       try {
-        let responses = [];
-        const activeMonths = months.length > 0 ? months : [];
-        const activeQuarters = quarters.length > 0 ? quarters : [];
-        const activeHalfYears = halfYears.length > 0 ? halfYears : [];
-
-        if (
-          activeMonths.length === 0 &&
-          activeQuarters.length === 0 &&
-          activeHalfYears.length === 0
-        ) {
-          const query = `?groupBy=${groupBy}`;
-          const data = await fetchData(`/api/oil/oil_summary${query}`);
-          responses.push(data);
-        }
-
+        const activeMonths = months.length ? months : monthOptions;
+        const combined = [];
         for (const m of activeMonths) {
-          const query = `?groupBy=${groupBy}&month=${m}`;
+          const query = `?groupBy=city&month=${m}`;
           const data = await fetchData(`/api/oil/oil_summary${query}`);
-          responses.push(data);
+          combined.push({ month: m, data: data || [] });
         }
-
-        for (const q of activeQuarters) {
-          const query = `?groupBy=${groupBy}&qtrWise=${q}`;
-          const data = await fetchData(`/api/oil/oil_summary${query}`);
-          responses.push(data);
-        }
-
-        for (const h of activeHalfYears) {
-          const query = `?groupBy=${groupBy}&halfYear=${h}`;
-          const data = await fetchData(`/api/oil/oil_summary${query}`);
-          responses.push(data);
-        }
-
-        const validData = responses.filter((r) => Array.isArray(r));
-        let combinedData =
-          validData.length > 1
-            ? combineDataSets(validData, groupBy)
-            : validData[0] || [];
-
-        combinedData = sortByCityPriority(combinedData);
-
-        const formatted = formatNumericValues(combinedData);
-        const withTotal = addGrandTotalRow(formatted);
-        setOilSummary(withTotal);
-      } catch (error) {
-        console.error(error);
-        alert("❌ Error fetching Summary: " + error.message);
+        setSummary(combined);
+      } catch (err) {
+        console.error("fetchCitySummary error:", err);
       }
     };
+    fetchCitySummary();
+  }, [months]);
 
-    fetchOilSummary();
-  }, [months, quarters, halfYears, groupBy]);
+  // ---------- Helpers ----------
+  const readCityName = (row) => {
+    if (!row) return "";
+    return (
+      row.city ||
+      row.City ||
+      row.cityName ||
+      row.CityName ||
+      row.name ||
+      row.Name ||
+      ""
+    ).toString().trim();
+  };
 
-  const renamedData = oilSummary.map((row) => {
-    const newRow = {};
-    Object.keys(row).forEach((key) => {
-      const newKey = columnRenameMap[key] || key;
-      newRow[newKey] = row[key];
+  const readGrowthValue = (row, apiKey) => {
+    if (!row || !apiKey) return undefined;
+    const candidates = [
+      apiKey,
+      apiKey.toLowerCase(),
+      apiKey.toUpperCase(),
+      apiKey.replace(/([A-Z])/g, "_$1").toLowerCase(),
+      "value",
+      "growth",
+      "val",
+    ];
+    for (const key of candidates) {
+      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
+        return row[key];
+    }
+    for (const key of Object.keys(row)) {
+      const v = row[key];
+      if (typeof v === "number") return v;
+      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
+    }
+    return undefined;
+  };
+
+  const buildChartData = (summaryArr) => {
+    const apiKey = growthKeyMap[selectedGrowth];
+    const citySet = new Set();
+    summaryArr.forEach(({ data }) => {
+      (data || []).forEach((row) => citySet.add(readCityName(row)));
     });
-    return newRow;
-  });
+    const allCities = Array.from(citySet);
 
-  const hiddenColumns = [];
-  if (groupBy === "city") hiddenColumns.push("Branch");
-  if (groupBy === "branch") hiddenColumns.push("City");
+    const result = summaryArr.map(({ month, data }) => {
+      const entry = { month };
+      allCities.forEach((c) => (entry[c] = 0));
+      (data || []).forEach((row) => {
+        const city = readCityName(row);
+        const val = readGrowthValue(row, apiKey);
+        const parsed = parseFloat(String(val).replace("%", "").trim());
+        entry[city] = isNaN(parsed) ? 0 : parsed;
+      });
+      return entry;
+    });
+    return { data: result, keys: allCities };
+  };
 
+  const { data: chartData, keys: cityKeys } = buildChartData(summary);
+
+  // ---------- Render ----------
   return (
-    <Box className="battery-container" sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        Oil REPORT
-      </Typography>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Typography variant="h4">
+          OIL Profit REPORT (City-wise)
+        </Typography>
+        
+      </Box>
 
-      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Month</InputLabel>
+      {/* Filters */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Select Month(s)</InputLabel>
           <Select
             multiple
             value={months}
             onChange={(e) => setMonths(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
+            renderValue={(selected) =>
+              selected && selected.length ? selected.join(", ") : "All"
+            }
           >
             {monthOptions.map((m) => (
               <MenuItem key={m} value={m}>
@@ -270,54 +157,97 @@ const addGrandTotalRow = (data) => {
             ))}
           </Select>
         </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Quarter</InputLabel>
-          <Select
-            multiple
-            value={quarters}
-            onChange={(e) => setQuarters(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {quarterOptions.map((q) => (
-              <MenuItem key={q} value={q}>
-                <Checkbox checked={quarters.indexOf(q) > -1} />
-                <ListItemText primary={q} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Half Year</InputLabel>
-          <Select
-            multiple
-            value={halfYears}
-            onChange={(e) => setHalfYears(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {halfYearOptions.map((h) => (
-              <MenuItem key={h} value={h}>
-                <Checkbox checked={halfYears.indexOf(h) > -1} />
-                <ListItemText primary={h} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Group By</InputLabel>
-          <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
-            <MenuItem value="city">City</MenuItem>
-            <MenuItem value="branch">Branch</MenuItem>
-            <MenuItem value="city_branch">City & Branch</MenuItem>
-          </Select>
-        </FormControl>
       </Box>
 
-      <Box sx={{ overflowX: "auto", width: "100%" }}>
-        <DataTable data={renamedData} title="Oil Summary" hiddenColumns={hiddenColumns} />
+      {/* Growth buttons */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
+        {growthOptions.map((g) => (
+          <Button
+            key={g}
+            variant={selectedGrowth === g ? "contained" : "outlined"}
+            onClick={() => setSelectedGrowth(g)}
+          >
+            {g.replace(" Growth %", "")}
+          </Button>
+        ))}
       </Box>
+
+      {!selectedGrowth ? (
+        <Typography>👆 Select a growth type to view the chart below</Typography>
+      ) : (
+        <Box
+          sx={{
+            mt: 2,
+            width: "100%",
+            height: 520,
+            background: "#fff",
+            borderRadius: 2,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            p: 2,
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            {selectedGrowth}
+          </Typography>
+
+          <ResponsiveContainer width="100%" height="92%">
+            <LineChart
+              data={chartData}
+              margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis
+                tick={{ fontSize: 12 }}
+                label={{
+                  value: "Growth %",
+                  angle: -90,
+                  position: "insideLeft",
+                }}
+              />
+              <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
+              <Legend />
+
+              {cityKeys.map((key, idx) => (
+                <Line
+                  key={key}
+                  dataKey={key}
+                  type="monotone"
+                  stroke={`hsl(${(idx * 60) % 360}, 70%, 45%)`}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  isAnimationActive={false}
+                >
+                  {/* Always show value on each point formatted as xx.xx% */}
+                  <LabelList
+                    dataKey={key}
+                    position="top"
+                    fontSize={11}
+                    formatter={(val) =>
+                      isNaN(val) ? "" : `${val.toFixed(2)}%`
+                    }
+                    content={(props) => {
+                      const { x, y, value } = props;
+                      if (value == null) return null;
+                      return (
+                        <text
+                          x={x}
+                          y={y - 5}
+                          textAnchor="middle"
+                          fontSize={11}
+                          fill="#333"
+                        >
+                          {`${Number(value).toFixed(2)}%`}
+                        </text>
+                      );
+                    }}
+                  />
+                </Line>
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </Box>
+      )}
     </Box>
   );
 }

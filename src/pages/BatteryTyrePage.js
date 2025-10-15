@@ -10,10 +10,7 @@ import {
   ListItemText,
   Button,
 } from "@mui/material";
-import { fetchData } from "../api/uploadService";
 import {
-  BarChart,
-  Bar,
   LineChart,
   Line,
   XAxis,
@@ -22,141 +19,135 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LabelList,
 } from "recharts";
-
-// Color palette for different cities
-const colorPalette = [
-  "#8884d8", "#82ca9d", "#ffc658", "#d0ed57", "#a4de6c",
-  "#8dd1e1", "#ff8042", "#ffbb28", "#d888d8", "#84cae1",
-];
+import { fetchData } from "../api/uploadService";
+import { useNavigate } from "react-router-dom";
 
 function BatteryTyrePage() {
-  const [batteryTyreSummary, setBatteryTyreSummary] = useState([]);
+  const navigate = useNavigate(); // For navigation
+  const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [quarters, setQuarters] = useState([]);
-  const [halfYears, setHalfYears] = useState([]);
-  const [groupBy, setGroupBy] = useState("city");
-  const [showGraph, setShowGraph] = useState(false); // 👈 for toggle view
+  const [selectedGrowth, setSelectedGrowth] = useState(null);
 
   const monthOptions = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+    "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
-  const quarterOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
-  const halfYearOptions = ["H1", "H2"];
 
-  const fetchAndFormatData = async () => {
-    try {
-      const requests = [];
+  const growthOptions = [
+    "Battery Propfit %",
+    "Tyre Profit %",
+    "Battery&Tyre Profit %",
+  ];
 
-      // collect all filters
-      const activeMonths = months.length > 0 ? months : [];
-      const activeQuarters = quarters.length > 0 ? quarters : [];
-      const activeHalfYears = halfYears.length > 0 ? halfYears : [];
-
-      // no filters = fetch overall
-      if (
-        activeMonths.length === 0 &&
-        activeQuarters.length === 0 &&
-        activeHalfYears.length === 0
-      ) {
-        requests.push(fetchData(`/api/battery_tyre/battery_tyre_summary?groupBy=${groupBy}`));
-      }
-
-      for (const m of activeMonths) {
-        requests.push(fetchData(`/api/battery_tyre/battery_tyre_summary?groupBy=${groupBy}&month=${m}`));
-      }
-
-      for (const q of activeQuarters) {
-        requests.push(fetchData(`/api/battery_tyre/battery_tyre_summary?groupBy=${groupBy}&qtrWise=${q}`));
-      }
-
-      for (const h of activeHalfYears) {
-        requests.push(fetchData(`/api/battery_tyre/battery_tyre_summary?groupBy=${groupBy}&halfYear=${h}`));
-      }
-
-      const responses = await Promise.all(requests);
-      const validData = responses.filter((r) => Array.isArray(r));
-      const flatData = validData.flat();
-
-      // aggregate by city/branch key
-      const aggregated = flatData.reduce((acc, row) => {
-        const key =
-          groupBy === "city_branch"
-            ? `${row.city || "Unknown City"}|${row.branch || "Unknown Branch"}`
-            : groupBy === "city"
-            ? row.city || "Unknown City"
-            : row.branch || "Unknown Branch";
-
-        if (!acc[key]) {
-          acc[key] = {
-            city: row.city || "Unknown City",
-            branch: row.branch || "Unknown Branch",
-            batteryProfit: 0,
-            tyreProfit: 0,
-            batteryTyreProfit: 0,
-          };
-        }
-
-        acc[key].batteryProfit += Number(row.batteryProfit) || 0;
-        acc[key].tyreProfit += Number(row.tyreProfit) || 0;
-        acc[key].batteryTyreProfit += Number(row.batteryTyreProfit) || 0;
-
-        return acc;
-      }, {});
-
-      // convert to array + labels
-      let combinedData = Object.values(aggregated).map((row) => ({
-        ...row,
-        label:
-          groupBy === "city_branch"
-            ? `${row.city} - ${row.branch}`
-            : groupBy === "city"
-            ? row.city
-            : row.branch,
-      }));
-
-      // custom sorting
-      const priorityCities = ["Bangalore", "Mysore", "Mangalore"];
-      combinedData.sort((a, b) => {
-        if (groupBy === "city" || groupBy === "city_branch") {
-          const indexA = priorityCities.indexOf(a.city);
-          const indexB = priorityCities.indexOf(b.city);
-          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-          if (indexA !== -1) return -1;
-          if (indexB !== -1) return 1;
-        }
-        return 0;
-      });
-
-      setBatteryTyreSummary(combinedData);
-    } catch (error) {
-      console.error(error);
-      alert("❌ Error fetching Battery & Tyre Summary: " + error.message);
-    }
+  const growthKeyMap = {
+    "Battery Propfit %": "batteryPercentageProfit",
+    "Tyre Profit %": "tyrePercentageProfit",
+    "Battery&Tyre Profit %": "batteryTyrePercentageProfit",
   };
 
+  // ---------- Fetch city summary ----------
   useEffect(() => {
-    fetchAndFormatData();
-  }, [months, quarters, halfYears, groupBy]);
+    const fetchCitySummary = async () => {
+      try {
+        const activeMonths = months.length ? months : monthOptions;
+        const combined = [];
+        for (const m of activeMonths) {
+          const query = `?groupBy=city&month=${m}`;
+          const data = await fetchData(`/api/battery_tyre/battery_tyre_summary${query}`);
+          combined.push({ month: m, data: data || [] });
+        }
+        setSummary(combined);
+      } catch (err) {
+        console.error("fetchCitySummary error:", err);
+      }
+    };
+    fetchCitySummary();
+  }, [months]);
 
-  const decimalFormatter = (value) => Number(value).toFixed(2);
+  // ---------- Helpers ----------
+  const readCityName = (row) => {
+    if (!row) return "";
+    return (
+      row.city ||
+      row.City ||
+      row.cityName ||
+      row.CityName ||
+      row.name ||
+      row.Name ||
+      ""
+    ).toString().trim();
+  };
 
+  const readGrowthValue = (row, apiKey) => {
+    if (!row || !apiKey) return undefined;
+    const candidates = [
+      apiKey,
+      apiKey.toLowerCase(),
+      apiKey.toUpperCase(),
+      apiKey.replace(/([A-Z])/g, "_$1").toLowerCase(),
+      "value",
+      "growth",
+      "val",
+    ];
+    for (const key of candidates) {
+      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
+        return row[key];
+    }
+    for (const key of Object.keys(row)) {
+      const v = row[key];
+      if (typeof v === "number") return v;
+      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
+    }
+    return undefined;
+  };
+
+  const buildChartData = (summaryArr) => {
+    const apiKey = growthKeyMap[selectedGrowth];
+    const citySet = new Set();
+    summaryArr.forEach(({ data }) => {
+      (data || []).forEach((row) => citySet.add(readCityName(row)));
+    });
+    const allCities = Array.from(citySet);
+
+    const result = summaryArr.map(({ month, data }) => {
+      const entry = { month };
+      allCities.forEach((c) => (entry[c] = 0));
+      (data || []).forEach((row) => {
+        const city = readCityName(row);
+        const val = readGrowthValue(row, apiKey);
+        const parsed = parseFloat(String(val).replace("%", "").trim());
+        entry[city] = isNaN(parsed) ? 0 : parsed;
+      });
+      return entry;
+    });
+    return { data: result, keys: allCities };
+  };
+
+  const { data: chartData, keys: cityKeys } = buildChartData(summary);
+
+  // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        BATTERY & TYRE REPORT
-      </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Typography variant="h4">
+          BATTERY & TYRE REPORT (City-wise)
+        </Typography>
+        
+      </Box>
 
       {/* Filters */}
-      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Month</InputLabel>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Select Month(s)</InputLabel>
           <Select
             multiple
             value={months}
             onChange={(e) => setMonths(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
+            renderValue={(selected) =>
+              selected && selected.length ? selected.join(", ") : "All"
+            }
           >
             {monthOptions.map((m) => (
               <MenuItem key={m} value={m}>
@@ -166,100 +157,97 @@ function BatteryTyrePage() {
             ))}
           </Select>
         </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Quarter</InputLabel>
-          <Select
-            multiple
-            value={quarters}
-            onChange={(e) => setQuarters(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {quarterOptions.map((q) => (
-              <MenuItem key={q} value={q}>
-                <Checkbox checked={quarters.indexOf(q) > -1} />
-                <ListItemText primary={q} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Half Year</InputLabel>
-          <Select
-            multiple
-            value={halfYears}
-            onChange={(e) => setHalfYears(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {halfYearOptions.map((h) => (
-              <MenuItem key={h} value={h}>
-                <Checkbox checked={halfYears.indexOf(h) > -1} />
-                <ListItemText primary={h} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Group By</InputLabel>
-          <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
-            <MenuItem value="city">City</MenuItem>
-            <MenuItem value="branch">Branch</MenuItem>
-            <MenuItem value="city_branch">City & Branch</MenuItem>
-          </Select>
-        </FormControl>
       </Box>
 
-      {/* Chart */}
-      <Box sx={{ width: "100%", height: 500 }}>
-        <ResponsiveContainer>
-          {showGraph ? (
-            <LineChart
-              data={batteryTyreSummary}
-              margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="label" angle={-45} textAnchor="end" interval={0} />
-              <YAxis />
-              <Tooltip formatter={decimalFormatter} />
-              <Legend />
-              <Line type="monotone" dataKey="batteryProfit" name="Battery Profit" stroke="#8884d8" />
-              <Line type="monotone" dataKey="tyreProfit" name="Tyre Profit" stroke="#82ca9d" />
-              <Line type="monotone" dataKey="batteryTyreProfit" name="Battery & Tyre Profit" stroke="#ffc658" />
-            </LineChart>
-          ) : (
-            <BarChart
-              data={batteryTyreSummary}
-              margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="label" angle={-45} textAnchor="end" interval={0} />
-              <YAxis />
-              <Tooltip formatter={decimalFormatter} />
-              <Legend />
-              <Bar dataKey="batteryProfit" name="Battery Profit" fill="#8884d8" />
-              <Bar dataKey="tyreProfit" name="Tyre Profit" fill="#82ca9d" />
-              <Bar
-                dataKey="batteryTyreProfit"
-                name="Battery & Tyre Profit"
-                fill="#ffc658"
-              />
-            </BarChart>
-          )}
-        </ResponsiveContainer>
+      {/* Growth buttons */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
+        {growthOptions.map((g) => (
+          <Button
+            key={g}
+            variant={selectedGrowth === g ? "contained" : "outlined"}
+            onClick={() => setSelectedGrowth(g)}
+          >
+            {g.replace(" Growth %", "")}
+          </Button>
+        ))}
       </Box>
 
-      {/* Toggle Button */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => setShowGraph(!showGraph)}
+      {!selectedGrowth ? (
+        <Typography>👆 Select a growth type to view the chart below</Typography>
+      ) : (
+        <Box
+          sx={{
+            mt: 2,
+            width: "100%",
+            height: 520,
+            background: "#fff",
+            borderRadius: 2,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            p: 2,
+          }}
         >
-          {showGraph ? "Show Bar Chart" : "Show Graph View"}
-        </Button>
-      </Box>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            {selectedGrowth}
+          </Typography>
+
+          <ResponsiveContainer width="100%" height="92%">
+            <LineChart
+              data={chartData}
+              margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis
+                tick={{ fontSize: 12 }}
+                label={{
+                  value: "Growth %",
+                  angle: -90,
+                  position: "insideLeft",
+                }}
+              />
+              <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
+              <Legend />
+
+              {cityKeys.map((key, idx) => (
+                <Line
+                  key={key}
+                  dataKey={key}
+                  type="monotone"
+                  stroke={`hsl(${(idx * 60) % 360}, 70%, 45%)`}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  isAnimationActive={false}
+                >
+                  {/* Always show value on each point formatted as xx.xx% */}
+                  <LabelList
+                    dataKey={key}
+                    position="top"
+                    fontSize={11}
+                    formatter={(val) =>
+                      isNaN(val) ? "" : `${val.toFixed(2)}%`
+                    }
+                    content={(props) => {
+                      const { x, y, value } = props;
+                      if (value == null) return null;
+                      return (
+                        <text
+                          x={x}
+                          y={y - 5}
+                          textAnchor="middle"
+                          fontSize={11}
+                          fill="#333"
+                        >
+                          {`${Number(value).toFixed(2)}%`}
+                        </text>
+                      );
+                    }}
+                  />
+                </Line>
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </Box>
+      )}
     </Box>
   );
 }

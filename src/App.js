@@ -12,7 +12,7 @@ import LabourPage from "./pages/LabourPage";
 import LoaddPage from "./pages/LoaddPage";
 import MCPPage from "./pages/MCPPage";
 import MGAPAGE from "./pages/MGAPage";
-import MSGPPAge from "./pages/MSGPPage";
+import MSGPPage from "./pages/MSGPPage";
 import MSGPProfitPage from "./pages/MSGPProfitPage";
 import OilPage from "./pages/OilPage";
 import PMSPartsPage from "./pages/PMSPartsPage";
@@ -21,7 +21,7 @@ import ReferenceePage from "./pages/ReferenceePage";
 import RevenuePage from "./pages/RevenuePage";
 import SparesPage from "./pages/SparesPage";
 import TATPage from "./pages/TATPage";
-import VasPage from "./pages/VasPage";
+import VasPage from "./pages/VASPage";
 
 // Admin upload pages
 import BatteryTyreUploadPage from "./pages/FileUpload/BatteryTyreUploadPage";
@@ -40,6 +40,9 @@ import RevenueUploadPage from "./pages/FileUpload/RevenueUploadPage";
 import SparesUploadPage from "./pages/FileUpload/SparesUploadPage";
 import TATUploadPage from "./pages/FileUpload/TATUploadPage";
 import VASUploadPage from "./pages/FileUpload/VASUploadPage";
+
+//BranchWise Graph View Pages
+import LoaddBranchWisePage from "./pages/BranchWise/LoaddBranchWisePage";
 
 import "./App.css";
 
@@ -71,6 +74,9 @@ function App() {
         <Route path="/tat-upload" element={<TATUploadPage />} />
         <Route path="/vas-upload" element={<VASUploadPage />} />
 
+        {/* ✅ BranchWise GraphView Page */}
+        <Route path="/loadd_branchview" element={<LoaddBranchWisePage />} />
+
         {/* 🧭 Employee Dashboard Layout */}
         <Route path="/DashboardHome" element={<Layout />}>
           {/* Default route → Battery & Tyre */}
@@ -82,7 +88,7 @@ function App() {
           <Route path="loadd" element={<LoaddPage />} />
           <Route path="mcp" element={<MCPPage />} />
           <Route path="mga" element={<MGAPAGE />} />
-          <Route path="msgp" element={<MSGPPAge />} />
+          <Route path="msgp" element={<MSGPPage />} />
           <Route path="msgp_profit" element={<MSGPProfitPage />} />
           <Route path="oil" element={<OilPage />} />
           <Route path="pms_parts" element={<PMSPartsPage />} />
