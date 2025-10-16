@@ -1,180 +1,162 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  FormControl,
-  InputLabel,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
   Checkbox,
   ListItemText,
-  Typography,
+  Button,
 } from "@mui/material";
-import DataTable from "../components/DataTable";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LabelList,
+} from "recharts";
 import { fetchData } from "../api/uploadService";
+import { useNavigate } from "react-router-dom";
 
 function MCPPage() {
-  const [mcpSummary, setMCPSummary] = useState([]);
-
+  const navigate = useNavigate();
+  const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [groupBy, setGroupBy] = useState("city");
-  const [qtr, setQtr] = useState([]);
-  const [halfYear, setHalfYear] = useState([]);
+  const [selectedGrowth, setSelectedGrowth] = useState(null);
 
-  const monthOptions = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const qtrOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
-  const halfYearOptions = ["H1", "H2"];
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
+  const monthOptions = [
+    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+    "Nov", "Dec", "Jan", "Feb", "Mar",
+  ];
 
-  // 🔹 Helper: Aggregate rows by key columns
-  const aggregateData = (data, keys) => {
-    const map = {};
-    data.forEach((row) => {
-      const key = keys.map((k) => row[k]).join("_");
-      if (!map[key]) {
-        map[key] = { ...row };
-      } else {
-        ["mcp", "amount"].forEach((col) => {
-          if (row[col] !== undefined && !isNaN(row[col])) {
-            map[key][col] = (map[key][col] || 0) + Number(row[col]);
-          }
-        });
-      }
-    });
-    return Object.values(map);
+  const growthOptions = ["MCP NO"];
+
+  const growthKeyMap = {
+    "MCP NO": "mcp",
   };
 
-  // 🔹 Format data and compute display columns
-  const formatSummaryData = (data) => {
-    const keys = groupBy === "city_branch" ? ["city", "branch"] : [groupBy];
-    const aggregated = aggregateData(data, keys);
+  // ---------- Fetch city summary ----------
+  useEffect(() => {
+    const fetchCitySummary = async () => {
+      try {
+        const activeMonths = months.length ? months : monthOptions;
+        const combined = [];
 
-    return aggregated.map((row) => {
-      const formattedRow = { ...row };
-      if (row.mcp !== undefined && row.amount !== undefined) {
-        formattedRow["MCP NO"] = Number(row.mcp).toLocaleString("en-IN");
-        formattedRow["AMOUNT"] = Number(row.amount).toLocaleString("en-IN");
-        delete formattedRow.mcp;
-        delete formattedRow.amount;
-      }
-      return formattedRow;
-    });
-  };
+        for (const m of activeMonths) {
+          const query = `?groupBy=city&month=${m}`;
+          const data = await fetchData(`/api/mcp/mcp_summary${query}`);
 
-  // 🔹 Maintain custom city order
-  const sortByCityOrder = (data) => {
-    const cityOrder = ["Bangalore", "Mysore", "Mangalore"];
-    return data.sort((a, b) => {
-      if (!a.city) return 1;
-      if (!b.city) return -1;
-      const indexA = cityOrder.indexOf(a.city);
-      const indexB = cityOrder.indexOf(b.city);
-      if (indexA === -1 && indexB === -1) return a.city.localeCompare(b.city);
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    });
-  };
-
-  // 🔹 Add a Grand Total row
-  const addGrandTotalRow = (data) => {
-    if (!data || data.length === 0) return data;
-
-    const totalRow = {};
-    const numericKeys = new Set();
-
-    // detect numeric columns
-    Object.keys(data[0]).forEach((key) => {
-      const sample = data[0][key];
-      if (typeof sample === "string" && sample.replace(/[,\d.%]/g, "").trim() === "")
-        numericKeys.add(key);
-    });
-
-    // sum totals
-    data.forEach((row) => {
-      numericKeys.forEach((key) => {
-        const num = Number(String(row[key]).replace(/[,%]/g, "").replace(/,/g, "")) || 0;
-        totalRow[key] = (totalRow[key] || 0) + num;
-      });
-    });
-
-    // format total row
-    const formattedTotals = {};
-    Object.entries(totalRow).forEach(([key, val]) => {
-      formattedTotals[key] = val.toLocaleString("en-IN");
-    });
-
-    const totalLabelKey = Object.keys(data[0])[0];
-    formattedTotals[totalLabelKey] = "Grand Total";
-
-    return [...data, formattedTotals];
-  };
-
-  // 🔹 Fetch data from API
-  const fetchSummaries = async () => {
-    try {
-      let allMCP = [];
-
-      const monthsList = months.length > 0 ? months : [""];
-      const qtrList = qtr.length > 0 ? qtr : [""];
-      const halfList = halfYear.length > 0 ? halfYear : [""];
-
-      for (const m of monthsList) {
-        for (const q of qtrList) {
-          for (const h of halfList) {
-            const query =
-              `?groupBy=${groupBy}` +
-              (m ? `&month=${m}` : "") +
-              (q ? `&qtrWise=${q}` : "") +
-              (h ? `&halfYear=${h}` : "");
-
-            const mcpData = await fetchData(`/api/mcp/mcp_summary${query}`);
-            if (Array.isArray(mcpData)) allMCP = allMCP.concat(mcpData);
+          if (
+            (data && data.length > 0) ||
+            (months.length > 0 && months.includes(m))
+          ) {
+            combined.push({ month: m, data });
           }
         }
-      }
 
-      let formattedMCP = sortByCityOrder(formatSummaryData(allMCP));
-      formattedMCP = addGrandTotalRow(formattedMCP);
-      setMCPSummary(formattedMCP);
-    } catch (err) {
-      console.error(err);
-      alert("❌ Error fetching MCP Summaries: " + err.message);
-    }
+        setSummary(combined);
+      } catch (err) {
+        console.error("fetchCitySummary error:", err);
+      }
+    };
+    fetchCitySummary();
+  }, [months]);
+
+  // ---------- Helpers ----------
+  const readCityName = (row) => {
+    if (!row) return "";
+    return (
+      row.city ||
+      row.City ||
+      row.cityName ||
+      row.CityName ||
+      row.name ||
+      row.Name ||
+      ""
+    ).toString().trim();
   };
 
-  useEffect(() => {
-    fetchSummaries();
-  }, [months, groupBy, qtr, halfYear]);
+  const readGrowthValue = (row, apiKey) => {
+    if (!row || !apiKey) return undefined;
+    const candidates = [
+      apiKey,
+      apiKey.toLowerCase(),
+      apiKey.toUpperCase(),
+      apiKey.replace(/([A-Z])/g, "_$1").toLowerCase(),
+      "value",
+      "growth",
+      "val",
+    ];
+    for (const key of candidates) {
+      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
+        return row[key];
+    }
+    for (const key of Object.keys(row)) {
+      const v = row[key];
+      if (typeof v === "number") return v;
+      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
+    }
+    return undefined;
+  };
 
-  // 🔹 Hide unwanted columns
-  const hiddenColumns = ["qtrWise", "halfYear", "channel"];
-  if (groupBy === "city") hiddenColumns.push("branch");
-  if (groupBy === "branch") hiddenColumns.push("city");
-
-  const filterData = (data) =>
-    data.map((row) => {
-      const filteredRow = { ...row };
-      hiddenColumns.forEach((col) => delete filteredRow[col]);
-      return filteredRow;
+  const buildChartData = (summaryArr) => {
+    const apiKey = growthKeyMap[selectedGrowth];
+    const citySet = new Set();
+    summaryArr.forEach(({ data }) => {
+      (data || []).forEach((row) => citySet.add(readCityName(row)));
     });
+    const allCities = Array.from(citySet);
 
+    const result = summaryArr.map(({ month, data }) => {
+      const entry = { month };
+      allCities.forEach((c) => (entry[c] = 0));
+      (data || []).forEach((row) => {
+        const city = readCityName(row);
+        const val = readGrowthValue(row, apiKey);
+        const parsed = parseFloat(String(val).replace("%", "").trim());
+        entry[city] = isNaN(parsed) ? 0 : parsed;
+      });
+      return entry;
+    });
+    return { data: result, keys: allCities };
+  };
+
+  const { data: chartData, keys: cityKeys } = buildChartData(summary);
+
+  // Detect if the selected growth is percentage-based
+  const isPercentageGrowth = selectedGrowth?.includes("%");
+
+  // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        MCP SUMMARY REPORT
-      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">MCP REPORT (City-wise)</Typography>
+      </Box>
 
-      {/* 🔹 Filters */}
-      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-        {/* Month */}
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Months</InputLabel>
+      {/* Filters */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Select Month(s)</InputLabel>
           <Select
             multiple
             value={months}
             onChange={(e) => setMonths(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
+            renderValue={(selected) =>
+              selected && selected.length ? selected.join(", ") : "Auto Filter"
+            }
           >
             {monthOptions.map((m) => (
               <MenuItem key={m} value={m}>
@@ -184,60 +166,104 @@ function MCPPage() {
             ))}
           </Select>
         </FormControl>
-
-        {/* Group By */}
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Group By</InputLabel>
-          <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
-            <MenuItem value="city">City</MenuItem>
-            <MenuItem value="branch">Branch</MenuItem>
-            <MenuItem value="city_branch">City & Branch</MenuItem>
-          </Select>
-        </FormControl>
-
-        {/* Quarter */}
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Quarter</InputLabel>
-          <Select
-            multiple
-            value={qtr}
-            onChange={(e) => setQtr(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {qtrOptions.map((q) => (
-              <MenuItem key={q} value={q}>
-                <Checkbox checked={qtr.indexOf(q) > -1} />
-                <ListItemText primary={q} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* Half Year */}
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Half Year</InputLabel>
-          <Select
-            multiple
-            value={halfYear}
-            onChange={(e) => setHalfYear(e.target.value)}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {halfYearOptions.map((h) => (
-              <MenuItem key={h} value={h}>
-                <Checkbox checked={halfYear.indexOf(h) > -1} />
-                <ListItemText primary={h} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
       </Box>
 
-      {/* 🔹 Data Table */}
-      <Box sx={{ display: "flex", flexWrap: "wrap" }}>
-        <Box sx={{ flex: 1, minWidth: 400, maxHeight: 600, overflowY: "auto" }}>
-          <DataTable data={filterData(mcpSummary)} title="MCP Summary" />
+      {/* Growth buttons */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
+        {growthOptions.map((g) => (
+          <Button
+            key={g}
+            variant={selectedGrowth === g ? "contained" : "outlined"}
+            onClick={() => setSelectedGrowth(g)}
+          >
+            {g}
+          </Button>
+        ))}
+      </Box>
+
+      {!selectedGrowth ? (
+        <Typography>👆 Select a growth type to view the chart below</Typography>
+      ) : summary.length === 0 ? (
+        <Typography>No data available for the selected criteria.</Typography>
+      ) : (
+        <Box
+          sx={{
+            mt: 2,
+            width: "100%",
+            height: 520,
+            background: "#fff",
+            borderRadius: 2,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            p: 2,
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            {selectedGrowth}
+          </Typography>
+
+          <ResponsiveContainer width="100%" height="92%">
+            <LineChart
+              data={chartData}
+              margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis
+                tick={{ fontSize: 12 }}
+                label={{
+                  value: isPercentageGrowth ? "Growth %" : "Value",
+                  angle: -90,
+                  position: "insideLeft",
+                }}
+              />
+              <Tooltip
+                formatter={(value) =>
+                  isPercentageGrowth
+                    ? `${value.toFixed(2)}%`
+                    : value.toFixed(2)
+                }
+              />
+              <Legend />
+
+              {cityKeys.map((key, idx) => (
+                <Line
+                  key={key}
+                  dataKey={key}
+                  type="monotone"
+                  stroke={`hsl(${(idx * 60) % 360}, 70%, 45%)`}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  isAnimationActive={false}
+                >
+                  <LabelList
+                    dataKey={key}
+                    position="top"
+                    fontSize={11}
+                    content={(props) => {
+                      const { x, y, value } = props;
+                      if (value == null) return null;
+                      const displayVal = isPercentageGrowth
+                        ? `${Number(value).toFixed(2)}%`
+                        : Number(value).toFixed(2);
+                      return (
+                        <text
+                          x={x}
+                          y={y - 5}
+                          textAnchor="middle"
+                          fontSize={11}
+                          fill="#333"
+                        >
+                          {displayVal}
+                        </text>
+                      );
+                    }}
+                  />
+                </Line>
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
         </Box>
-      </Box>
+      )}
     </Box>
   );
 }

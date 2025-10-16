@@ -25,7 +25,7 @@ import { fetchData } from "../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
 function BRConversionPage() {
-  const navigate = useNavigate(); // For navigation
+  const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
@@ -39,18 +39,18 @@ function BRConversionPage() {
     "Arena BR Conversion %",
     "Nexa BR Conversion %",
     "Arena&Nexa BR Conversion %",
-    // "Arena Total Amount",
-    // "Nexa Total Amount",
-    // "Arena&Nexa Total Amount",
+    "Arena Total Amount",
+    "Nexa Total Amount",
+    "Arena&Nexa Total Amount",
   ];
 
   const growthKeyMap = {
     "Arena BR Conversion %": "arenaPercentageBRConversion",
     "Nexa BR Conversion %": "nexaPercentageBRConversion",
     "Arena&Nexa BR Conversion %": "arenaNexaPercentageBRConversion",
-    // "Arena Total Amount": "arenaTotalAmount",
-    // "Nexa Total Amount": "nexaTotalAmount",
-    // "Arena&Nexa Total Amount": "arenaNexaTotalAmount",
+    "Arena Total Amount": "arenaTotalAmount",
+    "Nexa Total Amount": "nexaTotalAmount",
+    "Arena&Nexa Total Amount": "arenaNexaTotalAmount",
   };
 
   // ---------- Fetch city summary ----------
@@ -59,11 +59,19 @@ function BRConversionPage() {
       try {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
+
         for (const m of activeMonths) {
           const query = `?groupBy=city&month=${m}`;
           const data = await fetchData(`/api/br_conversion/br_conversion_summary${query}`);
-          combined.push({ month: m, data: data || [] });
+
+          if (
+            (data && data.length > 0) ||
+            (months.length > 0 && months.includes(m))
+          ) {
+            combined.push({ month: m, data });
+          }
         }
+
         setSummary(combined);
       } catch (err) {
         console.error("fetchCitySummary error:", err);
@@ -133,14 +141,21 @@ function BRConversionPage() {
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
 
+  // Detect if the selected growth is percentage-based
+  const isPercentageGrowth = selectedGrowth?.includes("%");
+
   // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h4">
-          BR CONVERSION REPORT (City-wise)
-        </Typography>
-        
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">BR CONVERSION REPORT (City-wise)</Typography>
       </Box>
 
       {/* Filters */}
@@ -152,7 +167,7 @@ function BRConversionPage() {
             value={months}
             onChange={(e) => setMonths(e.target.value)}
             renderValue={(selected) =>
-              selected && selected.length ? selected.join(", ") : "All"
+              selected && selected.length ? selected.join(", ") : "Auto Filter"
             }
           >
             {monthOptions.map((m) => (
@@ -173,13 +188,15 @@ function BRConversionPage() {
             variant={selectedGrowth === g ? "contained" : "outlined"}
             onClick={() => setSelectedGrowth(g)}
           >
-            {g.replace(" Growth %", "")}
+            {g}
           </Button>
         ))}
       </Box>
 
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
+      ) : summary.length === 0 ? (
+        <Typography>No data available for the selected criteria.</Typography>
       ) : (
         <Box
           sx={{
@@ -206,12 +223,18 @@ function BRConversionPage() {
               <YAxis
                 tick={{ fontSize: 12 }}
                 label={{
-                  value: "Growth %",
+                  value: isPercentageGrowth ? "Growth %" : "Value",
                   angle: -90,
                   position: "insideLeft",
                 }}
               />
-              <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
+              <Tooltip
+                formatter={(value) =>
+                  isPercentageGrowth
+                    ? `${value.toFixed(2)}%`
+                    : value.toFixed(2)
+                }
+              />
               <Legend />
 
               {cityKeys.map((key, idx) => (
@@ -224,17 +247,16 @@ function BRConversionPage() {
                   dot={{ r: 3 }}
                   isAnimationActive={false}
                 >
-                  {/* Always show value on each point formatted as xx.xx% */}
                   <LabelList
                     dataKey={key}
                     position="top"
                     fontSize={11}
-                    formatter={(val) =>
-                      isNaN(val) ? "" : `${val.toFixed(2)}%`
-                    }
                     content={(props) => {
                       const { x, y, value } = props;
                       if (value == null) return null;
+                      const displayVal = isPercentageGrowth
+                        ? `${Number(value).toFixed(2)}%`
+                        : Number(value).toFixed(2);
                       return (
                         <text
                           x={x}
@@ -243,7 +265,7 @@ function BRConversionPage() {
                           fontSize={11}
                           fill="#333"
                         >
-                          {`${Number(value).toFixed(2)}%`}
+                          {displayVal}
                         </text>
                       );
                     }}

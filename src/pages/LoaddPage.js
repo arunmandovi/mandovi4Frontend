@@ -25,7 +25,7 @@ import { fetchData } from "../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
 function LoaddPage() {
-  const navigate = useNavigate(); // For navigation
+  const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
@@ -61,13 +61,23 @@ function LoaddPage() {
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
+        // If no month is selected, try all months but filter out empty ones.
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
+
         for (const m of activeMonths) {
           const query = `?groupBy=city&month=${m}`;
           const data = await fetchData(`/api/loadd/loadd_summary${query}`);
-          combined.push({ month: m, data: data || [] });
+
+          // Only push month if it has valid data, OR if user explicitly selected it.
+          if (
+            (data && data.length > 0) ||
+            (months.length > 0 && months.includes(m))
+          ) {
+            combined.push({ month: m, data });
+          }
         }
+
         setSummary(combined);
       } catch (err) {
         console.error("fetchCitySummary error:", err);
@@ -137,14 +147,21 @@ function LoaddPage() {
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
 
+  // Detect if the selected growth is percentage-based
+  const isPercentageGrowth = selectedGrowth?.includes("%");
+
   // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h4">
-          LOAD REPORT (City-wise)
-        </Typography>
-        
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">LOAD REPORT (City-wise)</Typography>
       </Box>
 
       {/* Filters */}
@@ -156,7 +173,7 @@ function LoaddPage() {
             value={months}
             onChange={(e) => setMonths(e.target.value)}
             renderValue={(selected) =>
-              selected && selected.length ? selected.join(", ") : "All"
+              selected && selected.length ? selected.join(", ") : "Auto Filter"
             }
           >
             {monthOptions.map((m) => (
@@ -184,6 +201,8 @@ function LoaddPage() {
 
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
+      ) : summary.length === 0 ? (
+        <Typography>No data available for the selected criteria.</Typography>
       ) : (
         <Box
           sx={{
@@ -228,14 +247,10 @@ function LoaddPage() {
                   dot={{ r: 3 }}
                   isAnimationActive={false}
                 >
-                  {/* Always show value on each point formatted as xx.xx% */}
                   <LabelList
                     dataKey={key}
                     position="top"
                     fontSize={11}
-                    formatter={(val) =>
-                      isNaN(val) ? "" : `${val.toFixed(2)}%`
-                    }
                     content={(props) => {
                       const { x, y, value } = props;
                       if (value == null) return null;
