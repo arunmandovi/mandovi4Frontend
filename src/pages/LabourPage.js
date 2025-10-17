@@ -53,7 +53,7 @@ function LabourPage() {
     "Free Service Growth %": "growthFreeService",
     "PMS Growth %": "growthPMS",
     "FPR Growth %": "growthFPR",
-    "RR Growth %": "growthRR",
+    "RR Growth %": "growthRunningRepair",
     "Others Growth %": "growthOthers",
   };
 
