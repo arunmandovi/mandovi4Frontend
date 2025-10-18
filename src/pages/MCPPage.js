@@ -35,7 +35,7 @@ function MCPPage() {
     "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
 
-  const growthOptions = ["MCP NO"];
+  const growthOptions = ["MCP NO"]; // You can add % growth ones here later if needed
 
   const growthKeyMap = {
     "MCP NO": "mcp",
@@ -105,13 +105,28 @@ function MCPPage() {
     return undefined;
   };
 
+  // ---------- Build Chart Data ----------
   const buildChartData = (summaryArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const citySet = new Set();
+
     summaryArr.forEach(({ data }) => {
       (data || []).forEach((row) => citySet.add(readCityName(row)));
     });
-    const allCities = Array.from(citySet);
+
+    // ---------- Fixed city order ----------
+    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+    const allCitiesUnordered = Array.from(citySet);
+    const allCities = [
+      ...preferredOrder.filter((c) =>
+        allCitiesUnordered.some((x) => x.toLowerCase() === c.toLowerCase())
+      ),
+      ...allCitiesUnordered
+        .filter(
+          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
+        )
+        .sort((a, b) => a.localeCompare(b)),
+    ];
 
     const result = summaryArr.map(({ month, data }) => {
       const entry = { month };
@@ -129,8 +144,46 @@ function MCPPage() {
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
 
-  // Detect if the selected growth is percentage-based
-  const isPercentageGrowth = selectedGrowth?.includes("%");
+  // ✅ Dynamic check if % should be shown or not
+  const showPercentage = selectedGrowth?.includes("%");
+
+  // ---------- Custom Tooltip ----------
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+      const sortedPayload = [
+        ...payload.filter((p) =>
+          preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
+        ),
+        ...payload.filter(
+          (p) => !preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
+        ),
+      ];
+
+      return (
+        <Box
+          sx={{
+            background: "white",
+            border: "1px solid #ccc",
+            borderRadius: 1,
+            p: 1,
+          }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {label}
+          </Typography>
+          {sortedPayload.map((entry, i) => (
+            <Typography key={i} variant="body2" sx={{ color: entry.color }}>
+              {`${entry.name}: ${entry.value?.toFixed(2)}${
+                showPercentage ? "%" : ""
+              }`}
+            </Typography>
+          ))}
+        </Box>
+      );
+    }
+    return null;
+  };
 
   // ---------- Render ----------
   return (
@@ -211,19 +264,23 @@ function MCPPage() {
               <YAxis
                 tick={{ fontSize: 12 }}
                 label={{
-                  value: isPercentageGrowth ? "Growth %" : "Value",
+                  value: showPercentage ? "Growth %" : "Value",
                   angle: -90,
                   position: "insideLeft",
                 }}
               />
-              <Tooltip
-                formatter={(value) =>
-                  isPercentageGrowth
-                    ? `${value.toFixed(2)}%`
-                    : value.toFixed(2)
-                }
+              <Tooltip content={<CustomTooltip />} />
+              <Legend
+                wrapperStyle={{
+                  display: "flex",
+                  flexDirection: "row",
+                }}
+                payload={cityKeys.map((key, idx) => ({
+                  value: key,
+                  type: "line",
+                  color: `hsl(${(idx * 60) % 360}, 70%, 45%)`,
+                }))}
               />
-              <Legend />
 
               {cityKeys.map((key, idx) => (
                 <Line
@@ -242,9 +299,9 @@ function MCPPage() {
                     content={(props) => {
                       const { x, y, value } = props;
                       if (value == null) return null;
-                      const displayVal = isPercentageGrowth
-                        ? `${Number(value).toFixed(2)}%`
-                        : Number(value).toFixed(2);
+                      const displayVal = `${Number(value).toFixed(2)}${
+                        showPercentage ? "%" : ""
+                      }`;
                       return (
                         <text
                           x={x}

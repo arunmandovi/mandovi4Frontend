@@ -55,11 +55,13 @@ function MSGPPage() {
     "Others Growth %": "growthOthers",
   };
 
+  // ✅ Define preferred city order here
+  const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+
   // ---------- Fetch city summary ----------
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
-        // If no month is selected, try all months but filter out empty ones.
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
 
@@ -67,7 +69,6 @@ function MSGPPage() {
           const query = `?groupBy=city&month=${m}`;
           const data = await fetchData(`/api/msgp/msgp_summary${query}`);
 
-          // Only push month if it has valid data, OR if user explicitly selected it.
           if (
             (data && data.length > 0) ||
             (months.length > 0 && months.includes(m))
@@ -124,14 +125,22 @@ function MSGPPage() {
   const buildChartData = (summaryArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const citySet = new Set();
+
     summaryArr.forEach(({ data }) => {
       (data || []).forEach((row) => citySet.add(readCityName(row)));
     });
+
     const allCities = Array.from(citySet);
+
+    // ✅ Sort cities using preferred order first, then alphabetical for others
+    const orderedCities = [
+      ...preferredOrder.filter((c) => allCities.includes(c)),
+      ...allCities.filter((c) => !preferredOrder.includes(c)).sort(),
+    ];
 
     const result = summaryArr.map(({ month, data }) => {
       const entry = { month };
-      allCities.forEach((c) => (entry[c] = 0));
+      orderedCities.forEach((c) => (entry[c] = 0));
       (data || []).forEach((row) => {
         const city = readCityName(row);
         const val = readGrowthValue(row, apiKey);
@@ -140,12 +149,12 @@ function MSGPPage() {
       });
       return entry;
     });
-    return { data: result, keys: allCities };
+
+    return { data: result, keys: orderedCities };
   };
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
 
-  // Detect if the selected growth is percentage-based
   const isPercentageGrowth = selectedGrowth?.includes("%");
 
   // ---------- Render ----------
@@ -235,6 +244,7 @@ function MSGPPage() {
               <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
               <Legend />
 
+              {/* ✅ Lines will follow preferred city order */}
               {cityKeys.map((key, idx) => (
                 <Line
                   key={key}

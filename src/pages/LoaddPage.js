@@ -61,7 +61,6 @@ function LoaddPage() {
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
-        // If no month is selected, try all months but filter out empty ones.
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
 
@@ -69,7 +68,6 @@ function LoaddPage() {
           const query = `?groupBy=city&month=${m}`;
           const data = await fetchData(`/api/loadd/loadd_summary${query}`);
 
-          // Only push month if it has valid data, OR if user explicitly selected it.
           if (
             (data && data.length > 0) ||
             (months.length > 0 && months.includes(m))
@@ -126,10 +124,24 @@ function LoaddPage() {
   const buildChartData = (summaryArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const citySet = new Set();
+
     summaryArr.forEach(({ data }) => {
       (data || []).forEach((row) => citySet.add(readCityName(row)));
     });
-    const allCities = Array.from(citySet);
+
+    // ---------- Fixed city order ----------
+    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+    const allCitiesUnordered = Array.from(citySet);
+    const allCities = [
+      ...preferredOrder.filter((c) =>
+        allCitiesUnordered.some((x) => x.toLowerCase() === c.toLowerCase())
+      ),
+      ...allCitiesUnordered
+        .filter(
+          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
+        )
+        .sort((a, b) => a.localeCompare(b)),
+    ];
 
     const result = summaryArr.map(({ month, data }) => {
       const entry = { month };
@@ -146,9 +158,46 @@ function LoaddPage() {
   };
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
-
-  // Detect if the selected growth is percentage-based
   const isPercentageGrowth = selectedGrowth?.includes("%");
+
+  // ---------- Custom Tooltip ----------
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      // Sort tooltip data in the same fixed city order
+      const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+      const sortedPayload = [
+        ...payload.filter((p) =>
+          preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
+        ),
+        ...payload.filter(
+          (p) => !preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
+        ),
+      ];
+
+      return (
+        <Box
+          sx={{
+            background: "white",
+            border: "1px solid #ccc",
+            borderRadius: 1,
+            p: 1,
+          }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {label}
+          </Typography>
+          {sortedPayload.map((entry, i) => (
+            <Typography
+              key={i}
+              variant="body2"
+              sx={{ color: entry.color }}
+            >{`${entry.name}: ${entry.value?.toFixed(2)}%`}</Typography>
+          ))}
+        </Box>
+      );
+    }
+    return null;
+  };
 
   // ---------- Render ----------
   return (
@@ -234,8 +283,18 @@ function LoaddPage() {
                   position: "insideLeft",
                 }}
               />
-              <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
-              <Legend />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend
+                wrapperStyle={{
+                  display: "flex",
+                  flexDirection: "row",
+                }}
+                payload={cityKeys.map((key, idx) => ({
+                  value: key,
+                  type: "line",
+                  color: `hsl(${(idx * 60) % 360}, 70%, 45%)`,
+                }))}
+              />
 
               {cityKeys.map((key, idx) => (
                 <Line

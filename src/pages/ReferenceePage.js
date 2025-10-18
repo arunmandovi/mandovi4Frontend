@@ -51,7 +51,6 @@ function ReferenceePage() {
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
-        // If no month is selected, try all months but filter out empty ones.
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
 
@@ -59,7 +58,6 @@ function ReferenceePage() {
           const query = `?groupBy=city&month=${m}`;
           const data = await fetchData(`/api/referencee/referencee_summary${query}`);
 
-          // Only push month if it has valid data, OR if user explicitly selected it.
           if (
             (data && data.length > 0) ||
             (months.length > 0 && months.includes(m))
@@ -114,12 +112,28 @@ function ReferenceePage() {
   };
 
   const buildChartData = (summaryArr) => {
+    if (!selectedGrowth) return { data: [], keys: [] };
+
     const apiKey = growthKeyMap[selectedGrowth];
     const citySet = new Set();
+
     summaryArr.forEach(({ data }) => {
       (data || []).forEach((row) => citySet.add(readCityName(row)));
     });
-    const allCities = Array.from(citySet);
+
+    // ---------- Fixed city order ----------
+    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+    const allCitiesUnordered = Array.from(citySet);
+    const allCities = [
+      ...preferredOrder.filter((c) =>
+        allCitiesUnordered.some((x) => x.toLowerCase() === c.toLowerCase())
+      ),
+      ...allCitiesUnordered
+        .filter(
+          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
+        )
+        .sort((a, b) => a.localeCompare(b)),
+    ];
 
     const result = summaryArr.map(({ month, data }) => {
       const entry = { month };
@@ -136,9 +150,46 @@ function ReferenceePage() {
   };
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
-
-  // Detect if the selected growth is percentage-based
   const isPercentageGrowth = selectedGrowth?.includes("%");
+
+  // ---------- Custom Tooltip ----------
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      // Sort tooltip data in the same fixed city order
+      const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+      const sortedPayload = [
+        ...payload.filter((p) =>
+          preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
+        ),
+        ...payload.filter(
+          (p) => !preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
+        ),
+      ];
+
+      return (
+        <Box
+          sx={{
+            background: "white",
+            border: "1px solid #ccc",
+            borderRadius: 1,
+            p: 1,
+          }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {label}
+          </Typography>
+          {sortedPayload.map((entry, i) => (
+            <Typography
+              key={i}
+              variant="body2"
+              sx={{ color: entry.color }}
+            >{`${entry.name}: ${entry.value?.toFixed(2)}${isPercentageGrowth ? "%" : ""}`}</Typography>
+          ))}
+        </Box>
+      );
+    }
+    return null;
+  };
 
   // ---------- Render ----------
   return (
@@ -219,13 +270,23 @@ function ReferenceePage() {
               <YAxis
                 tick={{ fontSize: 12 }}
                 label={{
-                  value: "Growth %",
+                  value: "Growth" + (isPercentageGrowth ? " %" : ""),
                   angle: -90,
                   position: "insideLeft",
                 }}
               />
-              <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
-              <Legend />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend
+                wrapperStyle={{
+                  display: "flex",
+                  flexDirection: "row",
+                }}
+                payload={cityKeys.map((key, idx) => ({
+                  value: key,
+                  type: "line",
+                  color: `hsl(${(idx * 60) % 360}, 70%, 45%)`,
+                }))}
+              />
 
               {cityKeys.map((key, idx) => (
                 <Line
@@ -252,7 +313,7 @@ function ReferenceePage() {
                           fontSize={11}
                           fill="#333"
                         >
-                          {`${Number(value).toFixed(2)}%`}
+                          {`${Number(value).toFixed(2)}${isPercentageGrowth ? "%" : ""}`}
                         </text>
                       );
                     }}

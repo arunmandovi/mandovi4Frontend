@@ -146,7 +146,7 @@ function MGAPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">LOAD REPORT (City-wise)</Typography>
+        <Typography variant="h4">MGA REPORT (City-wise)</Typography>
       </Box>
 
       {/* Filters */}
