@@ -36,15 +36,15 @@ function ReferenceePage() {
   ];
 
   const growthOptions = [
-    "E-B",
-    "E-R",
-    "B-R",
+    "E-B %",
+    "E-R %",
+    "B-R %",
   ];
 
   const growthKeyMap = {
-    "E-B": "percentageEnquiryBooking",
-    "E-R": "percentageEnquiryInvoice",
-    "B-R": "percentageBookingInvoice",
+    "E-B %": "percentageEnquiryBooking",
+    "E-R %": "percentageEnquiryInvoice",
+    "B-R %": "percentageBookingInvoice",
   };
 
   // ---------- Fetch city summary ----------

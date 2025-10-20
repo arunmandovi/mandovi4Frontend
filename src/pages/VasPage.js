@@ -36,19 +36,31 @@ function VASPage() {
   ];
 
   const growthOptions = [
-    "Diagnostic PMS Load %",
+    "Diagnostic Charges %",
     "Wheel Alignment Age %",
     "Wheel Balancing Age %",
     "Exterior Cleaning Age %",
-    "Interior Cleaning Age %"
+    "Interior Cleaning Age %",
+    "UndreBody Coating Age %",
+    "TopBody Coating Age %",
+    "Rat Mesh Age %",
+    "AC Evaporator Age %",
+    "AC Vent Age %",
+    "Plastic Restorer Age %"
   ];
 
   const growthKeyMap = {
-    "Diagnostic PMS Load %": "diagnosticChargesPercentagePMSLoad",
+    "Diagnostic Charges %": "diagnosticChargesPercentagePMSLoad",
     "Wheel Alignment Age %": "wheelAlignmentPercentageAge",
     "Wheel Balancing Age %": "wheelBalancingPercentageAge",
     "Exterior Cleaning Age %": "exteriorCleaningPercentageAge",
     "Interior Cleaning Age %": "interiorCleaningPercentageAge",
+    "UndreBody Coating Age %": "underBodyCoatingPercentageAge",
+    "TopBody Coating Age %": "topBodyPercentageAge",
+    "Rat Mesh Age %": "ratMeshPercentageAge",
+    "AC Evaporator Age %": "acEvaporatorPercentageAge",
+    "AC Vent Age %": "acVentPercentageAge",
+    "Plastic Restorer Age %": "plasticRestorerPercentageAge"
   };
 
   // ---------- Fetch city summary ----------

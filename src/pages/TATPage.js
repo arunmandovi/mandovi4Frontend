@@ -44,6 +44,9 @@ function TATPage() {
     PMS: "paidService",
   };
 
+  // Preferred city order for tooltip
+  const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+
   // ---------- Fetch city summary ----------
   useEffect(() => {
     const fetchCitySummary = async () => {
@@ -82,7 +85,9 @@ function TATPage() {
       row.name ||
       row.Name ||
       ""
-    ).toString().trim();
+    )
+      .toString()
+      .trim();
   };
 
   const readGrowthValue = (row, apiKey) => {
@@ -108,28 +113,28 @@ function TATPage() {
     return undefined;
   };
 
+  // Converts seconds (or numeric time) into HH:MM:SS
+  const formatSecondsToHHMMSS = (seconds) => {
+    if (isNaN(seconds)) return "00:00:00";
+    const h = Math.floor(seconds / 3600)
+      .toString()
+      .padStart(2, "0");
+    const m = Math.floor((seconds % 3600) / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = Math.floor(seconds % 60)
+      .toString()
+      .padStart(2, "0");
+    return `${h}:${m}:${s}`;
+  };
+
   const buildChartData = (summaryArr) => {
-    if (!selectedGrowth) return { data: [], keys: [] };
     const apiKey = growthKeyMap[selectedGrowth];
     const citySet = new Set();
-
     summaryArr.forEach(({ data }) => {
       (data || []).forEach((row) => citySet.add(readCityName(row)));
     });
-
-    // ---------- Fixed city order ----------
-    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
-    const allCitiesUnordered = Array.from(citySet);
-    const allCities = [
-      ...preferredOrder.filter((c) =>
-        allCitiesUnordered.some((x) => x.toLowerCase() === c.toLowerCase())
-      ),
-      ...allCitiesUnordered
-        .filter(
-          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
-        )
-        .sort((a, b) => a.localeCompare(b)),
-    ];
+    const allCities = Array.from(citySet);
 
     const result = summaryArr.map(({ month, data }) => {
       const entry = { month };
@@ -137,7 +142,16 @@ function TATPage() {
       (data || []).forEach((row) => {
         const city = readCityName(row);
         const val = readGrowthValue(row, apiKey);
-        const parsed = parseFloat(String(val).replace("%", "").trim());
+        let parsed = 0;
+
+        if (typeof val === "string" && val.includes(":")) {
+          // Already in HH:MM:SS format
+          const parts = val.split(":").map(Number);
+          parsed = parts[0] * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+        } else {
+          parsed = parseFloat(String(val).replace("%", "").trim());
+        }
+
         entry[city] = isNaN(parsed) ? 0 : parsed;
       });
       return entry;
@@ -147,47 +161,44 @@ function TATPage() {
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
 
-  // ---------- Determine if % should be shown ----------
-  const isPercentageGrowth = selectedGrowth?.includes("%");
-
   // ---------- Custom Tooltip ----------
   const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
-      const sortedPayload = [
-        ...payload.filter((p) =>
-          preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
-        ),
-        ...payload.filter(
-          (p) => !preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
-        ),
-      ];
+    if (!active || !payload || payload.length === 0) return null;
 
-      return (
-        <Box
-          sx={{
-            background: "white",
-            border: "1px solid #ccc",
-            borderRadius: 1,
-            p: 1,
-          }}
-        >
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {label}
+    // Reorder cities: Bangalore → Mysore → Mangalore → others alphabetically
+    const sortedPayload = [...payload].sort((a, b) => {
+      const aCity = a.name;
+      const bCity = b.name;
+      const aIndex = preferredOrder.indexOf(aCity);
+      const bIndex = preferredOrder.indexOf(bCity);
+
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return aCity.localeCompare(bCity);
+    });
+
+    return (
+      <Box
+        sx={{
+          background: "#fff",
+          border: "1px solid #ccc",
+          borderRadius: 1,
+          p: 1.2,
+          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+        }}
+      >
+        <Typography sx={{ fontWeight: "bold", mb: 0.5 }}>{label}</Typography>
+        {sortedPayload.map((entry, index) => (
+          <Typography
+            key={index}
+            sx={{ color: entry.stroke, fontSize: 13, lineHeight: 1.3 }}
+          >
+            {entry.name}: {formatSecondsToHHMMSS(entry.value)}
           </Typography>
-          {sortedPayload.map((entry, i) => (
-            <Typography
-              key={i}
-              variant="body2"
-              sx={{ color: entry.color }}
-            >
-              {`${entry.name}: ${entry.value?.toFixed(2)}${isPercentageGrowth ? "%" : ""}`}
-            </Typography>
-          ))}
-        </Box>
-      );
-    }
-    return null;
+        ))}
+      </Box>
+    );
   };
 
   // ---------- Render ----------
@@ -234,13 +245,13 @@ function TATPage() {
             variant={selectedGrowth === g ? "contained" : "outlined"}
             onClick={() => setSelectedGrowth(g)}
           >
-            {g.replace(" Growth %", "")}
+            {g}
           </Button>
         ))}
       </Box>
 
       {!selectedGrowth ? (
-        <Typography>👆 Select a growth type to view the chart below</Typography>
+        <Typography>👆 Select a service type to view the chart below</Typography>
       ) : summary.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
@@ -268,24 +279,15 @@ function TATPage() {
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis
                 tick={{ fontSize: 12 }}
+                tickFormatter={(val) => formatSecondsToHHMMSS(val)}
                 label={{
-                  value: "Growth" + (isPercentageGrowth ? " %" : ""),
+                  value: "TAT (HH:MM:SS)",
                   angle: -90,
                   position: "insideLeft",
                 }}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Legend
-                wrapperStyle={{
-                  display: "flex",
-                  flexDirection: "row",
-                }}
-                payload={cityKeys.map((key, idx) => ({
-                  value: key,
-                  type: "line",
-                  color: `hsl(${(idx * 60) % 360}, 70%, 45%)`,
-                }))}
-              />
+              <Legend />
 
               {cityKeys.map((key, idx) => (
                 <Line
@@ -312,7 +314,7 @@ function TATPage() {
                           fontSize={11}
                           fill="#333"
                         >
-                          {`${Number(value).toFixed(2)}${isPercentageGrowth ? "%" : ""}`}
+                          {formatSecondsToHHMMSS(value)}
                         </text>
                       );
                     }}

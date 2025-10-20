@@ -36,6 +36,8 @@ function RevenuePage() {
   ];
 
   const growthOptions = [
+    "SR LABOUR Growth %",
+    "BR LABOUR Growth %",
     "SR&BR LABOUR Growth %",
     "SR Spares Growth %",
     "BR Spares Growth %",
@@ -44,6 +46,8 @@ function RevenuePage() {
   ];
 
   const growthKeyMap = {
+    "SR LABOUR Growth %": "growthSRLabour",
+    "BR LABOUR Growth %": "growthBRLabour",
     "SR&BR LABOUR Growth %": "growthSRBRLabour",
     "SR Spares Growth %": "growthSRSpares",
     "BR Spares Growth %": "growthBRSpares",
