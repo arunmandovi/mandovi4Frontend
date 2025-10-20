@@ -49,7 +49,7 @@ function LabourPage() {
   const growthKeyMap = {
     "Service Growth %": "growthService",
     "BodyShop Growth %": "growthBodyShop",
-    "SR&BR Growth %": "growthSRAndBR",
+    "SR&BR Growth %": "growthSrBr",
     "Free Service Growth %": "growthFreeService",
     "PMS Growth %": "growthPMS",
     "FPR Growth %": "growthFPR",
