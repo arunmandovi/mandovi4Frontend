@@ -51,6 +51,8 @@ import BatteryTyreBarChartPage from "./pages/BarChartView/BatteryTyreBarChartPag
 import BRConversionBarChartPage from "./pages/BarChartView/BRConversionBarChartPage";
 import MSGPBarChartPage from "./pages/BarChartView/MSGPBarChartPage";
 import MSGPProfitBarChartPage from "./pages/BarChartView/MSGPProfitBarChartPage";
+import OilBarChartPage from "./pages/BarChartView/OilBarChartPage";
+import PMSPartsBarChartPage from "./pages/BarChartView/PMSPartsBarChartPage";
 
 import "./App.css";
 
@@ -115,6 +117,8 @@ function App() {
           <Route path="br_conversion-bar-chart" element={<BRConversionBarChartPage />} />
           <Route path="msgp-bar-chart" element={<MSGPBarChartPage />} />
           <Route path="msgp_profit-bar-chart" element={<MSGPProfitBarChartPage />} />
+          <Route path="oil-bar-chart" element={<OilBarChartPage />} />
+          <Route path="pms_parts-bar-chart" element={<PMSPartsBarChartPage />} />
         </Route>
       </Routes>
     </Router>

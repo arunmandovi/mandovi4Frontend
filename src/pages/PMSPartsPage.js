@@ -75,7 +75,7 @@ function PMSPartsPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&month=${m}`;
+          const query = `?groupBy=city&months=${m}`;
           const data = await fetchData(`/api/pms_parts/pms_parts_summary${query}`);
 
           if (
@@ -221,6 +221,15 @@ function PMSPartsPage() {
         }}
       >
         <Typography variant="h4">PMS PARTS REPORT (City-wise)</Typography>
+
+         {/* Bar Chart Navigation Button */}
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => navigate("/DashboardHome/pms_parts-bar-chart")}
+                        >
+                          Bar Chart
+                        </Button>
       </Box>
 
       {/* Filters */}

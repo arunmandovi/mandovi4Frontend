@@ -11,8 +11,8 @@ import {
   Button,
 } from "@mui/material";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -21,10 +21,10 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import { fetchData } from "../api/uploadService";
+import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function OilPage() {
+function PMSPartsBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -36,37 +36,53 @@ function OilPage() {
   ];
 
   const growthOptions = [
-    "Full Synthetic QTY %",
-    "Semi Synthetic QTY %",
-    "Full & Semi Synthetic QTY %",
+    "Air filter %",
+    "Belt water pump %",
+    "Brake fluid %",
+    "Coolant %",
+    "Fuel Filter %",
+    "Oil filter %",
+    "Spark plug %",
+    "7 PARTS PMS %",
+    "DRAIN PLUG GASKET",
+    "ISG BELT GENERATOR",
+    "CNG FILTER",
+    "3 PARTS PMS",
+    "Grand Total",
   ];
 
   const growthKeyMap = {
-    "Full Synthetic QTY %": "fullSyntheticPercentageQTY",
-    "Semi Synthetic QTY %": "semiSyntheticPercentageQTY",
-    "Full & Semi Synthetic QTY %": "fullSemiSyntheticPercentageQTY",
+    "Air filter %": "airFilter",
+    "Belt water pump %": "beltWaterPump",
+    "Brake fluid %": "brakeFluid",
+    "Coolant %": "coolant",
+    "Fuel Filter %": "fuelFilter",
+    "Oil filter %": "oilFilter",
+    "Spark plug %": "sparkPlug",
+    "7 PARTS PMS %": "sevenPartsPMS",
+    "DRAIN PLUG GASKET": "drainPlugGasket",
+    "ISG BELT GENERATOR": "isgBeltGenerator",
+    "CNG FILTER": "cngFilter",
+    "3 PARTS PMS": "threePartsPMS",
+    "Grand Total": "grandTotal",
   };
 
   // ---------- Fetch city summary ----------
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
+        // Prepare month list: all months if none selected
         const activeMonths = months.length ? months : monthOptions;
-        const combined = [];
+        const monthQuery = activeMonths.join(",");
+        const query = `?groupBy=city&months=${monthQuery}`;
 
-        for (const m of activeMonths) {
-          const query = `?groupBy=city&months=${m}`;
-          const data = await fetchData(`/api/oil/oil_summary${query}`);
+        const data = await fetchData(`/api/pms_parts/pms_parts_summary${query}`);
 
-          if (
-            (data && data.length > 0) ||
-            (months.length > 0 && months.includes(m))
-          ) {
-            combined.push({ month: m, data });
-          }
+        if (data && data.length > 0) {
+          setSummary(data);
+        } else {
+          setSummary([]);
         }
-
-        setSummary(combined);
       } catch (err) {
         console.error("fetchCitySummary error:", err);
       }
@@ -111,17 +127,24 @@ function OilPage() {
     return undefined;
   };
 
-  const buildChartData = (summaryArr) => {
+  // ---------- Build averaged dataset ----------
+  const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
-    const citySet = new Set();
+    const cityTotals = {};
+    const cityCounts = {};
 
-    summaryArr.forEach(({ data }) => {
-      (data || []).forEach((row) => citySet.add(readCityName(row)));
+    (dataArr || []).forEach((row) => {
+      const city = readCityName(row);
+      const val = readGrowthValue(row, apiKey);
+      const parsed = parseFloat(String(val).replace("%", "").trim());
+      if (!isNaN(parsed)) {
+        cityTotals[city] = (cityTotals[city] || 0) + parsed;
+        cityCounts[city] = (cityCounts[city] || 0) + 1;
+      }
     });
 
-    // ---------- Fixed city order ----------
     const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
-    const allCitiesUnordered = Array.from(citySet);
+    const allCitiesUnordered = Object.keys(cityTotals);
     const allCities = [
       ...preferredOrder.filter((c) =>
         allCitiesUnordered.some((x) => x.toLowerCase() === c.toLowerCase())
@@ -133,37 +156,18 @@ function OilPage() {
         .sort((a, b) => a.localeCompare(b)),
     ];
 
-    const result = summaryArr.map(({ month, data }) => {
-      const entry = { month };
-      allCities.forEach((c) => (entry[c] = 0));
-      (data || []).forEach((row) => {
-        const city = readCityName(row);
-        const val = readGrowthValue(row, apiKey);
-        const parsed = parseFloat(String(val).replace("%", "").trim());
-        entry[city] = isNaN(parsed) ? 0 : parsed;
-      });
-      return entry;
-    });
-    return { data: result, keys: allCities };
+    return allCities.map((city) => ({
+      city,
+      value: cityCounts[city] ? cityTotals[city] / cityCounts[city] : 0,
+    }));
   };
 
-  const { data: chartData, keys: cityKeys } = buildChartData(summary);
-  const isPercentageGrowth = selectedGrowth?.includes("%");
+  const chartData =
+    selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
   // ---------- Custom Tooltip ----------
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
-      // Sort tooltip data in the same fixed city order
-      const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
-      const sortedPayload = [
-        ...payload.filter((p) =>
-          preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
-        ),
-        ...payload.filter(
-          (p) => !preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
-        ),
-      ];
-
       return (
         <Box
           sx={{
@@ -174,15 +178,11 @@ function OilPage() {
           }}
         >
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {label}
+            {payload[0].payload.city}
           </Typography>
-          {sortedPayload.map((entry, i) => (
-            <Typography
-              key={i}
-              variant="body2"
-              sx={{ color: entry.color }}
-            >{`${entry.name}: ${entry.value?.toFixed(2)}%`}</Typography>
-          ))}
+          <Typography variant="body2">
+            {`${payload[0].value.toFixed(2)}%`}
+          </Typography>
         </Box>
       );
     }
@@ -200,16 +200,16 @@ function OilPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">OIL REPORT (City-wise)</Typography>
+        <Typography variant="h4">PMS PARTS REPORT (City-wise)</Typography>
 
-         {/* Bar Chart Navigation Button */}
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          onClick={() => navigate("/DashboardHome/oil-bar-chart")}
-                        >
-                          Bar Chart
-                        </Button>
+        {/* Back to Graph Button */}
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => navigate("/DashboardHome/pms_parts")}
+        >
+          Graph
+        </Button>
       </Box>
 
       {/* Filters */}
@@ -221,7 +221,7 @@ function OilPage() {
             value={months}
             onChange={(e) => setMonths(e.target.value)}
             renderValue={(selected) =>
-              selected && selected.length ? selected.join(", ") : "Auto Filter"
+              selected && selected.length ? selected.join(", ") : "All Months"
             }
           >
             {monthOptions.map((m) => (
@@ -268,12 +268,12 @@ function OilPage() {
           </Typography>
 
           <ResponsiveContainer width="100%" height="92%">
-            <LineChart
+            <BarChart
               data={chartData}
               margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <XAxis dataKey="city" tick={{ fontSize: 12 }} />
               <YAxis
                 tick={{ fontSize: 12 }}
                 label={{
@@ -283,51 +283,36 @@ function OilPage() {
                 }}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Legend
-                wrapperStyle={{
-                  display: "flex",
-                  flexDirection: "row",
-                }}
-                payload={cityKeys.map((key, idx) => ({
-                  value: key,
-                  type: "line",
-                  color: `hsl(${(idx * 60) % 360}, 70%, 45%)`,
-                }))}
-              />
+              <Legend />
 
-              {cityKeys.map((key, idx) => (
-                <Line
-                  key={key}
-                  dataKey={key}
-                  type="monotone"
-                  stroke={`hsl(${(idx * 60) % 360}, 70%, 45%)`}
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  isAnimationActive={false}
-                >
-                  <LabelList
-                    dataKey={key}
-                    position="top"
-                    fontSize={11}
-                    content={(props) => {
-                      const { x, y, value } = props;
-                      if (value == null) return null;
-                      return (
-                        <text
-                          x={x}
-                          y={y - 5}
-                          textAnchor="middle"
-                          fontSize={11}
-                          fill="#333"
-                        >
-                          {`${Number(value).toFixed(2)}%`}
-                        </text>
-                      );
-                    }}
-                  />
-                </Line>
-              ))}
-            </LineChart>
+              <Bar
+                dataKey="value"
+                fill="#1976d2"
+                barSize={35}
+                isAnimationActive={false}
+              >
+                <LabelList
+                  dataKey="value"
+                  position="top"
+                  fontSize={11}
+                  content={(props) => {
+                    const { x, y, value } = props;
+                    if (value == null) return null;
+                    return (
+                      <text
+                        x={x}
+                        y={y - 5}
+                        textAnchor="middle"
+                        fontSize={11}
+                        fill="#333"
+                      >
+                        {`${Number(value).toFixed(2)}%`}
+                      </text>
+                    );
+                  }}
+                />
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </Box>
       )}
@@ -335,4 +320,4 @@ function OilPage() {
   );
 }
 
-export default OilPage;
+export default PMSPartsBarChartPage;
