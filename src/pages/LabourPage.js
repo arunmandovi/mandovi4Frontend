@@ -65,7 +65,7 @@ function LabourPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&month=${m}`;
+          const query = `?groupBy=city&months=${m}`;
           const data = await fetchData(`/api/labour/labour_summary${query}`);
 
           if (
@@ -158,12 +158,10 @@ function LabourPage() {
   };
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
-  const isPercentageGrowth = selectedGrowth?.includes("%");
 
   // ---------- Custom Tooltip ----------
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      // Sort tooltip data in the same fixed city order
       const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
       const sortedPayload = [
         ...payload.filter((p) =>
@@ -202,6 +200,7 @@ function LabourPage() {
   // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
+      {/* Header section with title and Bar Chart button */}
       <Box
         sx={{
           display: "flex",
@@ -211,6 +210,15 @@ function LabourPage() {
         }}
       >
         <Typography variant="h4">LABOUR REPORT (City-wise)</Typography>
+
+        {/* Bar Chart Navigation Button */}
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => navigate("/DashboardHome/labour-bar-chart")}
+        >
+          Bar Chart
+        </Button>
       </Box>
 
       {/* Filters */}

@@ -55,7 +55,7 @@ function MSGPProfitPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&month=${m}`;
+          const query = `?groupBy=city&months=${m}`;
           const data = await fetchData(`/api/msgp_profit/msgp_profit_summary${query}`);
 
           if (
@@ -201,6 +201,15 @@ function MSGPProfitPage() {
         }}
       >
         <Typography variant="h4">MSGP PROFIT REPORT (City-wise)</Typography>
+
+        {/* Bar Chart Navigation Button */}
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => navigate("/DashboardHome/msgp_profit-bar-chart")}
+                        >
+                          Bar Chart
+                        </Button>
       </Box>
 
       {/* Filters */}

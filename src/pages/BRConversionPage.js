@@ -64,7 +64,7 @@ function BRConversionPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&month=${m}`;
+          const query = `?groupBy=city&months=${m}`;
           const data = await fetchData(`/api/br_conversion/br_conversion_summary${query}`);
           if ((data && data.length > 0) ||
               (months.length > 0 && months.includes(m))) {
@@ -222,6 +222,15 @@ function BRConversionPage() {
         }}
       >
         <Typography variant="h4">BR CONVERSION REPORT (City-wise)</Typography>
+
+        {/* Bar Chart Navigation Button */}
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}
+                        >
+                          Bar Chart
+                        </Button>
       </Box>
 
       {/* Filters */}

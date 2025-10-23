@@ -65,7 +65,7 @@ function LoaddPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&month=${m}`;
+          const query = `?groupBy=city&months=${m}`;
           const data = await fetchData(`/api/loadd/loadd_summary${query}`);
 
           if (
@@ -211,6 +211,15 @@ function LoaddPage() {
         }}
       >
         <Typography variant="h4">LOAD REPORT (City-wise)</Typography>
+
+        {/* Bar Chart Navigation Button */}
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => navigate("/DashboardHome/loadd-bar-chart")}
+                >
+                  Bar Chart
+                </Button>
       </Box>
 
       {/* Filters */}

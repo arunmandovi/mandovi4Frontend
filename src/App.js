@@ -5,7 +5,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import Layout from "./components/Layout"; // ✅ Navbar + Outlet
 
-// Employee dashboard pages
+// Employee dashboard graph pages
 import BatteryTyrePage from "./pages/BatteryTyrePage";
 import BRConversionPage from "./pages/BRConversionPage";
 import LabourPage from "./pages/LabourPage";
@@ -22,6 +22,9 @@ import RevenuePage from "./pages/RevenuePage";
 import SparesPage from "./pages/SparesPage";
 import TATPage from "./pages/TATPage";
 import VasPage from "./pages/VASPage";
+
+//BranchWise Graph View Pages
+import LoaddBranchWisePage from "./pages/BranchWise/LoaddBranchWisePage";
 
 // Admin upload pages
 import BatteryTyreUploadPage from "./pages/FileUpload/BatteryTyreUploadPage";
@@ -41,8 +44,13 @@ import SparesUploadPage from "./pages/FileUpload/SparesUploadPage";
 import TATUploadPage from "./pages/FileUpload/TATUploadPage";
 import VASUploadPage from "./pages/FileUpload/VASUploadPage";
 
-//BranchWise Graph View Pages
-import LoaddBranchWisePage from "./pages/BranchWise/LoaddBranchWisePage";
+// Employee Dashboard BarChart Pages
+import LabourBarChartPage from "./pages/BarChartView/LabourBarChartPage";
+import LoaddBarChartPage from "./pages/BarChartView/LoaddBarChartPage";
+import BatteryTyreBarChartPage from "./pages/BarChartView/BatteryTyreBarChartPage";
+import BRConversionBarChartPage from "./pages/BarChartView/BRConversionBarChartPage";
+import MSGPBarChartPage from "./pages/BarChartView/MSGPBarChartPage";
+import MSGPProfitBarChartPage from "./pages/BarChartView/MSGPProfitBarChartPage";
 
 import "./App.css";
 
@@ -82,6 +90,7 @@ function App() {
           {/* Default route → Battery & Tyre */}
           <Route index element={<Navigate to="battery_tyre" replace />} />
 
+          {/* 🧭 Employee Dashboard Pages */}
           <Route path="battery_tyre" element={<BatteryTyrePage />} />
           <Route path="br_conversion" element={<BRConversionPage />} />
           <Route path="labour" element={<LabourPage />} />
@@ -98,6 +107,14 @@ function App() {
           <Route path="spares" element={<SparesPage />} />
           <Route path="tat" element={<TATPage />} />
           <Route path="vas" element={<VasPage />} />
+
+          {/* 🧭 Employee Dashboard BarChart Pages */}
+          <Route path="labour-bar-chart" element={<LabourBarChartPage />} />
+          <Route path="loadd-bar-chart" element={<LoaddBarChartPage />} />
+          <Route path="battery_tyre-bar-chart" element={<BatteryTyreBarChartPage />} />
+          <Route path="br_conversion-bar-chart" element={<BRConversionBarChartPage />} />
+          <Route path="msgp-bar-chart" element={<MSGPBarChartPage />} />
+          <Route path="msgp_profit-bar-chart" element={<MSGPProfitBarChartPage />} />
         </Route>
       </Routes>
     </Router>
