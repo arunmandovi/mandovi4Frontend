@@ -21,24 +21,34 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import { fetchData } from "../api/uploadService";
+import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function MCPPage() {
+function SparesPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
   const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+    "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct",
     "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
 
-  const growthOptions = ["MCP NO"]; 
+  const growthOptions = [
+    "SR Spares Growth %",
+    "BR Spares Growth %",
+    "SR&BR Spares Growth %",
+    "Battery Growth %",
+    "Tyre Growth %",
+  ];
 
   const growthKeyMap = {
-    "MCP NO": "mcp",
+    "SR Spares Growth %": "growthSRSpares",
+    "BR Spares Growth %": "growthBRSpares",
+    "SR&BR Spares Growth %": "growthSRBRSpares",
+    "Battery Growth %": "growthBattery",
+    "Tyre Growth %": "growthTyre",
   };
 
   // ---------- Fetch city summary ----------
@@ -50,7 +60,7 @@ function MCPPage() {
 
         for (const m of activeMonths) {
           const query = `?groupBy=city&months=${m}`;
-          const data = await fetchData(`/api/mcp/mcp_summary${query}`);
+          const data = await fetchData(`/api/spares/spares_summary${query}`);
 
           if (
             (data && data.length > 0) ||
@@ -105,7 +115,6 @@ function MCPPage() {
     return undefined;
   };
 
-  // ---------- Build Chart Data ----------
   const buildChartData = (summaryArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const citySet = new Set();
@@ -143,13 +152,12 @@ function MCPPage() {
   };
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
-
-  // ✅ Dynamic check if % should be shown or not
-  const showPercentage = selectedGrowth?.includes("%");
+  const isPercentageGrowth = selectedGrowth?.includes("%");
 
   // ---------- Custom Tooltip ----------
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      // Sort tooltip data in the same fixed city order
       const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
       const sortedPayload = [
         ...payload.filter((p) =>
@@ -173,11 +181,11 @@ function MCPPage() {
             {label}
           </Typography>
           {sortedPayload.map((entry, i) => (
-            <Typography key={i} variant="body2" sx={{ color: entry.color }}>
-              {`${entry.name}: ${entry.value?.toFixed(0)}${
-                showPercentage ? "%" : ""
-              }`}
-            </Typography>
+            <Typography
+              key={i}
+              variant="body2"
+              sx={{ color: entry.color }}
+            >{`${entry.name}: ${entry.value?.toFixed(2)}%`}</Typography>
           ))}
         </Box>
       );
@@ -196,13 +204,13 @@ function MCPPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">MCP REPORT (City-wise)</Typography>
+        <Typography variant="h4">SPARES REPORT (City-wise)</Typography>
 
         {/* Bar Chart Navigation Button */}
                         <Button
                           variant="contained"
                           color="secondary"
-                          onClick={() => navigate("/DashboardHome/mcp-bar-chart")}
+                          onClick={() => navigate("/DashboardHome/spares-bar-chart")}
                         >
                           Bar Chart
                         </Button>
@@ -230,17 +238,53 @@ function MCPPage() {
         </FormControl>
       </Box>
 
-      {/* Growth buttons */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
-        {growthOptions.map((g) => (
-          <Button
-            key={g}
-            variant={selectedGrowth === g ? "contained" : "outlined"}
-            onClick={() => setSelectedGrowth(g)}
-          >
-            {g}
-          </Button>
-        ))}
+      {/* 🔹 Stylish Growth Type Buttons */}
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1.2,
+                mb: 2,
+              }}
+            >
+              {growthOptions.map((g, idx) => (
+                <Button
+                  key={g}
+                  variant={selectedGrowth === g ? "contained" : "outlined"}
+                  color={selectedGrowth === g ? "secondary" : "primary"}
+                  sx={{
+                    borderRadius: "20px",
+                    px: 2,
+                    py: 0.5,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    transition: "all 0.3s ease",
+                    background:
+                      selectedGrowth === g
+                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                            (idx * 40 + 20) % 360
+                          }, 70%, 55%))`
+                        : "transparent",
+                    color: selectedGrowth === g ? "white" : "inherit",
+                    boxShadow:
+                      selectedGrowth === g
+                        ? `0 3px 10px rgba(0,0,0,0.15)`
+                        : "none",
+                    "&:hover": {
+                      transform: "scale(1.05)",
+                      background:
+                        selectedGrowth === g
+                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
+                              (idx * 40 + 20) % 360
+                            }, 65%, 50%))`
+                          : "rgba(103,58,183,0.05)",
+                    },
+                  }}
+                  onClick={() => setSelectedGrowth(g)}
+                >
+                  {g.replace(" Growth %", "")}
+                </Button>
+              ))}
       </Box>
 
       {!selectedGrowth ? (
@@ -273,7 +317,7 @@ function MCPPage() {
               <YAxis
                 tick={{ fontSize: 12 }}
                 label={{
-                  value: showPercentage ? "Growth %" : "Value",
+                  value: "Growth %",
                   angle: -90,
                   position: "insideLeft",
                 }}
@@ -308,9 +352,6 @@ function MCPPage() {
                     content={(props) => {
                       const { x, y, value } = props;
                       if (value == null) return null;
-                      const displayVal = `${Number(value).toFixed(0)}${
-                        showPercentage ? "%" : ""
-                      }`;
                       return (
                         <text
                           x={x}
@@ -319,7 +360,7 @@ function MCPPage() {
                           fontSize={11}
                           fill="#333"
                         >
-                          {displayVal}
+                          {`${Number(value).toFixed(2)}%`}
                         </text>
                       );
                     }}
@@ -334,4 +375,4 @@ function MCPPage() {
   );
 }
 
-export default MCPPage;
+export default SparesPage;

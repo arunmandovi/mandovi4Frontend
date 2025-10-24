@@ -24,8 +24,8 @@ import {
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function LoaddBranchWisePage() {
-  const navigate = useNavigate(); // For navigation
+function LoaddPage() {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
@@ -57,33 +57,41 @@ function LoaddBranchWisePage() {
     "% BS on FPR Growth %": "growthBSFPR",
   };
 
-  // ---------- Fetch branch summary ----------
+  // ---------- Fetch city summary ----------
   useEffect(() => {
-    const fetchCityBranchSummary = async () => {
+    const fetchCitySummary = async () => {
       try {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
+
         for (const m of activeMonths) {
-          const query = `?groupBy=city_branch&month=${m}`;
+          const query = `?groupBy=city&months=${m}`;
           const data = await fetchData(`/api/loadd/loadd_summary${query}`);
-          combined.push({ month: m, data: data || [] });
+
+          if (
+            (data && data.length > 0) ||
+            (months.length > 0 && months.includes(m))
+          ) {
+            combined.push({ month: m, data });
+          }
         }
+
         setSummary(combined);
       } catch (err) {
-        console.error("fetchCityBranchSummary error:", err);
+        console.error("fetchCitySummary error:", err);
       }
     };
-    fetchCityBranchSummary();
+    fetchCitySummary();
   }, [months]);
 
   // ---------- Helpers ----------
-  const readCityBranchName = (row) => {
+  const readCityName = (row) => {
     if (!row) return "";
     return (
-      row.city_branch ||
-      row.city_branch ||
-      row.city_branchName ||
-      row.City_branchName ||
+      row.city ||
+      row.City ||
+      row.cityName ||
+      row.CityName ||
       row.name ||
       row.Name ||
       ""
@@ -115,42 +123,103 @@ function LoaddBranchWisePage() {
 
   const buildChartData = (summaryArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
-    const cityBranchSet = new Set();
+    const citySet = new Set();
+
     summaryArr.forEach(({ data }) => {
-      (data || []).forEach((row) => cityBranchSet.add(readCityBranchName(row)));
+      (data || []).forEach((row) => citySet.add(readCityName(row)));
     });
-    const allCities = Array.from(cityBranchSet);
+
+    // ---------- Fixed city order ----------
+    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+    const allCitiesUnordered = Array.from(citySet);
+    const allCities = [
+      ...preferredOrder.filter((c) =>
+        allCitiesUnordered.some((x) => x.toLowerCase() === c.toLowerCase())
+      ),
+      ...allCitiesUnordered
+        .filter(
+          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
+        )
+        .sort((a, b) => a.localeCompare(b)),
+    ];
 
     const result = summaryArr.map(({ month, data }) => {
       const entry = { month };
       allCities.forEach((c) => (entry[c] = 0));
       (data || []).forEach((row) => {
-        const city_branch = readCityBranchName(row);
+        const city = readCityName(row);
         const val = readGrowthValue(row, apiKey);
         const parsed = parseFloat(String(val).replace("%", "").trim());
-        entry[city_branch] = isNaN(parsed) ? 0 : parsed;
+        entry[city] = isNaN(parsed) ? 0 : parsed;
       });
       return entry;
     });
     return { data: result, keys: allCities };
   };
 
-  const { data: chartData, keys: cityBranchKeys } = buildChartData(summary);
+  const { data: chartData, keys: cityKeys } = buildChartData(summary);
+  const isPercentageGrowth = selectedGrowth?.includes("%");
+
+  // ---------- Custom Tooltip ----------
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      // Sort tooltip data in the same fixed city order
+      const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+      const sortedPayload = [
+        ...payload.filter((p) =>
+          preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
+        ),
+        ...payload.filter(
+          (p) => !preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
+        ),
+      ];
+
+      return (
+        <Box
+          sx={{
+            background: "white",
+            border: "1px solid #ccc",
+            borderRadius: 1,
+            p: 1,
+          }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {label}
+          </Typography>
+          {sortedPayload.map((entry, i) => (
+            <Typography
+              key={i}
+              variant="body2"
+              sx={{ color: entry.color }}
+            >{`${entry.name}: ${entry.value?.toFixed(2)}%`}</Typography>
+          ))}
+        </Box>
+      );
+    }
+    return null;
+  };
 
   // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h4">
-          LOAD REPORT (Branch-wise)
-        </Typography>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => navigate("/loadd")}
-        >
-          City-wise View
-        </Button>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">LOAD REPORT (City-wise)</Typography>
+
+        {/* Bar Chart Navigation Button */}
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => navigate("/DashboardHome/loadd-bar-chart")}
+                >
+                  Bar Chart
+                </Button>
       </Box>
 
       {/* Filters */}
@@ -162,7 +231,7 @@ function LoaddBranchWisePage() {
             value={months}
             onChange={(e) => setMonths(e.target.value)}
             renderValue={(selected) =>
-              selected && selected.length ? selected.join(", ") : "All"
+              selected && selected.length ? selected.join(", ") : "Auto Filter"
             }
           >
             {monthOptions.map((m) => (
@@ -175,21 +244,59 @@ function LoaddBranchWisePage() {
         </FormControl>
       </Box>
 
-      {/* Growth buttons */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
-        {growthOptions.map((g) => (
-          <Button
-            key={g}
-            variant={selectedGrowth === g ? "contained" : "outlined"}
-            onClick={() => setSelectedGrowth(g)}
-          >
-            {g.replace(" Growth %", "")}
-          </Button>
-        ))}
+      {/* 🔹 Stylish Growth Type Buttons */}
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1.2,
+                mb: 2,
+              }}
+            >
+              {growthOptions.map((g, idx) => (
+                <Button
+                  key={g}
+                  variant={selectedGrowth === g ? "contained" : "outlined"}
+                  color={selectedGrowth === g ? "secondary" : "primary"}
+                  sx={{
+                    borderRadius: "20px",
+                    px: 2,
+                    py: 0.5,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    transition: "all 0.3s ease",
+                    background:
+                      selectedGrowth === g
+                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                            (idx * 40 + 20) % 360
+                          }, 70%, 55%))`
+                        : "transparent",
+                    color: selectedGrowth === g ? "white" : "inherit",
+                    boxShadow:
+                      selectedGrowth === g
+                        ? `0 3px 10px rgba(0,0,0,0.15)`
+                        : "none",
+                    "&:hover": {
+                      transform: "scale(1.05)",
+                      background:
+                        selectedGrowth === g
+                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
+                              (idx * 40 + 20) % 360
+                            }, 65%, 50%))`
+                          : "rgba(103,58,183,0.05)",
+                    },
+                  }}
+                  onClick={() => setSelectedGrowth(g)}
+                >
+                  {g.replace(" Growth %", "")}
+                </Button>
+              ))}
       </Box>
 
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
+      ) : summary.length === 0 ? (
+        <Typography>No data available for the selected criteria.</Typography>
       ) : (
         <Box
           sx={{
@@ -221,10 +328,20 @@ function LoaddBranchWisePage() {
                   position: "insideLeft",
                 }}
               />
-              <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
-              <Legend />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend
+                wrapperStyle={{
+                  display: "flex",
+                  flexDirection: "row",
+                }}
+                payload={cityKeys.map((key, idx) => ({
+                  value: key,
+                  type: "line",
+                  color: `hsl(${(idx * 60) % 360}, 70%, 45%)`,
+                }))}
+              />
 
-              {cityBranchKeys.map((key, idx) => (
+              {cityKeys.map((key, idx) => (
                 <Line
                   key={key}
                   dataKey={key}
@@ -234,14 +351,10 @@ function LoaddBranchWisePage() {
                   dot={{ r: 3 }}
                   isAnimationActive={false}
                 >
-                  {/* Always show value on each point formatted as xx.xx% */}
                   <LabelList
                     dataKey={key}
                     position="top"
                     fontSize={11}
-                    formatter={(val) =>
-                      isNaN(val) ? "" : `${val.toFixed(2)}%`
-                    }
                     content={(props) => {
                       const { x, y, value } = props;
                       if (value == null) return null;
@@ -268,4 +381,4 @@ function LoaddBranchWisePage() {
   );
 }
 
-export default LoaddBranchWisePage;
+export default LoaddPage;

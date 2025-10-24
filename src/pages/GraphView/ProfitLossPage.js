@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Button, Box } from "@mui/material";
-import DataTable from "../components/DataTable";
-import { fetchData, uploadFile } from "../api/uploadService";
-import { apiModules } from "../config/modules";
+import DataTable from "../../components/DataTable";
+import { fetchData, uploadFile } from "../../api/uploadService";
+import { apiModules } from "../../config/modules";
 import { useNavigate } from "react-router-dom";
 
 function ProfitLossPage() {

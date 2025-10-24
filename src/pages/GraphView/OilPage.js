@@ -21,10 +21,10 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import { fetchData } from "../api/uploadService";
+import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function VASPage() {
+function OilPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -36,31 +36,15 @@ function VASPage() {
   ];
 
   const growthOptions = [
-    "Diagnostic Charges %",
-    "Wheel Alignment Age %",
-    "Wheel Balancing Age %",
-    "Exterior Cleaning Age %",
-    "Interior Cleaning Age %",
-    "UndreBody Coating Age %",
-    "TopBody Coating Age %",
-    "Rat Mesh Age %",
-    "AC Evaporator Age %",
-    "AC Vent Age %",
-    "Plastic Restorer Age %"
+    "Full Synthetic QTY %",
+    "Semi Synthetic QTY %",
+    "Full & Semi Synthetic QTY %",
   ];
 
   const growthKeyMap = {
-    "Diagnostic Charges %": "diagnosticChargesPercentagePMSLoad",
-    "Wheel Alignment Age %": "wheelAlignmentPercentageAge",
-    "Wheel Balancing Age %": "wheelBalancingPercentageAge",
-    "Exterior Cleaning Age %": "exteriorCleaningPercentageAge",
-    "Interior Cleaning Age %": "interiorCleaningPercentageAge",
-    "UndreBody Coating Age %": "underBodyCoatingPercentageAge",
-    "TopBody Coating Age %": "topBodyPercentageAge",
-    "Rat Mesh Age %": "ratMeshPercentageAge",
-    "AC Evaporator Age %": "acEvaporatorPercentageAge",
-    "AC Vent Age %": "acVentPercentageAge",
-    "Plastic Restorer Age %": "plasticRestorerPercentageAge"
+    "Full Synthetic QTY %": "fullSyntheticPercentageQTY",
+    "Semi Synthetic QTY %": "semiSyntheticPercentageQTY",
+    "Full & Semi Synthetic QTY %": "fullSemiSyntheticPercentageQTY",
   };
 
   // ---------- Fetch city summary ----------
@@ -71,8 +55,8 @@ function VASPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&month=${m}`;
-          const data = await fetchData(`/api/vas/vas_summary${query}`);
+          const query = `?groupBy=city&months=${m}`;
+          const data = await fetchData(`/api/oil/oil_summary${query}`);
 
           if (
             (data && data.length > 0) ||
@@ -216,7 +200,16 @@ function VASPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">VAS REPORT (City-wise)</Typography>
+        <Typography variant="h4">OIL REPORT (City-wise)</Typography>
+
+         {/* Bar Chart Navigation Button */}
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => navigate("/DashboardHome/oil-bar-chart")}
+                        >
+                          Bar Chart
+                        </Button>
       </Box>
 
       {/* Filters */}
@@ -241,17 +234,53 @@ function VASPage() {
         </FormControl>
       </Box>
 
-      {/* Growth buttons */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
-        {growthOptions.map((g) => (
-          <Button
-            key={g}
-            variant={selectedGrowth === g ? "contained" : "outlined"}
-            onClick={() => setSelectedGrowth(g)}
-          >
-            {g.replace(" Growth %", "")}
-          </Button>
-        ))}
+      {/* 🔹 Stylish Growth Type Buttons */}
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1.2,
+                mb: 2,
+              }}
+            >
+              {growthOptions.map((g, idx) => (
+                <Button
+                  key={g}
+                  variant={selectedGrowth === g ? "contained" : "outlined"}
+                  color={selectedGrowth === g ? "secondary" : "primary"}
+                  sx={{
+                    borderRadius: "20px",
+                    px: 2,
+                    py: 0.5,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    transition: "all 0.3s ease",
+                    background:
+                      selectedGrowth === g
+                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                            (idx * 40 + 20) % 360
+                          }, 70%, 55%))`
+                        : "transparent",
+                    color: selectedGrowth === g ? "white" : "inherit",
+                    boxShadow:
+                      selectedGrowth === g
+                        ? `0 3px 10px rgba(0,0,0,0.15)`
+                        : "none",
+                    "&:hover": {
+                      transform: "scale(1.05)",
+                      background:
+                        selectedGrowth === g
+                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
+                              (idx * 40 + 20) % 360
+                            }, 65%, 50%))`
+                          : "rgba(103,58,183,0.05)",
+                    },
+                  }}
+                  onClick={() => setSelectedGrowth(g)}
+                >
+                  {g.replace(" Growth %", "")}
+                </Button>
+              ))}
       </Box>
 
       {!selectedGrowth ? (
@@ -342,4 +371,4 @@ function VASPage() {
   );
 }
 
-export default VASPage;
+export default OilPage;

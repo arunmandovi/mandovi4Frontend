@@ -21,10 +21,10 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import { fetchData } from "../api/uploadService";
+import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function MSGPProfitPage() {
+function MCPPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -35,16 +35,10 @@ function MSGPProfitPage() {
     "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
 
-  const growthOptions = [
-    "Service&BodyShop Profit %",
-    "Service Profit %",
-    "BodyShop Profit %",
-  ];
+  const growthOptions = ["MCP NO"]; 
 
   const growthKeyMap = {
-    "Service&BodyShop Profit %": "percentageProfitServiceBodyShop",
-    "Service Profit %": "percentageProfitService",
-    "BodyShop Profit %": "percentageProfitBodyShop",
+    "MCP NO": "mcp",
   };
 
   // ---------- Fetch city summary ----------
@@ -56,7 +50,7 @@ function MSGPProfitPage() {
 
         for (const m of activeMonths) {
           const query = `?groupBy=city&months=${m}`;
-          const data = await fetchData(`/api/msgp_profit/msgp_profit_summary${query}`);
+          const data = await fetchData(`/api/mcp/mcp_summary${query}`);
 
           if (
             (data && data.length > 0) ||
@@ -111,6 +105,7 @@ function MSGPProfitPage() {
     return undefined;
   };
 
+  // ---------- Build Chart Data ----------
   const buildChartData = (summaryArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const citySet = new Set();
@@ -148,12 +143,13 @@ function MSGPProfitPage() {
   };
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
-  const isPercentageGrowth = selectedGrowth?.includes("%");
+
+  // ✅ Dynamic check if % should be shown or not
+  const showPercentage = selectedGrowth?.includes("%");
 
   // ---------- Custom Tooltip ----------
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      // Sort tooltip data in the same fixed city order
       const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
       const sortedPayload = [
         ...payload.filter((p) =>
@@ -177,11 +173,11 @@ function MSGPProfitPage() {
             {label}
           </Typography>
           {sortedPayload.map((entry, i) => (
-            <Typography
-              key={i}
-              variant="body2"
-              sx={{ color: entry.color }}
-            >{`${entry.name}: ${entry.value?.toFixed(2)}%`}</Typography>
+            <Typography key={i} variant="body2" sx={{ color: entry.color }}>
+              {`${entry.name}: ${entry.value?.toFixed(0)}${
+                showPercentage ? "%" : ""
+              }`}
+            </Typography>
           ))}
         </Box>
       );
@@ -200,13 +196,13 @@ function MSGPProfitPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">MSGP PROFIT REPORT (City-wise)</Typography>
+        <Typography variant="h4">MCP REPORT (City-wise)</Typography>
 
         {/* Bar Chart Navigation Button */}
                         <Button
                           variant="contained"
                           color="secondary"
-                          onClick={() => navigate("/DashboardHome/msgp_profit-bar-chart")}
+                          onClick={() => navigate("/DashboardHome/mcp-bar-chart")}
                         >
                           Bar Chart
                         </Button>
@@ -234,17 +230,53 @@ function MSGPProfitPage() {
         </FormControl>
       </Box>
 
-      {/* Growth buttons */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
-        {growthOptions.map((g) => (
-          <Button
-            key={g}
-            variant={selectedGrowth === g ? "contained" : "outlined"}
-            onClick={() => setSelectedGrowth(g)}
-          >
-            {g.replace(" Growth %", "")}
-          </Button>
-        ))}
+      {/* 🔹 Stylish Growth Type Buttons */}
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1.2,
+                mb: 2,
+              }}
+            >
+              {growthOptions.map((g, idx) => (
+                <Button
+                  key={g}
+                  variant={selectedGrowth === g ? "contained" : "outlined"}
+                  color={selectedGrowth === g ? "secondary" : "primary"}
+                  sx={{
+                    borderRadius: "20px",
+                    px: 2,
+                    py: 0.5,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    transition: "all 0.3s ease",
+                    background:
+                      selectedGrowth === g
+                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                            (idx * 40 + 20) % 360
+                          }, 70%, 55%))`
+                        : "transparent",
+                    color: selectedGrowth === g ? "white" : "inherit",
+                    boxShadow:
+                      selectedGrowth === g
+                        ? `0 3px 10px rgba(0,0,0,0.15)`
+                        : "none",
+                    "&:hover": {
+                      transform: "scale(1.05)",
+                      background:
+                        selectedGrowth === g
+                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
+                              (idx * 40 + 20) % 360
+                            }, 65%, 50%))`
+                          : "rgba(103,58,183,0.05)",
+                    },
+                  }}
+                  onClick={() => setSelectedGrowth(g)}
+                >
+                  {g.replace(" Growth %", "")}
+                </Button>
+              ))}
       </Box>
 
       {!selectedGrowth ? (
@@ -277,7 +309,7 @@ function MSGPProfitPage() {
               <YAxis
                 tick={{ fontSize: 12 }}
                 label={{
-                  value: "Growth %",
+                  value: showPercentage ? "Growth %" : "Value",
                   angle: -90,
                   position: "insideLeft",
                 }}
@@ -312,6 +344,9 @@ function MSGPProfitPage() {
                     content={(props) => {
                       const { x, y, value } = props;
                       if (value == null) return null;
+                      const displayVal = `${Number(value).toFixed(0)}${
+                        showPercentage ? "%" : ""
+                      }`;
                       return (
                         <text
                           x={x}
@@ -320,7 +355,7 @@ function MSGPProfitPage() {
                           fontSize={11}
                           fill="#333"
                         >
-                          {`${Number(value).toFixed(2)}%`}
+                          {displayVal}
                         </text>
                       );
                     }}
@@ -335,4 +370,4 @@ function MSGPProfitPage() {
   );
 }
 
-export default MSGPProfitPage;
+export default MCPPage;

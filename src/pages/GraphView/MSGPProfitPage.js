@@ -21,10 +21,10 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import { fetchData } from "../api/uploadService";
+import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function LabourPage() {
+function MSGPProfitPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -36,25 +36,15 @@ function LabourPage() {
   ];
 
   const growthOptions = [
-    "Service Growth %",
-    "BodyShop Growth %",
-    "SR&BR Growth %",
-    "Free Service Growth %",
-    "PMS Growth %",
-    "FPR Growth %",
-    "RR Growth %",
-    "Others Growth %",
+    "Service&BodyShop Profit %",
+    "Service Profit %",
+    "BodyShop Profit %",
   ];
 
   const growthKeyMap = {
-    "Service Growth %": "growthService",
-    "BodyShop Growth %": "growthBodyShop",
-    "SR&BR Growth %": "growthSrBr",
-    "Free Service Growth %": "growthFreeService",
-    "PMS Growth %": "growthPMS",
-    "FPR Growth %": "growthFPR",
-    "RR Growth %": "growthRunningRepair",
-    "Others Growth %": "growthOthers",
+    "Service&BodyShop Profit %": "percentageProfitServiceBodyShop",
+    "Service Profit %": "percentageProfitService",
+    "BodyShop Profit %": "percentageProfitBodyShop",
   };
 
   // ---------- Fetch city summary ----------
@@ -66,7 +56,7 @@ function LabourPage() {
 
         for (const m of activeMonths) {
           const query = `?groupBy=city&months=${m}`;
-          const data = await fetchData(`/api/labour/labour_summary${query}`);
+          const data = await fetchData(`/api/msgp_profit/msgp_profit_summary${query}`);
 
           if (
             (data && data.length > 0) ||
@@ -158,10 +148,12 @@ function LabourPage() {
   };
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
+  const isPercentageGrowth = selectedGrowth?.includes("%");
 
   // ---------- Custom Tooltip ----------
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      // Sort tooltip data in the same fixed city order
       const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
       const sortedPayload = [
         ...payload.filter((p) =>
@@ -200,7 +192,6 @@ function LabourPage() {
   // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header section with title and Bar Chart button */}
       <Box
         sx={{
           display: "flex",
@@ -209,16 +200,16 @@ function LabourPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">LABOUR REPORT (City-wise)</Typography>
+        <Typography variant="h4">MSGP PROFIT REPORT (City-wise)</Typography>
 
         {/* Bar Chart Navigation Button */}
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => navigate("/DashboardHome/labour-bar-chart")}
-        >
-          Bar Chart
-        </Button>
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => navigate("/DashboardHome/msgp_profit-bar-chart")}
+                        >
+                          Bar Chart
+                        </Button>
       </Box>
 
       {/* Filters */}
@@ -243,17 +234,53 @@ function LabourPage() {
         </FormControl>
       </Box>
 
-      {/* Growth buttons */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
-        {growthOptions.map((g) => (
-          <Button
-            key={g}
-            variant={selectedGrowth === g ? "contained" : "outlined"}
-            onClick={() => setSelectedGrowth(g)}
-          >
-            {g.replace(" Growth %", "")}
-          </Button>
-        ))}
+      {/* 🔹 Stylish Growth Type Buttons */}
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1.2,
+                mb: 2,
+              }}
+            >
+              {growthOptions.map((g, idx) => (
+                <Button
+                  key={g}
+                  variant={selectedGrowth === g ? "contained" : "outlined"}
+                  color={selectedGrowth === g ? "secondary" : "primary"}
+                  sx={{
+                    borderRadius: "20px",
+                    px: 2,
+                    py: 0.5,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    transition: "all 0.3s ease",
+                    background:
+                      selectedGrowth === g
+                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                            (idx * 40 + 20) % 360
+                          }, 70%, 55%))`
+                        : "transparent",
+                    color: selectedGrowth === g ? "white" : "inherit",
+                    boxShadow:
+                      selectedGrowth === g
+                        ? `0 3px 10px rgba(0,0,0,0.15)`
+                        : "none",
+                    "&:hover": {
+                      transform: "scale(1.05)",
+                      background:
+                        selectedGrowth === g
+                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
+                              (idx * 40 + 20) % 360
+                            }, 65%, 50%))`
+                          : "rgba(103,58,183,0.05)",
+                    },
+                  }}
+                  onClick={() => setSelectedGrowth(g)}
+                >
+                  {g.replace(" Growth %", "")}
+                </Button>
+              ))}
       </Box>
 
       {!selectedGrowth ? (
@@ -344,4 +371,4 @@ function LabourPage() {
   );
 }
 
-export default LabourPage;
+export default MSGPProfitPage;

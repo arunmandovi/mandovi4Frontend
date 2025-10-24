@@ -1,30 +1,29 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import EmployeeLogin from "./pages/EmployeeLogin";
-import AdminLogin from "./pages/AdminLogin";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminLogin from "./pages/AdminPages/AdminLogin";
+import AdminDashboard from "./pages/AdminPages/AdminDashboard";
 import Layout from "./components/Layout"; // ✅ Navbar + Outlet
 
 // Employee dashboard graph pages
-import BatteryTyrePage from "./pages/BatteryTyrePage";
-import BRConversionPage from "./pages/BRConversionPage";
-import LabourPage from "./pages/LabourPage";
-import LoaddPage from "./pages/LoaddPage";
-import MCPPage from "./pages/MCPPage";
-import MGAPAGE from "./pages/MGAPage";
-import MSGPPage from "./pages/MSGPPage";
-import MSGPProfitPage from "./pages/MSGPProfitPage";
-import OilPage from "./pages/OilPage";
-import PMSPartsPage from "./pages/PMSPartsPage";
-import ProfitLossPage from "./pages/ProfitLossPage";
-import ReferenceePage from "./pages/ReferenceePage";
-import RevenuePage from "./pages/RevenuePage";
-import SparesPage from "./pages/SparesPage";
-import TATPage from "./pages/TATPage";
-import VasPage from "./pages/VASPage";
+import BatteryTyrePage from "./pages/GraphView/BatteryTyrePage";
+import BRConversionPage from "./pages/GraphView/BRConversionPage";
+import LabourPage from "./pages/GraphView/LabourPage";
+import LoaddPage from "./pages/GraphView/LoaddPage";
+import MCPPage from "./pages/GraphView/MCPPage";
+import MGAPage from "./pages/GraphView/MGAPage";
+import MSGPPage from "./pages/GraphView/MSGPPage";
+import MSGPProfitPage from "./pages/GraphView/MSGPProfitPage";
+import OilPage from "./pages/GraphView/OilPage";
+import PMSPartsPage from "./pages/GraphView/PMSPartsPage";
+import ProfitLossPage from "./pages/GraphView/ProfitLossPage";
+import ReferenceePage from "./pages/GraphView/ReferenceePage";
+import RevenuePage from "./pages/GraphView/RevenuePage";
+import SparesPage from "./pages/GraphView/SparesPage";
+import TATPage from "./pages/GraphView/TATPage";
+import VASPage from "./pages/GraphView/VASPage";
 
 //BranchWise Graph View Pages
-import LoaddBranchWisePage from "./pages/BranchWise/LoaddBranchWisePage";
 
 // Admin upload pages
 import BatteryTyreUploadPage from "./pages/FileUpload/BatteryTyreUploadPage";
@@ -60,6 +59,9 @@ import TATBarChartPage from "./pages/BarChartView/TATBarChartPage";
 import MCPBarChartPage from "./pages/BarChartView/MCPBarChartPage";
 import MGABarChartPage from "./pages/BarChartView/MGABarChartPage";
 
+// BranchWise Graph Pages
+import LabourBranchesGraphPage from "./pages/BranchWiseGraphView/LabourBranchesGraphPage";
+
 import "./App.css";
 
 function App() {
@@ -91,7 +93,6 @@ function App() {
         <Route path="/vas-upload" element={<VASUploadPage />} />
 
         {/* ✅ BranchWise GraphView Page */}
-        <Route path="/loadd_branchview" element={<LoaddBranchWisePage />} />
 
         {/* 🧭 Employee Dashboard Layout */}
         <Route path="/DashboardHome" element={<Layout />}>
@@ -104,7 +105,7 @@ function App() {
           <Route path="labour" element={<LabourPage />} />
           <Route path="loadd" element={<LoaddPage />} />
           <Route path="mcp" element={<MCPPage />} />
-          <Route path="mga" element={<MGAPAGE />} />
+          <Route path="mga" element={<MGAPage />} />
           <Route path="msgp" element={<MSGPPage />} />
           <Route path="msgp_profit" element={<MSGPProfitPage />} />
           <Route path="oil" element={<OilPage />} />
@@ -114,7 +115,7 @@ function App() {
           <Route path="revenue" element={<RevenuePage />} />
           <Route path="spares" element={<SparesPage />} />
           <Route path="tat" element={<TATPage />} />
-          <Route path="vas" element={<VasPage />} />
+          <Route path="vas" element={<VASPage />} />
 
           {/* 🧭 Employee Dashboard BarChart Pages */}
           <Route path="labour-bar-chart" element={<LabourBarChartPage />} />
@@ -131,6 +132,9 @@ function App() {
           <Route path="tat-bar-chart" element={<TATBarChartPage />} />
           <Route path="mcp-bar-chart" element={<MCPBarChartPage />} />
           <Route path="mga-bar-chart" element={<MGABarChartPage />} />
+
+          {/* 🧭 BranchWise Graph Pages */}
+          <Route path="labour-branch-graph" element={<LabourBranchesGraphPage />} />
         </Route>
       </Routes>
     </Router>

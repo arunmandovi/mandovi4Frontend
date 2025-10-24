@@ -21,10 +21,10 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import { fetchData } from "../api/uploadService";
+import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function RevenuePage() {
+function LabourPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -36,23 +36,25 @@ function RevenuePage() {
   ];
 
   const growthOptions = [
-    "SR LABOUR Growth %",
-    "BR LABOUR Growth %",
-    "SR&BR LABOUR Growth %",
-    "SR Spares Growth %",
-    "BR Spares Growth %",
-    "SR&BR Spares Growth %",
-    "SR&Br Total Growth %",
+    "Service Growth %",
+    "BodyShop Growth %",
+    "SR&BR Growth %",
+    "Free Service Growth %",
+    "PMS Growth %",
+    "FPR Growth %",
+    "RR Growth %",
+    "Others Growth %",
   ];
 
   const growthKeyMap = {
-    "SR LABOUR Growth %": "growthSRLabour",
-    "BR LABOUR Growth %": "growthBRLabour",
-    "SR&BR LABOUR Growth %": "growthSRBRLabour",
-    "SR Spares Growth %": "growthSRSpares",
-    "BR Spares Growth %": "growthBRSpares",
-    "SR&BR Spares Growth %": "growthSRBRSpares",
-    "SR&Br Total Growth %": "growthSRBRTotal",
+    "Service Growth %": "growthService",
+    "BodyShop Growth %": "growthBodyShop",
+    "SR&BR Growth %": "growthSrBr",
+    "Free Service Growth %": "growthFreeService",
+    "PMS Growth %": "growthPMS",
+    "FPR Growth %": "growthFPR",
+    "RR Growth %": "growthRunningRepair",
+    "Others Growth %": "growthOthers",
   };
 
   // ---------- Fetch city summary ----------
@@ -64,7 +66,7 @@ function RevenuePage() {
 
         for (const m of activeMonths) {
           const query = `?groupBy=city&months=${m}`;
-          const data = await fetchData(`/api/revenue/revenue_summary${query}`);
+          const data = await fetchData(`/api/labour/labour_summary${query}`);
 
           if (
             (data && data.length > 0) ||
@@ -156,12 +158,10 @@ function RevenuePage() {
   };
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
-  const isPercentageGrowth = selectedGrowth?.includes("%");
 
   // ---------- Custom Tooltip ----------
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      // Sort tooltip data in the same fixed city order
       const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
       const sortedPayload = [
         ...payload.filter((p) =>
@@ -200,6 +200,7 @@ function RevenuePage() {
   // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
+      {/* Header section with title and navigation buttons */}
       <Box
         sx={{
           display: "flex",
@@ -208,16 +209,40 @@ function RevenuePage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">REVENUE REPORT (City-wise)</Typography>
+        <Typography variant="h4">LABOUR REPORT (City-wise)</Typography>
 
-        {/* Bar Chart Navigation Button */}
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          onClick={() => navigate("/DashboardHome/revenue-bar-chart")}
-                        >
-                          Bar Chart
-                        </Button>
+        {/* 🔹 Buttons section */}
+        <Box sx={{ display: "flex", gap: 1.5 }}>
+          {/* <Button
+            variant="contained"
+            sx={{
+              background: "linear-gradient(90deg, #00b09b, #96c93d)",
+              color: "#fff",
+              textTransform: "none",
+              fontWeight: 600,
+              px: 2.5,
+              borderRadius: "20px",
+              "&:hover": { background: "linear-gradient(90deg, #00a088, #82b636)" },
+            }}
+            onClick={() => navigate("/DashboardHome/labour-branch-graph")}
+          >
+            Branch View
+          </Button> */}
+
+          <Button
+            variant="contained"
+            color="secondary"
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+              px: 2.5,
+              borderRadius: "20px",
+            }}
+            onClick={() => navigate("/DashboardHome/labour-bar-chart")}
+          >
+            Bar Chart
+          </Button>
+        </Box>
       </Box>
 
       {/* Filters */}
@@ -242,12 +267,46 @@ function RevenuePage() {
         </FormControl>
       </Box>
 
-      {/* Growth buttons */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
-        {growthOptions.map((g) => (
+      {/* Stylish Growth Type Buttons */}
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 1.2,
+          mb: 2,
+        }}
+      >
+        {growthOptions.map((g, idx) => (
           <Button
             key={g}
             variant={selectedGrowth === g ? "contained" : "outlined"}
+            color={selectedGrowth === g ? "secondary" : "primary"}
+            sx={{
+              borderRadius: "20px",
+              px: 2,
+              py: 0.5,
+              textTransform: "none",
+              fontWeight: 600,
+              transition: "all 0.3s ease",
+              background:
+                selectedGrowth === g
+                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                      (idx * 40 + 20) % 360
+                    }, 70%, 55%))`
+                  : "transparent",
+              color: selectedGrowth === g ? "white" : "inherit",
+              boxShadow:
+                selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
+              "&:hover": {
+                transform: "scale(1.05)",
+                background:
+                  selectedGrowth === g
+                    ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
+                        (idx * 40 + 20) % 360
+                      }, 65%, 50%))`
+                    : "rgba(103,58,183,0.05)",
+              },
+            }}
             onClick={() => setSelectedGrowth(g)}
           >
             {g.replace(" Growth %", "")}
@@ -343,4 +402,4 @@ function RevenuePage() {
   );
 }
 
-export default RevenuePage;
+export default LabourPage;

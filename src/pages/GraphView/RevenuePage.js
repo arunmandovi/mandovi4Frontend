@@ -21,10 +21,10 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import { fetchData } from "../api/uploadService";
+import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function ReferenceePage() {
+function RevenuePage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -36,15 +36,23 @@ function ReferenceePage() {
   ];
 
   const growthOptions = [
-    "E-B %",
-    "E-R %",
-    "B-R %",
+    "SR LABOUR Growth %",
+    "BR LABOUR Growth %",
+    "SR&BR LABOUR Growth %",
+    "SR Spares Growth %",
+    "BR Spares Growth %",
+    "SR&BR Spares Growth %",
+    "SR&Br Total Growth %",
   ];
 
   const growthKeyMap = {
-    "E-B %": "percentageEnquiryBooking",
-    "E-R %": "percentageEnquiryInvoice",
-    "B-R %": "percentageBookingInvoice",
+    "SR LABOUR Growth %": "growthSRLabour",
+    "BR LABOUR Growth %": "growthBRLabour",
+    "SR&BR LABOUR Growth %": "growthSRBRLabour",
+    "SR Spares Growth %": "growthSRSpares",
+    "BR Spares Growth %": "growthBRSpares",
+    "SR&BR Spares Growth %": "growthSRBRSpares",
+    "SR&Br Total Growth %": "growthSRBRTotal",
   };
 
   // ---------- Fetch city summary ----------
@@ -56,7 +64,7 @@ function ReferenceePage() {
 
         for (const m of activeMonths) {
           const query = `?groupBy=city&months=${m}`;
-          const data = await fetchData(`/api/referencee/referencee_summary${query}`);
+          const data = await fetchData(`/api/revenue/revenue_summary${query}`);
 
           if (
             (data && data.length > 0) ||
@@ -112,8 +120,6 @@ function ReferenceePage() {
   };
 
   const buildChartData = (summaryArr) => {
-    if (!selectedGrowth) return { data: [], keys: [] };
-
     const apiKey = growthKeyMap[selectedGrowth];
     const citySet = new Set();
 
@@ -183,7 +189,7 @@ function ReferenceePage() {
               key={i}
               variant="body2"
               sx={{ color: entry.color }}
-            >{`${entry.name}: ${entry.value?.toFixed(2)}${isPercentageGrowth ? "%" : ""}`}</Typography>
+            >{`${entry.name}: ${entry.value?.toFixed(2)}%`}</Typography>
           ))}
         </Box>
       );
@@ -202,13 +208,13 @@ function ReferenceePage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">REFERENCE REPORT (City-wise)</Typography>
+        <Typography variant="h4">REVENUE REPORT (City-wise)</Typography>
 
         {/* Bar Chart Navigation Button */}
                         <Button
                           variant="contained"
                           color="secondary"
-                          onClick={() => navigate("/DashboardHome/referencee-bar-chart")}
+                          onClick={() => navigate("/DashboardHome/revenue-bar-chart")}
                         >
                           Bar Chart
                         </Button>
@@ -236,17 +242,53 @@ function ReferenceePage() {
         </FormControl>
       </Box>
 
-      {/* Growth buttons */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
-        {growthOptions.map((g) => (
-          <Button
-            key={g}
-            variant={selectedGrowth === g ? "contained" : "outlined"}
-            onClick={() => setSelectedGrowth(g)}
-          >
-            {g.replace(" Growth %", "")}
-          </Button>
-        ))}
+      {/* 🔹 Stylish Growth Type Buttons */}
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1.2,
+                mb: 2,
+              }}
+            >
+              {growthOptions.map((g, idx) => (
+                <Button
+                  key={g}
+                  variant={selectedGrowth === g ? "contained" : "outlined"}
+                  color={selectedGrowth === g ? "secondary" : "primary"}
+                  sx={{
+                    borderRadius: "20px",
+                    px: 2,
+                    py: 0.5,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    transition: "all 0.3s ease",
+                    background:
+                      selectedGrowth === g
+                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                            (idx * 40 + 20) % 360
+                          }, 70%, 55%))`
+                        : "transparent",
+                    color: selectedGrowth === g ? "white" : "inherit",
+                    boxShadow:
+                      selectedGrowth === g
+                        ? `0 3px 10px rgba(0,0,0,0.15)`
+                        : "none",
+                    "&:hover": {
+                      transform: "scale(1.05)",
+                      background:
+                        selectedGrowth === g
+                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
+                              (idx * 40 + 20) % 360
+                            }, 65%, 50%))`
+                          : "rgba(103,58,183,0.05)",
+                    },
+                  }}
+                  onClick={() => setSelectedGrowth(g)}
+                >
+                  {g.replace(" Growth %", "")}
+                </Button>
+              ))}
       </Box>
 
       {!selectedGrowth ? (
@@ -279,7 +321,7 @@ function ReferenceePage() {
               <YAxis
                 tick={{ fontSize: 12 }}
                 label={{
-                  value: "Growth" + (isPercentageGrowth ? " %" : ""),
+                  value: "Growth %",
                   angle: -90,
                   position: "insideLeft",
                 }}
@@ -322,7 +364,7 @@ function ReferenceePage() {
                           fontSize={11}
                           fill="#333"
                         >
-                          {`${Number(value).toFixed(2)}${isPercentageGrowth ? "%" : ""}`}
+                          {`${Number(value).toFixed(2)}%`}
                         </text>
                       );
                     }}
@@ -337,4 +379,4 @@ function ReferenceePage() {
   );
 }
 
-export default ReferenceePage;
+export default RevenuePage;

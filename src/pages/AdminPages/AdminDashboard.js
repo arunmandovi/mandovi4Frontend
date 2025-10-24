@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "../styles/AdminDashboard.css";
+import "../../styles/AdminDashboard.css";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -253,8 +253,8 @@ function AdminDashboard() {
           <button onClick={() => navigate("/EmployeeLogin")}>
             Go to Employee Login
           </button>
-          <button onClick={() => navigate(-1)} style={{ marginLeft: "10px" }}>
-            Go Back
+          <button onClick={() => navigate("/AdminLogin")} style={{ marginLeft: "10px" }}>
+            Logout
           </button>
         </div>
       </div>

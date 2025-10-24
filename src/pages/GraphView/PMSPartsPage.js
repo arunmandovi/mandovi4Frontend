@@ -21,10 +21,10 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import { fetchData } from "../api/uploadService";
+import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function LoaddPage() {
+function PMSPartsPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -36,25 +36,35 @@ function LoaddPage() {
   ];
 
   const growthOptions = [
-    "Service Growth %",
-    "BodyShop Growth %",
-    "Free Service Growth %",
-    "PMS Growth %",
-    "FPR Growth %",
-    "RR Growth %",
-    "Others Growth %",
-    "% BS on FPR Growth %",
+    "Air filter %",
+    "Belt water pump %",
+    "Brake fluid %",
+    "Coolant %",
+    "Fuel Filter %",
+    "Oil filter %",
+    "Spark plug %",
+    "7 PARTS PMS %",
+    "DRAIN PLUG GASKET",
+    "ISG BELT GENERATOR",
+    "CNG FILTER",
+    "3 PARTS PMS",
+    "Grand Total",
   ];
 
   const growthKeyMap = {
-    "Service Growth %": "growthService",
-    "BodyShop Growth %": "growthBodyShop",
-    "Free Service Growth %": "growthFreeService",
-    "PMS Growth %": "growthPMS",
-    "FPR Growth %": "growthFPR",
-    "RR Growth %": "growthRR",
-    "Others Growth %": "growthOthers",
-    "% BS on FPR Growth %": "growthBSFPR",
+    "Air filter %": "airFilter",
+    "Belt water pump %": "beltWaterPump",
+    "Brake fluid %": "brakeFluid",
+    "Coolant %": "coolant",
+    "Fuel Filter %": "fuelFilter",
+    "Oil filter %": "oilFilter",
+    "Spark plug %": "sparkPlug",
+    "7 PARTS PMS %": "sevenPartsPMS",
+    "DRAIN PLUG GASKET": "drainPlugGasket",
+    "ISG BELT GENERATOR": "isgBeltGenerator",
+    "CNG FILTER": "cngFilter",
+    "3 PARTS PMS": "threePartsPMS",
+    "Grand Total": "grandTotal",
   };
 
   // ---------- Fetch city summary ----------
@@ -66,7 +76,7 @@ function LoaddPage() {
 
         for (const m of activeMonths) {
           const query = `?groupBy=city&months=${m}`;
-          const data = await fetchData(`/api/loadd/loadd_summary${query}`);
+          const data = await fetchData(`/api/pms_parts/pms_parts_summary${query}`);
 
           if (
             (data && data.length > 0) ||
@@ -210,16 +220,16 @@ function LoaddPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">LOAD REPORT (City-wise)</Typography>
+        <Typography variant="h4">PMS PARTS REPORT (City-wise)</Typography>
 
-        {/* Bar Chart Navigation Button */}
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => navigate("/DashboardHome/loadd-bar-chart")}
-                >
-                  Bar Chart
-                </Button>
+         {/* Bar Chart Navigation Button */}
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => navigate("/DashboardHome/pms_parts-bar-chart")}
+                        >
+                          Bar Chart
+                        </Button>
       </Box>
 
       {/* Filters */}
@@ -244,17 +254,53 @@ function LoaddPage() {
         </FormControl>
       </Box>
 
-      {/* Growth buttons */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
-        {growthOptions.map((g) => (
-          <Button
-            key={g}
-            variant={selectedGrowth === g ? "contained" : "outlined"}
-            onClick={() => setSelectedGrowth(g)}
-          >
-            {g.replace(" Growth %", "")}
-          </Button>
-        ))}
+      {/* 🔹 Stylish Growth Type Buttons */}
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1.2,
+                mb: 2,
+              }}
+            >
+              {growthOptions.map((g, idx) => (
+                <Button
+                  key={g}
+                  variant={selectedGrowth === g ? "contained" : "outlined"}
+                  color={selectedGrowth === g ? "secondary" : "primary"}
+                  sx={{
+                    borderRadius: "20px",
+                    px: 2,
+                    py: 0.5,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    transition: "all 0.3s ease",
+                    background:
+                      selectedGrowth === g
+                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                            (idx * 40 + 20) % 360
+                          }, 70%, 55%))`
+                        : "transparent",
+                    color: selectedGrowth === g ? "white" : "inherit",
+                    boxShadow:
+                      selectedGrowth === g
+                        ? `0 3px 10px rgba(0,0,0,0.15)`
+                        : "none",
+                    "&:hover": {
+                      transform: "scale(1.05)",
+                      background:
+                        selectedGrowth === g
+                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
+                              (idx * 40 + 20) % 360
+                            }, 65%, 50%))`
+                          : "rgba(103,58,183,0.05)",
+                    },
+                  }}
+                  onClick={() => setSelectedGrowth(g)}
+                >
+                  {g.replace(" Growth %", "")}
+                </Button>
+              ))}
       </Box>
 
       {!selectedGrowth ? (
@@ -345,4 +391,4 @@ function LoaddPage() {
   );
 }
 
-export default LoaddPage;
+export default PMSPartsPage;

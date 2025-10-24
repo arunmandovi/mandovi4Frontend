@@ -21,34 +21,30 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import { fetchData } from "../api/uploadService";
+import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function SparesPage() {
+function ReferenceePage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
   const monthOptions = [
-    "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct",
+    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
     "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
 
   const growthOptions = [
-    "SR Spares Growth %",
-    "BR Spares Growth %",
-    "SR&BR Spares Growth %",
-    "Battery Growth %",
-    "Tyre Growth %",
+    "E-B %",
+    "E-R %",
+    "B-R %",
   ];
 
   const growthKeyMap = {
-    "SR Spares Growth %": "growthSRSpares",
-    "BR Spares Growth %": "growthBRSpares",
-    "SR&BR Spares Growth %": "growthSRBRSpares",
-    "Battery Growth %": "growthBattery",
-    "Tyre Growth %": "growthTyre",
+    "E-B %": "percentageEnquiryBooking",
+    "E-R %": "percentageEnquiryInvoice",
+    "B-R %": "percentageBookingInvoice",
   };
 
   // ---------- Fetch city summary ----------
@@ -60,7 +56,7 @@ function SparesPage() {
 
         for (const m of activeMonths) {
           const query = `?groupBy=city&months=${m}`;
-          const data = await fetchData(`/api/spares/spares_summary${query}`);
+          const data = await fetchData(`/api/referencee/referencee_summary${query}`);
 
           if (
             (data && data.length > 0) ||
@@ -116,6 +112,8 @@ function SparesPage() {
   };
 
   const buildChartData = (summaryArr) => {
+    if (!selectedGrowth) return { data: [], keys: [] };
+
     const apiKey = growthKeyMap[selectedGrowth];
     const citySet = new Set();
 
@@ -185,7 +183,7 @@ function SparesPage() {
               key={i}
               variant="body2"
               sx={{ color: entry.color }}
-            >{`${entry.name}: ${entry.value?.toFixed(2)}%`}</Typography>
+            >{`${entry.name}: ${entry.value?.toFixed(2)}${isPercentageGrowth ? "%" : ""}`}</Typography>
           ))}
         </Box>
       );
@@ -204,13 +202,13 @@ function SparesPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">SPARES REPORT (City-wise)</Typography>
+        <Typography variant="h4">REFERENCE REPORT (City-wise)</Typography>
 
         {/* Bar Chart Navigation Button */}
                         <Button
                           variant="contained"
                           color="secondary"
-                          onClick={() => navigate("/DashboardHome/spares-bar-chart")}
+                          onClick={() => navigate("/DashboardHome/referencee-bar-chart")}
                         >
                           Bar Chart
                         </Button>
@@ -238,17 +236,53 @@ function SparesPage() {
         </FormControl>
       </Box>
 
-      {/* Growth buttons */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
-        {growthOptions.map((g) => (
-          <Button
-            key={g}
-            variant={selectedGrowth === g ? "contained" : "outlined"}
-            onClick={() => setSelectedGrowth(g)}
-          >
-            {g.replace(" Growth %", "")}
-          </Button>
-        ))}
+      {/* 🔹 Stylish Growth Type Buttons */}
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1.2,
+                mb: 2,
+              }}
+            >
+              {growthOptions.map((g, idx) => (
+                <Button
+                  key={g}
+                  variant={selectedGrowth === g ? "contained" : "outlined"}
+                  color={selectedGrowth === g ? "secondary" : "primary"}
+                  sx={{
+                    borderRadius: "20px",
+                    px: 2,
+                    py: 0.5,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    transition: "all 0.3s ease",
+                    background:
+                      selectedGrowth === g
+                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                            (idx * 40 + 20) % 360
+                          }, 70%, 55%))`
+                        : "transparent",
+                    color: selectedGrowth === g ? "white" : "inherit",
+                    boxShadow:
+                      selectedGrowth === g
+                        ? `0 3px 10px rgba(0,0,0,0.15)`
+                        : "none",
+                    "&:hover": {
+                      transform: "scale(1.05)",
+                      background:
+                        selectedGrowth === g
+                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
+                              (idx * 40 + 20) % 360
+                            }, 65%, 50%))`
+                          : "rgba(103,58,183,0.05)",
+                    },
+                  }}
+                  onClick={() => setSelectedGrowth(g)}
+                >
+                  {g.replace(" Growth %", "")}
+                </Button>
+              ))}
       </Box>
 
       {!selectedGrowth ? (
@@ -281,7 +315,7 @@ function SparesPage() {
               <YAxis
                 tick={{ fontSize: 12 }}
                 label={{
-                  value: "Growth %",
+                  value: "Growth" + (isPercentageGrowth ? " %" : ""),
                   angle: -90,
                   position: "insideLeft",
                 }}
@@ -324,7 +358,7 @@ function SparesPage() {
                           fontSize={11}
                           fill="#333"
                         >
-                          {`${Number(value).toFixed(2)}%`}
+                          {`${Number(value).toFixed(2)}${isPercentageGrowth ? "%" : ""}`}
                         </text>
                       );
                     }}
@@ -339,4 +373,4 @@ function SparesPage() {
   );
 }
 
-export default SparesPage;
+export default ReferenceePage;
