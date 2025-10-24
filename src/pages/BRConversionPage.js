@@ -54,7 +54,7 @@ function BRConversionPage() {
   };
 
   // ✅ Your required fixed order
-  const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+  const preferredOrder = ["BANGALORE", "MYSORE", "MANGALORE"];
 
   // ---------- Fetch data ----------
   useEffect(() => {

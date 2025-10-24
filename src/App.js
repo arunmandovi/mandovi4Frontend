@@ -53,6 +53,10 @@ import MSGPBarChartPage from "./pages/BarChartView/MSGPBarChartPage";
 import MSGPProfitBarChartPage from "./pages/BarChartView/MSGPProfitBarChartPage";
 import OilBarChartPage from "./pages/BarChartView/OilBarChartPage";
 import PMSPartsBarChartPage from "./pages/BarChartView/PMSPartsBarChartPage";
+import ReferenceeBarChartPage from "./pages/BarChartView/ReferenceeBarChartPage";
+import RevenueBarChartPage from "./pages/BarChartView/RevenueBarChartPage";
+import SparesBarChartPage from "./pages/BarChartView/SparesBarChartPage";
+import TATBarChartPage from "./pages/BarChartView/TATBarChartPage";
 
 import "./App.css";
 
@@ -119,6 +123,10 @@ function App() {
           <Route path="msgp_profit-bar-chart" element={<MSGPProfitBarChartPage />} />
           <Route path="oil-bar-chart" element={<OilBarChartPage />} />
           <Route path="pms_parts-bar-chart" element={<PMSPartsBarChartPage />} />
+          <Route path="referencee-bar-chart" element={<ReferenceeBarChartPage />} />
+          <Route path="revenue-bar-chart" element={<RevenueBarChartPage />} />
+          <Route path="spares-bar-chart" element={<SparesBarChartPage />} />
+          <Route path="tat-bar-chart" element={<TATBarChartPage />} />
         </Route>
       </Routes>
     </Router>

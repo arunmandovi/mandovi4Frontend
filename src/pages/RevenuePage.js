@@ -63,7 +63,7 @@ function RevenuePage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&month=${m}`;
+          const query = `?groupBy=city&months=${m}`;
           const data = await fetchData(`/api/revenue/revenue_summary${query}`);
 
           if (
@@ -209,6 +209,15 @@ function RevenuePage() {
         }}
       >
         <Typography variant="h4">REVENUE REPORT (City-wise)</Typography>
+
+        {/* Bar Chart Navigation Button */}
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => navigate("/DashboardHome/revenue-bar-chart")}
+                        >
+                          Bar Chart
+                        </Button>
       </Box>
 
       {/* Filters */}

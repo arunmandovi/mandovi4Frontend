@@ -43,7 +43,10 @@ function MGAPage() {
     "MGA By VEH": "mgaVeh",
   };
 
-  // ---------- Fetch city summary ----------
+  // ✅ Your required fixed order
+  const preferredOrder = ["BANGALORE", "MYSORE", "MANGALORE"];
+
+  // ---------- Fetch data ----------
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
@@ -53,11 +56,8 @@ function MGAPage() {
         for (const m of activeMonths) {
           const query = `?groupBy=city&month=${m}`;
           const data = await fetchData(`/api/mga/mga_summary${query}`);
-
-          if (
-            (data && data.length > 0) ||
-            (months.length > 0 && months.includes(m))
-          ) {
+          if ((data && data.length > 0) ||
+              (months.length > 0 && months.includes(m))) {
             combined.push({ month: m, data });
           }
         }
@@ -107,13 +107,26 @@ function MGAPage() {
     return undefined;
   };
 
+  // ---------- Build chart data ----------
   const buildChartData = (summaryArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const citySet = new Set();
+
     summaryArr.forEach(({ data }) => {
       (data || []).forEach((row) => citySet.add(readCityName(row)));
     });
-    const allCities = Array.from(citySet);
+
+    let allCities = Array.from(citySet);
+
+    // sort city names according to preferred order
+    allCities.sort((a, b) => {
+      const aIndex = preferredOrder.indexOf(a);
+      const bIndex = preferredOrder.indexOf(b);
+      if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+      return aIndex - bIndex;
+    });
 
     const result = summaryArr.map(({ month, data }) => {
       const entry = { month };
@@ -126,14 +139,66 @@ function MGAPage() {
       });
       return entry;
     });
+
     return { data: result, keys: allCities };
   };
 
-  const { data: chartData, keys: cityKeys } = buildChartData(summary);
+  const { data: chartData, keys: unsortedKeys } = buildChartData(summary);
 
-  // Detect if this growth option is percentage-based
-  const isPercentageGrowth =
-    selectedGrowth && selectedGrowth.toLowerCase().includes("%");
+  // ✅ Sort for rendering order
+  const cityKeys = [...unsortedKeys].sort((a, b) => {
+    const aIndex = preferredOrder.indexOf(a);
+    const bIndex = preferredOrder.indexOf(b);
+    if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
+  });
+
+  const isPercentageGrowth = selectedGrowth?.includes("%");
+
+  // ---------- Custom Tooltip (forces hover order) ----------
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      // sort the payload according to preferredOrder
+      const sortedPayload = [...payload].sort((a, b) => {
+        const aIndex = preferredOrder.indexOf(a.name);
+        const bIndex = preferredOrder.indexOf(b.name);
+        if (aIndex === -1 && bIndex === -1) return a.name.localeCompare(b.name);
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+
+      return (
+        <Box
+          sx={{
+            backgroundColor: "white",
+            border: "1px solid #ccc",
+            p: 1,
+            borderRadius: 1,
+            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            {label}
+          </Typography>
+          {sortedPayload.map((item, idx) => (
+            <Typography
+              key={idx}
+              sx={{ color: item.color, fontSize: 13, ml: 0.5 }}
+            >
+              {item.name}:{" "}
+              {isPercentageGrowth
+                ? `${item.value.toFixed(2)}%`
+                : item.value.toFixed(2)}
+            </Typography>
+          ))}
+        </Box>
+      );
+    }
+    return null;
+  };
 
   // ---------- Render ----------
   return (
@@ -147,6 +212,15 @@ function MGAPage() {
         }}
       >
         <Typography variant="h4">MGA REPORT (City-wise)</Typography>
+
+        {/* Bar Chart Navigation Button
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => navigate("/DashboardHome/mga-bar-chart")}
+                        >
+                          Bar Chart
+                        </Button> */}
       </Box>
 
       {/* Filters */}
@@ -171,7 +245,7 @@ function MGAPage() {
         </FormControl>
       </Box>
 
-      {/* Growth buttons */}
+      {/* Growth Buttons */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
         {growthOptions.map((g) => (
           <Button
@@ -219,15 +293,13 @@ function MGAPage() {
                   position: "insideLeft",
                 }}
               />
-              <Tooltip
-                formatter={(value) =>
-                  isPercentageGrowth
-                    ? `${Number(value).toFixed(2)}%`
-                    : Number(value).toFixed(2)
-                }
-              />
+
+              {/* ✅ Custom Tooltip replaces default one */}
+              <Tooltip content={<CustomTooltip />} />
+
               <Legend />
 
+              {/* Render lines in the fixed order */}
               {cityKeys.map((key, idx) => (
                 <Line
                   key={key}
@@ -245,6 +317,9 @@ function MGAPage() {
                     content={(props) => {
                       const { x, y, value } = props;
                       if (value == null) return null;
+                      const displayVal = isPercentageGrowth
+                        ? `${Number(value).toFixed(2)}%`
+                        : Number(value).toFixed(2);
                       return (
                         <text
                           x={x}
@@ -253,9 +328,7 @@ function MGAPage() {
                           fontSize={11}
                           fill="#333"
                         >
-                          {isPercentageGrowth
-                            ? `${Number(value).toFixed(2)}%`
-                            : Number(value).toFixed(2)}
+                          {displayVal}
                         </text>
                       );
                     }}

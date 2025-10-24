@@ -31,7 +31,7 @@ function SparesPage() {
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
   const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+    "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct",
     "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
 
@@ -59,7 +59,7 @@ function SparesPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&month=${m}`;
+          const query = `?groupBy=city&months=${m}`;
           const data = await fetchData(`/api/spares/spares_summary${query}`);
 
           if (
@@ -205,6 +205,15 @@ function SparesPage() {
         }}
       >
         <Typography variant="h4">SPARES REPORT (City-wise)</Typography>
+
+        {/* Bar Chart Navigation Button */}
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => navigate("/DashboardHome/spares-bar-chart")}
+                        >
+                          Bar Chart
+                        </Button>
       </Box>
 
       {/* Filters */}

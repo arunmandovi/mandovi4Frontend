@@ -42,34 +42,10 @@ function ProfitLossPage() {
     <Box sx={{ p: 3 }}>
       <h2> Profit & Loss </h2>
 
-      {/* 🔼 Upload Section */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 2,
-          mb: 3,
-          flexWrap: "wrap",
-        }}
-      >
-        <input
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={(e) => setFile(e.target.files[0])}
-          style={{ border: "1px solid #ccc", padding: "6px", borderRadius: "6px" }}
-        />
-        <Button variant="contained" color="success" onClick={handleUpload}>
-          ⬆ Upload Excel
-        </Button>
-      </Box>
-
       {/* Buttons: View All & Back */}
       <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
         <Button variant="contained" onClick={() => handleFetch(false)}>
           📄 View All Data
-        </Button>
-        <Button variant="outlined" color="secondary" onClick={() => navigate("/DashboardHome")}>
-          ⬅ Back to Home
         </Button>
       </Box>
 
