@@ -54,7 +54,7 @@ function MGAPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&month=${m}`;
+          const query = `?groupBy=city&months=${m}`;
           const data = await fetchData(`/api/mga/mga_summary${query}`);
           if ((data && data.length > 0) ||
               (months.length > 0 && months.includes(m))) {
@@ -213,14 +213,14 @@ function MGAPage() {
       >
         <Typography variant="h4">MGA REPORT (City-wise)</Typography>
 
-        {/* Bar Chart Navigation Button
+        {/* Bar Chart Navigation Button */}
                         <Button
                           variant="contained"
                           color="secondary"
                           onClick={() => navigate("/DashboardHome/mga-bar-chart")}
                         >
                           Bar Chart
-                        </Button> */}
+                        </Button>
       </Box>
 
       {/* Filters */}

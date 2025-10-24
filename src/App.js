@@ -57,6 +57,8 @@ import ReferenceeBarChartPage from "./pages/BarChartView/ReferenceeBarChartPage"
 import RevenueBarChartPage from "./pages/BarChartView/RevenueBarChartPage";
 import SparesBarChartPage from "./pages/BarChartView/SparesBarChartPage";
 import TATBarChartPage from "./pages/BarChartView/TATBarChartPage";
+import MCPBarChartPage from "./pages/BarChartView/MCPBarChartPage";
+import MGABarChartPage from "./pages/BarChartView/MGABarChartPage";
 
 import "./App.css";
 
@@ -127,6 +129,8 @@ function App() {
           <Route path="revenue-bar-chart" element={<RevenueBarChartPage />} />
           <Route path="spares-bar-chart" element={<SparesBarChartPage />} />
           <Route path="tat-bar-chart" element={<TATBarChartPage />} />
+          <Route path="mcp-bar-chart" element={<MCPBarChartPage />} />
+          <Route path="mga-bar-chart" element={<MGABarChartPage />} />
         </Route>
       </Routes>
     </Router>
