@@ -42,7 +42,6 @@ function AdminDashboard() {
     try {
       const res = await axios.get("http://localhost:8080/api/adminn/getallemployee");
       console.log("Employee API Response:", res.data);
-
       if (Array.isArray(res.data)) setEmployees(res.data);
       else setEmployees([]);
     } catch (err) {
@@ -53,6 +52,7 @@ function AdminDashboard() {
 
   useEffect(() => {
     fetchEmployees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ✅ Fetch Admins
@@ -60,7 +60,6 @@ function AdminDashboard() {
     try {
       const res = await axios.get("http://localhost:8080/api/adminn/getalladminn");
       console.log("Admin API Response:", res.data);
-
       if (Array.isArray(res.data)) setAdminn(res.data);
       else setAdminn([]);
     } catch (err) {
@@ -71,6 +70,7 @@ function AdminDashboard() {
 
   useEffect(() => {
     fetchAdminns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ✅ Create Admin
@@ -220,21 +220,27 @@ function AdminDashboard() {
             type="text"
             placeholder="Employee Name"
             value={newEmployee.employeeName}
-            onChange={(e) => setNewEmployee({ ...newEmployee, employeeName: e.target.value })}
+            onChange={(e) =>
+              setNewEmployee({ ...newEmployee, employeeName: e.target.value })
+            }
             required
           />
           <input
             type="text"
             placeholder="Employee ID"
             value={newEmployee.employeeId}
-            onChange={(e) => setNewEmployee({ ...newEmployee, employeeId: e.target.value })}
+            onChange={(e) =>
+              setNewEmployee({ ...newEmployee, employeeId: e.target.value })
+            }
             required
           />
           <input
             type="text"
             placeholder="Designation"
             value={newEmployee.designation}
-            onChange={(e) => setNewEmployee({ ...newEmployee, designation: e.target.value })}
+            onChange={(e) =>
+              setNewEmployee({ ...newEmployee, designation: e.target.value })
+            }
             required
           />
           <input
@@ -253,7 +259,10 @@ function AdminDashboard() {
           <button onClick={() => navigate("/EmployeeLogin")}>
             Go to Employee Login
           </button>
-          <button onClick={() => navigate("/AdminLogin")} style={{ marginLeft: "10px" }}>
+          <button
+            onClick={() => navigate("/AdminLogin")}
+            style={{ marginLeft: "10px" }}
+          >
             Logout
           </button>
         </div>
