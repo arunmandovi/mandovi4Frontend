@@ -44,10 +44,12 @@ import TATUploadPage from "./pages/FileUpload/TATUploadPage";
 import VASUploadPage from "./pages/FileUpload/VASUploadPage";
 
 // Employee Dashboard BarChart Pages
-import LabourBarChartPage from "./pages/BarChartView/LabourBarChartPage";
-import LoaddBarChartPage from "./pages/BarChartView/LoaddBarChartPage";
 import BatteryTyreBarChartPage from "./pages/BarChartView/BatteryTyreBarChartPage";
 import BRConversionBarChartPage from "./pages/BarChartView/BRConversionBarChartPage";
+import LabourBarChartPage from "./pages/BarChartView/LabourBarChartPage";
+import LoaddBarChartPage from "./pages/BarChartView/LoaddBarChartPage";
+import MCPBarChartPage from "./pages/BarChartView/MCPBarChartPage";
+import MGABarChartPage from "./pages/BarChartView/MGABarChartPage";
 import MSGPBarChartPage from "./pages/BarChartView/MSGPBarChartPage";
 import MSGPProfitBarChartPage from "./pages/BarChartView/MSGPProfitBarChartPage";
 import OilBarChartPage from "./pages/BarChartView/OilBarChartPage";
@@ -56,8 +58,8 @@ import ReferenceeBarChartPage from "./pages/BarChartView/ReferenceeBarChartPage"
 import RevenueBarChartPage from "./pages/BarChartView/RevenueBarChartPage";
 import SparesBarChartPage from "./pages/BarChartView/SparesBarChartPage";
 import TATBarChartPage from "./pages/BarChartView/TATBarChartPage";
-import MCPBarChartPage from "./pages/BarChartView/MCPBarChartPage";
-import MGABarChartPage from "./pages/BarChartView/MGABarChartPage";
+import VASBarChartPage from "./pages/BarChartView/VASBarChartPage";
+
 
 // BranchWise Graph Pages
 import LabourBranchesGraphPage from "./pages/BranchWiseGraphView/LabourBranchesGraphPage";
@@ -118,10 +120,12 @@ function App() {
           <Route path="vas" element={<VASPage />} />
 
           {/* 🧭 Employee Dashboard BarChart Pages */}
-          <Route path="labour-bar-chart" element={<LabourBarChartPage />} />
-          <Route path="loadd-bar-chart" element={<LoaddBarChartPage />} />
           <Route path="battery_tyre-bar-chart" element={<BatteryTyreBarChartPage />} />
           <Route path="br_conversion-bar-chart" element={<BRConversionBarChartPage />} />
+          <Route path="labour-bar-chart" element={<LabourBarChartPage />} />
+          <Route path="loadd-bar-chart" element={<LoaddBarChartPage />} />
+          <Route path="mcp-bar-chart" element={<MCPBarChartPage />} />
+          <Route path="mga-bar-chart" element={<MGABarChartPage />} />          
           <Route path="msgp-bar-chart" element={<MSGPBarChartPage />} />
           <Route path="msgp_profit-bar-chart" element={<MSGPProfitBarChartPage />} />
           <Route path="oil-bar-chart" element={<OilBarChartPage />} />
@@ -130,8 +134,7 @@ function App() {
           <Route path="revenue-bar-chart" element={<RevenueBarChartPage />} />
           <Route path="spares-bar-chart" element={<SparesBarChartPage />} />
           <Route path="tat-bar-chart" element={<TATBarChartPage />} />
-          <Route path="mcp-bar-chart" element={<MCPBarChartPage />} />
-          <Route path="mga-bar-chart" element={<MGABarChartPage />} />
+          <Route path="vas-bar-chart" element={<VASBarChartPage />} />
 
           {/* 🧭 BranchWise Graph Pages */}
           <Route path="labour-branch-graph" element={<LabourBranchesGraphPage />} />
