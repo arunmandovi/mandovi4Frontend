@@ -57,17 +57,15 @@ function BatteryTyreBarChartPage() {
         const query = `?groupBy=city&months=${monthQuery}`;
 
         const data = await fetchData(`/api/battery_tyre/battery_tyre_summary${query}`);
-
-        if (data && data.length > 0) {
-          setSummary(data);
-        } else {
-          setSummary([]);
-        }
+        setSummary(Array.isArray(data) && data.length > 0 ? data : []);
       } catch (err) {
         console.error("fetchCitySummary error:", err);
+        setSummary([]);
       }
     };
+
     fetchCitySummary();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [months]);
 
   // ---------- Helpers ----------
@@ -171,33 +169,36 @@ function BatteryTyreBarChartPage() {
 
   // ---------- Render ----------
   return (
-        <Box sx={{ p: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
+    <Box sx={{ p: 3 }}>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">BATTERY & TYRE REPORT (City-wise)</Typography>
+
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/battery_tyre")}
           >
-            <Typography variant="h4">BATTERY & TYRE REPORT (City-wise)</Typography>
-    
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => navigate("/DashboardHome/battery_tyre")}
-              >
-                Graph
-              </Button>
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => navigate("/DashboardHome/battery_tyre_branches-bar-chart")}
-              >
-                BranchWise
-              </Button>
-            </Box>
+            Graph
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() =>
+              navigate("/DashboardHome/battery_tyre_branches-bar-chart")
+            }
+          >
+            BranchWise
+          </Button>
+        </Box>
       </Box>
 
       {/* Filters */}
@@ -222,51 +223,51 @@ function BatteryTyreBarChartPage() {
         </FormControl>
       </Box>
 
-      {/* Stylish Growth Type Buttons */}
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 1.2,
-                mb: 2,
-              }}
-            >
-              {growthOptions.map((g, idx) => (
-                <Button
-                  key={g}
-                  variant={selectedGrowth === g ? "contained" : "outlined"}
-                  color={selectedGrowth === g ? "secondary" : "primary"}
-                  sx={{
-                    borderRadius: "20px",
-                    px: 2,
-                    py: 0.5,
-                    textTransform: "none",
-                    fontWeight: 600,
-                    transition: "all 0.3s ease",
-                    background:
-                      selectedGrowth === g
-                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
-                            (idx * 40 + 20) % 360
-                          }, 70%, 55%))`
-                        : "transparent",
-                    color: selectedGrowth === g ? "white" : "inherit",
-                    boxShadow:
-                      selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
-                    "&:hover": {
-                      transform: "scale(1.05)",
-                      background:
-                        selectedGrowth === g
-                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
-                              (idx * 40 + 20) % 360
-                            }, 65%, 50%))`
-                          : "rgba(103,58,183,0.05)",
-                    },
-                  }}
-                  onClick={() => setSelectedGrowth(g)}
-                >
-                  {g.replace(" Growth %", "")}
-                </Button>
-              ))}
+      {/* Growth Type Buttons */}
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 1.2,
+          mb: 2,
+        }}
+      >
+        {growthOptions.map((g, idx) => (
+          <Button
+            key={g}
+            variant={selectedGrowth === g ? "contained" : "outlined"}
+            color={selectedGrowth === g ? "secondary" : "primary"}
+            sx={{
+              borderRadius: "20px",
+              px: 2,
+              py: 0.5,
+              textTransform: "none",
+              fontWeight: 600,
+              transition: "all 0.3s ease",
+              background:
+                selectedGrowth === g
+                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                      (idx * 40 + 20) % 360
+                    }, 70%, 55%))`
+                  : "transparent",
+              color: selectedGrowth === g ? "white" : "inherit",
+              boxShadow:
+                selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
+              "&:hover": {
+                transform: "scale(1.05)",
+                background:
+                  selectedGrowth === g
+                    ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
+                        (idx * 40 + 20) % 360
+                      }, 65%, 50%))`
+                    : "rgba(103,58,183,0.05)",
+              },
+            }}
+            onClick={() => setSelectedGrowth(g)}
+          >
+            {g.replace(" Growth %", "")}
+          </Button>
+        ))}
       </Box>
 
       {!selectedGrowth ? (
@@ -306,7 +307,6 @@ function BatteryTyreBarChartPage() {
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
-
               <Bar
                 dataKey="value"
                 fill="#1976d2"
@@ -317,10 +317,8 @@ function BatteryTyreBarChartPage() {
                   dataKey="value"
                   position="top"
                   fontSize={11}
-                  content={(props) => {
-                    const { x, y, value } = props;
-                    if (value == null) return null;
-                    return (
+                  content={({ x, y, value }) =>
+                    value == null ? null : (
                       <text
                         x={x}
                         y={y - 5}
@@ -330,8 +328,8 @@ function BatteryTyreBarChartPage() {
                       >
                         {`${Number(value).toFixed(2)}%`}
                       </text>
-                    );
-                  }}
+                    )
+                  }
                 />
               </Bar>
             </BarChart>

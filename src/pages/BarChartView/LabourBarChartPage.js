@@ -202,7 +202,7 @@ function LabourBarChartPage() {
             <Button
               variant="contained"
               color="secondary"
-              onClick={() => navigate("/DashboardHome/labour_branches-bar-chart")}
+              onClick={() => navigate("/DashboardHome/labour-bar-chart")}
             >
               BranchWise
             </Button>
