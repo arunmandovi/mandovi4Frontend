@@ -63,6 +63,7 @@ import VASBarChartPage from "./pages/BarChartView/VASBarChartPage";
 
 // BranchWise BarChart Pages
 import BatteryTyreBranchesBarChartPage from "./pages/BranchWiseBarChartView/BatteryTyreBranchesBarChartPage";
+import BRConversionBranchesBarChartPage from "./pages/BranchWiseBarChartView/BRConversionBranchesBarChartPage";
 import LabourBranchesBarChartPage from "./pages/BranchWiseBarChartView/LabourBranchesBarChartPage";
 
 import "./App.css";
@@ -139,6 +140,7 @@ function App() {
 
           {/* 🧭 BranchWise Graph Pages */}
           <Route path="battery_tyre_branches-bar-chart" element={<BatteryTyreBranchesBarChartPage />} />
+          <Route path="br_conversion_branches-bar-chart" element={<BRConversionBranchesBarChartPage />} />
           <Route path="labour_branches-bar-chart" element={<LabourBranchesBarChartPage />} />
         </Route>
       </Routes>
