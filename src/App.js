@@ -61,8 +61,8 @@ import TATBarChartPage from "./pages/BarChartView/TATBarChartPage";
 import VASBarChartPage from "./pages/BarChartView/VASBarChartPage";
 
 
-// BranchWise Graph Pages
-import LabourBranchesGraphPage from "./pages/BranchWiseGraphView/LabourBranchesGraphPage";
+// BranchWise BarChart Pages
+import LabourBranchesBarChartPage from "./pages/BranchWiseBarChartView/LabourBranchesBarChartPage";
 
 import "./App.css";
 
@@ -137,7 +137,7 @@ function App() {
           <Route path="vas-bar-chart" element={<VASBarChartPage />} />
 
           {/* 🧭 BranchWise Graph Pages */}
-          <Route path="labour-branch-graph" element={<LabourBranchesGraphPage />} />
+          <Route path="labour_branches-bar-chart" element={<LabourBranchesBarChartPage />} />
         </Route>
       </Routes>
     </Router>

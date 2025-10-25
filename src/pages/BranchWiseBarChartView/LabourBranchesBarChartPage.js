@@ -24,16 +24,19 @@ import {
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function LabourBarChartPage() {
+function LabourBranchesBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [cities, setCities] = useState([]); // ✅ multiple city selection
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
     "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
+
+  const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
 
   const growthOptions = [
     "Service Growth %",
@@ -57,29 +60,41 @@ function LabourBarChartPage() {
     "Others Growth %": "growthOthers",
   };
 
-  // ---------- Fetch city summary ----------
+  // ---------- Fetch branch summary ----------
   useEffect(() => {
-    const fetchCitySummary = async () => {
+    const fetchSummary = async () => {
       try {
         const activeMonths = months.length ? months : monthOptions;
         const monthQuery = activeMonths.join(",");
-        const query = `?groupBy=city&months=${monthQuery}`;
+        const cityQuery = cities.length ? `&cities=${cities.join(",")}` : "";
 
-        const data = await fetchData(`/api/labour/labour_summary${query}`);
+        const query = `?months=${monthQuery}${cityQuery}`;
+        const data = await fetchData(`/api/labour/labour_branch_summary${query}`);
 
-        if (data && data.length > 0) {
-          setSummary(data);
-        } else {
-          setSummary([]);
-        }
+        if (data && data.length > 0) setSummary(data);
+        else setSummary([]);
       } catch (err) {
-        console.error("fetchCitySummary error:", err);
+        console.error("fetchSummary error:", err);
       }
     };
-    fetchCitySummary();
-  }, [months]);
+
+    fetchSummary();
+  }, [months, cities]);
 
   // ---------- Helpers ----------
+  const readBranchName = (row) => {
+    if (!row) return "";
+    return (
+      row.branch ||
+      row.Branch ||
+      row.branchName ||
+      row.BranchName ||
+      row.name ||
+      row.Name ||
+      ""
+    ).toString().trim();
+  };
+
   const readCityName = (row) => {
     if (!row) return "";
     return (
@@ -87,8 +102,6 @@ function LabourBarChartPage() {
       row.City ||
       row.cityName ||
       row.CityName ||
-      row.name ||
-      row.Name ||
       ""
     ).toString().trim();
   };
@@ -116,39 +129,46 @@ function LabourBarChartPage() {
     return undefined;
   };
 
-  // ---------- Build averaged dataset ----------
+  // ---------- Build averaged dataset with City priority ----------
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
-    const cityTotals = {};
-    const cityCounts = {};
+    const totals = {};
+    const counts = {};
+    const cityMap = {};
 
     (dataArr || []).forEach((row) => {
+      const branch = readBranchName(row);
       const city = readCityName(row);
       const val = readGrowthValue(row, apiKey);
       const parsed = parseFloat(String(val).replace("%", "").trim());
       if (!isNaN(parsed)) {
-        cityTotals[city] = (cityTotals[city] || 0) + parsed;
-        cityCounts[city] = (cityCounts[city] || 0) + 1;
+        totals[branch] = (totals[branch] || 0) + parsed;
+        counts[branch] = (counts[branch] || 0) + 1;
+        cityMap[branch] = city;
       }
     });
 
-    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
-    const allCitiesUnordered = Object.keys(cityTotals);
-    const allCities = [
-      ...preferredOrder.filter((c) =>
-        allCitiesUnordered.some((x) => x.toLowerCase() === c.toLowerCase())
-      ),
-      ...allCitiesUnordered
-        .filter(
-          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
-        )
-        .sort((a, b) => a.localeCompare(b)),
-    ];
-
-    return allCities.map((city) => ({
-      city,
-      value: cityCounts[city] ? cityTotals[city] / cityCounts[city] : 0,
+    const branches = Object.keys(totals).map((b) => ({
+      name: b,
+      city: cityMap[b],
+      value: counts[b] ? totals[b] / counts[b] : 0,
     }));
+
+    // ✅ Sort by city order (Bangalore → Mysore → Mangalore)
+    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+
+    branches.sort((a, b) => {
+      const cityAIndex = preferredOrder.findIndex(
+        (c) => c.toLowerCase() === (a.city || "").toLowerCase()
+      );
+      const cityBIndex = preferredOrder.findIndex(
+        (c) => c.toLowerCase() === (b.city || "").toLowerCase()
+      );
+      if (cityAIndex !== cityBIndex) return cityAIndex - cityBIndex;
+      return a.name.localeCompare(b.name);
+    });
+
+    return branches;
   };
 
   const chartData =
@@ -167,7 +187,7 @@ function LabourBarChartPage() {
           }}
         >
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {payload[0].payload.city}
+            {payload[0].payload.name} ({payload[0].payload.city})
           </Typography>
           <Typography variant="body2">
             {`${payload[0].value.toFixed(2)}%`}
@@ -180,37 +200,38 @@ function LabourBarChartPage() {
 
   // ---------- Render ----------
   return (
-      <Box sx={{ p: 3 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography variant="h4">LABOUR REPORT (City-wise)</Typography>
-  
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={() => navigate("/DashboardHome/labour")}
-            >
-              Graph
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={() => navigate("/DashboardHome/labour_branches-bar-chart")}
-            >
-              BranchWise
-            </Button>
-          </Box>
+    <Box sx={{ p: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">LABOUR REPORT (Branch-wise)</Typography>
+
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/labour")}
+          >
+            Graph
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/labour-bar-chart")}
+          >
+            CityWise
+          </Button>
+        </Box>
       </Box>
 
-      {/* Filters */}
+      {/* Filters Section */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
+        {/* Month Filter */}
         <FormControl size="small" sx={{ minWidth: 180 }}>
           <InputLabel>Select Month(s)</InputLabel>
           <Select
@@ -229,17 +250,30 @@ function LabourBarChartPage() {
             ))}
           </Select>
         </FormControl>
+
+        {/* City Filter */}
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select City(s)</InputLabel>
+          <Select
+            multiple
+            value={cities}
+            onChange={(e) => setCities(e.target.value)}
+            renderValue={(selected) =>
+              selected && selected.length ? selected.join(", ") : "All Cities"
+            }
+          >
+            {cityOptions.map((c) => (
+              <MenuItem key={c} value={c}>
+                <Checkbox checked={cities.indexOf(c) > -1} />
+                <ListItemText primary={c} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Box>
 
-      {/* Stylish Growth Type Buttons */}
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 1.2,
-          mb: 2,
-        }}
-      >
+      {/* Growth Buttons */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2, mb: 2 }}>
         {growthOptions.map((g, idx) => (
           <Button
             key={g}
@@ -263,12 +297,6 @@ function LabourBarChartPage() {
                 selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
               "&:hover": {
                 transform: "scale(1.05)",
-                background:
-                  selectedGrowth === g
-                    ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
-                        (idx * 40 + 20) % 360
-                      }, 65%, 50%))`
-                    : "rgba(103,58,183,0.05)",
               },
             }}
             onClick={() => setSelectedGrowth(g)}
@@ -278,6 +306,7 @@ function LabourBarChartPage() {
         ))}
       </Box>
 
+      {/* Chart Display */}
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
       ) : summary.length === 0 ? (
@@ -301,10 +330,17 @@ function LabourBarChartPage() {
           <ResponsiveContainer width="100%" height="92%">
             <BarChart
               data={chartData}
-              margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+              margin={{ top: 10, right: 30, left: 10, bottom: 80 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="city" tick={{ fontSize: 12 }} />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 11 }}
+                angle={-45}
+                textAnchor="end"
+                interval={0}
+                height={70}
+              />
               <YAxis
                 tick={{ fontSize: 12 }}
                 label={{
@@ -351,4 +387,4 @@ function LabourBarChartPage() {
   );
 }
 
-export default LabourBarChartPage;
+export default LabourBranchesBarChartPage;
