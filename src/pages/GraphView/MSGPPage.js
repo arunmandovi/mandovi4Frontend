@@ -223,7 +223,7 @@ function MSGPPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">MSGP REPORT (City-wise)</Typography>
+        <Typography variant="h4">MSGP REPORT</Typography>
 
         {/* Bar Chart Navigation Button */}
                         <Button

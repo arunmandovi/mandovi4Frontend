@@ -211,7 +211,7 @@ function MGAPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">MGA REPORT (City-wise)</Typography>
+        <Typography variant="h4">MGA REPORT</Typography>
 
         {/* Bar Chart Navigation Button */}
                         <Button

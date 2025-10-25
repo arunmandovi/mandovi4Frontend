@@ -204,7 +204,7 @@ function SparesPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">SPARES REPORT (City-wise)</Typography>
+        <Typography variant="h4">SPARES REPORT</Typography>
 
         {/* Bar Chart Navigation Button */}
                         <Button

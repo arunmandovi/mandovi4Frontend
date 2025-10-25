@@ -20,6 +20,7 @@ import {
   Legend,
   ResponsiveContainer,
   LabelList,
+  Cell,
 } from "recharts";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
@@ -28,7 +29,7 @@ function LabourBranchesBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [cities, setCities] = useState([]); // ✅ multiple city selection
+  const [cities, setCities] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
   const monthOptions = [
@@ -129,7 +130,7 @@ function LabourBranchesBarChartPage() {
     return undefined;
   };
 
-  // ---------- Build averaged dataset with City priority ----------
+  // ---------- Build averaged dataset ----------
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const totals = {};
@@ -154,19 +155,8 @@ function LabourBranchesBarChartPage() {
       value: counts[b] ? totals[b] / counts[b] : 0,
     }));
 
-    // ✅ Sort by city order (Bangalore → Mysore → Mangalore)
-    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
-
-    branches.sort((a, b) => {
-      const cityAIndex = preferredOrder.findIndex(
-        (c) => c.toLowerCase() === (a.city || "").toLowerCase()
-      );
-      const cityBIndex = preferredOrder.findIndex(
-        (c) => c.toLowerCase() === (b.city || "").toLowerCase()
-      );
-      if (cityAIndex !== cityBIndex) return cityAIndex - cityBIndex;
-      return a.name.localeCompare(b.name);
-    });
+    // Sort by growth value (descending)
+    branches.sort((a, b) => b.value - a.value);
 
     return branches;
   };
@@ -196,6 +186,13 @@ function LabourBranchesBarChartPage() {
       );
     }
     return null;
+  };
+
+  // ---------- Get color based on value ----------
+  const getBarColor = (value) => {
+    if (value > 5) return "#05f105ff"; // Light Green
+    if (value >= 0 && value <= 5) return "#FFD700"; // Yellow
+    return "#ce2203ff"; // Red
   };
 
   // ---------- Render ----------
@@ -352,12 +349,11 @@ function LabourBranchesBarChartPage() {
               <Tooltip content={<CustomTooltip />} />
               <Legend />
 
-              <Bar
-                dataKey="value"
-                fill="#1976d2"
-                barSize={35}
-                isAnimationActive={false}
-              >
+              <Bar dataKey="value" barSize={35} isAnimationActive={false}>
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={getBarColor(entry.value)} />
+                ))}
+
                 <LabelList
                   dataKey="value"
                   position="top"

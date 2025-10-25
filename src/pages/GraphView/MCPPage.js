@@ -196,7 +196,7 @@ function MCPPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">MCP REPORT (City-wise)</Typography>
+        <Typography variant="h4">MCP REPORT</Typography>
 
         {/* Bar Chart Navigation Button */}
                         <Button

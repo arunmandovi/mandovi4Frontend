@@ -200,7 +200,7 @@ function MSGPProfitPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">MSGP PROFIT REPORT (City-wise)</Typography>
+        <Typography variant="h4">MSGP PROFIT REPORT</Typography>
 
         {/* Bar Chart Navigation Button */}
                         <Button

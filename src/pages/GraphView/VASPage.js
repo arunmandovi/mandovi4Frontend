@@ -216,7 +216,7 @@ function VASPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">VAS REPORT (City-wise)</Typography>
+        <Typography variant="h4">VAS REPORT</Typography>
 
         {/* Bar Chart Navigation Button */}
                         <Button

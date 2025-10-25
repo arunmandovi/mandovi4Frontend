@@ -210,7 +210,7 @@ function LoaddPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">LOAD REPORT (City-wise)</Typography>
+        <Typography variant="h4">LOAD REPORT</Typography>
 
         {/* Bar Chart Navigation Button */}
                 <Button

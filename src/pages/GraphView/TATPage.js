@@ -212,7 +212,7 @@ function TATPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">TAT REPORT (City-wise)</Typography>
+        <Typography variant="h4">TAT REPORT</Typography>
 
          {/* Bar Chart Navigation Button */}
                         <Button

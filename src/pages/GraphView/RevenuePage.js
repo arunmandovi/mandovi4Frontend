@@ -208,7 +208,7 @@ function RevenuePage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">REVENUE REPORT (City-wise)</Typography>
+        <Typography variant="h4">REVENUE REPORT</Typography>
 
         {/* Bar Chart Navigation Button */}
                         <Button

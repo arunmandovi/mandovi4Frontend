@@ -209,7 +209,7 @@ function LabourPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">LABOUR REPORT (City-wise)</Typography>
+        <Typography variant="h4">LABOUR REPORT</Typography>
 
         {/* 🔹 Buttons section */}
         <Box sx={{ display: "flex", gap: 1.5 }}>
