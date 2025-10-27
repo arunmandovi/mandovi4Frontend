@@ -4,6 +4,7 @@ import DataTable from "../../components/DataTable";
 import { fetchData, uploadFile } from "../../api/uploadService";
 import { apiModules } from "../../config/modules";
 import { useNavigate } from "react-router-dom";
+import SlicerFilters from "../../components/SlicerFilters";
 
 function ProfitLossPage() {
   const profit_lossConfig = apiModules.find((m) => m.name === "Profit & Loss");

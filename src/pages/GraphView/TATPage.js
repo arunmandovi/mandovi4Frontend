@@ -23,6 +23,7 @@ import {
 } from "recharts";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
+import SlicerFilters from "../../components/SlicerFilters";
 
 function TATPage() {
   const navigate = useNavigate();
@@ -224,27 +225,12 @@ function TATPage() {
                         </Button>
       </Box>
 
-      {/* Filters */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Select Month(s)</InputLabel>
-          <Select
-            multiple
-            value={months}
-            onChange={(e) => setMonths(e.target.value)}
-            renderValue={(selected) =>
-              selected && selected.length ? selected.join(", ") : "Auto Filter"
-            }
-          >
-            {monthOptions.map((m) => (
-              <MenuItem key={m} value={m}>
-                <Checkbox checked={months.indexOf(m) > -1} />
-                <ListItemText primary={m} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
+      {/* Filters Section */}
+      <SlicerFilters
+      monthOptions={monthOptions}
+      months={months}
+      setMonths={setMonths}
+      />
 
       {/* 🔹 Stylish Growth Type Buttons */}
             <Box

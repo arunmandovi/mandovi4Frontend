@@ -24,6 +24,7 @@ import {
 } from "recharts";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
+import SlicerFilters from "../../components/SlicerFilters";
 
 function MSGPProfitBranchesBarChartPage() {
   const navigate = useNavigate();
@@ -217,47 +218,14 @@ function MSGPProfitBranchesBarChartPage() {
       </Box>
 
       {/* Filters Section */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-        {/* Month Filter */}
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Select Month(s)</InputLabel>
-          <Select
-            multiple
-            value={months}
-            onChange={(e) => setMonths(e.target.value)}
-            renderValue={(selected) =>
-              selected && selected.length ? selected.join(", ") : "All Months"
-            }
-          >
-            {monthOptions.map((m) => (
-              <MenuItem key={m} value={m}>
-                <Checkbox checked={months.indexOf(m) > -1} />
-                <ListItemText primary={m} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* City Filter */}
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Select City(s)</InputLabel>
-          <Select
-            multiple
-            value={cities}
-            onChange={(e) => setCities(e.target.value)}
-            renderValue={(selected) =>
-              selected && selected.length ? selected.join(", ") : "All Cities"
-            }
-          >
-            {cityOptions.map((c) => (
-              <MenuItem key={c} value={c}>
-                <Checkbox checked={cities.indexOf(c) > -1} />
-                <ListItemText primary={c} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
+      <SlicerFilters
+      monthOptions={monthOptions}
+      cityOptions={cityOptions}
+      months={months}
+      setMonths={setMonths}
+      cities={cities}
+      setCities={setCities}
+      />
 
       {/* Growth Buttons */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2, mb: 2 }}>

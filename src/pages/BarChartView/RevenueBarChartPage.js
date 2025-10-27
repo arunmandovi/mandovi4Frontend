@@ -23,6 +23,7 @@ import {
 } from "recharts";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
+import SlicerFilters from "../../components/SlicerFilters";
 
 function RevenueBarChartPage() {
   const navigate = useNavigate();
@@ -179,48 +180,41 @@ function RevenueBarChartPage() {
 
   // ---------- Render ----------
   return (
-    <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4">REVENUE REPORT (City-wise)</Typography>
-
-        {/* Back to Graph Button */}
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => navigate("/DashboardHome/revenue")}
-        >
-          Graph
-        </Button>
-      </Box>
-
-      {/* Filters */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Select Month(s)</InputLabel>
-          <Select
-            multiple
-            value={months}
-            onChange={(e) => setMonths(e.target.value)}
-            renderValue={(selected) =>
-              selected && selected.length ? selected.join(", ") : "All Months"
-            }
+        <Box sx={{ p: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
           >
-            {monthOptions.map((m) => (
-              <MenuItem key={m} value={m}>
-                <Checkbox checked={months.indexOf(m) > -1} />
-                <ListItemText primary={m} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            <Typography variant="h4">REVENUE REPORT (City-wise)</Typography>
+    
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => navigate("/DashboardHome/revenue")}
+              >
+                Graph
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => navigate("/DashboardHome/revenue_branches-bar-chart")}
+              >
+                BranchWise
+              </Button>
+            </Box>
       </Box>
+
+      {/* Filters Section */}
+      <SlicerFilters
+      monthOptions={monthOptions}
+      months={months}
+      setMonths={setMonths}
+      />
 
       {/* Stylish Growth Type Buttons */}
             <Box

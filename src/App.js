@@ -23,8 +23,6 @@ import SparesPage from "./pages/GraphView/SparesPage";
 import TATPage from "./pages/GraphView/TATPage";
 import VASPage from "./pages/GraphView/VASPage";
 
-//BranchWise Graph View Pages
-
 // Admin upload pages
 import BatteryTyreUploadPage from "./pages/FileUpload/BatteryTyreUploadPage";
 import BRConversionUploadPage from "./pages/FileUpload/BRConversionUploadPage";
@@ -70,6 +68,8 @@ import MSGPBranchesBarChartPage from "./pages/BranchWiseBarChartView/MSGPBranche
 import MSGPProfitBranchesBarChartPage from "./pages/BranchWiseBarChartView/MSGPProfitBranchesBarChartPage";
 import OilBranchesBarChartPage from "./pages/BranchWiseBarChartView/OilBranchesBarChartPage";
 import PMSPartsBranchesBarChartPage from "./pages/BranchWiseBarChartView/PMSPartsBranchesBarChartPage";
+import ReferenceeeBranchesBarChartPage from "./pages/BranchWiseBarChartView/ReferenceeBranchesBarChartPage";
+import RevenueBranchesBarChartPage from "./pages/BranchWiseBarChartView/RevenueBranchesBarChartPage";
 
 import "./App.css";
 
@@ -152,6 +152,8 @@ function App() {
           <Route path="msgp_profit_branches-bar-chart" element={<MSGPProfitBranchesBarChartPage />} />
           <Route path="oil_branches-bar-chart" element={<OilBranchesBarChartPage />} />
           <Route path="pms_parts_branches-bar-chart" element={<PMSPartsBranchesBarChartPage />} />
+          <Route path="referencee_branches-bar-chart" element={<ReferenceeeBranchesBarChartPage />} />
+          <Route path="revenue_branches-bar-chart" element={<RevenueBranchesBarChartPage />} />
         </Route>
       </Routes>
     </Router>
