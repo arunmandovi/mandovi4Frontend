@@ -43,7 +43,7 @@ function PMSPartsBarChartPage() {
     "Fuel Filter %",
     "Oil filter %",
     "Spark plug %",
-    "7 PARTS PMS %",
+    "7 PARTS PMS",
     "DRAIN PLUG GASKET",
     "ISG BELT GENERATOR",
     "CNG FILTER",
@@ -59,7 +59,7 @@ function PMSPartsBarChartPage() {
     "Fuel Filter %": "fuelFilter",
     "Oil filter %": "oilFilter",
     "Spark plug %": "sparkPlug",
-    "7 PARTS PMS %": "sevenPartsPMS",
+    "7 PARTS PMS": "sevenPartsPMS",
     "DRAIN PLUG GASKET": "drainPlugGasket",
     "ISG BELT GENERATOR": "isgBeltGenerator",
     "CNG FILTER": "cngFilter",
@@ -191,25 +191,33 @@ function PMSPartsBarChartPage() {
 
   // ---------- Render ----------
   return (
-    <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4">PMS PARTS REPORT (City-wise)</Typography>
-
-        {/* Back to Graph Button */}
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => navigate("/DashboardHome/pms_parts")}
-        >
-          Graph
-        </Button>
+        <Box sx={{ p: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
+            <Typography variant="h4">PMS PARTS REPORT (City-wise)</Typography>
+    
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => navigate("/DashboardHome/pms_parts")}
+              >
+                Graph
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => navigate("/DashboardHome/pms_parts_branches-bar-chart")}
+              >
+                BranchWise
+              </Button>
+            </Box>
       </Box>
 
       {/* Filters */}

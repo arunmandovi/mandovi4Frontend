@@ -171,25 +171,33 @@ function MSGPProfitBarChartPage() {
 
   // ---------- Render ----------
   return (
-    <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4">MSGP PROFIT REPORT (City-wise)</Typography>
-
-        {/* Back to Graph Button */}
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => navigate("/DashboardHome/msgp_profit")}
-        >
-          Graph
-        </Button>
+        <Box sx={{ p: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
+            <Typography variant="h4">MSGP PROFIT REPORT (City-wise)</Typography>
+    
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => navigate("/DashboardHome/msgp_profit")}
+              >
+                Graph
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => navigate("/DashboardHome/msgp_profit_branches-bar-chart")}
+              >
+                BranchWise
+              </Button>
+            </Box>
       </Box>
 
       {/* Filters */}

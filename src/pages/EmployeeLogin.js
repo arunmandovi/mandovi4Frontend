@@ -1,5 +1,6 @@
+// src/pages/EmployeeLogin.js
 import { useState } from "react";
-import axios from "axios";
+import axiosInstance from "../api/axiosConfig";
 import { useNavigate } from "react-router-dom";
 import "../styles/EmployeeLogin.css";
 
@@ -10,9 +11,9 @@ function EmployeeLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // send as query params since backend expects @RequestParam
-      await axios.post(
-        "http://localhost:8080/api/employee/login_employee",
+      // backend expects @RequestParam style, so we send params and no body
+      await axiosInstance.post(
+        "/api/employee/login_employee",
         null, // no body
         {
           params: {
@@ -21,10 +22,13 @@ function EmployeeLogin() {
           },
         }
       );
-      // ✅ Go to DashboardHome (which defaults to Battery & Tyre)
+
+      // navigate to dashboard on success
       navigate("/DashboardHome");
     } catch (err) {
-      alert(err.response?.data || "Login failed");
+      // prefer safe error access
+      const msg = err?.response?.data || err.message || "Login failed";
+      alert(msg);
     }
   };
 
@@ -38,6 +42,7 @@ function EmployeeLogin() {
           placeholder="EmployeeId"
           value={form.employeeId}
           onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
+          required
         />
         <input
           type="password"
@@ -46,6 +51,7 @@ function EmployeeLogin() {
           onChange={(e) =>
             setForm({ ...form, employeePassword: e.target.value })
           }
+          required
         />
 
         <button type="submit">Login</button>

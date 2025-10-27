@@ -199,50 +199,25 @@ function LabourPage() {
 
   // ---------- Render ----------
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Header section with title and navigation buttons */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4">LABOUR REPORT</Typography>
-
-        {/* 🔹 Buttons section */}
-        <Box sx={{ display: "flex", gap: 1.5 }}>
-          {/* <Button
-            variant="contained"
-            sx={{
-              background: "linear-gradient(90deg, #00b09b, #96c93d)",
-              color: "#fff",
-              textTransform: "none",
-              fontWeight: 600,
-              px: 2.5,
-              borderRadius: "20px",
-              "&:hover": { background: "linear-gradient(90deg, #00a088, #82b636)" },
-            }}
-            onClick={() => navigate("/DashboardHome/labour-branch-graph")}
-          >
-            Branch View
-          </Button> */}
-
-          <Button
-            variant="contained"
-            color="secondary"
-            sx={{
-              textTransform: "none",
-              fontWeight: 600,
-              px: 2.5,
-              borderRadius: "20px",
-            }}
-            onClick={() => navigate("/DashboardHome/labour-bar-chart")}
-          >
-            Bar Chart
-          </Button>
-        </Box>
+      <Box sx={{ p: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
+          <Typography variant="h4">LABOUR REPORT</Typography>
+  
+          {/* Bar Chart Navigation Button */}
+                          <Button
+                            variant="contained"
+                            color="secondary"
+                            onClick={() => navigate("/DashboardHome/labour-bar-chart")}
+                          >
+                            Bar Chart
+                          </Button>
       </Box>
 
       {/* Filters */}

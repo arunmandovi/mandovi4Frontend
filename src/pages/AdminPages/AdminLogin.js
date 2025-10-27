@@ -1,5 +1,6 @@
+// src/pages/AdminLogin.js
 import { useState } from "react";
-import axios from "axios";
+import axiosInstance from "../../api/axiosConfig";
 import { useNavigate } from "react-router-dom";
 import "../../styles/AdminLogin.css";
 
@@ -10,8 +11,8 @@ function AdminLogin() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        "http://localhost:8080/api/adminn/login_adminn",
+      const res = await axiosInstance.post(
+        "/api/adminn/login_adminn",
         null, // backend expects RequestParams
         {
           params: {
@@ -21,14 +22,16 @@ function AdminLogin() {
         }
       );
 
-      // Save admin info if needed
-      localStorage.setItem("adminnId", res.data.adminnId);
+      // Save admin info if the backend returns it
+      if (res?.data?.adminnId) {
+        localStorage.setItem("adminnId", res.data.adminnId);
+      }
 
       // Redirect to AdminDashboard
       navigate("/AdminDashboard");
     } catch (err) {
-      console.error(err.response?.data || err);
-      alert(err.response?.data || "Admin login failed");
+      console.error(err?.response?.data || err);
+      alert(err?.response?.data || "Admin login failed");
     }
   };
 

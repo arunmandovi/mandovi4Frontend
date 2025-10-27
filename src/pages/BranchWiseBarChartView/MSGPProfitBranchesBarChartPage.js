@@ -20,14 +20,16 @@ import {
   Legend,
   ResponsiveContainer,
   LabelList,
+  Cell,
 } from "recharts";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function LoaddBarChartPage() {
+function MSGPProfitBranchesBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [cities, setCities] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
   const monthOptions = [
@@ -35,52 +37,55 @@ function LoaddBarChartPage() {
     "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
 
+  const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
+
   const growthOptions = [
-    "Service Growth %",
-    "BodyShop Growth %",
-    "Free Service Growth %",
-    "PMS Growth %",
-    "FPR Growth %",
-    "RR Growth %",
-    "Others Growth %",
-    "% BS on FPR Growth %",
+    "Service&BodyShop Profit %",
+    "Service Profit %",
+    "BodyShop Profit %",
   ];
 
   const growthKeyMap = {
-    "Service Growth %": "growthService",
-    "BodyShop Growth %": "growthBodyShop",
-    "Free Service Growth %": "growthFreeService",
-    "PMS Growth %": "growthPMS",
-    "FPR Growth %": "growthFPR",
-    "RR Growth %": "growthRR",
-    "Others Growth %": "growthOthers",
-    "% BS on FPR Growth %": "growthBSFPR",
+    "Service&BodyShop Profit %": "percentageProfitServiceBodyShop",
+    "Service Profit %": "percentageProfitService",
+    "BodyShop Profit %": "percentageProfitBodyShop",
   };
 
-  // ---------- Fetch city summary ----------
+  // ---------- Fetch branch summary ----------
   useEffect(() => {
-    const fetchCitySummary = async () => {
+    const fetchSummary = async () => {
       try {
-        // Prepare month list: all months if none selected
         const activeMonths = months.length ? months : monthOptions;
         const monthQuery = activeMonths.join(",");
-        const query = `?groupBy=city&months=${monthQuery}`;
+        const cityQuery = cities.length ? `&cities=${cities.join(",")}` : "";
 
-        const data = await fetchData(`/api/loadd/loadd_summary${query}`);
+        const query = `?months=${monthQuery}${cityQuery}`;
+        const data = await fetchData(`/api/msgp_profit/msgp_profit_branch_summary${query}`);
 
-        if (data && data.length > 0) {
-          setSummary(data);
-        } else {
-          setSummary([]);
-        }
+        if (data && data.length > 0) setSummary(data);
+        else setSummary([]);
       } catch (err) {
-        console.error("fetchCitySummary error:", err);
+        console.error("fetchSummary error:", err);
       }
     };
-    fetchCitySummary();
-  }, [months]);
+
+    fetchSummary();
+  }, [months, cities]);
 
   // ---------- Helpers ----------
+  const readBranchName = (row) => {
+    if (!row) return "";
+    return (
+      row.branch ||
+      row.Branch ||
+      row.branchName ||
+      row.BranchName ||
+      row.name ||
+      row.Name ||
+      ""
+    ).toString().trim();
+  };
+
   const readCityName = (row) => {
     if (!row) return "";
     return (
@@ -88,8 +93,6 @@ function LoaddBarChartPage() {
       row.City ||
       row.cityName ||
       row.CityName ||
-      row.name ||
-      row.Name ||
       ""
     ).toString().trim();
   };
@@ -120,36 +123,32 @@ function LoaddBarChartPage() {
   // ---------- Build averaged dataset ----------
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
-    const cityTotals = {};
-    const cityCounts = {};
+    const totals = {};
+    const counts = {};
+    const cityMap = {};
 
     (dataArr || []).forEach((row) => {
+      const branch = readBranchName(row);
       const city = readCityName(row);
       const val = readGrowthValue(row, apiKey);
       const parsed = parseFloat(String(val).replace("%", "").trim());
       if (!isNaN(parsed)) {
-        cityTotals[city] = (cityTotals[city] || 0) + parsed;
-        cityCounts[city] = (cityCounts[city] || 0) + 1;
+        totals[branch] = (totals[branch] || 0) + parsed;
+        counts[branch] = (counts[branch] || 0) + 1;
+        cityMap[branch] = city;
       }
     });
 
-    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
-    const allCitiesUnordered = Object.keys(cityTotals);
-    const allCities = [
-      ...preferredOrder.filter((c) =>
-        allCitiesUnordered.some((x) => x.toLowerCase() === c.toLowerCase())
-      ),
-      ...allCitiesUnordered
-        .filter(
-          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
-        )
-        .sort((a, b) => a.localeCompare(b)),
-    ];
-
-    return allCities.map((city) => ({
-      city,
-      value: cityCounts[city] ? cityTotals[city] / cityCounts[city] : 0,
+    const branches = Object.keys(totals).map((b) => ({
+      name: b,
+      city: cityMap[b],
+      value: counts[b] ? totals[b] / counts[b] : 0,
     }));
+
+    // Sort by growth value (descending)
+    branches.sort((a, b) => b.value - a.value);
+
+    return branches;
   };
 
   const chartData =
@@ -168,7 +167,7 @@ function LoaddBarChartPage() {
           }}
         >
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {payload[0].payload.city}
+            {payload[0].payload.name} ({payload[0].payload.city})
           </Typography>
           <Typography variant="body2">
             {`${payload[0].value.toFixed(2)}%`}
@@ -179,39 +178,47 @@ function LoaddBarChartPage() {
     return null;
   };
 
+  // ---------- Get color based on value ----------
+  const getBarColor = (value) => {
+    if (value > 5) return "#05f105ff"; // Light Green
+    if (value >= 0 && value <= 5) return "#FFD700"; // Yellow
+    return "#ce2203ff"; // Red
+  };
+
   // ---------- Render ----------
   return (
-        <Box sx={{ p: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
+    <Box sx={{ p: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">MSGP PROFIT REPORT (Branch-wise)</Typography>
+
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/msgp_profit")}
           >
-            <Typography variant="h4">LOAD REPORT (City-wise)</Typography>
-    
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => navigate("/DashboardHome/loadd")}
-              >
-                Graph
-              </Button>
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}
-              >
-                BranchWise
-              </Button>
-            </Box>
+            Graph
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/msgp_profit-bar-chart")}
+          >
+            CityWise
+          </Button>
+        </Box>
       </Box>
 
-      {/* Filters */}
+      {/* Filters Section */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
+        {/* Month Filter */}
         <FormControl size="small" sx={{ minWidth: 180 }}>
           <InputLabel>Select Month(s)</InputLabel>
           <Select
@@ -230,55 +237,63 @@ function LoaddBarChartPage() {
             ))}
           </Select>
         </FormControl>
+
+        {/* City Filter */}
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select City(s)</InputLabel>
+          <Select
+            multiple
+            value={cities}
+            onChange={(e) => setCities(e.target.value)}
+            renderValue={(selected) =>
+              selected && selected.length ? selected.join(", ") : "All Cities"
+            }
+          >
+            {cityOptions.map((c) => (
+              <MenuItem key={c} value={c}>
+                <Checkbox checked={cities.indexOf(c) > -1} />
+                <ListItemText primary={c} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Box>
 
-      {/* Stylish Growth Type Buttons */}
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 1.2,
-                mb: 2,
-              }}
-            >
-              {growthOptions.map((g, idx) => (
-                <Button
-                  key={g}
-                  variant={selectedGrowth === g ? "contained" : "outlined"}
-                  color={selectedGrowth === g ? "secondary" : "primary"}
-                  sx={{
-                    borderRadius: "20px",
-                    px: 2,
-                    py: 0.5,
-                    textTransform: "none",
-                    fontWeight: 600,
-                    transition: "all 0.3s ease",
-                    background:
-                      selectedGrowth === g
-                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
-                            (idx * 40 + 20) % 360
-                          }, 70%, 55%))`
-                        : "transparent",
-                    color: selectedGrowth === g ? "white" : "inherit",
-                    boxShadow:
-                      selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
-                    "&:hover": {
-                      transform: "scale(1.05)",
-                      background:
-                        selectedGrowth === g
-                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
-                              (idx * 40 + 20) % 360
-                            }, 65%, 50%))`
-                          : "rgba(103,58,183,0.05)",
-                    },
-                  }}
-                  onClick={() => setSelectedGrowth(g)}
-                >
-                  {g.replace(" Growth %", "")}
-                </Button>
-              ))}
+      {/* Growth Buttons */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2, mb: 2 }}>
+        {growthOptions.map((g, idx) => (
+          <Button
+            key={g}
+            variant={selectedGrowth === g ? "contained" : "outlined"}
+            color={selectedGrowth === g ? "secondary" : "primary"}
+            sx={{
+              borderRadius: "20px",
+              px: 2,
+              py: 0.5,
+              textTransform: "none",
+              fontWeight: 600,
+              transition: "all 0.3s ease",
+              background:
+                selectedGrowth === g
+                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                      (idx * 40 + 20) % 360
+                    }, 70%, 55%))`
+                  : "transparent",
+              color: selectedGrowth === g ? "white" : "inherit",
+              boxShadow:
+                selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
+              "&:hover": {
+                transform: "scale(1.05)",
+              },
+            }}
+            onClick={() => setSelectedGrowth(g)}
+          >
+            {g.replace(" Growth %", "")}
+          </Button>
+        ))}
       </Box>
 
+      {/* Chart Display */}
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
       ) : summary.length === 0 ? (
@@ -302,10 +317,17 @@ function LoaddBarChartPage() {
           <ResponsiveContainer width="100%" height="92%">
             <BarChart
               data={chartData}
-              margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+              margin={{ top: 10, right: 30, left: 10, bottom: 80 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="city" tick={{ fontSize: 12 }} />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 11 }}
+                angle={-45}
+                textAnchor="end"
+                interval={0}
+                height={70}
+              />
               <YAxis
                 tick={{ fontSize: 12 }}
                 label={{
@@ -317,12 +339,11 @@ function LoaddBarChartPage() {
               <Tooltip content={<CustomTooltip />} />
               <Legend />
 
-              <Bar
-                dataKey="value"
-                fill="#1976d2"
-                barSize={35}
-                isAnimationActive={false}
-              >
+              <Bar dataKey="value" barSize={35} isAnimationActive={false}>
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={getBarColor(entry.value)} />
+                ))}
+
                 <LabelList
                   dataKey="value"
                   position="top"
@@ -352,4 +373,4 @@ function LoaddBarChartPage() {
   );
 }
 
-export default LoaddBarChartPage;
+export default MSGPProfitBranchesBarChartPage;

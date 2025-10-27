@@ -1,7 +1,9 @@
-import axios from "axios";
-const API = "http://localhost:8080/api/auth";
+// src/services/authService.js
+import axiosInstance from "../api/axiosConfig";
 
-export const register = (data) => axios.post(`${API}/register`, data);
-export const login = (data) => axios.post(`${API}/login`, data);
-export const getUsers = () => axios.get(`${API}/users`);
-export const approveUser = (id) => axios.put(`${API}/approve/${id}`);
+const API = "/api/auth";
+
+export const register = (data) => axiosInstance.post(`${API}/register`, data);
+export const login = (data) => axiosInstance.post(`${API}/login`, data);
+export const getUsers = () => axiosInstance.get(`${API}/users`);
+export const approveUser = (id) => axiosInstance.put(`${API}/approve/${id}`);

@@ -145,17 +145,33 @@ function MSGPBarChartPage() {
 
   // ---------- Render ----------
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h4">MSGP REPORT (City-wise)</Typography>
-
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => navigate("/DashboardHome/msgp")}
-        >
-          Graph
-        </Button>
+          <Box sx={{ p: 3 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 3,
+              }}
+            >
+              <Typography variant="h4">MSGP REPORT (City-wise)</Typography>
+      
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => navigate("/DashboardHome/msgp")}
+                >
+                  Graph
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => navigate("/DashboardHome/msgp_branches-bar-chart")}
+                >
+                  BranchWise
+                </Button>
+              </Box>
       </Box>
 
       {/* Filters */}

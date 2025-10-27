@@ -1,5 +1,6 @@
+// src/pages/AdminDashboard.js
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axiosInstance from "../../api/axiosConfig";
 import { useNavigate } from "react-router-dom";
 import "../../styles/AdminDashboard.css";
 
@@ -25,22 +26,22 @@ function AdminDashboard() {
   const [adminn, setAdminn] = useState([]);
   const [showAdminn, setShowAdminn] = useState(false);
 
-  // ✅ Common error handler
+  // Common error handler
   const handleError = (err, fallbackMsg) => {
-    if (err.response?.data) {
+    if (err?.response?.data) {
       const data = err.response.data;
       if (typeof data === "string") alert(data);
-      else if (data.message) alert(data.message);
+      else if (data?.message) alert(data.message);
       else alert(JSON.stringify(data));
     } else {
       alert(fallbackMsg);
     }
   };
 
-  // ✅ Fetch Employees
+  // Fetch Employees
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/adminn/getallemployee");
+      const res = await axiosInstance.get("/api/adminn/getallemployee");
       console.log("Employee API Response:", res.data);
       if (Array.isArray(res.data)) setEmployees(res.data);
       else setEmployees([]);
@@ -55,10 +56,10 @@ function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ Fetch Admins
+  // Fetch Admins
   const fetchAdminns = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/adminn/getalladminn");
+      const res = await axiosInstance.get("/api/adminn/getalladminn");
       console.log("Admin API Response:", res.data);
       if (Array.isArray(res.data)) setAdminn(res.data);
       else setAdminn([]);
@@ -73,11 +74,11 @@ function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ Create Admin
+  // Create Admin
   const handleCreateAdmin = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:8080/api/adminn/new_adminn_registration", newAdmin);
+      await axiosInstance.post("/api/adminn/new_adminn_registration", newAdmin);
       alert("New admin created successfully!");
       setNewAdmin({ adminnName: "", adminnId: "", branch: "", adminnPassword: "" });
       fetchAdminns();
@@ -86,11 +87,11 @@ function AdminDashboard() {
     }
   };
 
-  // ✅ Create Employee
+  // Create Employee
   const handleCreateEmployee = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:8080/api/employee/new_emp_registration", newEmployee);
+      await axiosInstance.post("/api/employee/new_emp_registration", newEmployee);
       alert("Employee created successfully!");
       setNewEmployee({
         employeeName: "",
@@ -104,10 +105,10 @@ function AdminDashboard() {
     }
   };
 
-  // ✅ Enable / Disable functions
+  // Enable / Disable functions
   const disableEmployee = async (employeeId) => {
     try {
-      await axios.put(`http://localhost:8080/api/adminn/disable_employee/${employeeId}`);
+      await axiosInstance.put(`/api/adminn/disable_employee/${employeeId}`);
       alert("Employee disabled!");
       fetchEmployees();
     } catch (err) {
@@ -117,7 +118,7 @@ function AdminDashboard() {
 
   const enableEmployee = async (employeeId) => {
     try {
-      await axios.put(`http://localhost:8080/api/adminn/enable_employee/${employeeId}`);
+      await axiosInstance.put(`/api/adminn/enable_employee/${employeeId}`);
       alert("Employee enabled!");
       fetchEmployees();
     } catch (err) {
@@ -127,7 +128,7 @@ function AdminDashboard() {
 
   const disableAdminn = async (adminnId) => {
     try {
-      await axios.put(`http://localhost:8080/api/adminn/disable_adminn/${adminnId}`);
+      await axiosInstance.put(`/api/adminn/disable_adminn/${adminnId}`);
       alert("Admin disabled!");
       fetchAdminns();
     } catch (err) {
@@ -137,7 +138,7 @@ function AdminDashboard() {
 
   const enableAdminn = async (adminnId) => {
     try {
-      await axios.put(`http://localhost:8080/api/adminn/enable_adminn/${adminnId}`);
+      await axiosInstance.put(`/api/adminn/enable_adminn/${adminnId}`);
       alert("Admin enabled!");
       fetchAdminns();
     } catch (err) {
@@ -147,7 +148,7 @@ function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
-      {/* ✅ Top bar with Upload Files button */}
+      {/* Top bar with Upload Files button */}
       <div
         style={{
           display: "flex",

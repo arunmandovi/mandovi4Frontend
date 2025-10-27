@@ -65,6 +65,11 @@ import VASBarChartPage from "./pages/BarChartView/VASBarChartPage";
 import BatteryTyreBranchesBarChartPage from "./pages/BranchWiseBarChartView/BatteryTyreBranchesBarChartPage";
 import BRConversionBranchesBarChartPage from "./pages/BranchWiseBarChartView/BRConversionBranchesBarChartPage";
 import LabourBranchesBarChartPage from "./pages/BranchWiseBarChartView/LabourBranchesBarChartPage";
+import LoaddBranchesBarChartPage from "./pages/BranchWiseBarChartView/LoaddBranchesBarChartPage";
+import MSGPBranchesBarChartPage from "./pages/BranchWiseBarChartView/MSGPBranchesBarChartPage";
+import MSGPProfitBranchesBarChartPage from "./pages/BranchWiseBarChartView/MSGPProfitBranchesBarChartPage";
+import OilBranchesBarChartPage from "./pages/BranchWiseBarChartView/OilBranchesBarChartPage";
+import PMSPartsBranchesBarChartPage from "./pages/BranchWiseBarChartView/PMSPartsBranchesBarChartPage";
 
 import "./App.css";
 
@@ -142,6 +147,11 @@ function App() {
           <Route path="battery_tyre_branches-bar-chart" element={<BatteryTyreBranchesBarChartPage />} />
           <Route path="br_conversion_branches-bar-chart" element={<BRConversionBranchesBarChartPage />} />
           <Route path="labour_branches-bar-chart" element={<LabourBranchesBarChartPage />} />
+          <Route path="loadd_branches-bar-chart" element={<LoaddBranchesBarChartPage />} />
+          <Route path="msgp_branches-bar-chart" element={<MSGPBranchesBarChartPage />} />
+          <Route path="msgp_profit_branches-bar-chart" element={<MSGPProfitBranchesBarChartPage />} />
+          <Route path="oil_branches-bar-chart" element={<OilBranchesBarChartPage />} />
+          <Route path="pms_parts_branches-bar-chart" element={<PMSPartsBranchesBarChartPage />} />
         </Route>
       </Routes>
     </Router>
