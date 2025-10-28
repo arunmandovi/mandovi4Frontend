@@ -174,7 +174,7 @@ function LabourBranchesBarChartPage() {
         <Box
           sx={{
             background: "white",
-            border: "1px solid #ccc",
+            border: "1px solid #fbfafeff",
             borderRadius: 1,
             p: 1,
           }}
