@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Typography,
-  Checkbox,
-  ListItemText,
   Button,
 } from "@mui/material";
 import {
@@ -25,6 +19,8 @@ import {
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
+import { getBarColor } from "../../utils/getBarColor";
+import InsideBarLabel from "../../utils/InsideBarLabel";
 
 function BRConversionBranchesBarChartPage() {
   const navigate = useNavigate();
@@ -58,62 +54,34 @@ function BRConversionBranchesBarChartPage() {
     "Arena&Nexa Total Amount": "arenaNexaTotalAmount",
   };
 
-  // ---------- Fetch branch summary ----------
   useEffect(() => {
     const fetchSummary = async () => {
       try {
         const activeMonths = months.length ? months : monthOptions;
         const monthQuery = activeMonths.join(",");
         const cityQuery = cities.length ? `&cities=${cities.join(",")}` : "";
-
         const query = `?months=${monthQuery}${cityQuery}`;
         const data = await fetchData(`/api/br_conversion/br_conversion_branch_summary${query}`);
-
-        if (data && data.length > 0) setSummary(data);
-        else setSummary([]);
+        setSummary(data && data.length > 0 ? data : []);
       } catch (err) {
         console.error("fetchSummary error:", err);
       }
     };
-
     fetchSummary();
   }, [months, cities]);
 
-  // ---------- Helpers ----------
-  const readBranchName = (row) => {
-    if (!row) return "";
-    return (
-      row.branch ||
-      row.Branch ||
-      row.branchName ||
-      row.BranchName ||
-      row.name ||
-      row.Name ||
-      ""
-    ).toString().trim();
-  };
+  const readBranchName = (row) =>
+    (row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "").toString().trim();
 
-  const readCityName = (row) => {
-    if (!row) return "";
-    return (
-      row.city ||
-      row.City ||
-      row.cityName ||
-      row.CityName ||
-      ""
-    ).toString().trim();
-  };
+  const readCityName = (row) =>
+    (row?.city || row?.City || row?.cityName || row?.CityName || "").toString().trim();
 
   const readGrowthValue = (row, apiKey) => {
     if (!row || !apiKey) return undefined;
     const candidates = [
-      apiKey,
-      apiKey.toLowerCase(),
-      apiKey.toUpperCase(),
+      apiKey, apiKey.toLowerCase(), apiKey.toUpperCase(),
       apiKey.replace(/([A-Z])/g, "_$1").toLowerCase(),
-      "value",
-      "growth",
-      "val",
+      "value", "growth", "val",
     ];
     for (const key of candidates) {
       if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
@@ -127,7 +95,6 @@ function BRConversionBranchesBarChartPage() {
     return undefined;
   };
 
-  // ---------- Build averaged dataset ----------
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const totals = {};
@@ -152,32 +119,26 @@ function BRConversionBranchesBarChartPage() {
       value: counts[b] ? totals[b] / counts[b] : 0,
     }));
 
-    // Sort by growth value (descending)
     branches.sort((a, b) => b.value - a.value);
-
     return branches;
   };
 
   const chartData =
     selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
-  // ---------- Custom Tooltip ----------
+  const isPercentageData =
+    selectedGrowth && selectedGrowth.includes("%");
+
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
+      const value = payload[0].value.toFixed(2);
       return (
-        <Box
-          sx={{
-            background: "white",
-            border: "1px solid #ccc",
-            borderRadius: 1,
-            p: 1,
-          }}
-        >
+        <Box sx={{ background: "white", border: "1px solid #ccc", borderRadius: 1, p: 1 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {payload[0].payload.name} ({payload[0].payload.city})
           </Typography>
           <Typography variant="body2">
-            {`${payload[0].value.toFixed(2)}%`}
+            {isPercentageData ? `${value}%` : `${value}`}
           </Typography>
         </Box>
       );
@@ -185,26 +146,12 @@ function BRConversionBranchesBarChartPage() {
     return null;
   };
 
-  // ---------- Get color based on value ----------
-  const getBarColor = (value) => {
-    if (value > 5) return "#05f105ff"; // Light Green
-    if (value >= 0 && value <= 5) return "#FFD700"; // Yellow
-    return "#ce2203ff"; // Red
-  };
-
-  // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
       <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
+        sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}
       >
         <Typography variant="h4">BR CONVERSION REPORT (Branch-wise)</Typography>
-
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="contained"
@@ -223,17 +170,15 @@ function BRConversionBranchesBarChartPage() {
         </Box>
       </Box>
 
-      {/* Filters Section */}
       <SlicerFilters
-      monthOptions={monthOptions}
-      cityOptions={cityOptions}
-      months={months}
-      setMonths={setMonths}
-      cities={cities}
-      setCities={setCities}
+        monthOptions={monthOptions}
+        cityOptions={cityOptions}
+        months={months}
+        setMonths={setMonths}
+        cities={cities}
+        setCities={setCities}
       />
 
-      {/* Growth Buttons */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2, mb: 2 }}>
         {growthOptions.map((g, idx) => (
           <Button
@@ -249,9 +194,7 @@ function BRConversionBranchesBarChartPage() {
               transition: "all 0.3s ease",
               background:
                 selectedGrowth === g
-                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
-                      (idx * 40 + 20) % 360
-                    }, 70%, 55%))`
+                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${(idx * 40 + 20) % 360}, 70%, 55%))`
                   : "transparent",
               color: selectedGrowth === g ? "white" : "inherit",
               boxShadow:
@@ -262,12 +205,11 @@ function BRConversionBranchesBarChartPage() {
             }}
             onClick={() => setSelectedGrowth(g)}
           >
-            {g.replace(" Growth %", "")}
+            {g}
           </Button>
         ))}
       </Box>
 
-      {/* Chart Display */}
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
       ) : summary.length === 0 ? (
@@ -305,39 +247,19 @@ function BRConversionBranchesBarChartPage() {
               <YAxis
                 tick={{ fontSize: 12 }}
                 label={{
-                  value: "Growth %",
+                  value: isPercentageData ? "Growth %" : "Amount",
                   angle: -90,
                   position: "insideLeft",
                 }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
-
               <Bar dataKey="value" barSize={35} isAnimationActive={false}>
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={getBarColor(entry.value)} />
                 ))}
-
-                <LabelList
-                  dataKey="value"
-                  position="top"
-                  fontSize={11}
-                  content={(props) => {
-                    const { x, y, value } = props;
-                    if (value == null) return null;
-                    return (
-                      <text
-                        x={x}
-                        y={y - 5}
-                        textAnchor="middle"
-                        fontSize={11}
-                        fill="#333"
-                      >
-                        {`${Number(value).toFixed(2)}%`}
-                      </text>
-                    );
-                  }}
-                />
+                
+                <LabelList dataKey="value" content={<InsideBarLabel />} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>

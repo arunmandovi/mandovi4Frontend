@@ -71,6 +71,8 @@ import PMSPartsBranchesBarChartPage from "./pages/BranchWiseBarChartView/PMSPart
 import ReferenceeeBranchesBarChartPage from "./pages/BranchWiseBarChartView/ReferenceeBranchesBarChartPage";
 import RevenueBranchesBarChartPage from "./pages/BranchWiseBarChartView/RevenueBranchesBarChartPage";
 import SparesBranchesBarChartPage from "./pages/BranchWiseBarChartView/SparesBranchesBarChartPage";
+import TATBranchesBarChartPage from "./pages/BranchWiseBarChartView/TATBranchesBarChartPage";
+import VASBranchesBarChartPage from "./pages/BranchWiseBarChartView/VASBranchesBarChartPage";
 
 import "./App.css";
 
@@ -156,6 +158,8 @@ function App() {
           <Route path="referencee_branches-bar-chart" element={<ReferenceeeBranchesBarChartPage />} />
           <Route path="revenue_branches-bar-chart" element={<RevenueBranchesBarChartPage />} />
           <Route path="spares_branches-bar-chart" element={<SparesBranchesBarChartPage />} />
+          <Route path="tat_branches-bar-chart" element={<TATBranchesBarChartPage />} />
+          <Route path="vas_branches-bar-chart" element={<VASBranchesBarChartPage />} />
         </Route>
       </Routes>
     </Router>

@@ -28,7 +28,7 @@ import SlicerFilters from "../../components/SlicerFilters";
 import { getBarColor} from "../../utils/getBarColor";
 import InsideBarLabel from "../../utils/InsideBarLabel";
 
-function OilBranchesBarChartPage() {
+function VASBranchesBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -43,15 +43,31 @@ function OilBranchesBarChartPage() {
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
 
   const growthOptions = [
-    "Full Synthetic QTY %",
-    "Semi Synthetic QTY %",
-    "Full & Semi Synthetic QTY %",
+    "Diagnostic Charges %",
+    "Wheel Alignment Age %",
+    "Wheel Balancing Age %",
+    "Exterior Cleaning Age %",
+    "Interior Cleaning Age %",
+    "UndreBody Coating Age %",
+    "TopBody Coating Age %",
+    "Rat Mesh Age %",
+    "AC Evaporator Age %",
+    "AC Vent Age %",
+    "Plastic Restorer Age %"
   ];
 
   const growthKeyMap = {
-    "Full Synthetic QTY %": "fullSyntheticPercentageQTY",
-    "Semi Synthetic QTY %": "semiSyntheticPercentageQTY",
-    "Full & Semi Synthetic QTY %": "fullSemiSyntheticPercentageQTY",
+    "Diagnostic Charges %": "diagnosticChargesPercentagePMSLoad",
+    "Wheel Alignment Age %": "wheelAlignmentPercentageAge",
+    "Wheel Balancing Age %": "wheelBalancingPercentageAge",
+    "Exterior Cleaning Age %": "exteriorCleaningPercentageAge",
+    "Interior Cleaning Age %": "interiorCleaningPercentageAge",
+    "UndreBody Coating Age %": "underBodyCoatingPercentageAge",
+    "TopBody Coating Age %": "topBodyPercentageAge",
+    "Rat Mesh Age %": "ratMeshPercentageAge",
+    "AC Evaporator Age %": "acEvaporatorPercentageAge",
+    "AC Vent Age %": "acVentPercentageAge",
+    "Plastic Restorer Age %": "plasticRestorerPercentageAge"
   };
 
   // ---------- Fetch branch summary ----------
@@ -63,7 +79,7 @@ function OilBranchesBarChartPage() {
         const cityQuery = cities.length ? `&cities=${cities.join(",")}` : "";
 
         const query = `?months=${monthQuery}${cityQuery}`;
-        const data = await fetchData(`/api/oil/oil_branch_summary${query}`);
+        const data = await fetchData(`/api/vas/vas_branch_summary${query}`);
 
         if (data && data.length > 0) setSummary(data);
         else setSummary([]);
@@ -192,20 +208,20 @@ function OilBranchesBarChartPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">OIL REPORT (Branch-wise)</Typography>
+        <Typography variant="h4">VAS REPORT (Branch-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="contained"
             color="secondary"
-            onClick={() => navigate("/DashboardHome/oil")}
+            onClick={() => navigate("/DashboardHome/vas")}
           >
             Graph
           </Button>
           <Button
             variant="contained"
             color="secondary"
-            onClick={() => navigate("/DashboardHome/oil-bar-chart")}
+            onClick={() => navigate("/DashboardHome/vas-bar-chart")}
           >
             CityWise
           </Button>
@@ -221,6 +237,7 @@ function OilBranchesBarChartPage() {
       cities={cities}
       setCities={setCities}
       />
+
 
       {/* Growth Buttons */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2, mb: 2 }}>
@@ -317,4 +334,4 @@ function OilBranchesBarChartPage() {
   );
 }
 
-export default OilBranchesBarChartPage;
+export default VASBranchesBarChartPage;

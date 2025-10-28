@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Typography,
-  Checkbox,
-  ListItemText,
   Button,
 } from "@mui/material";
 import {
@@ -25,10 +19,9 @@ import {
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
-import { getBarColor} from "../../utils/getBarColor";
-import InsideBarLabel from "../../utils/InsideBarLabel";
+import { getBarColor } from "../../utils/getBarColor";
 
-function OilBranchesBarChartPage() {
+function TATBranchesBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -41,89 +34,73 @@ function OilBranchesBarChartPage() {
   ];
 
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
-
-  const growthOptions = [
-    "Full Synthetic QTY %",
-    "Semi Synthetic QTY %",
-    "Full & Semi Synthetic QTY %",
-  ];
+  const growthOptions = ["FR1", "FR2", "FR3", "PMS"];
 
   const growthKeyMap = {
-    "Full Synthetic QTY %": "fullSyntheticPercentageQTY",
-    "Semi Synthetic QTY %": "semiSyntheticPercentageQTY",
-    "Full & Semi Synthetic QTY %": "fullSemiSyntheticPercentageQTY",
+    FR1: "firstFreeService",
+    FR2: "secondFreeService",
+    FR3: "thirdFreeService",
+    PMS: "paidService",
   };
 
-  // ---------- Fetch branch summary ----------
+  // ------------------- Fetch API -------------------
   useEffect(() => {
     const fetchSummary = async () => {
       try {
         const activeMonths = months.length ? months : monthOptions;
         const monthQuery = activeMonths.join(",");
         const cityQuery = cities.length ? `&cities=${cities.join(",")}` : "";
-
         const query = `?months=${monthQuery}${cityQuery}`;
-        const data = await fetchData(`/api/oil/oil_branch_summary${query}`);
-
+        const data = await fetchData(`/api/tat/tat_branch_summary${query}`);
         if (data && data.length > 0) setSummary(data);
         else setSummary([]);
       } catch (err) {
         console.error("fetchSummary error:", err);
       }
     };
-
     fetchSummary();
   }, [months, cities]);
 
-  // ---------- Helpers ----------
-  const readBranchName = (row) => {
-    if (!row) return "";
-    return (
-      row.branch ||
-      row.Branch ||
-      row.branchName ||
-      row.BranchName ||
-      row.name ||
-      row.Name ||
-      ""
-    ).toString().trim();
-  };
+  // ------------------- Helpers -------------------
+  const readBranchName = (row) =>
+    (row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "").toString().trim();
 
-  const readCityName = (row) => {
-    if (!row) return "";
-    return (
-      row.city ||
-      row.City ||
-      row.cityName ||
-      row.CityName ||
-      ""
-    ).toString().trim();
-  };
+  const readCityName = (row) =>
+    (row?.city || row?.City || row?.cityName || row?.CityName || "").toString().trim();
 
-  const readGrowthValue = (row, apiKey) => {
-    if (!row || !apiKey) return undefined;
-    const candidates = [
-      apiKey,
-      apiKey.toLowerCase(),
-      apiKey.toUpperCase(),
-      apiKey.replace(/([A-Z])/g, "_$1").toLowerCase(),
-      "value",
-      "growth",
-      "val",
-    ];
-    for (const key of candidates) {
-      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
-        return row[key];
+  // Convert "HH:MM:SS" → total seconds
+  const timeToSeconds = (timeStr) => {
+    if (!timeStr || typeof timeStr !== "string") return 0;
+    const parts = timeStr.split(":").map(Number);
+    if (parts.length === 3) {
+      const [h, m, s] = parts;
+      return h * 3600 + m * 60 + s;
+    } else if (parts.length === 2) {
+      const [m, s] = parts;
+      return m * 60 + s;
+    } else {
+      const val = parseFloat(timeStr);
+      return isNaN(val) ? 0 : val;
     }
-    for (const key of Object.keys(row)) {
-      const v = row[key];
-      if (typeof v === "number") return v;
-      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
-    }
-    return undefined;
   };
 
-  // ---------- Build averaged dataset ----------
+  // Convert seconds → "HH:MM:SS"
+  const secondsToHHMMSS = (seconds) => {
+    if (isNaN(seconds)) return "00:00:00";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${pad(h)}:${pad(m)}:${pad(s)}`;
+  };
+
+  const readTimeValue = (row, apiKey) => {
+    if (!row || !apiKey) return 0;
+    const val = row[apiKey];
+    return timeToSeconds(val);
+  };
+
+  // ------------------- Data Build -------------------
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const totals = {};
@@ -133,10 +110,9 @@ function OilBranchesBarChartPage() {
     (dataArr || []).forEach((row) => {
       const branch = readBranchName(row);
       const city = readCityName(row);
-      const val = readGrowthValue(row, apiKey);
-      const parsed = parseFloat(String(val).replace("%", "").trim());
-      if (!isNaN(parsed)) {
-        totals[branch] = (totals[branch] || 0) + parsed;
+      const val = readTimeValue(row, apiKey);
+      if (!isNaN(val)) {
+        totals[branch] = (totals[branch] || 0) + val;
         counts[branch] = (counts[branch] || 0) + 1;
         cityMap[branch] = city;
       }
@@ -145,21 +121,20 @@ function OilBranchesBarChartPage() {
     const branches = Object.keys(totals).map((b) => ({
       name: b,
       city: cityMap[b],
-      value: counts[b] ? totals[b] / counts[b] : 0,
+      valueSec: counts[b] ? totals[b] / counts[b] : 0,
     }));
 
-    // Sort by growth value (descending)
-    branches.sort((a, b) => b.value - a.value);
-
+    branches.sort((a, b) => a.valueSec - b.valueSec);
     return branches;
   };
 
   const chartData =
     selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
-  // ---------- Custom Tooltip ----------
+  // ------------------- Tooltip -------------------
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
+      const sec = payload[0].value;
       return (
         <Box
           sx={{
@@ -172,16 +147,55 @@ function OilBranchesBarChartPage() {
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {payload[0].payload.name} ({payload[0].payload.city})
           </Typography>
-          <Typography variant="body2">
-            {`${payload[0].value.toFixed(2)}%`}
-          </Typography>
+          <Typography variant="body2">{secondsToHHMMSS(sec)}</Typography>
         </Box>
       );
     }
     return null;
   };
 
-  // ---------- Render ----------
+  // ------------------- Inside Label -------------------
+  const InsideBarLabel = (props) => {
+    const { x, y, width, height, value, fill } = props;
+    if (value == null || width <= 0) return null;
+
+    const textX = x + width / 2;
+    const textY = y + height / 2;
+    const rotation = -90;
+
+    // ✅ Safe luminance calculation
+    let textColor = "#000000";
+    try {
+      if (typeof fill === "string" && fill.startsWith("rgb")) {
+        const rgb = fill.match(/\d+/g);
+        if (rgb && rgb.length === 3) {
+          const [r, g, b] = rgb.map(Number);
+          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          textColor = luminance > 0.6 ? "#000" : "#fff";
+        }
+      }
+    } catch {
+      textColor = "#000";
+    }
+
+    return (
+      <text
+        x={textX}
+        y={textY}
+        transform={`rotate(${rotation}, ${textX}, ${textY})`}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={11}
+        fill={textColor}
+        fontWeight={600}
+        pointerEvents="none"
+      >
+        {secondsToHHMMSS(value)}
+      </text>
+    );
+  };
+
+  // ------------------- UI -------------------
   return (
     <Box sx={{ p: 3 }}>
       <Box
@@ -192,37 +206,35 @@ function OilBranchesBarChartPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">OIL REPORT (Branch-wise)</Typography>
+        <Typography variant="h4">TAT REPORT (Branch-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="contained"
             color="secondary"
-            onClick={() => navigate("/DashboardHome/oil")}
+            onClick={() => navigate("/DashboardHome/tat")}
           >
             Graph
           </Button>
           <Button
             variant="contained"
             color="secondary"
-            onClick={() => navigate("/DashboardHome/oil-bar-chart")}
+            onClick={() => navigate("/DashboardHome/tat-bar-chart")}
           >
             CityWise
           </Button>
         </Box>
       </Box>
 
-      {/* Filters Section */}
       <SlicerFilters
-      monthOptions={monthOptions}
-      cityOptions={cityOptions}
-      months={months}
-      setMonths={setMonths}
-      cities={cities}
-      setCities={setCities}
+        monthOptions={monthOptions}
+        cityOptions={cityOptions}
+        months={months}
+        setMonths={setMonths}
+        cities={cities}
+        setCities={setCities}
       />
 
-      {/* Growth Buttons */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2, mb: 2 }}>
         {growthOptions.map((g, idx) => (
           <Button
@@ -245,20 +257,17 @@ function OilBranchesBarChartPage() {
               color: selectedGrowth === g ? "white" : "inherit",
               boxShadow:
                 selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
-              "&:hover": {
-                transform: "scale(1.05)",
-              },
+              "&:hover": { transform: "scale(1.05)" },
             }}
             onClick={() => setSelectedGrowth(g)}
           >
-            {g.replace(" Growth %", "")}
+            {g}
           </Button>
         ))}
       </Box>
 
-      {/* Chart Display */}
       {!selectedGrowth ? (
-        <Typography>👆 Select a growth type to view the chart below</Typography>
+        <Typography>👆 Select a service type to view the chart below</Typography>
       ) : summary.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
@@ -274,7 +283,7 @@ function OilBranchesBarChartPage() {
           }}
         >
           <Typography variant="h6" sx={{ mb: 1 }}>
-            {selectedGrowth}
+            {selectedGrowth} — Avg TAT (HH:MM:SS)
           </Typography>
 
           <ResponsiveContainer width="100%" height="92%">
@@ -292,22 +301,21 @@ function OilBranchesBarChartPage() {
                 height={70}
               />
               <YAxis
+                tickFormatter={(sec) => secondsToHHMMSS(sec)}
                 tick={{ fontSize: 12 }}
                 label={{
-                  value: "Growth %",
+                  value: "Average TAT (HH:MM:SS)",
                   angle: -90,
                   position: "insideLeft",
                 }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
-
-              <Bar dataKey="value" barSize={35} isAnimationActive={false}>
+              <Bar dataKey="valueSec" barSize={35} isAnimationActive={false}>
                 {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getBarColor(entry.value)} />
+                  <Cell key={`cell-${index}`} fill={getBarColor(entry.valueSec)} />
                 ))}
-                
-                <LabelList dataKey="value" content={<InsideBarLabel />} />
+                <LabelList dataKey="valueSec" content={<InsideBarLabel />} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -317,4 +325,4 @@ function OilBranchesBarChartPage() {
   );
 }
 
-export default OilBranchesBarChartPage;
+export default TATBranchesBarChartPage;

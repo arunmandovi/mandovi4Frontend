@@ -176,26 +176,34 @@ function TATBarChartPage() {
   };
 
   // ---------- Render ----------
-  return (
-    <Box sx={{ p: 3 }}>
-      {/* Header with Back button */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4">TAT REPORT (City-wise)</Typography>
-
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => navigate("/DashboardHome/tat")}
-        >
-          Graph
-        </Button>
+ return (
+       <Box sx={{ p: 3 }}>
+         <Box
+           sx={{
+             display: "flex",
+             justifyContent: "space-between",
+             alignItems: "center",
+             mb: 3,
+           }}
+         >
+           <Typography variant="h4">TAT REPORT (City-wise)</Typography>
+   
+           <Box sx={{ display: "flex", gap: 1 }}>
+             <Button
+               variant="contained"
+               color="secondary"
+               onClick={() => navigate("/DashboardHome/tat")}
+             >
+               Graph
+             </Button>
+             <Button
+               variant="contained"
+               color="secondary"
+               onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}
+             >
+               BranchWise
+             </Button>
+           </Box>
       </Box>
 
       {/* Filters Section */}

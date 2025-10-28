@@ -25,6 +25,8 @@ import {
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
+import { getBarColor } from "../../utils/getBarColor";
+import InsideBarLabel from "../../utils/InsideBarLabel";
 
 function LoaddBranchesBarChartPage() {
   const navigate = useNavigate();
@@ -189,13 +191,6 @@ function LoaddBranchesBarChartPage() {
     return null;
   };
 
-  // ---------- Get color based on value ----------
-  const getBarColor = (value) => {
-    if (value > 5) return "#05f105ff"; // Light Green
-    if (value >= 0 && value <= 5) return "#FFD700"; // Yellow
-    return "#ce2203ff"; // Red
-  };
-
   // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
@@ -229,12 +224,12 @@ function LoaddBranchesBarChartPage() {
 
       {/* Filters Section */}
       <SlicerFilters
-      monthOptions={monthOptions}
-      cityOptions={cityOptions}
-      months={months}
-      setMonths={setMonths}
-      cities={cities}
-      setCities={setCities}
+        monthOptions={monthOptions}
+        cityOptions={cityOptions}
+        months={months}
+        setMonths={setMonths}
+        cities={cities}
+        setCities={setCities}
       />
 
       {/* Growth Buttons */}
@@ -321,27 +316,8 @@ function LoaddBranchesBarChartPage() {
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={getBarColor(entry.value)} />
                 ))}
-
-                <LabelList
-                  dataKey="value"
-                  position="top"
-                  fontSize={11}
-                  content={(props) => {
-                    const { x, y, value } = props;
-                    if (value == null) return null;
-                    return (
-                      <text
-                        x={x}
-                        y={y - 5}
-                        textAnchor="middle"
-                        fontSize={11}
-                        fill="#333"
-                      >
-                        {`${Number(value).toFixed(2)}%`}
-                      </text>
-                    );
-                  }}
-                />
+                
+                <LabelList dataKey="value" content={<InsideBarLabel />} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
