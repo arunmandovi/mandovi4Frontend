@@ -4,11 +4,34 @@ import { Box, Button, Typography } from "@mui/material";
 const SlicerFilters = ({
   monthOptions = [],
   cityOptions = [],
-  months = [],
+  months = [], // initially selected months (auto-highlighted)
   setMonths = () => {},
-  cities = [],
+  cities = [], // initially selected cities (auto-highlighted)
   setCities = () => {},
 }) => {
+  // ✅ Light green gradient for selected buttons
+  const selectedGradient =
+    "linear-gradient(90deg, rgba(144,238,144,1) 0%, rgba(102,205,170,1) 100%)";
+
+  const commonButtonStyles = (selected) => ({
+    borderRadius: "20px",
+    px: 2,
+    py: 0.5,
+    textTransform: "none",
+    fontWeight: 600,
+    transition: "all 0.3s ease",
+    background: selected ? selectedGradient : "white", // ✅ default white background
+    color: "inherit", // ✅ text color always black
+    border: selected ? "1.5px solid #388e3c" : "1px solid #bdbdbd",
+    boxShadow: selected ? "0 3px 10px rgba(0,0,0,0.15)" : "none",
+    "&:hover": {
+      transform: "scale(1.05)",
+      background: selected
+        ? selectedGradient
+        : "rgba(0, 0, 0, 0.04)", // light gray hover if unselected
+    },
+  });
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mb: 3 }}>
       {/* Month Slicer */}
@@ -18,33 +41,14 @@ const SlicerFilters = ({
             Select Month(s)
           </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-            {monthOptions.map((m, idx) => {
-              const selected = months.includes(m);
+            {monthOptions.map((m) => {
+              const selected = months.includes(m); // ✅ auto-select based on current data
               return (
                 <Button
                   key={m}
-                  variant={selected ? "contained" : "outlined"}
-                  color={selected ? "secondary" : "primary"}
-                  sx={{
-                    borderRadius: "20px",
-                    px: 2,
-                    py: 0.5,
-                    textTransform: "none",
-                    fontWeight: 600,
-                    transition: "all 0.3s ease",
-                    background: selected
-                      ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
-                          (idx * 40 + 20) % 360
-                        }, 70%, 55%))`
-                      : "transparent",
-                    color: selected ? "white" : "inherit",
-                    boxShadow: selected
-                      ? `0 3px 10px rgba(0,0,0,0.15)`
-                      : "none",
-                    "&:hover": {
-                      transform: "scale(1.05)",
-                    },
-                  }}
+                  variant="outlined"
+                  size="small"
+                  sx={commonButtonStyles(selected)}
                   onClick={() => {
                     if (selected)
                       setMonths(months.filter((x) => x !== m));
@@ -66,33 +70,14 @@ const SlicerFilters = ({
             Select City(s)
           </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-            {cityOptions.map((c, idx) => {
-              const selected = cities.includes(c);
+            {cityOptions.map((c) => {
+              const selected = cities.includes(c); // ✅ auto-select based on current data
               return (
                 <Button
                   key={c}
-                  variant={selected ? "contained" : "outlined"}
-                  color={selected ? "secondary" : "primary"}
-                  sx={{
-                    borderRadius: "20px",
-                    px: 2,
-                    py: 0.5,
-                    textTransform: "none",
-                    fontWeight: 600,
-                    transition: "all 0.3s ease",
-                    background: selected
-                      ? `linear-gradient(90deg, hsl(${idx * 35}, 70%, 45%), hsl(${
-                          (idx * 35 + 20) % 360
-                        }, 70%, 55%))`
-                      : "transparent",
-                    color: selected ? "white" : "inherit",
-                    boxShadow: selected
-                      ? `0 3px 10px rgba(0,0,0,0.15)`
-                      : "none",
-                    "&:hover": {
-                      transform: "scale(1.05)",
-                    },
-                  }}
+                  variant="outlined"
+                  size="small"
+                  sx={commonButtonStyles(selected)}
                   onClick={() => {
                     if (selected)
                       setCities(cities.filter((x) => x !== c));
