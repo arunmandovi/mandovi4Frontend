@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Typography,
-  Checkbox,
-  ListItemText,
   Button,
+  Typography,
 } from "@mui/material";
 import {
   LineChart,
@@ -29,12 +23,15 @@ function MCPPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [channels, setChannels] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
     "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
+
+  const channelOptions = ["ARENA", "NEXA"];
 
   const growthOptions = ["MCP NO"]; 
 
@@ -50,13 +47,17 @@ function MCPPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&months=${m}`;
+          let query = `?&months=${m}`;
+
+          // ✅ If exactly one channel selected, include it in query
+          if (channels.length === 1) {
+            query += `&channels=${channels[0]}`;
+          }
+          // ✅ If both or none selected → skip channel filter (fetch total by month only)
+
           const data = await fetchData(`/api/mcp/mcp_summary${query}`);
 
-          if (
-            (data && data.length > 0) ||
-            (months.length > 0 && months.includes(m))
-          ) {
+          if (data && data.length > 0) {
             combined.push({ month: m, data });
           }
         }
@@ -67,7 +68,7 @@ function MCPPage() {
       }
     };
     fetchCitySummary();
-  }, [months]);
+  }, [months, channels]);
 
   // ---------- Helpers ----------
   const readCityName = (row) => {
@@ -106,16 +107,16 @@ function MCPPage() {
     return undefined;
   };
 
-  // ---------- Build Chart Data ----------
   const buildChartData = (summaryArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
-    const citySet = new Set();
+    if (!apiKey || summaryArr.length === 0) return { data: [], keys: [] };
 
+    const citySet = new Set();
     summaryArr.forEach(({ data }) => {
       (data || []).forEach((row) => citySet.add(readCityName(row)));
     });
 
-    // ---------- Fixed city order ----------
+    // ---------- City order ----------
     const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
     const allCitiesUnordered = Array.from(citySet);
     const allCities = [
@@ -124,29 +125,31 @@ function MCPPage() {
       ),
       ...allCitiesUnordered
         .filter(
-          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
+          (c) =>
+            !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
         )
         .sort((a, b) => a.localeCompare(b)),
     ];
 
+    // ---------- Build chart data ----------
     const result = summaryArr.map(({ month, data }) => {
       const entry = { month };
       allCities.forEach((c) => (entry[c] = 0));
+
       (data || []).forEach((row) => {
         const city = readCityName(row);
         const val = readGrowthValue(row, apiKey);
         const parsed = parseFloat(String(val).replace("%", "").trim());
         entry[city] = isNaN(parsed) ? 0 : parsed;
       });
+
       return entry;
     });
+
     return { data: result, keys: allCities };
   };
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
-
-  // ✅ Dynamic check if % should be shown or not
-  const showPercentage = selectedGrowth?.includes("%");
 
   // ---------- Custom Tooltip ----------
   const CustomTooltip = ({ active, payload, label }) => {
@@ -157,7 +160,8 @@ function MCPPage() {
           preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
         ),
         ...payload.filter(
-          (p) => !preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
+          (p) =>
+            !preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
         ),
       ];
 
@@ -174,11 +178,11 @@ function MCPPage() {
             {label}
           </Typography>
           {sortedPayload.map((entry, i) => (
-            <Typography key={i} variant="body2" sx={{ color: entry.color }}>
-              {`${entry.name}: ${entry.value?.toFixed(0)}${
-                showPercentage ? "%" : ""
-              }`}
-            </Typography>
+            <Typography
+              key={i}
+              variant="body2"
+              sx={{ color: entry.color }}
+            >{`${entry.name}: ${entry.value?.toFixed()}`}</Typography>
           ))}
         </Box>
       );
@@ -199,75 +203,60 @@ function MCPPage() {
       >
         <Typography variant="h4">MCP REPORT</Typography>
 
-        {/* Bar Chart Navigation Button */}
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          onClick={() => navigate("/DashboardHome/mcp-bar-chart")}
-                        >
-                          Bar Chart
-                        </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => navigate("/DashboardHome/mcp-bar-chart")}
+        >
+          Bar Chart
+        </Button>
       </Box>
 
-      {/* Filters Section */}
+      {/* Filters */}
       <SlicerFilters
-      monthOptions={monthOptions}
-      months={months}
-      setMonths={setMonths}
+        monthOptions={monthOptions}
+        months={months}
+        setMonths={setMonths}
+        channelOptions={channelOptions}
+        channels={channels}
+        setChannels={setChannels}
       />
 
-      {/* 🔹 Stylish Growth Type Buttons */}
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 1.2,
-                mb: 2,
-              }}
-            >
-              {growthOptions.map((g, idx) => (
-                <Button
-                  key={g}
-                  variant={selectedGrowth === g ? "contained" : "outlined"}
-                  color={selectedGrowth === g ? "secondary" : "primary"}
-                  sx={{
-                    borderRadius: "20px",
-                    px: 2,
-                    py: 0.5,
-                    textTransform: "none",
-                    fontWeight: 600,
-                    transition: "all 0.3s ease",
-                    background:
-                      selectedGrowth === g
-                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
-                            (idx * 40 + 20) % 360
-                          }, 70%, 55%))`
-                        : "transparent",
-                    color: selectedGrowth === g ? "white" : "inherit",
-                    boxShadow:
-                      selectedGrowth === g
-                        ? `0 3px 10px rgba(0,0,0,0.15)`
-                        : "none",
-                    "&:hover": {
-                      transform: "scale(1.05)",
-                      background:
-                        selectedGrowth === g
-                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
-                              (idx * 40 + 20) % 360
-                            }, 65%, 50%))`
-                          : "rgba(103,58,183,0.05)",
-                    },
-                  }}
-                  onClick={() => setSelectedGrowth(g)}
-                >
-                  {g.replace(" Growth %", "")}
-                </Button>
-              ))}
+      {/* Growth Buttons */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2, mb: 2 }}>
+        {growthOptions.map((g, idx) => (
+          <Button
+            key={g}
+            variant={selectedGrowth === g ? "contained" : "outlined"}
+            color={selectedGrowth === g ? "secondary" : "primary"}
+            sx={{
+              borderRadius: "20px",
+              px: 2,
+              py: 0.5,
+              textTransform: "none",
+              fontWeight: 600,
+              transition: "all 0.3s ease",
+              background:
+                selectedGrowth === g
+                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                      (idx * 40 + 20) % 360
+                    }, 70%, 55%))`
+                  : "transparent",
+              color: selectedGrowth === g ? "white" : "inherit",
+              "&:hover": {
+                transform: "scale(1.05)",
+              },
+            }}
+            onClick={() => setSelectedGrowth(g)}
+          >
+            {g.replace(" Growth %", "")}
+          </Button>
+        ))}
       </Box>
 
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
-      ) : summary.length === 0 ? (
+      ) : chartData.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
         <Box
@@ -295,24 +284,19 @@ function MCPPage() {
               <YAxis
                 tick={{ fontSize: 12 }}
                 label={{
-                  value: showPercentage ? "Growth %" : "Value",
+                  value: "Growth %",
                   angle: -90,
                   position: "insideLeft",
                 }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend
-                wrapperStyle={{
-                  display: "flex",
-                  flexDirection: "row",
-                }}
                 payload={cityKeys.map((key, idx) => ({
                   value: key,
                   type: "line",
                   color: `hsl(${(idx * 60) % 360}, 70%, 45%)`,
                 }))}
               />
-
               {cityKeys.map((key, idx) => (
                 <Line
                   key={key}
@@ -330,9 +314,6 @@ function MCPPage() {
                     content={(props) => {
                       const { x, y, value } = props;
                       if (value == null) return null;
-                      const displayVal = `${Number(value).toFixed(0)}${
-                        showPercentage ? "%" : ""
-                      }`;
                       return (
                         <text
                           x={x}
@@ -341,7 +322,7 @@ function MCPPage() {
                           fontSize={11}
                           fill="#333"
                         >
-                          {displayVal}
+                          {`${Number(value)}`}
                         </text>
                       );
                     }}

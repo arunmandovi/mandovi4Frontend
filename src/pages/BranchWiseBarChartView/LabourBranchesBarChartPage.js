@@ -66,24 +66,33 @@ function LabourBranchesBarChartPage() {
 
   // ---------- Fetch branch summary ----------
   useEffect(() => {
-    const fetchSummary = async () => {
-      try {
-        const activeMonths = months.length ? months : monthOptions;
-        const monthQuery = activeMonths.join(",");
-        const cityQuery = cities.length ? `&cities=${cities.join(",")}` : "";
+  const fetchSummary = async () => {
+    try {
+      // ✅ Build query params dynamically
+      const activeMonths = months.length > 0 ? months : monthOptions;
+      const monthQuery = `months=${activeMonths.join(",")}`;
+      const cityQuery = cities.length > 0 ? `&cities=${cities.join(",")}` : "";
 
-        const query = `?months=${monthQuery}${cityQuery}`;
-        const data = await fetchData(`/api/labour/labour_branch_summary${query}`);
+      const endpoint = `/api/labour/labour_branch_summary?${monthQuery}${cityQuery}`;
 
-        if (data && data.length > 0) setSummary(data);
-        else setSummary([]);
-      } catch (err) {
-        console.error("fetchSummary error:", err);
+      // ✅ Fetch data
+      const data = await fetchData(endpoint);
+
+      // ✅ Handle data safely
+      if (Array.isArray(data) && data.length > 0) {
+        setSummary(data);
+      } else {
+        setSummary([]);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching labour branch summary:", error);
+      setSummary([]); // Fallback to empty on error
+    }
+  };
 
-    fetchSummary();
-  }, [months, cities]);
+  fetchSummary();
+}, [months, cities, monthOptions]);
+
 
   // ---------- Helpers ----------
   const readBranchName = (row) => {

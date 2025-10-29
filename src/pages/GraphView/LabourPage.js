@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Typography,
-  Checkbox,
-  ListItemText,
   Button,
+  Typography,
 } from "@mui/material";
 import {
   LineChart,
@@ -29,12 +23,15 @@ function LabourPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [channels, setChannels] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
     "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
+
+  const channelOptions = ["ARENA", "NEXA"];
 
   const growthOptions = [
     "Service Growth %",
@@ -66,13 +63,17 @@ function LabourPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&months=${m}`;
+          let query = `?&months=${m}`;
+
+          // ✅ If exactly one channel selected, include it in query
+          if (channels.length === 1) {
+            query += `&channels=${channels[0]}`;
+          }
+          // ✅ If both or none selected → skip channel filter (fetch total by month only)
+
           const data = await fetchData(`/api/labour/labour_summary${query}`);
 
-          if (
-            (data && data.length > 0) ||
-            (months.length > 0 && months.includes(m))
-          ) {
+          if (data && data.length > 0) {
             combined.push({ month: m, data });
           }
         }
@@ -83,7 +84,7 @@ function LabourPage() {
       }
     };
     fetchCitySummary();
-  }, [months]);
+  }, [months, channels]);
 
   // ---------- Helpers ----------
   const readCityName = (row) => {
@@ -124,13 +125,14 @@ function LabourPage() {
 
   const buildChartData = (summaryArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
-    const citySet = new Set();
+    if (!apiKey || summaryArr.length === 0) return { data: [], keys: [] };
 
+    const citySet = new Set();
     summaryArr.forEach(({ data }) => {
       (data || []).forEach((row) => citySet.add(readCityName(row)));
     });
 
-    // ---------- Fixed city order ----------
+    // ---------- City order ----------
     const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
     const allCitiesUnordered = Array.from(citySet);
     const allCities = [
@@ -139,22 +141,27 @@ function LabourPage() {
       ),
       ...allCitiesUnordered
         .filter(
-          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
+          (c) =>
+            !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
         )
         .sort((a, b) => a.localeCompare(b)),
     ];
 
+    // ---------- Build chart data ----------
     const result = summaryArr.map(({ month, data }) => {
       const entry = { month };
       allCities.forEach((c) => (entry[c] = 0));
+
       (data || []).forEach((row) => {
         const city = readCityName(row);
         const val = readGrowthValue(row, apiKey);
         const parsed = parseFloat(String(val).replace("%", "").trim());
         entry[city] = isNaN(parsed) ? 0 : parsed;
       });
+
       return entry;
     });
+
     return { data: result, keys: allCities };
   };
 
@@ -169,7 +176,8 @@ function LabourPage() {
           preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
         ),
         ...payload.filter(
-          (p) => !preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
+          (p) =>
+            !preferredOrder.some((x) => x.toLowerCase() === p.name.toLowerCase())
         ),
       ];
 
@@ -200,43 +208,38 @@ function LabourPage() {
 
   // ---------- Render ----------
   return (
-      <Box sx={{ p: 3 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography variant="h4">LABOUR REPORT</Typography>
-  
-          {/* Bar Chart Navigation Button */}
-                          <Button
-                            variant="contained"
-                            color="secondary"
-                            onClick={() => navigate("/DashboardHome/labour-bar-chart")}
-                          >
-                            Bar Chart
-                          </Button>
-      </Box>
-
-      {/* Filters Section */}
-      <SlicerFilters
-      monthOptions={monthOptions}
-      months={months}
-      setMonths={setMonths}
-      />
-
-      {/* Stylish Growth Type Buttons */}
+    <Box sx={{ p: 3 }}>
       <Box
         sx={{
           display: "flex",
-          flexWrap: "wrap",
-          gap: 1.2,
-          mb: 2,
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
         }}
       >
+        <Typography variant="h4">LABOUR REPORT</Typography>
+
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => navigate("/DashboardHome/labour-bar-chart")}
+        >
+          Bar Chart
+        </Button>
+      </Box>
+
+      {/* Filters */}
+      <SlicerFilters
+        monthOptions={monthOptions}
+        months={months}
+        setMonths={setMonths}
+        channelOptions={channelOptions}
+        channels={channels}
+        setChannels={setChannels}
+      />
+
+      {/* Growth Buttons */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2, mb: 2 }}>
         {growthOptions.map((g, idx) => (
           <Button
             key={g}
@@ -256,16 +259,8 @@ function LabourPage() {
                     }, 70%, 55%))`
                   : "transparent",
               color: selectedGrowth === g ? "white" : "inherit",
-              boxShadow:
-                selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
               "&:hover": {
                 transform: "scale(1.05)",
-                background:
-                  selectedGrowth === g
-                    ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
-                        (idx * 40 + 20) % 360
-                      }, 65%, 50%))`
-                    : "rgba(103,58,183,0.05)",
               },
             }}
             onClick={() => setSelectedGrowth(g)}
@@ -277,7 +272,7 @@ function LabourPage() {
 
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
-      ) : summary.length === 0 ? (
+      ) : chartData.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
         <Box
@@ -312,17 +307,12 @@ function LabourPage() {
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend
-                wrapperStyle={{
-                  display: "flex",
-                  flexDirection: "row",
-                }}
                 payload={cityKeys.map((key, idx) => ({
                   value: key,
                   type: "line",
                   color: `hsl(${(idx * 60) % 360}, 70%, 45%)`,
                 }))}
               />
-
               {cityKeys.map((key, idx) => (
                 <Line
                   key={key}
