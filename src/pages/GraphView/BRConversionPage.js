@@ -65,7 +65,7 @@ function BRConversionPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&months=${m}`;
+          const query = `?&months=${m}`;
           const data = await fetchData(`/api/br_conversion/br_conversion_summary${query}`);
           if ((data && data.length > 0) ||
               (months.length > 0 && months.includes(m))) {

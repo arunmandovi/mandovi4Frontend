@@ -56,7 +56,7 @@ function BatteryTyrePage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&months=${m}`;
+          const query = `?&months=${m}`;
           const data = await fetchData(`/api/battery_tyre/battery_tyre_summary${query}`);
 
           if (

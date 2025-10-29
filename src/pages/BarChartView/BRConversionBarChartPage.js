@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Typography,
-  Checkbox,
-  ListItemText,
-  Button,
-} from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import {
   BarChart,
   Bar,
@@ -29,12 +19,18 @@ function BRConversionBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [qtrWise, setQtrWise] = useState([]);
+  const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
+  // ---------- Dropdown Options ----------
   const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
+    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
+
+  const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
+  const halfYearOptions = ["H1", "H2"];
 
   const growthOptions = [
     "Arena BR Conversion %",
@@ -56,27 +52,30 @@ function BRConversionBarChartPage() {
 
   const preferredOrder = ["BANGALORE", "MYSORE", "MANGALORE"];
 
-  // ---------- Fetch data ----------
+  // ---------- Fetch Data ----------
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
-        // build query only with selected months (if any)
-        const query =
-          months.length > 0
-            ? `?groupBy=city${months.map((m) => `&months=${m.toLowerCase()}`).join("")}`
-            : "?groupBy=city";
+        const params = new URLSearchParams();
+        if (months.length) params.append("months", months.join(","));
+        if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
+        if (halfYear.length) params.append("halfYear", halfYear.join(","));
+        params.append("groupBy", "city");
 
-        const data = await fetchData(
-          `/api/br_conversion/br_conversion_summary${query}`
-        );
+        const query = `?${params.toString()}`;
+        const data = await fetchData(`/api/br_conversion/br_conversion_summary${query}`);
 
-        setSummary(data && data.length > 0 ? data : []);
+        if (data && Array.isArray(data)) {
+          setSummary(data);
+        } else {
+          setSummary([]);
+        }
       } catch (err) {
         console.error("fetchCitySummary error:", err);
       }
     };
     fetchCitySummary();
-  }, [months]);
+  }, [months, qtrWise, halfYear]);
 
   // ---------- Helpers ----------
   const readCityName = (row) => {
@@ -100,12 +99,13 @@ function BRConversionBarChartPage() {
     return parseFloat(row[apiKey] ?? 0);
   };
 
-  // ---------- Build chart data ----------
+  // ---------- Build Chart Data ----------
   const buildChartData = (summaryArr) => {
+    const apiKey = growthKeyMap[selectedGrowth];
     return summaryArr
       .map((row) => ({
         city: readCityName(row),
-        value: readGrowthValue(row, growthKeyMap[selectedGrowth]),
+        value: readGrowthValue(row, apiKey),
       }))
       .sort((a, b) => {
         const aIndex = preferredOrder.indexOf(a.city);
@@ -120,7 +120,7 @@ function BRConversionBarChartPage() {
   const chartData =
     selectedGrowth && summary.length > 0 ? buildChartData(summary) : [];
 
-  // ---------- Custom Tooltip ----------
+  // ---------- Tooltip ----------
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const { city, value } = payload[0].payload;
@@ -138,7 +138,7 @@ function BRConversionBarChartPage() {
           </Typography>
           <Typography variant="body2">
             {selectedGrowth?.includes("%")
-              ? `${value.toFixed(2)}%`
+              ? `${value.toFixed(1)}%`
               : `₹ ${value.toLocaleString("en-IN", {
                   maximumFractionDigits: 0,
                 })}`}
@@ -151,40 +151,49 @@ function BRConversionBarChartPage() {
 
   // ---------- Render ----------
   return (
-        <Box sx={{ p: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
+    <Box sx={{ p: 3 }}>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">BR CONVERSION REPORT (City-wise)</Typography>
+
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/br_conversion")}
           >
-            <Typography variant="h4">BR CONVERSION REPORT (City-wise)</Typography>
-    
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => navigate("/DashboardHome/br_conversion")}
-              >
-                Graph
-              </Button>
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}
-              >
-                BranchWise
-              </Button>
-            </Box>
+            Graph
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() =>
+              navigate("/DashboardHome/br_conversion_branches-bar-chart")
+            }
+          >
+            BranchWise
+          </Button>
+        </Box>
       </Box>
 
       {/* Filters Section */}
       <SlicerFilters
-      monthOptions={monthOptions}
-      months={months}
-      setMonths={setMonths}
+        monthOptions={monthOptions}
+        months={months}
+        setMonths={setMonths}
+        qtrWiseOptions={qtrWiseOptions}
+        qtrWise={qtrWise}
+        setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions}
+        halfYear={halfYear}
+        setHalfYear={setHalfYear}
       />
 
       {/* Growth Type Buttons */}
@@ -288,7 +297,7 @@ function BRConversionBarChartPage() {
                   content={({ x, y, value }) => {
                     if (value == null) return null;
                     const displayVal = selectedGrowth?.includes("%")
-                      ? `${Number(value).toFixed(2)}%`
+                      ? `${Number(value).toFixed(1)}%`
                       : `₹ ${Number(value).toLocaleString("en-IN", {
                           maximumFractionDigits: 0,
                         })}`;

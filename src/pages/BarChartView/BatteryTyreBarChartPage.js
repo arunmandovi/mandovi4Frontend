@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Typography,
-  Checkbox,
-  ListItemText,
   Button,
+  Typography,
 } from "@mui/material";
 import {
   BarChart,
@@ -29,12 +23,18 @@ function BatteryTyreBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [qtrWise, setQtrWise] = useState([]);
+  const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
+  // Dropdown options
   const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
+    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
+
+  const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
+  const halfYearOptions = ["H1", "H2"];
 
   const growthOptions = [
     "Battery Propfit %",
@@ -48,26 +48,30 @@ function BatteryTyreBarChartPage() {
     "Battery&Tyre Profit %": "batteryTyrePercentageProfit",
   };
 
-  // ---------- Fetch city summary ----------
+  // ---------- Fetch Data ----------
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
-        // Prepare month list: all months if none selected
-        const activeMonths = months.length ? months : monthOptions;
-        const monthQuery = activeMonths.join(",");
-        const query = `?groupBy=city&months=${monthQuery}`;
+        // build query dynamically
+        const params = new URLSearchParams();
+        if (months.length) params.append("months", months.join(","));
+        if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
+        if (halfYear.length) params.append("halfYear", halfYear.join(","));
 
+        const query = params.toString() ? `?${params.toString()}` : "";
         const data = await fetchData(`/api/battery_tyre/battery_tyre_summary${query}`);
-        setSummary(Array.isArray(data) && data.length > 0 ? data : []);
+
+        if (data && Array.isArray(data)) {
+          setSummary(data);
+        } else {
+          setSummary([]);
+        }
       } catch (err) {
         console.error("fetchCitySummary error:", err);
-        setSummary([]);
       }
     };
-
     fetchCitySummary();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [months]);
+  }, [months, qtrWise, halfYear]);
 
   // ---------- Helpers ----------
   const readCityName = (row) => {
@@ -144,7 +148,7 @@ function BatteryTyreBarChartPage() {
   const chartData =
     selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
-  // ---------- Custom Tooltip ----------
+  // ---------- Tooltip ----------
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
@@ -160,7 +164,7 @@ function BatteryTyreBarChartPage() {
             {payload[0].payload.city}
           </Typography>
           <Typography variant="body2">
-            {`${payload[0].value.toFixed(2)}%`}
+            {`${payload[0].value.toFixed()}%`}
           </Typography>
         </Box>
       );
@@ -204,9 +208,15 @@ function BatteryTyreBarChartPage() {
 
       {/* Filters Section */}
       <SlicerFilters
-      monthOptions={monthOptions}
-      months={months}
-      setMonths={setMonths}
+        monthOptions={monthOptions}
+        months={months}
+        setMonths={setMonths}
+        qtrWiseOptions={qtrWiseOptions}
+        qtrWise={qtrWise}
+        setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions}
+        halfYear={halfYear}
+        setHalfYear={setHalfYear}
       />
 
       {/* Growth Type Buttons */}
@@ -256,6 +266,7 @@ function BatteryTyreBarChartPage() {
         ))}
       </Box>
 
+      {/* Chart Section */}
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
       ) : summary.length === 0 ? (
@@ -293,6 +304,7 @@ function BatteryTyreBarChartPage() {
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
+
               <Bar
                 dataKey="value"
                 fill="#1976d2"
@@ -303,8 +315,10 @@ function BatteryTyreBarChartPage() {
                   dataKey="value"
                   position="top"
                   fontSize={11}
-                  content={({ x, y, value }) =>
-                    value == null ? null : (
+                  content={(props) => {
+                    const { x, y, value } = props;
+                    if (value == null) return null;
+                    return (
                       <text
                         x={x}
                         y={y - 5}
@@ -312,10 +326,10 @@ function BatteryTyreBarChartPage() {
                         fontSize={11}
                         fill="#333"
                       >
-                        {`${Number(value).toFixed(2)}%`}
+                        {`${Number(value).toFixed()}%`}
                       </text>
-                    )
-                  }
+                    );
+                  }}
                 />
               </Bar>
             </BarChart>
