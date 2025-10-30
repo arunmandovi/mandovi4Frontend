@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Typography,
-  Checkbox,
-  ListItemText,
   Button,
+  Typography,
 } from "@mui/material";
 import {
   BarChart,
@@ -29,12 +23,18 @@ function TATBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [qtrWise, setQtrWise] = useState([]);
+  const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
+  // ---------- Filter Options ----------
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
     "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
+
+  const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
+  const halfYearOptions = ["H1", "H2"];
 
   const growthOptions = ["FR1", "FR2", "FR3", "PMS"];
 
@@ -51,11 +51,18 @@ function TATBarChartPage() {
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
-        const activeMonths = months.length ? months : monthOptions;
-        const monthQuery = activeMonths.join(",");
-        const query = `?groupBy=city&months=${monthQuery}`;
+        const activeMonths = months.length ? months : [];
+        const activeQtrWise = qtrWise.length ? qtrWise : [];
+        const activeHalfYear = halfYear.length ? halfYear : [];
 
-        const data = await fetchData(`/api/tat/tat_summary${query}`);
+        // ✅ Build query dynamically
+        const queryParams = new URLSearchParams();
+        if (activeMonths.length) queryParams.append("months", activeMonths.join(","));
+        if (activeQtrWise.length) queryParams.append("qtrWise", activeQtrWise.join(","));
+        if (activeHalfYear.length) queryParams.append("halfYear", activeHalfYear.join(","));
+
+        const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
+        const data = await fetchData(`/api/tat/tat_summary${queryString}`);
 
         if (data && data.length > 0) {
           setSummary(data);
@@ -64,11 +71,12 @@ function TATBarChartPage() {
         }
       } catch (err) {
         console.error("fetchCitySummary error:", err);
+        setSummary([]);
       }
     };
 
     fetchCitySummary();
-  }, [months]);
+  }, [months, qtrWise, halfYear]);
 
   // ---------- Helpers ----------
   const readCityName = (row) => {
@@ -97,21 +105,14 @@ function TATBarChartPage() {
       return parts[0] * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
     }
 
-    // If numeric (seconds or hours)
     return parseFloat(val);
   };
 
   const formatSecondsToHHMMSS = (seconds) => {
     if (isNaN(seconds)) return "00:00:00";
-    const h = Math.floor(seconds / 3600)
-      .toString()
-      .padStart(2, "0");
-    const m = Math.floor((seconds % 3600) / 60)
-      .toString()
-      .padStart(2, "0");
-    const s = Math.floor(seconds % 60)
-      .toString()
-      .padStart(2, "0");
+    const h = Math.floor(seconds / 3600).toString().padStart(2, "0");
+    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, "0");
+    const s = Math.floor(seconds % 60).toString().padStart(2, "0");
     return `${h}:${m}:${s}`;
   };
 
@@ -176,90 +177,102 @@ function TATBarChartPage() {
   };
 
   // ---------- Render ----------
- return (
-       <Box sx={{ p: 3 }}>
-         <Box
-           sx={{
-             display: "flex",
-             justifyContent: "space-between",
-             alignItems: "center",
-             mb: 3,
-           }}
-         >
-           <Typography variant="h4">TAT REPORT (City-wise)</Typography>
-   
-           <Box sx={{ display: "flex", gap: 1 }}>
-             <Button
-               variant="contained"
-               color="secondary"
-               onClick={() => navigate("/DashboardHome/tat")}
-             >
-               Graph
-             </Button>
-             <Button
-               variant="contained"
-               color="secondary"
-               onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}
-             >
-               BranchWise
-             </Button>
-           </Box>
+  return (
+    <Box sx={{ p: 3 }}>
+      {/* Header Buttons */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">TAT REPORT (City-wise)</Typography>
+
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/tat")}
+          >
+            Graph
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() =>
+              navigate("/DashboardHome/tat_branches-bar-chart")
+            }
+          >
+            BranchWise
+          </Button>
+        </Box>
       </Box>
 
       {/* Filters Section */}
       <SlicerFilters
-      monthOptions={monthOptions}
-      months={months}
-      setMonths={setMonths}
+        monthOptions={monthOptions}
+        months={months}
+        setMonths={setMonths}
+        qtrWiseOptions={qtrWiseOptions}
+        qtrWise={qtrWise}
+        setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions}
+        halfYear={halfYear}
+        setHalfYear={setHalfYear}
       />
 
-      {/* Stylish Growth Type Buttons */}
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 1.2,
-                mb: 2,
-              }}
-            >
-              {growthOptions.map((g, idx) => (
-                <Button
-                  key={g}
-                  variant={selectedGrowth === g ? "contained" : "outlined"}
-                  color={selectedGrowth === g ? "secondary" : "primary"}
-                  sx={{
-                    borderRadius: "20px",
-                    px: 2,
-                    py: 0.5,
-                    textTransform: "none",
-                    fontWeight: 600,
-                    transition: "all 0.3s ease",
-                    background:
-                      selectedGrowth === g
-                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
-                            (idx * 40 + 20) % 360
-                          }, 70%, 55%))`
-                        : "transparent",
-                    color: selectedGrowth === g ? "white" : "inherit",
-                    boxShadow:
-                      selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
-                    "&:hover": {
-                      transform: "scale(1.05)",
-                      background:
-                        selectedGrowth === g
-                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
-                              (idx * 40 + 20) % 360
-                            }, 65%, 50%))`
-                          : "rgba(103,58,183,0.05)",
-                    },
-                  }}
-                  onClick={() => setSelectedGrowth(g)}
-                >
-                  {g.replace(" Growth %", "")}
-                </Button>
-              ))}
+      {/* Growth Type Buttons */}
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 1.2,
+          mb: 2,
+        }}
+      >
+        {growthOptions.map((g, idx) => (
+          <Button
+            key={g}
+            variant={selectedGrowth === g ? "contained" : "outlined"}
+            color={selectedGrowth === g ? "secondary" : "primary"}
+            sx={{
+              borderRadius: "20px",
+              px: 2,
+              py: 0.5,
+              textTransform: "none",
+              fontWeight: 600,
+              transition: "all 0.3s ease",
+              background:
+                selectedGrowth === g
+                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                      (idx * 40 + 20) % 360
+                    }, 70%, 55%))`
+                  : "transparent",
+              color: selectedGrowth === g ? "white" : "inherit",
+              boxShadow:
+                selectedGrowth === g
+                  ? `0 3px 10px rgba(0,0,0,0.15)`
+                  : "none",
+              "&:hover": {
+                transform: "scale(1.05)",
+                background:
+                  selectedGrowth === g
+                    ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
+                        (idx * 40 + 20) % 360
+                      }, 65%, 50%))`
+                    : "rgba(103,58,183,0.05)",
+              },
+            }}
+            onClick={() => setSelectedGrowth(g)}
+          >
+            {g}
+          </Button>
+        ))}
       </Box>
 
+      {/* Chart Section */}
       {!selectedGrowth ? (
         <Typography>👆 Select a service type to view the chart below</Typography>
       ) : summary.length === 0 ? (
@@ -298,7 +311,6 @@ function TATBarChartPage() {
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
-
               <Bar
                 dataKey="value"
                 fill="#1976d2"

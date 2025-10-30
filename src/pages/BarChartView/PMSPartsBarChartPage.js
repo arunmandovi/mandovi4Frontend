@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Typography,
-  Checkbox,
-  ListItemText,
   Button,
+  Typography,
 } from "@mui/material";
 import {
   BarChart,
@@ -29,12 +23,18 @@ function PMSPartsBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [qtrWise, setQtrWise] = useState([]);
+  const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
+  // Dropdown options
   const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
+    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
+
+  const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
+  const halfYearOptions = ["H1", "H2"];
 
   const growthOptions = [
     "Air filter %",
@@ -68,18 +68,20 @@ function PMSPartsBarChartPage() {
     "Grand Total": "grandTotal",
   };
 
-  // ---------- Fetch city summary ----------
+  // ---------- Fetch Data ----------
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
-        // Prepare month list: all months if none selected
-        const activeMonths = months.length ? months : monthOptions;
-        const monthQuery = activeMonths.join(",");
-        const query = `?groupBy=city&months=${monthQuery}`;
+        // build query dynamically
+        const params = new URLSearchParams();
+        if (months.length) params.append("months", months.join(","));
+        if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
+        if (halfYear.length) params.append("halfYear", halfYear.join(","));
 
+        const query = params.toString() ? `?${params.toString()}` : "";
         const data = await fetchData(`/api/pms_parts/pms_parts_summary${query}`);
 
-        if (data && data.length > 0) {
+        if (data && Array.isArray(data)) {
           setSummary(data);
         } else {
           setSummary([]);
@@ -89,7 +91,7 @@ function PMSPartsBarChartPage() {
       }
     };
     fetchCitySummary();
-  }, [months]);
+  }, [months, qtrWise, halfYear]);
 
   // ---------- Helpers ----------
   const readCityName = (row) => {
@@ -166,7 +168,7 @@ function PMSPartsBarChartPage() {
   const chartData =
     selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
-  // ---------- Custom Tooltip ----------
+  // ---------- Tooltip ----------
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
@@ -192,88 +194,99 @@ function PMSPartsBarChartPage() {
 
   // ---------- Render ----------
   return (
-        <Box sx={{ p: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
+    <Box sx={{ p: 3 }}>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">PMS PARTS REPORT (City-wise)</Typography>
+
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/pms_parts")}
           >
-            <Typography variant="h4">PMS PARTS REPORT (City-wise)</Typography>
-    
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => navigate("/DashboardHome/pms_parts")}
-              >
-                Graph
-              </Button>
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => navigate("/DashboardHome/pms_parts_branches-bar-chart")}
-              >
-                BranchWise
-              </Button>
-            </Box>
+            Graph
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() =>
+              navigate("/DashboardHome/pms_parts_branches-bar-chart")
+            }
+          >
+            BranchWise
+          </Button>
+        </Box>
       </Box>
 
       {/* Filters Section */}
       <SlicerFilters
-      monthOptions={monthOptions}
-      months={months}
-      setMonths={setMonths}
+        monthOptions={monthOptions}
+        months={months}
+        setMonths={setMonths}
+        qtrWiseOptions={qtrWiseOptions}
+        qtrWise={qtrWise}
+        setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions}
+        halfYear={halfYear}
+        setHalfYear={setHalfYear}
       />
-      {/* Stylish Growth Type Buttons */}
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 1.2,
-                mb: 2,
-              }}
-            >
-              {growthOptions.map((g, idx) => (
-                <Button
-                  key={g}
-                  variant={selectedGrowth === g ? "contained" : "outlined"}
-                  color={selectedGrowth === g ? "secondary" : "primary"}
-                  sx={{
-                    borderRadius: "20px",
-                    px: 2,
-                    py: 0.5,
-                    textTransform: "none",
-                    fontWeight: 600,
-                    transition: "all 0.3s ease",
-                    background:
-                      selectedGrowth === g
-                        ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
-                            (idx * 40 + 20) % 360
-                          }, 70%, 55%))`
-                        : "transparent",
-                    color: selectedGrowth === g ? "white" : "inherit",
-                    boxShadow:
-                      selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
-                    "&:hover": {
-                      transform: "scale(1.05)",
-                      background:
-                        selectedGrowth === g
-                          ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
-                              (idx * 40 + 20) % 360
-                            }, 65%, 50%))`
-                          : "rgba(103,58,183,0.05)",
-                    },
-                  }}
-                  onClick={() => setSelectedGrowth(g)}
-                >
-                  {g.replace(" Growth %", "")}
-                </Button>
-              ))}
+
+      {/* Growth Type Buttons */}
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 1.2,
+          mb: 2,
+        }}
+      >
+        {growthOptions.map((g, idx) => (
+          <Button
+            key={g}
+            variant={selectedGrowth === g ? "contained" : "outlined"}
+            color={selectedGrowth === g ? "secondary" : "primary"}
+            sx={{
+              borderRadius: "20px",
+              px: 2,
+              py: 0.5,
+              textTransform: "none",
+              fontWeight: 600,
+              transition: "all 0.3s ease",
+              background:
+                selectedGrowth === g
+                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
+                      (idx * 40 + 20) % 360
+                    }, 70%, 55%))`
+                  : "transparent",
+              color: selectedGrowth === g ? "white" : "inherit",
+              boxShadow:
+                selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
+              "&:hover": {
+                transform: "scale(1.05)",
+                background:
+                  selectedGrowth === g
+                    ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
+                        (idx * 40 + 20) % 360
+                      }, 65%, 50%))`
+                    : "rgba(103,58,183,0.05)",
+              },
+            }}
+            onClick={() => setSelectedGrowth(g)}
+          >
+            {g.replace(" Growth %", "")}
+          </Button>
+        ))}
       </Box>
 
+      {/* Chart Section */}
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
       ) : summary.length === 0 ? (
