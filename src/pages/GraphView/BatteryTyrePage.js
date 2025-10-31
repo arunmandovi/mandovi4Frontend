@@ -192,26 +192,25 @@ function BatteryTyrePage() {
 
   // ---------- Render ----------
   return (
-    <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4">BATTERY & TYRE REPORT</Typography>
-
-        {/* Bar Chart Navigation Button */}
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          onClick={() => navigate("/DashboardHome/battery_tyre-bar-chart")}
-                        >
-                          Bar Chart
-                        </Button>
-      </Box>
+      <Box sx={{ p: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
+          <Typography variant="h4">BATTERY & TYRE REPORT</Typography>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre-bar-chart")}>
+              CityWise
+            </Button>
+            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre_branches-bar-chart")}>
+              BranchWise
+            </Button>
+          </Box>
+        </Box>
 
       {/* Filters Section */}
       <SlicerFilters

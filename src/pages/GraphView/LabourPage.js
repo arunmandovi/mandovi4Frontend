@@ -218,14 +218,14 @@ function LabourPage() {
         }}
       >
         <Typography variant="h4">LABOUR REPORT</Typography>
-
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => navigate("/DashboardHome/labour-bar-chart")}
-        >
-          Bar Chart
-        </Button>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/labour-bar-chart")}>
+            CityWise
+          </Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/labour_branches-bar-chart")}>
+            BranchWise
+          </Button>
+        </Box>
       </Box>
 
       {/* Filters */}

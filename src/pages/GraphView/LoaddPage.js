@@ -198,7 +198,7 @@ function LoaddPage() {
               key={i}
               variant="body2"
               sx={{ color: entry.color }}
-            >{`${entry.name}: ${entry.value?.toFixed(2)}%`}</Typography>
+            >{`${entry.name}: ${entry.value?.toFixed(1)}%`}</Typography>
           ))}
         </Box>
       );
@@ -208,25 +208,25 @@ function LoaddPage() {
 
   // ---------- Render ----------
   return (
-    <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4">LOAD REPORT</Typography>
-
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => navigate("/DashboardHome/loadd-bar-chart")}
+      <Box sx={{ p: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
         >
-          Bar Chart
-        </Button>
-      </Box>
+          <Typography variant="h4">LOAD REPORT</Typography>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd-bar-chart")}>
+              CityWise 
+            </Button>
+            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}>
+              BranchWise
+            </Button>
+          </Box>
+        </Box>
 
       {/* Filters */}
       <SlicerFilters
@@ -338,7 +338,7 @@ function LoaddPage() {
                           fontSize={11}
                           fill="#333"
                         >
-                          {`${Number(value).toFixed(2)}%`}
+                          {`${Number(value).toFixed(1)}%`}
                         </text>
                       );
                     }}

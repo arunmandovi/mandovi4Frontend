@@ -201,7 +201,7 @@ function BRConversionPage() {
             >
               {item.name}:{" "}
               {isPercentageGrowth
-                ? `${item.value.toFixed(2)}%`
+                ? `${item.value.toFixed(1)}%`
                 : item.value.toFixed(2)}
             </Typography>
           ))}
@@ -213,26 +213,25 @@ function BRConversionPage() {
 
   // ---------- Render ----------
   return (
-    <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4">BR CONVERSION REPORT</Typography>
-
-        {/* Bar Chart Navigation Button */}
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}
-                        >
-                          Bar Chart
-                        </Button>
-      </Box>
+        <Box sx={{ p: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
+            <Typography variant="h4">BR CONVERSION REPORT</Typography>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}>
+                CityWise 
+              </Button>
+              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>
+                BranchWise
+              </Button>
+            </Box>
+          </Box>
 
       {/* Filters Section */}
       <SlicerFilters
@@ -350,7 +349,7 @@ function BRConversionPage() {
                       const { x, y, value } = props;
                       if (value == null) return null;
                       const displayVal = isPercentageGrowth
-                        ? `${Number(value).toFixed(2)}%`
+                        ? `${Number(value).toFixed(1)}%`
                         : Number(value).toFixed(2);
                       return (
                         <text

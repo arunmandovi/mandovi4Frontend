@@ -1,23 +1,26 @@
-// src/utils/InsideBarLabel.js
 import React from "react";
 
 const InsideBarLabel = (props) => {
-  const { x, y, width, height, value } = props;
+  const {
+    x,
+    y,
+    width,
+    height,
+    value,
+    decimalPlaces = 1, // default: 1 decimal for percentage
+    showPercent = true, // ✅ new flag from parent
+  } = props;
 
   if (value == null || width <= 0) return null;
 
   const textX = x + width / 2;
-  let textY;
-
-  if (value > 0) {
-    textY = y + height / 2;
-  } else if (value < 0) {
-    textY = y + height / 2; 
-  } else {
-    textY = y - 6;
-  }
-
+  const textY = y + height / 2; // centered vertically inside bar
   const rotation = -90;
+
+  // ✅ Format value dynamically
+  const displayValue = showPercent
+    ? `${Number(value).toFixed(decimalPlaces)}%`
+    : `${Number(value).toFixed(decimalPlaces)}`;
 
   return (
     <text
@@ -31,7 +34,7 @@ const InsideBarLabel = (props) => {
       fontWeight="600"
       pointerEvents="none"
     >
-      {`${Number(value).toFixed(2)}%`}
+      {displayValue}
     </text>
   );
 };

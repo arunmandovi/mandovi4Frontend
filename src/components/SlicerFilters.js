@@ -17,7 +17,7 @@ const SlicerFilters = ({
   qtrWise = [],
   setQtrWise = () => {},
   halfYear = [],
-  setHalfYear = () => {}, // ✅ fixed naming
+  setHalfYear = () => {},
   cities = [],
   setCities = () => {},
 }) => {
@@ -44,32 +44,73 @@ const SlicerFilters = ({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mb: 3 }}>
-      {/* Month Slicer */}
-      {monthOptions.length > 0 && (
-        <Box>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-            Select Month(s)
-          </Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-            {monthOptions.map((m) => {
-              const selected = months.includes(m);
-              return (
-                <Button
-                  key={m}
-                  variant="outlined"
-                  size="small"
-                  sx={commonButtonStyles(selected)}
-                  onClick={() =>
-                    selected
-                      ? setMonths(months.filter((x) => x !== m))
-                      : setMonths([...months, m])
-                  }
-                >
-                  {m}
-                </Button>
-              );
-            })}
-          </Box>
+      {/* ✅ Month + City Slicers in One Row */}
+      {(monthOptions.length > 0 || cityOptions.length > 0) && (
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 4,
+            alignItems: "flex-start",
+          }}
+        >
+          {/* Month Slicer */}
+          {monthOptions.length > 0 && (
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Select Month(s)
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+                {monthOptions.map((m) => {
+                  const selected = months.includes(m);
+                  return (
+                    <Button
+                      key={m}
+                      variant="outlined"
+                      size="small"
+                      sx={commonButtonStyles(selected)}
+                      onClick={() =>
+                        selected
+                          ? setMonths(months.filter((x) => x !== m))
+                          : setMonths([...months, m])
+                      }
+                    >
+                      {m}
+                    </Button>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
+
+          {/* City Slicer */}
+          {cityOptions.length > 0 && (
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Select City(s)
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+                {cityOptions.map((c) => {
+                  const selected = cities.includes(c);
+                  return (
+                    <Button
+                      key={c}
+                      variant="outlined"
+                      size="small"
+                      sx={commonButtonStyles(selected)}
+                      onClick={() =>
+                        selected
+                          ? setCities(cities.filter((x) => x !== c))
+                          : setCities([...cities, c])
+                      }
+                    >
+                      {c}
+                    </Button>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
         </Box>
       )}
 
@@ -102,7 +143,7 @@ const SlicerFilters = ({
         </Box>
       )}
 
-      {/* ✅ Channel + Quarter + Half-Year in a single row */}
+      {/* ✅ Channel + Quarter + Half-Year in One Row */}
       {(channelOptions.length > 0 ||
         qtrWiseOptions.length > 0 ||
         halfYearOptions.length > 0) && (
@@ -200,35 +241,6 @@ const SlicerFilters = ({
               </Box>
             </Box>
           )}
-        </Box>
-      )}
-
-      {/* City Slicer */}
-      {cityOptions.length > 0 && (
-        <Box>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-            Select City(s)
-          </Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-            {cityOptions.map((c) => {
-              const selected = cities.includes(c);
-              return (
-                <Button
-                  key={c}
-                  variant="outlined"
-                  size="small"
-                  sx={commonButtonStyles(selected)}
-                  onClick={() =>
-                    selected
-                      ? setCities(cities.filter((x) => x !== c))
-                      : setCities([...cities, c])
-                  }
-                >
-                  {c}
-                </Button>
-              );
-            })}
-          </Box>
         </Box>
       )}
     </Box>
