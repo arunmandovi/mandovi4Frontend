@@ -127,7 +127,7 @@ function BRConversionBranchesBarChartPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">BR CONVERSION & TYRE REPORT (Branch-wise)</Typography>
+        <Typography variant="h4">BR CONVERSION REPORT (Branch-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion")}>
             Graph
