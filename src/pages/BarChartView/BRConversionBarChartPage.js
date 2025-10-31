@@ -192,7 +192,7 @@ function BRConversionBarChartPage() {
         <CityBarChart
           chartData={chartData}
           selectedGrowth={selectedGrowth}
-          decimalPlaces={1} // ✅ Show only 1 decimal digit
+          decimalPlaces={0}
           showPercent={selectedGrowth.includes("%")}
         />
       )}

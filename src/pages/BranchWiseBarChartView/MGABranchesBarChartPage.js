@@ -5,11 +5,10 @@ import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
 import CityBarChart from "../../components/CityBarChart"; // ✅ External reusable chart
 
-function MCPBarChartPage() {
+function MGABranchesBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [channels,setChannels] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
@@ -19,14 +18,15 @@ function MCPBarChartPage() {
     "Apr", "May", "Jun", "Jul", "Aug", "Sep",
     "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
-  const channelOptions = ["ARENA", "NEXA"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
-  
-  const growthOptions = ["MCP NO"]; 
+
+  const growthOptions = [
+    "MGA By VEH",
+  ];
 
   const growthKeyMap = {
-    "MCP NO": "mcp",
+    "MGA By VEH": "mgaVeh",
   };
 
   const preferredOrder = ["BANGALORE", "MYSORE", "MANGALORE"];
@@ -37,13 +37,12 @@ function MCPBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
-        if (channels.length > 0) params.append("channels", channels.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
         params.append("groupBy", "city");
 
         const query = `?${params.toString()}`;
-        const data = await fetchData(`/api/mcp/mcp_summary${query}`);
+        const data = await fetchData(`/api/mga/mga_summary${query}`);
 
         if (data && Array.isArray(data)) setSummary(data);
         else setSummary([]);
@@ -52,7 +51,7 @@ function MCPBarChartPage() {
       }
     };
     fetchCitySummary();
-  }, [months, channels, qtrWise, halfYear]);
+  }, [months, qtrWise, halfYear]);
 
   // ---------- Helpers ----------
   const readCityName = (row) =>
@@ -96,13 +95,13 @@ function MCPBarChartPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">MCP REPORT (City-wise)</Typography>
+        <Typography variant="h4">MGA REPORT (City-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="contained"
             color="secondary"
-            onClick={() => navigate("/DashboardHome/mcp")}
+            onClick={() => navigate("/DashboardHome/mga")}
           >
             Graph
           </Button>
@@ -110,7 +109,7 @@ function MCPBarChartPage() {
             variant="contained"
             color="secondary"
             onClick={() =>
-              navigate("/DashboardHome/mcp_branches-bar-chart")
+              navigate("/DashboardHome/mga_branches-bar-chart")
             }
           >
             BranchWise
@@ -123,9 +122,6 @@ function MCPBarChartPage() {
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
         qtrWiseOptions={qtrWiseOptions}
         qtrWise={qtrWise}
         setQtrWise={setQtrWise}
@@ -186,7 +182,7 @@ function MCPBarChartPage() {
         <CityBarChart
           chartData={chartData}
           selectedGrowth={selectedGrowth}
-          decimalPlaces={0} 
+          decimalPlaces={0}
           showPercent={selectedGrowth.includes("%")}
         />
       )}
@@ -194,4 +190,4 @@ function MCPBarChartPage() {
   );
 }
 
-export default MCPBarChartPage;
+export default MGABranchesBarChartPage;
