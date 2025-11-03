@@ -3,21 +3,25 @@ import { Box, Button, Typography } from "@mui/material";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
-import CityBarChart from "../../components/CityBarChart"; // ✅ External reusable chart
+import GrowthButtons from "../../components/GrowthButtons";
+import BranchBarChart from "../../components/BranchBarChart";
 
 function MGABranchesBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [channels, setChannels] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
-  // ---------- Dropdown Options ----------
   const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
+    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+    "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
+  const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
+  const channelOptions = ["ARENA", "NEXA"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
 
@@ -29,64 +33,85 @@ function MGABranchesBarChartPage() {
     "MGA By VEH": "mgaVeh",
   };
 
-  const preferredOrder = ["BANGALORE", "MYSORE", "MANGALORE"];
-
-  // ---------- Fetch Data ----------
   useEffect(() => {
-    const fetchCitySummary = async () => {
+    const fetchSummary = async () => {
       try {
         const params = new URLSearchParams();
-        if (months.length) params.append("months", months.join(","));
-        if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
-        if (halfYear.length) params.append("halfYear", halfYear.join(","));
-        params.append("groupBy", "city");
-
-        const query = `?${params.toString()}`;
-        const data = await fetchData(`/api/mga/mga_summary${query}`);
-
-        if (data && Array.isArray(data)) setSummary(data);
-        else setSummary([]);
-      } catch (err) {
-        console.error("fetchCitySummary error:", err);
+        if (months.length > 0) params.append("months", months.join(","));
+        if (cities.length > 0) params.append("cities", cities.join(","));
+        if (channels.length > 0) params.append("channels", channels.join(","));
+        if (qtrWise.length > 0) params.append("qtrWise", qtrWise.join(","));
+        if (halfYear.length > 0) params.append("halfYear", halfYear.join(","));
+        const endpoint = `/api/mga/mga_branch_summary${
+          params.toString() ? "?" + params.toString() : ""
+        }`;
+        const data = await fetchData(endpoint);
+        setSummary(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error fetching mga branch summary:", error);
+        setSummary([]);
       }
     };
-    fetchCitySummary();
-  }, [months, qtrWise, halfYear]);
+    fetchSummary();
+  }, [months, cities, channels, qtrWise, halfYear]);
 
-  // ---------- Helpers ----------
+  const readBranchName = (row) =>
+    row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
   const readCityName = (row) =>
-    (row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "")
-      .toString()
-      .trim()
-      .toUpperCase();
+    row?.city || row?.City || row?.cityName || row?.CityName || "";
 
-  const readGrowthValue = (row, apiKey) =>
-    parseFloat(row?.[apiKey] ?? 0);
+  const readGrowthValue = (row, apiKey) => {
+    const candidates = [
+      apiKey,
+      apiKey?.toLowerCase(),
+      apiKey?.toUpperCase(),
+      apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(),
+      "value",
+      "growth",
+      "val",
+    ];
+    for (const key of candidates) {
+      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
+        return row[key];
+    }
+    for (const key of Object.keys(row)) {
+      const v = row[key];
+      if (typeof v === "number") return v;
+      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
+    }
+    return undefined;
+  };
 
-  const buildChartData = (summaryArr) => {
+  const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
-    return summaryArr
-      .map((row) => ({
-        city: readCityName(row),
-        value: readGrowthValue(row, apiKey),
+    const totals = {};
+    const counts = {};
+    const cityMap = {};
+    (dataArr || []).forEach((row) => {
+      const branch = readBranchName(row);
+      const city = readCityName(row);
+      const val = readGrowthValue(row, apiKey);
+      const parsed = parseFloat(String(val).replace("%", "").trim());
+      if (!isNaN(parsed)) {
+        totals[branch] = (totals[branch] || 0) + parsed;
+        counts[branch] = (counts[branch] || 0) + 1;
+        cityMap[branch] = city;
+      }
+    });
+    return Object.keys(totals)
+      .map((b) => ({
+        name: b,
+        city: cityMap[b],
+        value: counts[b] ? totals[b] / counts[b] : 0,
       }))
-      .sort((a, b) => {
-        const aIndex = preferredOrder.indexOf(a.city);
-        const bIndex = preferredOrder.indexOf(b.city);
-        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-        if (aIndex !== -1) return -1;
-        if (bIndex !== -1) return 1;
-        return a.city.localeCompare(b.city);
-      });
+      .sort((a, b) => b.value - a.value);
   };
 
   const chartData =
-    selectedGrowth && summary.length > 0 ? buildChartData(summary) : [];
+    selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
-  // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
       <Box
         sx={{
           display: "flex",
@@ -95,95 +120,48 @@ function MGABranchesBarChartPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">MGA REPORT (City-wise)</Typography>
-
+        <Typography variant="h4">MGA REPORT (Branch-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => navigate("/DashboardHome/mga")}
-          >
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga")}>
             Graph
           </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() =>
-              navigate("/DashboardHome/mga_branches-bar-chart")
-            }
-          >
-            BranchWise
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga-bar-chart")}>
+            CityWise
           </Button>
         </Box>
       </Box>
 
-      {/* Filters Section */}
       <SlicerFilters
         monthOptions={monthOptions}
+        cityOptions={cityOptions}
+        channelOptions={channelOptions}
+        qtrWiseOptions={qtrWiseOptions}
+        halfYearOptions={halfYearOptions}
         months={months}
         setMonths={setMonths}
-        qtrWiseOptions={qtrWiseOptions}
+        cities={cities}
+        setCities={setCities}
+        channels={channels}
+        setChannels={setChannels}
         qtrWise={qtrWise}
         setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
         halfYear={halfYear}
         setHalfYear={setHalfYear}
       />
 
-      {/* Growth Type Buttons */}
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 1.2,
-          mb: 2,
-        }}
-      >
-        {growthOptions.map((g, idx) => (
-          <Button
-            key={g}
-            variant={selectedGrowth === g ? "contained" : "outlined"}
-            color={selectedGrowth === g ? "secondary" : "primary"}
-            sx={{
-              borderRadius: "20px",
-              px: 2,
-              py: 0.5,
-              textTransform: "none",
-              fontWeight: 600,
-              transition: "all 0.3s ease",
-              background:
-                selectedGrowth === g
-                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${(idx * 40 + 20) % 360}, 70%, 55%))`
-                  : "transparent",
-              color: selectedGrowth === g ? "white" : "inherit",
-              boxShadow:
-                selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
-              "&:hover": {
-                transform: "scale(1.05)",
-                background:
-                  selectedGrowth === g
-                    ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${(idx * 40 + 20) % 360}, 65%, 50%))`
-                    : "rgba(103,58,183,0.05)",
-              },
-            }}
-            onClick={() => setSelectedGrowth(g)}
-          >
-            {g}
-          </Button>
-        ))}
-      </Box>
+      <GrowthButtons
+        growthOptions={growthOptions}
+        selectedGrowth={selectedGrowth}
+        setSelectedGrowth={setSelectedGrowth}
+      />
 
-      {/* Chart Section */}
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
-      ) : chartData.length === 0 ? (
-        <Typography>No data available for the selected criteria.</Typography>
       ) : (
-        <CityBarChart
-          chartData={chartData}
-          selectedGrowth={selectedGrowth}
-          decimalPlaces={0}
-          showPercent={selectedGrowth.includes("%")}
+        <BranchBarChart 
+        chartData={chartData}
+        selectedGrowth={selectedGrowth}
+        decimalPlaces={0}
         />
       )}
     </Box>
