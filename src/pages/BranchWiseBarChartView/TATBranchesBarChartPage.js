@@ -26,6 +26,8 @@ function TATBranchesBarChartPage() {
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [cities, setCities] = useState([]);
+  const [qtrWise, setQtrWise] = useState([]);
+  const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
   const monthOptions = [
@@ -34,6 +36,9 @@ function TATBranchesBarChartPage() {
   ];
 
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
+  const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
+  const halfYearOptions = ["H1", "H2"];
+  
   const growthOptions = ["FR1", "FR2", "FR3", "PMS"];
 
   const growthKeyMap = {
@@ -45,21 +50,25 @@ function TATBranchesBarChartPage() {
 
   // ------------------- Fetch API -------------------
   useEffect(() => {
-    const fetchSummary = async () => {
-      try {
-        const activeMonths = months.length ? months : monthOptions;
-        const monthQuery = activeMonths.join(",");
-        const cityQuery = cities.length ? `&cities=${cities.join(",")}` : "";
-        const query = `?months=${monthQuery}${cityQuery}`;
-        const data = await fetchData(`/api/tat/tat_branch_summary${query}`);
-        if (data && data.length > 0) setSummary(data);
-        else setSummary([]);
-      } catch (err) {
-        console.error("fetchSummary error:", err);
-      }
-    };
-    fetchSummary();
-  }, [months, cities]);
+      const fetchSummary = async () => {
+        try {
+          const params = new URLSearchParams();
+          if (months.length > 0) params.append("months", months.join(","));
+          if (cities.length > 0) params.append("cities", cities.join(","));
+          if (qtrWise.length > 0) params.append("qtrWise", qtrWise.join(","));
+          if (halfYear.length > 0) params.append("halfYear", halfYear.join(","));
+          const endpoint = `/api/tat/tat_branch_summary${
+            params.toString() ? "?" + params.toString() : ""
+          }`;
+          const data = await fetchData(endpoint);
+          setSummary(Array.isArray(data) ? data : []);
+        } catch (error) {
+          console.error("Error fetching tat tyre branch summary:", error);
+          setSummary([]);
+        }
+      };
+      fetchSummary();
+    }, [months, cities, qtrWise, halfYear]);
 
   // ------------------- Helpers -------------------
   const readBranchName = (row) =>
@@ -124,7 +133,7 @@ function TATBranchesBarChartPage() {
       valueSec: counts[b] ? totals[b] / counts[b] : 0,
     }));
 
-    branches.sort((a, b) => a.valueSec - b.valueSec);
+    branches.sort((a, b) => b.valueSec - a.valueSec);
     return branches;
   };
 
@@ -229,10 +238,16 @@ function TATBranchesBarChartPage() {
       <SlicerFilters
         monthOptions={monthOptions}
         cityOptions={cityOptions}
+        qtrWiseOptions={qtrWiseOptions}
+        halfYearOptions={halfYearOptions}
         months={months}
         setMonths={setMonths}
         cities={cities}
         setCities={setCities}
+        qtrWise={qtrWise}
+        setQtrWise={setQtrWise}
+        halfYear={halfYear}
+        setHalfYear={setHalfYear}
       />
 
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2, mb: 2 }}>
