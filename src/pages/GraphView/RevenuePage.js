@@ -200,26 +200,25 @@ function RevenuePage() {
 
   // ---------- Render ----------
   return (
-    <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4">REVENUE REPORT</Typography>
-
-        {/* Bar Chart Navigation Button */}
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          onClick={() => navigate("/DashboardHome/revenue-bar-chart")}
-                        >
-                          Bar Chart
-                        </Button>
-      </Box>
+        <Box sx={{ p: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
+            <Typography variant="h4">REVENUE REPORT</Typography>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/revenue-bar-chart")}>
+                CityWise 
+              </Button>
+              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/revenue_branches-bar-chart")}>
+                BranchWise
+              </Button>
+            </Box>
+          </Box>
 
       {/* Filters Section */}
       <SlicerFilters

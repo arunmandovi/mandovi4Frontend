@@ -208,26 +208,25 @@ function VASPage() {
 
   // ---------- Render ----------
   return (
-    <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4">VAS REPORT</Typography>
-
-        {/* Bar Chart Navigation Button */}
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          onClick={() => navigate("/DashboardHome/vas-bar-chart")}
-                        >
-                          Bar Chart
-                        </Button>
-      </Box>
+        <Box sx={{ p: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
+            <Typography variant="h4">VAS REPORT</Typography>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/vas-bar-chart")}>
+                CityWise 
+              </Button>
+              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/vas_branches-bar-chart")}>
+                BranchWise
+              </Button>
+            </Box>
+          </Box>
 
       {/* Filters Section */}
       <SlicerFilters
