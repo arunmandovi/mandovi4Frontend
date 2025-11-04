@@ -3,7 +3,7 @@ export const apiModules = [
 { name: 'Battery & Tyre', 
   upload: '/api/battery_tyre/upload', 
   get: '/api/battery_tyre/getallbattery_tyre',
-  getBatteryTyreByMonthYear: '/api/battery_tyre/getbattery_tyre/{month}/{year}'
+  getBatteryTyreByMonthYear: '/api/battery_tyre/getbattery_tyre'
 },
 { name: 'BR Conversion', 
   upload: '/api/br_conversion/upload', 

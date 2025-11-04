@@ -1,25 +1,32 @@
 import React, { useState } from "react";
-import { TextField, Button, Box, Typography } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import { Box } from "@mui/material";
 import { fetchData, uploadFile } from "../../api/uploadService";
 import { apiModules } from "../../config/modules";
 import { useNavigate } from "react-router-dom";
+
+// ✅ Import Navbar Component & Button List
 import UploadNavbar from "../../components/UploadNavbar";
+import { uploadNavbarButtons } from "../../config/uploadNavBarButtons";
+
+// ✅ Reusable components
+import TitleBar from "../../components/common/TitleBar";
+import UploadSection from "../../components/common/UploadSection";
+import FilterByDate from "../../components/common/FilterByDate";
+import DataTable from "../../components/common/DataTable";
 
 function MGAUploadPage() {
   const mgaConfig = apiModules.find((m) => m.name === "MGA");
   const [tableData, setTableData] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(""); 
-  const [file, setFile] = useState(null); // ✅ for upload
+  const [selectedDate, setSelectedDate] = useState("");
+  const [file, setFile] = useState(null);
 
   const navigate = useNavigate();
 
-  // Fetch data (all or filtered)
   const handleFetch = async (withFilter = false) => {
     try {
       let path = mgaConfig.get;
-      if (withFilter && selectedDate) { 
-        path = mgaConfig.getMgaByMGADate.replace("{mgaDate}", selectedDate); 
+      if (withFilter && selectedDate) {
+        path = mgaConfig.getMgaByMGADate.replace("{mgaDate}", selectedDate);
       }
       const data = await fetchData(path);
       setTableData(data);
@@ -29,134 +36,38 @@ function MGAUploadPage() {
   };
 
   const handleUpload = async () => {
-    if (!file) {
-      alert("⚠ Please select a file first!");
-      return;
-    }
+    if (!file) return alert("⚠ Please select a file!");
+
     try {
       await uploadFile(mgaConfig.upload, file);
-      alert("✅ MGA file uploaded successfully!");
+      alert("✅ File Uploaded Successfully!");
       setFile(null);
     } catch (err) {
-      alert("❌ Upload failed: " + (err.response?.data || err.message));
+      alert("❌ Upload Failed: " + err.message);
     }
   };
 
-  const columns = tableData[0]
-    ? Object.keys(tableData[0])
-        .filter((key) => key !== "mgaSINo")
-        .map((key) => ({
-          field: key,
-          flex: 1,
-        }))
-    : [];
-
   return (
     <Box sx={{ width: "100%" }}>
-      {/* Reusable Navbar */}
-      <UploadNavbar
-        buttons={[
-          { label: "Battery Tyre", path: "/batterytyre-upload"},
-          {label: "BR Conversion", path: "/brconversion-upload"},
-          {label: "Labour", path: "/labour-upload"},
-          {label: "Load", path: "/loadd-upload"},
-          { label: "MCP", path: "/mcp-upload" },
-          { label: "MGA", path: "/mga-upload"},
-          {label: "MSGP", path: "/msgp-upload"},
-          {label: "MSGP Profit", path: "/msgp_profit-upload"},
-          { label: "Oil", path: "/oil-upload" },
-          { label: "PMS Parts", path: "/pms_parts-upload"},
-          { label: "Profit & Loss", path: "/profit_loss-upload"},
-          { label: "Reference", path: "/referencee-upload"},
-          { label: "Revenue", path: "/revenue-upload"},
-          { label: "Spares", path: "/spares-upload"},
-          { label: "TAT", path: "/tat-upload"},
-          { label: "VAS", path: "/vas-upload"},
-        ]}
+      {/* ✅ Reusable Navbar with imported button config */}
+      <UploadNavbar buttons={uploadNavbarButtons} />
+
+      <TitleBar
+        title="MGA Upload File"
+        onBack={() => navigate("/AdminDashboard")}
       />
 
-      {/* ✅ Title and Back Button Row (below navbar) */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                p: 2,
-                mb: 2,
-              }}
-            >
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: "bold",
-                  color: "#1976d2",
-                  textAlign: "center",
-                  flexGrow: 1,
-                }}
-              >
-                MGA Upload File
-              </Typography>
-      
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => navigate("/AdminDashboard")}
-                sx={{ ml: "auto" }}
-              >
-                🔙 Back
-              </Button>
-            </Box>
-
       <Box sx={{ p: 3 }}>
-        {/* Upload Section */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3, flexWrap: "wrap" }}>
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={(e) => setFile(e.target.files[0])}
-            style={{ border: "1px solid #ccc", padding: "6px", borderRadius: "6px" }}
-          />
-          <Button variant="contained" color="success" onClick={handleUpload}>
-            ⬆ Upload Excel
-          </Button>
-        </Box>
+        <UploadSection file={file} setFile={setFile} onUpload={handleUpload} />
 
-        {/* View All & Filter Buttons */}
-        <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-          <Button variant="contained" onClick={() => handleFetch(false)}>
-            📄 View All Data
-          </Button>
-        </Box>
-
-        {/* Date filter */}
-      <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-        <TextField
-          type="date" 
-          size="small"
-          value={selectedDate} 
-          onChange={(e) => setSelectedDate(e.target.value)} 
-          InputLabelProps={{ shrink: true }} 
+        <FilterByDate
+          selectedDate={selectedDate}
+          handleDateChange={setSelectedDate}
+          handleFilter={() => handleFetch(true)}
+          handleViewAll={() => handleFetch(false)}
         />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => handleFetch(true)}
-        >
-          🔎 Apply Filter
-        </Button>
-      </Box>
 
-        {/* Data Table */}
-        <Box sx={{ height: "600px", width: "100%" }}>
-          <DataGrid
-            rows={tableData.map((row, idx) => ({ id: idx, ...row }))}
-            columns={columns}
-            pageSize={tableData.length}
-            rowsPerPageOptions={[tableData.length]}
-            disableSelectionOnClick
-            autoHeight
-          />
-        </Box>
+        <DataTable tableData={tableData} />
       </Box>
     </Box>
   );

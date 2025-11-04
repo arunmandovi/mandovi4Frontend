@@ -12,8 +12,8 @@ function Layout() {
     <div className="layout-container">
       {/* Navbar */}
       <nav className="navbar">
-        <Link to="/DashboardHome/battery_tyre">Battery & Tyre</Link>
         <Link to="/DashboardHome/br_conversion">BR Conversion</Link>
+        <Link to="/DashboardHome/battery_tyre">Battery & Tyre</Link>
         <Link to="/DashboardHome/labour">Labour</Link>
         <Link to="/DashboardHome/loadd">Load</Link>
         <Link to="/DashboardHome/mcp">MCP</Link>

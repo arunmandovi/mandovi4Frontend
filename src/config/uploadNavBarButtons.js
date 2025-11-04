@@ -1,0 +1,18 @@
+export const uploadNavbarButtons = [
+  { label: "Battery Tyre", path: "/batterytyre-upload" },
+  { label: "BR Conversion", path: "/brconversion-upload" },
+  { label: "Labour", path: "/labour-upload" },
+  { label: "Load", path: "/loadd-upload" },
+  { label: "MCP", path: "/mcp-upload" },
+  { label: "MGA", path: "/mga-upload" },
+  { label: "MSGP", path: "/msgp-upload" },
+  { label: "MSGP Profit", path: "/msgp_profit-upload" },
+  { label: "Oil", path: "/oil-upload" },
+  { label: "PMS Parts", path: "/pms_parts-upload" },
+  { label: "Profit & Loss", path: "/profit_loss-upload" },
+  { label: "Reference", path: "/referencee-upload" },
+  { label: "Revenue", path: "/revenue-upload" },
+  { label: "Spares", path: "/spares-upload" },
+  { label: "TAT", path: "/tat-upload" },
+  { label: "VAS", path: "/vas-upload" },
+];
