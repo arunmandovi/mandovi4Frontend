@@ -1,73 +1,110 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box } from "@mui/material";
 import { fetchData, uploadFile } from "../../api/uploadService";
 import { apiModules } from "../../config/modules";
 import { useNavigate } from "react-router-dom";
 
-// ✅ Import Navbar Component & Button List
 import UploadNavbar from "../../components/UploadNavbar";
 import { uploadNavbarButtons } from "../../config/uploadNavBarButtons";
-
-// ✅ Reusable components
 import TitleBar from "../../components/common/TitleBar";
 import UploadSection from "../../components/common/UploadSection";
-import FilterByDate from "../../components/common/FilterByDate";
+import MonthYearFilter from "../../components/common/MonthYearFilter";
 import DataTable from "../../components/common/DataTable";
 
 function MGAUploadPage() {
   const mgaConfig = apiModules.find((m) => m.name === "MGA");
   const [tableData, setTableData] = useState([]);
-  const [selectedDate, setSelectedDate] = useState("");
+  const [months, setMonths] = useState([]); 
+  const [years, setYears] = useState([]);
   const [file, setFile] = useState(null);
-
   const navigate = useNavigate();
 
-  const handleFetch = async (withFilter = false) => {
+  // Fetch all data
+  const handleFetch = async () => {
     try {
-      let path = mgaConfig.get;
-      if (withFilter && selectedDate) {
-        path = mgaConfig.getMgaByMGADate.replace("{mgaDate}", selectedDate);
-      }
-      const data = await fetchData(path);
-      setTableData(data);
+      const data = await fetchData(mgaConfig.get);
+      setTableData(Array.isArray(data) ? data : []);
+      // Reset slicer selections if you want:
+      // setMonths([]); setYears([]);
     } catch (err) {
-      alert("❌ Error fetching MGA: " + err.message);
+      console.error("Fetch all error:", err);
+      setTableData([]);
     }
   };
 
+  // Apply filter (builds query string supporting multiple months/years)
+  const handleFilter = async () => {
+    // Validation behavior A: show message if nothing selected
+    if ((!months || months.length === 0) && (!years || years.length === 0)) {
+      alert("⚠ Please select at least one Month and/or Year before applying the filter.");
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (Array.isArray(months)) months.forEach((m) => params.append("months", m));
+      if (Array.isArray(years)) years.forEach((y) => params.append("years", y));
+
+      const url = `${mgaConfig.getMgaByMonthYear}?${params.toString()}`;
+      // fetchData expects a path; pass the full url string we constructed
+      const data = await fetchData(url);
+      setTableData(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Filter error:", err);
+      setTableData([]);
+    }
+  };
+
+  // Upload file
   const handleUpload = async () => {
-    if (!file) return alert("⚠ Please select a file!");
+    if (!file) {
+      alert("⚠ Please select a file first!");
+      return;
+    }
 
     try {
       await uploadFile(mgaConfig.upload, file);
-      alert("✅ File Uploaded Successfully!");
+      alert("✅ File uploaded successfully!");
       setFile(null);
+      handleFetch();
     } catch (err) {
-      alert("❌ Upload Failed: " + err.message);
+      alert("❌ Upload failed: " + (err.response?.data || err.message));
     }
   };
 
+  useEffect(() => {
+    handleFetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fixed-top navbar: render it as position fixed and add top padding to content
   return (
     <Box sx={{ width: "100%" }}>
-      {/* ✅ Reusable Navbar with imported button config */}
-      <UploadNavbar buttons={uploadNavbarButtons} />
+      <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1200 }}>
+        <UploadNavbar buttons={uploadNavbarButtons} />
+      </Box>
 
-      <TitleBar
-        title="MGA Upload File"
-        onBack={() => navigate("/AdminDashboard")}
-      />
-
-      <Box sx={{ p: 3 }}>
-        <UploadSection file={file} setFile={setFile} onUpload={handleUpload} />
-
-        <FilterByDate
-          selectedDate={selectedDate}
-          handleDateChange={setSelectedDate}
-          handleFilter={() => handleFetch(true)}
-          handleViewAll={() => handleFetch(false)}
+      {/* Add padding top so page content doesn't hide under fixed navbar */}
+      <Box sx={{ pt: "72px" }}>
+        <TitleBar
+          title="MGA Upload File"
+          onBack={() => navigate("/AdminDashboard")}
         />
 
-        <DataTable tableData={tableData} />
+        <Box sx={{ p: 3 }}>
+          <UploadSection file={file} setFile={setFile} onUpload={handleUpload} />
+
+          <MonthYearFilter
+            months={months}
+            years={years}
+            setMonths={setMonths}
+            setYears={setYears}
+            onFilter={handleFilter}
+            onViewAll={handleFetch}
+          />
+
+          <DataTable tableData={Array.isArray(tableData) ? tableData : []} />
+        </Box>
       </Box>
     </Box>
   );

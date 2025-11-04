@@ -29,6 +29,7 @@ import BRConversionUploadPage from "./pages/FileUpload/BRConversionUploadPage";
 import LabourUploadPage from "./pages/FileUpload/LabourUpload";
 import LoaddUploadPage from "./pages/FileUpload/LoaddUpload";
 import MGAUploadPage from "./pages/FileUpload/MGAUploadPage";
+import MGAProfitUploadPage from "./pages/FileUpload/MGAProfitUploadPage";
 import MCPUploadPage from "./pages/FileUpload/MCPUploadPage";
 import MSGPUploadPage from "./pages/FileUpload/MSGPUploadPage";
 import MSGPProfitUploadPage from "./pages/FileUpload/MSGPProfitUploadPage";
@@ -95,6 +96,7 @@ function App() {
         <Route path="/loadd-upload" element ={<LoaddUploadPage />} />
         <Route path="/mcp-upload" element ={<MCPUploadPage />} />
         <Route path="/mga-upload" element ={<MGAUploadPage />} />
+        <Route path="/mga_profit-upload" element ={<MGAProfitUploadPage />} />
         <Route path="/msgp-upload" element={<MSGPUploadPage />} />
         <Route path="/msgp_profit-upload" element={<MSGPProfitUploadPage />} />
         <Route path="/oil-upload" element={<OilUploadPage />} />

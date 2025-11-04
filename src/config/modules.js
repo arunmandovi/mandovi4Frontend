@@ -8,47 +8,52 @@ export const apiModules = [
 { name: 'BR Conversion', 
   upload: '/api/br_conversion/upload', 
   get: '/api/br_conversion/getallbr_conversion',
-  getBRConversionByMonthYear :'/api/br_conversion/getbr_conversion/{month}/{year}'
+  getBRConversionByMonthYear :'/api/br_conversion/getbr_conversion'
 },
 { name: 'Labour', 
   upload: '/api/labour/upload', 
   get: '/api/labour/getalllabour',
-  getLabourByMonthYear :'/api/labour/getlabour/{month}/{year}'
+  getLabourByMonthYear :'/api/labour/getlabour'
 },
 { name: 'Loadd', 
   upload: '/api/loadd/upload', 
   get: '/api/loadd/getallloadd',
-  getLoaddByMonthYear: '/api/loadd/getloadd/{month}/{year}' 
+  getLoaddByMonthYear: '/api/loadd/getloadd' 
 },
 { name: 'MCP', 
   upload: '/api/mcp/upload', 
   get: '/api/mcp/getallmcp',
-  getMCPByMonthYear : '/api/mcp/getmcp/{month}/{year}'
+  getMCPByMonthYear : '/api/mcp/getmcp'
 },
 { name: 'MGA', 
   upload: '/api/mga/upload',
   get: '/api/mga/getallmga',
-  getMgaByMGADate : '/api/mga/getmga/{mgaDate}'
+  getMgaByMonthYear : '/api/mga/getmga'
+},
+{ name: 'MGA Profit', 
+  upload: '/api/mga_profit/upload',
+  get: '/api/mga_profit/getallmga_profit',
+  getMgaProfitByMonthYear : '/api/mga_profit/getmga_profit'
 },
 { name: 'MSGP', 
   upload: '/api/msgp/upload', 
   get: '/api/msgp/getallmsgp',
-  getMSGPByMonthYear: '/api/msgp/getmsgp/{month}/{year}'
+  getMSGPByMonthYear: '/api/msgp/getmsgp'
 },
 { name: 'MSGP Profit', 
   upload: '/api/msgp_profit/upload', 
   get: '/api/msgp_profit/getallmsgp_profit',
-  getMSGPProfitByMonthYear: '/api/msgp_profit/getmsgp_profit/{month}/{year}'
+  getMSGPProfitByMonthYear: '/api/msgp_profit/getmsgp_profit'
 },
 { name: 'Oil', 
   upload: '/api/oil/upload', 
   get: '/api/oil/getalloil',
-  getOilByMonthYear: '/api/oil/getoil/{month}/{year}'
+  getOilByMonthYear: '/api/oil/getoil'
 },
 { name: 'PMS Parts',
    upload: '/api/pms_parts/upload',
     get: '/api/pms_parts/getallpms_parts',
-    getPMSPartsByPMSDate: '/api/pms_parts/getpms_parts/{pmsDate}' 
+    getPMSPartsByMonthYear: '/api/pms_parts/getpms_parts' 
 },
 
 { name: 'Profit & Loss', upload: '/api/profit_loss/upload', get: '/api/profit_loss/getallprofit_loss' },
@@ -56,12 +61,12 @@ export const apiModules = [
 { name: 'Referencee',
   upload: '/api/referencee/upload',
   get: '/api/referencee/getallreferencee',
-  getReferenceeByMonthDate: '/api/referencee/getreferencee/{month}/{year}'
+  getReferenceeByMonthYear: '/api/referencee/getreferencee'
 },
 { name: 'Revenue',
   upload: '/api/revenue/upload',
   get: '/api/revenue/getallrevenue',
-  getRevenueByMonthYear: '/api/revenue/getrevenue/{month}/{year}'
+  getRevenueByMonthYear: '/api/revenue/getrevenue'
 },
 { name: 'Spares',
   upload: '/api/spares/upload',

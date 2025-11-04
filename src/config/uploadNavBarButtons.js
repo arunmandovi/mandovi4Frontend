@@ -1,10 +1,11 @@
 export const uploadNavbarButtons = [
-  { label: "Battery Tyre", path: "/batterytyre-upload" },
   { label: "BR Conversion", path: "/brconversion-upload" },
+  { label: "Battery & Tyre", path: "/batterytyre-upload" },
   { label: "Labour", path: "/labour-upload" },
   { label: "Load", path: "/loadd-upload" },
   { label: "MCP", path: "/mcp-upload" },
   { label: "MGA", path: "/mga-upload" },
+  { label: "MGA Profit", path: "/mga_profit-upload" },
   { label: "MSGP", path: "/msgp-upload" },
   { label: "MSGP Profit", path: "/msgp_profit-upload" },
   { label: "Oil", path: "/oil-upload" },

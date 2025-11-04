@@ -23,11 +23,12 @@ export default function DataTable({ tableData }) {
     }));
 
   return (
-    <Box sx={{ width: "100%", height: 600 }}>
+    <Box sx={{ width: "100%", mt: 2 }}>
       <DataGrid
+        autoHeight
         rows={safeData.map((row, index) => ({ id: index + 1, ...row }))}
         columns={columns}
-        pageSize={Math.min(25, safeData.length)}
+        pageSize={25}
         rowsPerPageOptions={[5, 10, 25, 50]}
         disableSelectionOnClick
       />

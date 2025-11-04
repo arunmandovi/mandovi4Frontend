@@ -14,8 +14,8 @@ import DataTable from "../../components/common/DataTable";
 function BatteryTyreUploadPage() {
   const batteryConfig = apiModules.find((m) => m.name === "Battery & Tyre");
   const [tableData, setTableData] = useState([]);
-  const [months, setMonths] = useState([]); // multi-select
-  const [years, setYears] = useState([]); // multi-select
+  const [months, setMonths] = useState([]); 
+  const [years, setYears] = useState([]);
   const [file, setFile] = useState(null);
   const navigate = useNavigate();
 
