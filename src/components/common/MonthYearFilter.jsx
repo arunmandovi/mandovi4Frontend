@@ -37,51 +37,56 @@ const MonthYearFilter = ({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mb: 3 }}>
-      {/* Month slicer */}
-      <Box>
-        <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Month(s)</Typography>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-          {MONTHS.map((m) => {
-            const selected = Array.isArray(months) && months.includes(m);
-            return (
-              <Button
-                key={m}
-                size="small"
-                sx={commonButtonStyles(selected)}
-                onClick={() =>
-                  selected ? setMonths(months.filter((x) => x !== m)) : setMonths([...months, m])
-                }
-              >
-                {m}
-              </Button>
-            );
-          })}
+      {/* Row: Month & Year Filters */}
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 4, flexWrap: "wrap" }}>
+        
+        {/* Month slicer */}
+        <Box>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Month(s)</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+            {MONTHS.map((m) => {
+              const selected = months.includes(m);
+              return (
+                <Button
+                  key={m}
+                  size="small"
+                  sx={commonButtonStyles(selected)}
+                  onClick={() =>
+                    selected ? setMonths(months.filter((x) => x !== m)) : setMonths([...months, m])
+                  }
+                >
+                  {m}
+                </Button>
+              );
+            })}
+          </Box>
         </Box>
+
+        {/* Year slicer */}
+        <Box>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Year(s)</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+            {YEARS.map((y) => {
+              const selected = years.includes(y);
+              return (
+                <Button
+                  key={y}
+                  size="small"
+                  sx={commonButtonStyles(selected)}
+                  onClick={() =>
+                    selected ? setYears(years.filter((x) => x !== y)) : setYears([...years, y])
+                  }
+                >
+                  {y}
+                </Button>
+              );
+            })}
+          </Box>
+        </Box>
+
       </Box>
 
-      {/* Year slicer */}
-      <Box>
-        <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Year(s)</Typography>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-          {YEARS.map((y) => {
-            const selected = Array.isArray(years) && years.includes(y);
-            return (
-              <Button
-                key={y}
-                size="small"
-                sx={commonButtonStyles(selected)}
-                onClick={() =>
-                  selected ? setYears(years.filter((x) => x !== y)) : setYears([...years, y])
-                }
-              >
-                {y}
-              </Button>
-            );
-          })}
-        </Box>
-      </Box>
-
-      {/* Actions */}
+      {/* Action Buttons */}
       <Box sx={{ display: "flex", gap: 2 }}>
         <Button variant="contained" color="secondary" onClick={onViewAll}>
           📄 View All
@@ -91,7 +96,7 @@ const MonthYearFilter = ({
           variant="contained"
           color="primary"
           onClick={onFilter}
-          disabled={(!Array.isArray(months) || months.length === 0) && (!Array.isArray(years) || years.length === 0)}
+          disabled={months.length === 0 && years.length === 0}
         >
           🔎 Apply Filter
         </Button>

@@ -85,7 +85,18 @@ function MGAUploadPage() {
       </Box>
 
       {/* Add padding top so page content doesn't hide under fixed navbar */}
-      <Box sx={{ pt: "72px" }}>
+      <Box sx={{ pt: "140px" }}>
+              <Box
+                  sx={{
+                  position: "fixed",
+                  top: "72px", // below the UploadNavbar
+                  left: 0,
+                  right: 0,
+                  backgroundColor: "white",
+                  zIndex: 1100, // below navbar, above content
+                  boxShadow: "0px 2px 6px rgba(0,0,0,0.15)",
+                }}
+              ></Box>
         <TitleBar
           title="MGA Upload File"
           onBack={() => navigate("/AdminDashboard")}
