@@ -71,16 +71,16 @@ export const apiModules = [
 { name: 'Spares',
   upload: '/api/spares/upload',
   get: '/api/spares/getallspares',
-  getSparesByMonthYear: '/api/spares/getspares/{month}/{year}'
+  getSparesByMonthYear: '/api/spares/getspares'
 },
 { name: 'TAT',
   upload: '/api/tat/upload',
   get: '/api/tat/getalltat',
-  getTATByMonthYear: '/api/tat/gettat/{month}/{year}'
+  getTATByMonthYear: '/api/tat/gettat'
 },
 { name: 'VAS',
   upload: '/api/vas/upload',
   get: '/api/vas/getallvas',
-  getVASByMonthYear: '/api/vas/getvas/{month}/{year}'
+  getVASByMonthYear: '/api/vas/getvas'
 },
 ];

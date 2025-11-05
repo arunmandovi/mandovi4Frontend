@@ -167,7 +167,7 @@ function AdminDashboard() {
             borderRadius: "6px",
             cursor: "pointer",
           }}
-          onClick={() => navigate("/batterytyre-upload")}
+          onClick={() => navigate("/loadd-upload")}
         >
           📁 Upload Files
         </button>
