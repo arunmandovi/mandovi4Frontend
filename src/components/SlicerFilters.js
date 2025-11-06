@@ -21,7 +21,6 @@ const SlicerFilters = ({
   cities = [],
   setCities = () => {},
 }) => {
-  // ✅ Quarter to Months Mapping
   const quarterMapping = {
     Qtr1: ["Apr", "May", "Jun"],
     Qtr2: ["Jul", "Aug", "Sep"],
@@ -29,7 +28,6 @@ const SlicerFilters = ({
     Qtr4: ["Jan", "Feb", "Mar"],
   };
 
-  // ✅ Half Year Mapping (Quarter + Months)
   const halfMapping = {
     H1: {
       months: [...quarterMapping.Qtr1, ...quarterMapping.Qtr2],
@@ -41,7 +39,6 @@ const SlicerFilters = ({
     },
   };
 
-  // ✅ Half-Year Selection Handler
   const handleHalfYearClick = (h) => {
     const selected = halfYear.includes(h);
     const { months: autoMonths, quarters: autoQuarters } = halfMapping[h];
@@ -67,7 +64,6 @@ const SlicerFilters = ({
     setQtrWise(updatedQuarters);
   };
 
-  // ✅ Quarter Selection Handler
   const handleQuarterClick = (q) => {
     const selected = qtrWise.includes(q);
     const relatedMonths = quarterMapping[q];
@@ -110,95 +106,99 @@ const SlicerFilters = ({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mb: 3 }}>
-      {/* ✅ Month + City Group */}
-      {(monthOptions.length > 0 || cityOptions.length > 0) && (
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-          {monthOptions.length > 0 && (
-            <Box>
-              <Typography sx={{ fontWeight: 600, mb: 1 }}>
-                Select Month(s)
-              </Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-                {monthOptions.map((m) => {
-                  const selected = months.includes(m);
-                  return (
-                    <Button
-                      key={m}
-                      sx={commonButtonStyles(selected)}
-                      size="small"
-                      onClick={() =>
-                        selected
-                          ? setMonths(months.filter((x) => x !== m))
-                          : setMonths([...months, m])
-                      }
-                    >
-                      {m}
-                    </Button>
-                  );
-                })}
-              </Box>
-            </Box>
-          )}
 
-          {cityOptions.length > 0 && (
-            <Box>
-              <Typography sx={{ fontWeight: 600, mb: 1 }}>
-                Select City(s)
-              </Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-                {cityOptions.map((c) => {
-                  const selected = cities.includes(c);
-                  return (
-                    <Button
-                      key={c}
-                      sx={commonButtonStyles(selected)}
-                      size="small"
-                      onClick={() =>
-                        selected
-                          ? setCities(cities.filter((x) => x !== c))
-                          : setCities([...cities, c])
-                      }
-                    >
-                      {c}
-                    </Button>
-                  );
-                })}
-              </Box>
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {/* ✅ Year */}
-      {yearOptions.length > 0 && (
-        <Box>
-          <Typography sx={{ fontWeight: 600, mb: 1 }}>
-            Select Year(s)
-          </Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-            {yearOptions.map((y) => {
-              const selected = years.includes(y);
-              return (
-                <Button
-                  key={y}
-                  sx={commonButtonStyles(selected)}
-                  size="small"
-                  onClick={() =>
-                    selected
-                      ? setYears(years.filter((x) => x !== y))
-                      : setYears([...years, y])
-                  }
-                >
-                  {y}
-                </Button>
-              );
-            })}
-          </Box>
-        </Box>
-      )}
-
-      {/* ✅ Channels + Quarter + Half-Year */}
+      {/* ✅ Top Row → Months + Years + Cities */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+        
+        {/* ✅ Months */}
+        {monthOptions.length > 0 && (
+          <Box>
+            <Typography sx={{ fontWeight: 600, mb: 1 }}>
+              Select Month(s)
+            </Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+              {monthOptions.map((m) => {
+                const selected = months.includes(m);
+                return (
+                  <Button
+                    key={m}
+                    sx={commonButtonStyles(selected)}
+                    size="small"
+                    onClick={() =>
+                      selected
+                        ? setMonths(months.filter((x) => x !== m))
+                        : setMonths([...months, m])
+                    }
+                  >
+                    {m}
+                  </Button>
+                );
+              })}
+            </Box>
+          </Box>
+        )}
+
+        {/* ✅ Years */}
+        {yearOptions.length > 0 && (
+          <Box>
+            <Typography sx={{ fontWeight: 600, mb: 1 }}>
+              Select Year(s)
+            </Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+              {yearOptions.map((y) => {
+                const selected = years.includes(y);
+                return (
+                  <Button
+                    key={y}
+                    sx={commonButtonStyles(selected)}
+                    size="small"
+                    onClick={() =>
+                      selected
+                        ? setYears(years.filter((x) => x !== y))
+                        : setYears([...years, y])
+                    }
+                  >
+                    {y}
+                  </Button>
+                );
+              })}
+            </Box>
+          </Box>
+        )}
+
+        {/* ✅ Cities */}
+        {cityOptions.length > 0 && (
+          <Box>
+            <Typography sx={{ fontWeight: 600, mb: 1 }}>
+              Select City(s)
+            </Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+              {cityOptions.map((c) => {
+                const selected = cities.includes(c);
+                return (
+                  <Button
+                    key={c}
+                    sx={commonButtonStyles(selected)}
+                    size="small"
+                    onClick={() =>
+                      selected
+                        ? setCities(cities.filter((x) => x !== c))
+                        : setCities([...cities, c])
+                    }
+                  >
+                    {c}
+                  </Button>
+                );
+              })}
+            </Box>
+          </Box>
+        )}
+      </Box>
+
+      {/* ✅ Bottom Row → Channels + Quarter + Half Year */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+        
+        {/* ✅ Channels */}
         {channelOptions.length > 0 && (
           <Box>
             <Typography sx={{ fontWeight: 600, mb: 1 }}>
@@ -226,7 +226,7 @@ const SlicerFilters = ({
           </Box>
         )}
 
-        {/* ✅ Quarter */}
+        {/* ✅ Quarters */}
         {qtrWiseOptions.length > 0 && (
           <Box>
             <Typography sx={{ fontWeight: 600, mb: 1 }}>
@@ -250,7 +250,7 @@ const SlicerFilters = ({
           </Box>
         )}
 
-        {/* ✅ Half-Year */}
+        {/* ✅ Half Years */}
         {halfYearOptions.length > 0 && (
           <Box>
             <Typography sx={{ fontWeight: 600, mb: 1 }}>

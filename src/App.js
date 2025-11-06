@@ -9,9 +9,11 @@ import Layout from "./components/Layout"; // ✅ Navbar + Outlet
 import BatteryTyrePage from "./pages/GraphView/BatteryTyrePage";
 import BRConversionPage from "./pages/GraphView/BRConversionPage";
 import LabourPage from "./pages/GraphView/LabourPage";
+import PerVehiclePage from "./pages/GraphView/PerVehiclePage";
 import LoaddPage from "./pages/GraphView/LoaddPage";
 import MCPPage from "./pages/GraphView/MCPPage";
 import MGAPage from "./pages/GraphView/MGAPage";
+import MGAProfitPage from "./pages/GraphView/MGAProfitPage";
 import MSGPPage from "./pages/GraphView/MSGPPage";
 import MSGPProfitPage from "./pages/GraphView/MSGPProfitPage";
 import OilPage from "./pages/GraphView/OilPage";
@@ -46,13 +48,16 @@ import VASUploadPage from "./pages/FileUpload/VASUploadPage";
 import BatteryTyreBarChartPage from "./pages/BarChartView/BatteryTyreBarChartPage";
 import BRConversionBarChartPage from "./pages/BarChartView/BRConversionBarChartPage";
 import LabourBarChartPage from "./pages/BarChartView/LabourBarChartPage";
+import PerVehicleBarChartPage from "./pages/BarChartView/PerVehicleBarChartPage";
 import LoaddBarChartPage from "./pages/BarChartView/LoaddBarChartPage";
 import MCPBarChartPage from "./pages/BarChartView/MCPBarChartPage";
 import MGABarChartPage from "./pages/BarChartView/MGABarChartPage";
+import MGAProfitBarChartPage from "./pages/BarChartView/MGAProfitBarChartPage";
 import MSGPBarChartPage from "./pages/BarChartView/MSGPBarChartPage";
 import MSGPProfitBarChartPage from "./pages/BarChartView/MSGPProfitBarChartPage";
 import OilBarChartPage from "./pages/BarChartView/OilBarChartPage";
 import PMSPartsBarChartPage from "./pages/BarChartView/PMSPartsBarChartPage";
+import ProfitLossBarChartPage from "./pages/BarChartView/ProfitLossBarChartPage";
 import ReferenceeBarChartPage from "./pages/BarChartView/ReferenceeBarChartPage";
 import RevenueBarChartPage from "./pages/BarChartView/RevenueBarChartPage";
 import SparesBarChartPage from "./pages/BarChartView/SparesBarChartPage";
@@ -64,13 +69,16 @@ import VASBarChartPage from "./pages/BarChartView/VASBarChartPage";
 import BatteryTyreBranchesBarChartPage from "./pages/BranchWiseBarChartView/BatteryTyreBranchesBarChartPage";
 import BRConversionBranchesBarChartPage from "./pages/BranchWiseBarChartView/BRConversionBranchesBarChartPage";
 import LabourBranchesBarChartPage from "./pages/BranchWiseBarChartView/LabourBranchesBarChartPage";
+import PerVehicleBranchesBarChartPage from "./pages/BranchWiseBarChartView/PerVehicleBranchesBarChartPage";
 import LoaddBranchesBarChartPage from "./pages/BranchWiseBarChartView/LoaddBranchesBarChartPage";
 import MCPBranchesBarChartPage from "./pages/BranchWiseBarChartView/MCPBranchesBarChartPage";
 import MGABranchesBarChartPage from "./pages/BranchWiseBarChartView/MGABranchesBarChartPage";
+import MGAProfitBranchesBarChartPage from "./pages/BranchWiseBarChartView/MGAProfitBranchesBarChartPage";
 import MSGPBranchesBarChartPage from "./pages/BranchWiseBarChartView/MSGPBranchesBarChartPage";
 import MSGPProfitBranchesBarChartPage from "./pages/BranchWiseBarChartView/MSGPProfitBranchesBarChartPage";
 import OilBranchesBarChartPage from "./pages/BranchWiseBarChartView/OilBranchesBarChartPage";
 import PMSPartsBranchesBarChartPage from "./pages/BranchWiseBarChartView/PMSPartsBranchesBarChartPage";
+import ProfitLossBranchesBarChartPage from "./pages/BranchWiseBarChartView/ProfitLossBranchesBarChartPage";
 import ReferenceeeBranchesBarChartPage from "./pages/BranchWiseBarChartView/ReferenceeBranchesBarChartPage";
 import RevenueBranchesBarChartPage from "./pages/BranchWiseBarChartView/RevenueBranchesBarChartPage";
 import SparesBranchesBarChartPage from "./pages/BranchWiseBarChartView/SparesBranchesBarChartPage";
@@ -108,8 +116,6 @@ function App() {
         <Route path="/tat-upload" element={<TATUploadPage />} />
         <Route path="/vas-upload" element={<VASUploadPage />} />
 
-        {/* ✅ BranchWise GraphView Page */}
-
         {/* 🧭 Employee Dashboard Layout */}
         <Route path="/DashboardHome" element={<Layout />}>
           {/* Default route → Battery & Tyre */}
@@ -119,9 +125,11 @@ function App() {
           <Route path="battery_tyre" element={<BatteryTyrePage />} />
           <Route path="br_conversion" element={<BRConversionPage />} />
           <Route path="labour" element={<LabourPage />} />
+          <Route path="per_vehicle" element={<PerVehiclePage />} />
           <Route path="loadd" element={<LoaddPage />} />
           <Route path="mcp" element={<MCPPage />} />
           <Route path="mga" element={<MGAPage />} />
+          <Route path="mga_profit" element={<MGAProfitPage />} />
           <Route path="msgp" element={<MSGPPage />} />
           <Route path="msgp_profit" element={<MSGPProfitPage />} />
           <Route path="oil" element={<OilPage />} />
@@ -137,13 +145,16 @@ function App() {
           <Route path="battery_tyre-bar-chart" element={<BatteryTyreBarChartPage />} />
           <Route path="br_conversion-bar-chart" element={<BRConversionBarChartPage />} />
           <Route path="labour-bar-chart" element={<LabourBarChartPage />} />
+          <Route path="per_vehicle-bar-chart" element={<PerVehicleBarChartPage />} />
           <Route path="loadd-bar-chart" element={<LoaddBarChartPage />} />
           <Route path="mcp-bar-chart" element={<MCPBarChartPage />} />
-          <Route path="mga-bar-chart" element={<MGABarChartPage />} />          
+          <Route path="mga-bar-chart" element={<MGABarChartPage />} />
+          <Route path="mga_profit-bar-chart" element={<MGAProfitBarChartPage />} />        
           <Route path="msgp-bar-chart" element={<MSGPBarChartPage />} />
           <Route path="msgp_profit-bar-chart" element={<MSGPProfitBarChartPage />} />
           <Route path="oil-bar-chart" element={<OilBarChartPage />} />
           <Route path="pms_parts-bar-chart" element={<PMSPartsBarChartPage />} />
+          <Route path="profit_loss-bar-chart" element={<ProfitLossBarChartPage />} />
           <Route path="referencee-bar-chart" element={<ReferenceeBarChartPage />} />
           <Route path="revenue-bar-chart" element={<RevenueBarChartPage />} />
           <Route path="spares-bar-chart" element={<SparesBarChartPage />} />
@@ -154,13 +165,16 @@ function App() {
           <Route path="battery_tyre_branches-bar-chart" element={<BatteryTyreBranchesBarChartPage />} />
           <Route path="br_conversion_branches-bar-chart" element={<BRConversionBranchesBarChartPage />} />
           <Route path="labour_branches-bar-chart" element={<LabourBranchesBarChartPage />} />
+          <Route path="per_vehicle_branches-bar-chart" element={<PerVehicleBranchesBarChartPage />} />
           <Route path="loadd_branches-bar-chart" element={<LoaddBranchesBarChartPage />} />
           <Route path="mcp_branches-bar-chart" element={<MCPBranchesBarChartPage />} />
           <Route path="mga_branches-bar-chart" element={<MGABranchesBarChartPage />} />
+          <Route path="mga_profit_branches-bar-chart" element={<MGAProfitBranchesBarChartPage />} />
           <Route path="msgp_branches-bar-chart" element={<MSGPBranchesBarChartPage />} />
           <Route path="msgp_profit_branches-bar-chart" element={<MSGPProfitBranchesBarChartPage />} />
           <Route path="oil_branches-bar-chart" element={<OilBranchesBarChartPage />} />
           <Route path="pms_parts_branches-bar-chart" element={<PMSPartsBranchesBarChartPage />} />
+          <Route path="profit_loss_branches-bar-chart" element={<ProfitLossBranchesBarChartPage />} />
           <Route path="referencee_branches-bar-chart" element={<ReferenceeeBranchesBarChartPage />} />
           <Route path="revenue_branches-bar-chart" element={<RevenueBranchesBarChartPage />} />
           <Route path="spares_branches-bar-chart" element={<SparesBranchesBarChartPage />} />

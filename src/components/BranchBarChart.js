@@ -62,7 +62,7 @@ const BranchBarChart = ({
     return <Typography>No data available for the selected criteria.</Typography>;
   }
 
-  // ✅ Automatically detect if % should be shown
+  // ✅ Auto show % if text includes %
   const showPercent = selectedGrowth?.includes("%");
 
   return (
@@ -123,11 +123,17 @@ const BranchBarChart = ({
 
           <ReferenceLine y={0} stroke="#003366" strokeWidth={2} />
 
-          <Bar dataKey="value" barSize={35} isAnimationActive={false}>
+          <Bar
+            dataKey="value"
+            barSize={35}
+            isAnimationActive={false}
+            minPointSize={10} // ✅ visible zero-value bars
+          >
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={getBarColor(entry.value)} />
             ))}
 
+            {/* ✅ Always show label, even when value = 0 */}
             <LabelList
               dataKey="value"
               content={(props) => (
@@ -135,6 +141,7 @@ const BranchBarChart = ({
                   {...props}
                   decimalPlaces={decimalPlaces}
                   showPercent={showPercent}
+                  displayZero // ✅ ensure zero is shown
                 />
               )}
             />

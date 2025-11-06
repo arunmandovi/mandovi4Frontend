@@ -11,6 +11,13 @@ export default function DataTable({ data, title, hiddenColumns = [] }) {
     );
   }
 
+  const formatValue = (value) => {
+    if (value === null || value === undefined) return "-";
+    if (typeof value === "number") return value.toFixed(2);
+    if (!isNaN(value) && value !== "-") return Number(value).toFixed(2);
+    return value;
+  };
+
   // 🔹 Dynamically generate columns from object keys
   const allKeys = Object.keys(data[0]);
 
@@ -25,14 +32,18 @@ export default function DataTable({ data, title, hiddenColumns = [] }) {
       headerAlign: "center",
       align: "center",
       renderCell: (params) => {
-        const value = params.value;
-        // keep % aligned right
+        let value = params.value;
+
+        // ✅ Right-align percentage
         if (typeof value === "string" && value.includes("%")) {
           return (
             <Box sx={{ textAlign: "right", width: "100%" }}>{value}</Box>
           );
         }
-        return value;
+
+        // ✅ Apply 2-decimal formatting for numbers
+        const formattedValue = formatValue(value);
+        return formattedValue;
       },
     }));
 
@@ -57,6 +68,7 @@ export default function DataTable({ data, title, hiddenColumns = [] }) {
           {title}
         </Typography>
       )}
+
       <DataGrid
         rows={rows}
         columns={columns}

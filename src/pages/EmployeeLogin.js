@@ -24,7 +24,7 @@ function EmployeeLogin() {
       );
 
       // navigate to dashboard on success
-      navigate("/DashboardHome");
+      navigate("/DashboardHome/loadd");
     } catch (err) {
       // prefer safe error access
       const msg = err?.response?.data || err.message || "Login failed";
