@@ -124,28 +124,31 @@ const BranchBarChart = ({
           <ReferenceLine y={0} stroke="#003366" strokeWidth={2} />
 
           <Bar
-            dataKey="value"
-            barSize={35}
-            isAnimationActive={false}
-            minPointSize={10} // ✅ visible zero-value bars
-          >
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={getBarColor(entry.value)} />
-            ))}
+  dataKey="value"
+  barSize={35}
+  isAnimationActive={false}
+  minPointSize={10} // ✅ visible zero-value bars
+>
+  {chartData.map((entry, index) => (
+    <Cell
+      key={`cell-${index}`}
+      fill={entry?.barColor ? entry.barColor : getBarColor(entry.value)}
+    />
+  ))}
 
-            {/* ✅ Always show label, even when value = 0 */}
-            <LabelList
-              dataKey="value"
-              content={(props) => (
-                <InsideBarLabel
-                  {...props}
-                  decimalPlaces={decimalPlaces}
-                  showPercent={showPercent}
-                  displayZero // ✅ ensure zero is shown
-                />
-              )}
-            />
-          </Bar>
+  {/* ✅ Always show label, even when value = 0 */}
+  <LabelList
+    dataKey="value"
+    content={(props) => (
+      <InsideBarLabel
+        {...props}
+        decimalPlaces={decimalPlaces}
+        showPercent={showPercent}
+        displayZero
+      />
+    )}
+  />
+</Bar>
         </BarChart>
       </ResponsiveContainer>
     </Box>

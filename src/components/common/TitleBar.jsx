@@ -10,9 +10,7 @@ export default function TitleBar({ title, onBack }) {
         {title}
       </Typography>
 
-      <Button variant="contained" color="secondary" onClick={onBack}>
-        🔙 Back
-      </Button>
+      
     </Box>
   );
 }

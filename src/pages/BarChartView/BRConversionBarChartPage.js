@@ -3,7 +3,9 @@ import { Box, Button, Typography } from "@mui/material";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
-import CityBarChart from "../../components/CityBarChart"; // ✅ External reusable chart
+import GrowthButtons from "../../components/GrowthButtons";
+import CityBarChart from "../../components/CityBarChart";
+import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
 function BRConversionBarChartPage() {
   const navigate = useNavigate();
@@ -11,13 +13,9 @@ function BRConversionBarChartPage() {
   const [months, setMonths] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowth] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("br_conversion"));
 
-  // ---------- Dropdown Options ----------
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
 
@@ -39,9 +37,7 @@ function BRConversionBarChartPage() {
     "Arena&Nexa Total Amount": "arenaNexaTotalAmount",
   };
 
-  const preferredOrder = ["BANGALORE", "MYSORE", "MANGALORE"];
 
-  // ---------- Fetch Data ----------
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
@@ -49,13 +45,9 @@ function BRConversionBarChartPage() {
         if (months.length) params.append("months", months.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
-        params.append("groupBy", "city");
-
-        const query = `?${params.toString()}`;
+        const query = params.toString() ? `?${params.toString()}` : "";
         const data = await fetchData(`/api/br_conversion/br_conversion_summary${query}`);
-
-        if (data && Array.isArray(data)) setSummary(data);
-        else setSummary([]);
+        setSummary(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("fetchCitySummary error:", err);
       }
@@ -63,71 +55,69 @@ function BRConversionBarChartPage() {
     fetchCitySummary();
   }, [months, qtrWise, halfYear]);
 
-  // ---------- Helpers ----------
   const readCityName = (row) =>
-    (row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "")
-      .toString()
-      .trim()
-      .toUpperCase();
+    row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
-  const readGrowthValue = (row, apiKey) =>
-    parseFloat(row?.[apiKey] ?? 0);
+  const readGrowthValue = (row, apiKey) => {
+    const candidates = [
+      apiKey, apiKey?.toLowerCase(), apiKey?.toUpperCase(),
+      apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(), "value","growth","val",
+    ];
+    for (const key of candidates) {
+      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null) return row[key];
+    }
+    for (const key of Object.keys(row)) {
+      const v = row[key];
+      if (typeof v === "number") return v;
+      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
+    }
+    return undefined;
+  };
 
-  const buildChartData = (summaryArr) => {
+  const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
-    return summaryArr
-      .map((row) => ({
-        city: readCityName(row),
-        value: readGrowthValue(row, apiKey),
-      }))
-      .sort((a, b) => {
-        const aIndex = preferredOrder.indexOf(a.city);
-        const bIndex = preferredOrder.indexOf(b.city);
-        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-        if (aIndex !== -1) return -1;
-        if (bIndex !== -1) return 1;
-        return a.city.localeCompare(b.city);
-      });
+    const totals = {};
+    const counts = {};
+    (dataArr || []).forEach((row) => {
+      const city = readCityName(row);
+      const val = readGrowthValue(row, apiKey);
+      const parsed = parseFloat(String(val).replace("%", "").trim());
+      if (!isNaN(parsed)) {
+        totals[city] = (totals[city] || 0) + parsed;
+        counts[city] = (counts[city] || 0) + 1;
+      }
+    });
+    const preferredOrder = ["BANGALORE", "MYSORE", "MANGALORE"];
+    const allCities = Object.keys(totals);
+    const sortedCities = [
+      ...preferredOrder.filter((c) =>
+        allCities.some((x) => x.toLowerCase() === c.toLowerCase())
+      ),
+      ...allCities
+        .filter(
+          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
+        )
+        .sort((a, b) => a.localeCompare(b)),
+    ];
+    return sortedCities.map((city) => ({
+      city,
+      value: parseFloat(((totals[city] || 0) / (counts[city] || 1)).toFixed(1)),
+    }));
   };
 
   const chartData =
-    selectedGrowth && summary.length > 0 ? buildChartData(summary) : [];
+    selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
-  // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">BR CONVERSION REPORT (City-wise)</Typography>
-
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => navigate("/DashboardHome/br_conversion")}
-          >
-            Graph
-          </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() =>
-              navigate("/DashboardHome/br_conversion_branches-bar-chart")
-            }
-          >
-            BranchWise
-          </Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion")}>Graph</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>
 
-      {/* Filters Section */}
       <SlicerFilters
         monthOptions={monthOptions}
         months={months}
@@ -140,61 +130,24 @@ function BRConversionBarChartPage() {
         setHalfYear={setHalfYear}
       />
 
-      {/* Growth Type Buttons */}
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 1.2,
-          mb: 2,
+      <GrowthButtons
+        growthOptions={growthOptions}
+        selectedGrowth={selectedGrowth}
+        setSelectedGrowth={(value) => {
+          setSelectedGrowthState(value);
+          setSelectedGrowth(value, "br_conversion");
         }}
-      >
-        {growthOptions.map((g, idx) => (
-          <Button
-            key={g}
-            variant={selectedGrowth === g ? "contained" : "outlined"}
-            color={selectedGrowth === g ? "secondary" : "primary"}
-            sx={{
-              borderRadius: "20px",
-              px: 2,
-              py: 0.5,
-              textTransform: "none",
-              fontWeight: 600,
-              transition: "all 0.3s ease",
-              background:
-                selectedGrowth === g
-                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${(idx * 40 + 20) % 360}, 70%, 55%))`
-                  : "transparent",
-              color: selectedGrowth === g ? "white" : "inherit",
-              boxShadow:
-                selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
-              "&:hover": {
-                transform: "scale(1.05)",
-                background:
-                  selectedGrowth === g
-                    ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${(idx * 40 + 20) % 360}, 65%, 50%))`
-                    : "rgba(103,58,183,0.05)",
-              },
-            }}
-            onClick={() => setSelectedGrowth(g)}
-          >
-            {g}
-          </Button>
-        ))}
-      </Box>
+      />
 
-      {/* Chart Section */}
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
-      ) : chartData.length === 0 ? (
+      ) : summary.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
-        <CityBarChart
-          chartData={chartData}
-          selectedGrowth={selectedGrowth}
-          decimalPlaces={0}
-          showPercent={selectedGrowth.includes("%")}
-        />
+        <CityBarChart chartData={chartData} 
+        selectedGrowth={selectedGrowth} 
+        decimalPlaces={1} 
+        showPercent={selectedGrowth.includes("%")} />
       )}
     </Box>
   );

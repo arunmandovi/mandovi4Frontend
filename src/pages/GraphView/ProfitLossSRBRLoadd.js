@@ -4,7 +4,7 @@ import DataTable from "../../components/DataTable";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function ProfitLossPage() {
+function ProfitLossSRBRLoaddPage() {
   const [citySummary, setCitySummary] = useState([]);
   const [branchSummary, setBranchSummary] = useState([]);
   const [selectedCity, setSelectedCity] = useState("ALL");
@@ -25,17 +25,12 @@ function ProfitLossPage() {
       const formatted = Array.isArray(data)
         ? data.map((row) => ({
             City: row.city || "-",
-            "Apr 2024": row.apr_24 ?? "-",
-            "May 2024": row.may_24 ?? "-",
-            "Jun 2024": row.jun_24 ?? "-",
-            "Jul 2024": row.jul_24 ?? "-",
-            "2024-25": row.total_24 ?? "-",
-            "Apr 2025": row.apr_25 ?? "-",
-            "May 2025": row.may_25 ?? "-",
-            "Jun 2025": row.jun_25 ?? "-",
-            "Jul 2025": row.jul_25 ?? "-",
-            "Aug 2025": row.aug_25 ?? "-",
-            "2025-26": row.fy_2025_26 ?? "-",
+            "Apr 2025": row.apr25_per_100k ?? "-",
+            "May 2025": row.may25_per_100k ?? "-",
+            "Jun 2025": row.jun25_per_100k ?? "-",
+            "Jul 2025": row.jul25_per_100k ?? "-",
+            "Aug 2025": row.aug25_per_100k ?? "-",
+            "2025-26": row.total25_per_100k ?? "-",
           }))
         : [];
 
@@ -61,17 +56,12 @@ function ProfitLossPage() {
       const formatted = Array.isArray(data)
         ? data.map((row) => ({
             Branch: row.branch || "-",
-            "Apr 2024": row.apr_24 ?? "-",
-            "May 2024": row.may_24 ?? "-",
-            "Jun 2024": row.jun_24 ?? "-",
-            "Jul 2024": row.jul_24 ?? "-",
-            "2024-25": row.total_24 ?? "-",
-            "Apr 2025": row.apr_25 ?? "-",
-            "May 2025": row.may_25 ?? "-",
-            "Jun 2025": row.jun_25 ?? "-",
-            "Jul 2025": row.jul_25 ?? "-",
-            "Aug 2025": row.aug_25 ?? "-",
-            "2025-26": row.fy_2025_26 ?? "-",
+            "Apr 2025": row.apr25_per_100k ?? "-",
+            "May 2025": row.may25_per_100k ?? "-",
+            "Jun 2025": row.jun25_per_100k ?? "-",
+            "Jul 2025": row.jul25_per_100k ?? "-",
+            "Aug 2025": row.aug25_per_100k ?? "-",
+            "2025-26": row.total25_per_100k ?? "-",
           }))
         : [];
 
@@ -110,11 +100,11 @@ function ProfitLossPage() {
 
       <Box sx={{ display: "flex", gap: 1 }}>
         <Button
-          variant="contained"
-          onClick={() => navigate("/DashboardHome/profit_loss_srbr")}
-        >
-          SR&BR Table
-        </Button>
+                  variant="contained"
+                  onClick={() => navigate("/DashboardHome/profit_loss")}
+                >
+                  P&L Table
+                </Button>
 
         <Button
           variant="contained"
@@ -132,7 +122,7 @@ function ProfitLossPage() {
       </Box>
     </Box>
 
-      <DataTable data={citySummary} title="📍 City Wise P&L Summary" />
+      <DataTable data={citySummary} title="📍 City Wise P&L Per SR&Br Summary" />
 
       <Box sx={{ mt: 5, mb: 2, display: "flex", gap: 1 }}>
         <Button
@@ -153,9 +143,9 @@ function ProfitLossPage() {
         ))}
       </Box>
 
-      <DataTable data={branchSummary} title="🏢 Branch Wise P&L Summary" />
+      <DataTable data={branchSummary} title="🏢 Branch Wise P&L Per SR&BR Summary" />
     </Box>
   );
 }
 
-export default ProfitLossPage;
+export default ProfitLossSRBRLoaddPage;

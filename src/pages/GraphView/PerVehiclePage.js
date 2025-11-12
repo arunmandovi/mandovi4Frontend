@@ -1,26 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, Typography, CircularProgress } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
 import GrowthButtons from "../../components/GrowthButtons";
-import { sortCities } from "../../components/CityOrderHelper";
 import GrowthLineChart from "../../components/GrowthLineChart";
+import { sortCities } from "../../components/CityOrderHelper";
+import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
 function PerVehiclePage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [years, setYears] = useState(["2025"]); // Default year selected ✅
-  const [selectedGrowth, setSelectedGrowth] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [years, setYears] = useState([]);
+  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("per_vehicle"));
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
     "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
 
-  const yearOptions = ["2024", "2025"]; // ✅ Add more if needed
+  const yearOptions = ["2024", "2025"];
 
   const growthOptions = [
     "SR LABOUR / VEH",
@@ -43,47 +43,42 @@ function PerVehiclePage() {
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
-  // ✅ Fetch Data when month or year changes
+  const readGrowthValue = (row, apiKey) => {
+    const raw = row?.[apiKey];
+    if (raw == null) return 0;
+    const cleaned = String(raw).replace("%", "").trim();
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
-        setLoading(true);
-
-        const selectedYear = years?.length ? years[0] : "2025"; 
         const activeMonths = months.length ? months : monthOptions;
+        const activeYears = years.length ? years : yearOptions;
+        const combined = [];
 
-        const allMonthsData = [];
+        for (const y of activeYears) {
+          for (const m of activeMonths){        
+          let query = `?&months=${m}&years=${y}`;
 
-        for (const m of activeMonths) {
-          const res = await fetchData(
-            `/api/per_vehicle/per_vehicle_summary?years=${selectedYear}&months=${m}`
-          );
-
-          const safeArray = Array.isArray(res)
-            ? res
-            : Array.isArray(res?.result)
-            ? res.result
-            : [];
-
-          allMonthsData.push({ month: m, data: safeArray });
+          const data = await fetchData(`/api/per_vehicle/per_vehicle_summary${query}`);
+          const safeData = Array.isArray(data) ? data : data?.result || [];
+          combined.push({ month: m, year: y, data: safeData });
+          }
         }
 
-        setSummary(allMonthsData);
-      } catch (err) {
-        console.error("fetchCitySummary error:", err);
-        setSummary([]);
-      } finally {
-        setLoading(false);
+        setSummary(combined);
+      } catch (error) {
+        console.error("fetchCitySummary error:", error);
       }
     };
 
     fetchCitySummary();
   }, [months, years]);
 
-  // ✅ Format Data for Chart
   const buildChartData = () => {
-    if (!selectedGrowth || summary.length === 0)
-      return { formatted: [], sortedCities: [] };
+    if (!selectedGrowth) return { formatted: [], sortedCities: [] };
 
     const apiKey = growthKeyMap[selectedGrowth];
     const cities = new Set();
@@ -96,15 +91,11 @@ function PerVehiclePage() {
 
     const formatted = summary.map(({ month, data }) => {
       const entry = { month };
-      sortedCities.forEach((c) => (entry[c] = 0));
-
+      sortedCities.forEach((city) => (entry[city] = 0));
       (data || []).forEach((row) => {
         const city = readCityName(row);
-        const raw = row?.[apiKey];
-        const val = parseFloat(String(raw ?? 0).replace("%", ""));
-        entry[city] = isNaN(val) ? 0 : val;
+        entry[city] = readGrowthValue(row, apiKey);
       });
-
       return entry;
     });
 
@@ -115,55 +106,41 @@ function PerVehiclePage() {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* HEADER */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">PER VEHICLE REPORT</Typography>
-
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => navigate("/DashboardHome/per_vehicle-bar-chart")}
-          >
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/per_vehicle-bar-chart")}>
             CityWise
           </Button>
-
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => navigate("/DashboardHome/per_vehicle_branches-bar-chart")}
-          >
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/per_vehicle_branches-bar-chart")}>
             BranchWise
           </Button>
         </Box>
       </Box>
 
-      {/* FILTERS ✅ Now supports Year also */}
       <SlicerFilters
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
+        yearOptions={yearOptions}
         years={years}
         setYears={setYears}
-        yearOptions={yearOptions}
       />
 
-      {/* GROWTH SELECT */}
       <GrowthButtons
         growthOptions={growthOptions}
         selectedGrowth={selectedGrowth}
-        setSelectedGrowth={setSelectedGrowth}
+        setSelectedGrowth={(value) => {
+          setSelectedGrowthState(value);
+          setSelectedGrowth(value, "per_vehicle");
+        }}
       />
 
-      {/* Loading Indicator */}
-      {loading && (
-        <Box sx={{ textAlign: "center", my: 3 }}>
-          <CircularProgress />
-        </Box>
-      )}
-
-      {/* Main Chart */}
-      {!loading && selectedGrowth && chartData.length > 0 ? (
+      {!selectedGrowth ? (
+        <Typography>Select a growth type to view the chart</Typography>
+      ) : chartData.length === 0 ? (
+        <Typography>No data available for the selected criteria.</Typography>
+      ) : (
         <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
             {selectedGrowth}
@@ -172,13 +149,9 @@ function PerVehiclePage() {
             chartData={chartData}
             cityKeys={cityKeys}
             decimalDigits={0}
-            showPercentage={false}
+            showPercentage={true}
           />
         </Box>
-      ) : !loading && selectedGrowth ? (
-        <Typography>No data found for selected filters</Typography>
-      ) : (
-        <Typography>Select a growth type to view the chart</Typography>
       )}
     </Box>
   );

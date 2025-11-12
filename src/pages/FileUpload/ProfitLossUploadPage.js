@@ -1,137 +1,112 @@
-import React, { useState } from "react";
-import { TextField, Button, Box, Typography } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-import { fetchData, uploadFile } from "../../api/uploadService";
+import React, { useEffect, useState } from "react";
+import { Box, Button } from "@mui/material";
+import { fetchData, uploadFile } from "../../api/uploadService"; // ✅ Only for fetch & upload
+import { deleteData } from "../../api/deleteService"; // ✅ NEW SEPARATE FILE
 import { apiModules } from "../../config/modules";
 import { useNavigate } from "react-router-dom";
+
 import UploadNavbar from "../../components/UploadNavbar";
+import { uploadNavbarButtons } from "../../config/uploadNavBarButtons";
+import TitleBar from "../../components/common/TitleBar";
+import UploadSection from "../../components/common/UploadSection";
+import MonthYearFilter from "../../components/common/MonthYearFilter";
+import DataTable from "../../components/common/DataTable";
 
 function ProfitLossUploadPage() {
-  const profitLossConfig = apiModules.find((m) => m.name === "Profit & Loss");
+  const config = apiModules.find((m) => m.name === "Profit & Loss");
   const [tableData, setTableData] = useState([]);
   const [file, setFile] = useState(null);
   const navigate = useNavigate();
 
-  const handleFetch = async (withFilter = false) => {
+  // 🔹 Fetch all data
+  const handleFetch = async () => {
     try {
-      let path = profitLossConfig.get;
-      const data = await fetchData(path);
-      setTableData(data);
+      const data = await fetchData(config.get);
+      setTableData(Array.isArray(data) ? data : []);
     } catch (err) {
-      alert("❌ Error fetching Profit & Loss : " + err.message);
+      console.error("Fetch all error:", err);
+      setTableData([]);
     }
   };
 
+  
+  // 🔹 Upload file
   const handleUpload = async () => {
     if (!file) {
       alert("⚠ Please select a file first!");
       return;
     }
+
     try {
-      await uploadFile(profitLossConfig.upload, file);
-      alert("✅ Profit & Loss file uploaded successfully!");
+      await uploadFile(config.upload, file);
+      alert("✅ File uploaded successfully!");
       setFile(null);
+      handleFetch();
     } catch (err) {
-      alert("❌ Upload failed: " + (err.response?.data || err.message));
+      alert("❌ Upload failed: " + (err.response?.data?.message || err.message));
     }
   };
 
-  const columns = tableData[0]
-    ? Object.keys(tableData[0])
-        .filter((key) => key !== "profit_losssino")
-        .map((key) => ({
-          field: key,
-          flex: 1,
-        }))
-    : [];
+  // 🔹 Delete all data (using separate deleteService)
+  const handleDeleteAll = async () => {
+    if (!window.confirm("⚠ Are you sure you want to delete ALL Profit & Loss data? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const res = await deleteData(config.deleteAll);
+      alert("🗑️ All Profit & Loss data deleted successfully!");
+      setTableData([]);
+    } catch (err) {
+      console.error("Delete all error:", err);
+      alert("❌ Failed to delete all data: " + (err.response?.data?.message || err.message));
+    }
+  };
+
+  useEffect(() => {
+    handleFetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Box sx={{ width: "100%" }}>
-      {/* Reusable Navbar */}
-      <UploadNavbar
-        buttons={[
-          { label: "Battery Tyre", path: "/batterytyre-upload"},
-          {label: "BR Conversion", path: "/brconversion-upload"},
-          {label: "Labour", path: "/labour-upload"},
-          {label: "Load", path: "/loadd-upload"},
-          { label: "MCP", path: "/mcp-upload" },
-          { label: "MGA", path: "/mga-upload"},
-          {label: "MSGP", path: "/msgp-upload"},
-          {label: "MSGP Profit", path: "/msgp_profit-upload"},
-          { label: "Oil", path: "/oil-upload" },
-          { label: "PMS Parts", path: "/pms_parts-upload"},
-          { label: "Profit & Loss", path: "/profit_loss-upload"},
-          { label: "Reference", path: "/referencee-upload"},
-          { label: "Revenue", path: "/revenue-upload"},
-          { label: "Spares", path: "/spares-upload"},
-          { label: "TAT", path: "/tat-upload"},
-          { label: "VAS", path: "/vas-upload"},
-        ]}
-      />
+      {/* Fixed Upload Navbar */}
+      <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1200 }}>
+        <UploadNavbar buttons={uploadNavbarButtons} />
+      </Box>
 
-      {/* ✅ Title and Back Button Row (below navbar) */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                p: 2,
-                mb: 2,
-              }}
-            >
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: "bold",
-                  color: "#1976d2",
-                  textAlign: "center",
-                  flexGrow: 1,
-                }}
-              >
-                Profit & Loss Upload File
-              </Typography>
-      
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => navigate("/AdminDashboard")}
-                sx={{ ml: "auto" }}
-              >
-                🔙 Back
-              </Button>
-            </Box>
-
-      <Box sx={{ p: 3 }}>
-        {/* Upload Section */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3, flexWrap: "wrap" }}>
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={(e) => setFile(e.target.files[0])}
-            style={{ border: "1px solid #ccc", padding: "6px", borderRadius: "6px" }}
-          />
-          <Button variant="contained" color="success" onClick={handleUpload}>
-            ⬆ Upload Excel
-          </Button>
+      {/* Add top padding for fixed navbar */}
+      <Box sx={{ pt: "140px" }}>
+        {/* TitleBar Row with Delete All + Back Button */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: 3,
+            mb: 2,
+          }}
+        >
+          <TitleBar title="Profit & Loss Upload File" />
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button variant="contained" color="error" onClick={handleDeleteAll}>
+              Delete All
+            </Button>
+            <Button variant="outlined" color="primary" onClick={() => navigate("/AdminDashboard")}>
+              Back
+            </Button>
+          </Box>
         </Box>
 
-        {/* View All & Filter Buttons */}
-        <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-          <Button variant="contained" onClick={() => handleFetch(false)}>
-            📄 View All Data
-          </Button>
-        </Box>
+        {/* Main Content */}
+        <Box sx={{ p: 3 }}>
+          <UploadSection file={file} setFile={setFile} onUpload={handleUpload} />
 
-        {/* Data Table */}
-        <Box sx={{ height: "600px", width: "100%" }}>
-          <DataGrid
-            rows={tableData.map((row, idx) => ({ id: idx, ...row }))}
-            columns={columns}
-            pageSize={tableData.length}
-            rowsPerPageOptions={[tableData.length]}
-            disableSelectionOnClick
-            autoHeight
+          <MonthYearFilter
+            onViewAll={handleFetch}
           />
+
+          <DataTable tableData={Array.isArray(tableData) ? tableData : []} />
         </Box>
       </Box>
     </Box>

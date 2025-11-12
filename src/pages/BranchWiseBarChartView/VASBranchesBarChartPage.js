@@ -25,30 +25,30 @@ function VASBranchesBarChartPage() {
 
   const growthOptions = [
     "Diagnostic Charges %",
-    "Wheel Alignment Age %",
-    "Wheel Balancing Age %",
-    "Exterior Cleaning Age %",
-    "Interior Cleaning Age %",
-    "UndreBody Coating Age %",
-    "TopBody Coating Age %",
-    "Rat Mesh Age %",
-    "AC Evaporator Age %",
-    "AC Vent Age %",
-    "Plastic Restorer Age %"
+    "Wheel Alignment %",
+    "Wheel Balancing %",
+    "Exterior Cleaning %",
+    "Interior Cleaning %",
+    "UndreBody Coating %",
+    "TopBody Coating %",
+    "Rat Mesh %",
+    "AC Evaporator %",
+    "AC Vent %",
+    "Plastic Restorer %"
   ];
 
   const growthKeyMap = {
     "Diagnostic Charges %": "diagnosticChargesPercentagePMSLoad",
-    "Wheel Alignment Age %": "wheelAlignmentPercentageAge",
-    "Wheel Balancing Age %": "wheelBalancingPercentageAge",
-    "Exterior Cleaning Age %": "exteriorCleaningPercentageAge",
-    "Interior Cleaning Age %": "interiorCleaningPercentageAge",
-    "UndreBody Coating Age %": "underBodyCoatingPercentageAge",
-    "TopBody Coating Age %": "topBodyPercentageAge",
-    "Rat Mesh Age %": "ratMeshPercentageAge",
-    "AC Evaporator Age %": "acEvaporatorPercentageAge",
-    "AC Vent Age %": "acVentPercentageAge",
-    "Plastic Restorer Age %": "plasticRestorerPercentageAge"
+    "Wheel Alignment %": "wheelAlignmentPercentageAge",
+    "Wheel Balancing %": "wheelBalancingPercentageAge",
+    "Exterior Cleaning %": "exteriorCleaningPercentageAge",
+    "Interior Cleaning %": "interiorCleaningPercentageAge",
+    "UndreBody Coating %": "underBodyCoatingPercentageAge",
+    "TopBody Coating %": "topBodyPercentageAge",
+    "Rat Mesh %": "ratMeshPercentageAge",
+    "AC Evaporator %": "acEvaporatorPercentageAge",
+    "AC Vent %": "acVentPercentageAge",
+    "Plastic Restorer %": "plasticRestorerPercentageAge"
   };
 
   useEffect(() => {

@@ -19,7 +19,6 @@ import {
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
-import { getBarColor } from "../../utils/getBarColor";
 
 function TATBranchesBarChartPage() {
   const navigate = useNavigate();
@@ -50,25 +49,25 @@ function TATBranchesBarChartPage() {
 
   // ------------------- Fetch API -------------------
   useEffect(() => {
-      const fetchSummary = async () => {
-        try {
-          const params = new URLSearchParams();
-          if (months.length > 0) params.append("months", months.join(","));
-          if (cities.length > 0) params.append("cities", cities.join(","));
-          if (qtrWise.length > 0) params.append("qtrWise", qtrWise.join(","));
-          if (halfYear.length > 0) params.append("halfYear", halfYear.join(","));
-          const endpoint = `/api/tat/tat_branch_summary${
-            params.toString() ? "?" + params.toString() : ""
-          }`;
-          const data = await fetchData(endpoint);
-          setSummary(Array.isArray(data) ? data : []);
-        } catch (error) {
-          console.error("Error fetching tat tyre branch summary:", error);
-          setSummary([]);
-        }
-      };
-      fetchSummary();
-    }, [months, cities, qtrWise, halfYear]);
+    const fetchSummary = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (months.length > 0) params.append("months", months.join(","));
+        if (cities.length > 0) params.append("cities", cities.join(","));
+        if (qtrWise.length > 0) params.append("qtrWise", qtrWise.join(","));
+        if (halfYear.length > 0) params.append("halfYear", halfYear.join(","));
+        const endpoint = `/api/tat/tat_branch_summary${
+          params.toString() ? "?" + params.toString() : ""
+        }`;
+        const data = await fetchData(endpoint);
+        setSummary(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error fetching TAT branch summary:", error);
+        setSummary([]);
+      }
+    };
+    fetchSummary();
+  }, [months, cities, qtrWise, halfYear]);
 
   // ------------------- Helpers -------------------
   const readBranchName = (row) =>
@@ -133,7 +132,7 @@ function TATBranchesBarChartPage() {
       valueSec: counts[b] ? totals[b] / counts[b] : 0,
     }));
 
-    branches.sort((a, b) => b.valueSec - a.valueSec);
+    branches.sort((a, b) => a.valueSec - b.valueSec);
     return branches;
   };
 
@@ -172,7 +171,6 @@ function TATBranchesBarChartPage() {
     const textY = y + height / 2;
     const rotation = -90;
 
-    // ✅ Safe luminance calculation
     let textColor = "#000000";
     try {
       if (typeof fill === "string" && fill.startsWith("rgb")) {
@@ -202,6 +200,12 @@ function TATBranchesBarChartPage() {
         {secondsToHHMMSS(value)}
       </text>
     );
+  };
+
+  // ------------------- Get Bar Color -------------------
+  const getBarColor = (valueSec) => {
+    const threshold = 2 * 3600 + 30 * 60; // 2 hours 30 minutes = 9000 sec
+    return valueSec < threshold ? "#05f105ff" : "#ff0000ff"; 
   };
 
   // ------------------- UI -------------------
@@ -328,7 +332,10 @@ function TATBranchesBarChartPage() {
               <Legend />
               <Bar dataKey="valueSec" barSize={35} isAnimationActive={false}>
                 {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getBarColor(entry.valueSec)} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={getBarColor(entry.valueSec)}
+                  />
                 ))}
                 <LabelList dataKey="valueSec" content={<InsideBarLabel />} />
               </Bar>

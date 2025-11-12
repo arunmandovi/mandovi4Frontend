@@ -1,22 +1,19 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Button,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
 import GrowthButtons from "../../components/GrowthButtons";
 import GrowthLineChart from "../../components/GrowthLineChart";
 import { sortCities } from "../../components/CityOrderHelper";
+import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
 function ReferenceePage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [channels, setChannels] = useState([]);
-  const [selectedGrowth, setSelectedGrowth] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("referencee"));
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
@@ -38,24 +35,16 @@ function ReferenceePage() {
   };
 
   const readCityName = (row) =>
-    row?.city ||
-    row?.City ||
-    row?.cityName ||
-    row?.CityName ||
-    row?.name ||
-    row?.Name ||
-    "";
+    row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
   const readGrowthValue = (row, apiKey) => {
     const raw = row?.[apiKey];
     if (raw == null) return 0;
-
     const cleaned = String(raw).replace("%", "").trim();
     const parsed = parseFloat(cleaned);
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  // ✅ Fetch API
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
@@ -68,7 +57,6 @@ function ReferenceePage() {
 
           const data = await fetchData(`/api/referencee/referencee_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
-
           combined.push({ month: m, data: safeData });
         }
 
@@ -81,7 +69,6 @@ function ReferenceePage() {
     fetchCitySummary();
   }, [months, channels]);
 
-  // ✅ Build chart data
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
 
@@ -111,7 +98,6 @@ function ReferenceePage() {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">REFERENCE REPORT</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
@@ -124,7 +110,6 @@ function ReferenceePage() {
         </Box>
       </Box>
 
-      {/* Filters */}
       <SlicerFilters
         monthOptions={monthOptions}
         months={months}
@@ -134,11 +119,13 @@ function ReferenceePage() {
         setChannels={setChannels}
       />
 
-      {/* GROWTH SELECT */}
       <GrowthButtons
         growthOptions={growthOptions}
         selectedGrowth={selectedGrowth}
-        setSelectedGrowth={setSelectedGrowth}
+        setSelectedGrowth={(value) => {
+          setSelectedGrowthState(value);
+          setSelectedGrowth(value, "referencee");
+        }}
       />
 
       {!selectedGrowth ? (
@@ -150,13 +137,15 @@ function ReferenceePage() {
           <Typography variant="h6" sx={{ mb: 1 }}>
             {selectedGrowth}
           </Typography>
-
-          {/* ✅ Using Global GrowthLineChart Component */}
           <GrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
             decimalDigits={0}
-            showPercentage={true}
+            showPercent={[
+              "E-B",
+              "E-R",
+              "B-R",
+            ].includes(selectedGrowth)}
           />
         </Box>
       )}

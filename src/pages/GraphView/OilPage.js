@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, Typography, CircularProgress } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
 import GrowthButtons from "../../components/GrowthButtons";
-import { sortCities } from "../../components/CityOrderHelper";
 import GrowthLineChart from "../../components/GrowthLineChart";
+import { sortCities } from "../../components/CityOrderHelper";
+import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
 function OilPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [selectedGrowth, setSelectedGrowth] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("oil"));
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
     "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
+
 
   const growthOptions = [
     "Full Synthetic QTY %",
@@ -34,29 +35,31 @@ function OilPage() {
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
+  const readGrowthValue = (row, apiKey) => {
+    const raw = row?.[apiKey];
+    if (raw == null) return 0;
+    const cleaned = String(raw).replace("%", "").trim();
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
-        setLoading(true);
         const activeMonths = months.length ? months : monthOptions;
-        const allMonthsData = [];
+        const combined = [];
 
         for (const m of activeMonths) {
-          const res = await fetchData(`/api/oil/oil_summary?&months=${m}`);
-          const safeArray = Array.isArray(res)
-            ? res
-            : Array.isArray(res?.result)
-            ? res.result
-            : [];
-          allMonthsData.push({ month: m, data: safeArray });
+          let query = `?&months=${m}`;
+
+          const data = await fetchData(`/api/oil/oil_summary${query}`);
+          const safeData = Array.isArray(data) ? data : data?.result || [];
+          combined.push({ month: m, data: safeData });
         }
 
-        setSummary(allMonthsData);
-      } catch (err) {
-        console.error("fetchCitySummary error:", err);
-        setSummary([]);
-      } finally {
-        setLoading(false);
+        setSummary(combined);
+      } catch (error) {
+        console.error("fetchCitySummary error:", error);
       }
     };
 
@@ -64,7 +67,7 @@ function OilPage() {
   }, [months]);
 
   const buildChartData = () => {
-    if (!selectedGrowth || summary.length === 0) return { formatted: [], sortedCities: [] };
+    if (!selectedGrowth) return { formatted: [], sortedCities: [] };
 
     const apiKey = growthKeyMap[selectedGrowth];
     const cities = new Set();
@@ -77,15 +80,11 @@ function OilPage() {
 
     const formatted = summary.map(({ month, data }) => {
       const entry = { month };
-      sortedCities.forEach((c) => (entry[c] = 0));
-
+      sortedCities.forEach((city) => (entry[city] = 0));
       (data || []).forEach((row) => {
         const city = readCityName(row);
-        const raw = row?.[apiKey];
-        const val = parseFloat(String(raw ?? 0).replace("%", ""));
-        entry[city] = isNaN(val) ? 0 : val;
+        entry[city] = readGrowthValue(row, apiKey);
       });
-
       return entry;
     });
 
@@ -96,48 +95,38 @@ function OilPage() {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* HEADER */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">OIL REPORT</Typography>
-
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => navigate("/DashboardHome/oil-bar-chart")}
-          >
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/oil-bar-chart")}>
             CityWise
           </Button>
-
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => navigate("/DashboardHome/oil_branches-bar-chart")}
-          >
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/oil_branches-bar-chart")}>
             BranchWise
           </Button>
         </Box>
       </Box>
 
-      {/* FILTERS */}
-      <SlicerFilters monthOptions={monthOptions} months={months} setMonths={setMonths} />
+      <SlicerFilters
+        monthOptions={monthOptions}
+        months={months}
+        setMonths={setMonths}
+      />
 
-      {/* GROWTH SELECT */}
       <GrowthButtons
         growthOptions={growthOptions}
         selectedGrowth={selectedGrowth}
-        setSelectedGrowth={setSelectedGrowth}
+        setSelectedGrowth={(value) => {
+          setSelectedGrowthState(value);
+          setSelectedGrowth(value, "oil");
+        }}
       />
 
-      {/* Loading Indicator */}
-      {loading && (
-        <Box sx={{ textAlign: "center", my: 3 }}>
-          <CircularProgress />
-        </Box>
-      )}
-
-      {/* Main Chart */}
-      {!loading && selectedGrowth && chartData.length > 0 ? (
+      {!selectedGrowth ? (
+        <Typography>Select a growth type to view the chart</Typography>
+      ) : chartData.length === 0 ? (
+        <Typography>No data available for the selected criteria.</Typography>
+      ) : (
         <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
             {selectedGrowth}
@@ -146,13 +135,13 @@ function OilPage() {
             chartData={chartData}
             cityKeys={cityKeys}
             decimalDigits={0}
-            showPercentage={true}
+            showPercent={[
+              "Full Synthetic QTY %",
+              "Semi Synthetic QTY %",
+              "Full & Semi Synthetic QTY %",
+            ].includes(selectedGrowth)}
           />
         </Box>
-      ) : !loading && selectedGrowth ? (
-        <Typography>No data found for selected filters</Typography>
-      ) : (
-        <Typography>Select a growth type to view the chart</Typography>
       )}
     </Box>
   );

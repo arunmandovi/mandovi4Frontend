@@ -12,16 +12,16 @@ import {
 } from "recharts";
 import CustomGrowthTooltip from "./CustomGrowthTooltip";
 
-const GrowthLineChart = ({ chartData, cityKeys, decimalDigits, showPercentage }) => {
+const GrowthLineChart = ({ chartData, cityKeys, decimalDigits, showPercentage, showPercent = false }) => {
   // ✅ Filter out rows where all city values are 0
   const filteredData = chartData.filter((row) =>
     cityKeys.some((key) => Number(row[key]) !== 0)
   );
 
-  // ✅ Formatter function only here
+  // ✅ Formatter function
   const formatValue = (value) => {
     const num = Number(value) || 0;
-    return showPercentage
+    return showPercent
       ? `${num.toFixed(decimalDigits)}%`
       : num.toFixed(decimalDigits);
   };
@@ -32,7 +32,11 @@ const GrowthLineChart = ({ chartData, cityKeys, decimalDigits, showPercentage })
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="month" tick={{ fontSize: 12 }} />
         <YAxis
-          label={{ value: showPercentage ? "Growth %" : "Growth", angle: -90, position: "insideLeft" }}
+          label={{
+            value: showPercent ? "Growth %" : "Growth",
+            angle: -90,
+            position: "insideLeft",
+          }}
           tick={{ fontSize: 12 }}
         />
         <Tooltip content={<CustomGrowthTooltip formatter={formatValue} />} />

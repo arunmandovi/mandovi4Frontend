@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Box } from "@mui/material";
-import { fetchData, uploadFile } from "../../api/uploadService";
+import { Box, Button } from "@mui/material";
+import { fetchData, uploadFile } from "../../api/uploadService"; // ✅ Only for fetch & upload
+import { deleteData } from "../../api/deleteService"; // ✅ NEW SEPARATE FILE
 import { apiModules } from "../../config/modules";
 import { useNavigate } from "react-router-dom";
 
@@ -12,29 +13,26 @@ import MonthYearFilter from "../../components/common/MonthYearFilter";
 import DataTable from "../../components/common/DataTable";
 
 function RevenueUploadPage() {
-  const revenueConfig = apiModules.find((m) => m.name === "Revenue");
+  const config = apiModules.find((m) => m.name === "Revenue");
   const [tableData, setTableData] = useState([]);
-  const [months, setMonths] = useState([]); 
+  const [months, setMonths] = useState([]);
   const [years, setYears] = useState([]);
   const [file, setFile] = useState(null);
   const navigate = useNavigate();
 
-  // Fetch all data
+  // 🔹 Fetch all data
   const handleFetch = async () => {
     try {
-      const data = await fetchData(revenueConfig.get);
+      const data = await fetchData(config.get);
       setTableData(Array.isArray(data) ? data : []);
-      // Reset slicer selections if you want:
-      // setMonths([]); setYears([]);
     } catch (err) {
       console.error("Fetch all error:", err);
       setTableData([]);
     }
   };
 
-  // Apply filter (builds query string supporting multiple months/years)
+  // 🔹 Apply filter (multiple month/year support)
   const handleFilter = async () => {
-    // Validation behavior A: show message if nothing selected
     if ((!months || months.length === 0) && (!years || years.length === 0)) {
       alert("⚠ Please select at least one Month and/or Year before applying the filter.");
       return;
@@ -45,8 +43,7 @@ function RevenueUploadPage() {
       if (Array.isArray(months)) months.forEach((m) => params.append("months", m));
       if (Array.isArray(years)) years.forEach((y) => params.append("years", y));
 
-      const url = `${revenueConfig.getRevenueByMonthYear}?${params.toString()}`;
-      // fetchData expects a path; pass the full url string we constructed
+      const url = `${config.getByMonthYear}?${params.toString()}`;
       const data = await fetchData(url);
       setTableData(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -55,7 +52,7 @@ function RevenueUploadPage() {
     }
   };
 
-  // Upload file
+  // 🔹 Upload file
   const handleUpload = async () => {
     if (!file) {
       alert("⚠ Please select a file first!");
@@ -63,12 +60,28 @@ function RevenueUploadPage() {
     }
 
     try {
-      await uploadFile(revenueConfig.upload, file);
+      await uploadFile(config.upload, file);
       alert("✅ File uploaded successfully!");
       setFile(null);
       handleFetch();
     } catch (err) {
-      alert("❌ Upload failed: " + (err.response?.data || err.message));
+      alert("❌ Upload failed: " + (err.response?.data?.message || err.message));
+    }
+  };
+
+  // 🔹 Delete all data (using separate deleteService)
+  const handleDeleteAll = async () => {
+    if (!window.confirm("⚠ Are you sure you want to delete ALL Revenue data? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const res = await deleteData(config.deleteAll);
+      alert("🗑️ All Revenue data deleted successfully!");
+      setTableData([]);
+    } catch (err) {
+      console.error("Delete all error:", err);
+      alert("❌ Failed to delete all data: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -77,31 +90,37 @@ function RevenueUploadPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fixed-top navbar: render it as position fixed and add top padding to content
   return (
     <Box sx={{ width: "100%" }}>
+      {/* Fixed Upload Navbar */}
       <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1200 }}>
         <UploadNavbar buttons={uploadNavbarButtons} />
       </Box>
 
-      {/* Add padding top so page content doesn't hide under fixed navbar */}
+      {/* Add top padding for fixed navbar */}
       <Box sx={{ pt: "140px" }}>
-              <Box
-                  sx={{
-                  position: "fixed",
-                  top: "72px", // below the UploadNavbar
-                  left: 0,
-                  right: 0,
-                  backgroundColor: "white",
-                  zIndex: 1100, // below navbar, above content
-                  boxShadow: "0px 2px 6px rgba(0,0,0,0.15)",
-                }}
-              ></Box>
-        <TitleBar
-          title="Revenue Upload File"
-          onBack={() => navigate("/AdminDashboard")}
-        />
+        {/* TitleBar Row with Delete All + Back Button */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: 3,
+            mb: 2,
+          }}
+        >
+          <TitleBar title="Revenue Upload File" />
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button variant="contained" color="error" onClick={handleDeleteAll}>
+              Delete All
+            </Button>
+            <Button variant="outlined" color="primary" onClick={() => navigate("/AdminDashboard")}>
+              Back
+            </Button>
+          </Box>
+        </Box>
 
+        {/* Main Content */}
         <Box sx={{ p: 3 }}>
           <UploadSection file={file} setFile={setFile} onUpload={handleUpload} />
 

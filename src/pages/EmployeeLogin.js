@@ -39,7 +39,7 @@ function EmployeeLogin() {
 
         <input
           type="text"
-          placeholder="EmployeeId"
+          placeholder="Employee ID"
           value={form.employeeId}
           onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
           required

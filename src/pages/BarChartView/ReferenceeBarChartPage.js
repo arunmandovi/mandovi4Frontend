@@ -1,23 +1,11 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Button,
-  Typography,
-} from "@mui/material";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  LabelList,
-} from "recharts";
+import { Box, Button, Typography } from "@mui/material";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
+import GrowthButtons from "../../components/GrowthButtons";
+import CityBarChart from "../../components/CityBarChart";
+import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
 function ReferenceeBarChartPage() {
   const navigate = useNavigate();
@@ -26,14 +14,9 @@ function ReferenceeBarChartPage() {
   const [channels, setChannels] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowth] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("referencee"));
 
-  // Dropdown options
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const channelOptions = ["ARENA", "NEXA"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
@@ -50,25 +33,17 @@ function ReferenceeBarChartPage() {
     "B-R": "percentageBookingInvoice",
   };
 
-  // ---------- Fetch Data ----------
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
-        // build query dynamically
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
         if (channels.length) params.append("channels", channels.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
-
         const query = params.toString() ? `?${params.toString()}` : "";
         const data = await fetchData(`/api/referencee/referencee_summary${query}`);
-
-        if (data && Array.isArray(data)) {
-          setSummary(data);
-        } else {
-          setSummary([]);
-        }
+        setSummary(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("fetchCitySummary error:", err);
       }
@@ -76,34 +51,16 @@ function ReferenceeBarChartPage() {
     fetchCitySummary();
   }, [months, channels, qtrWise, halfYear]);
 
-  // ---------- Helpers ----------
-  const readCityName = (row) => {
-    if (!row) return "";
-    return (
-      row.city ||
-      row.City ||
-      row.cityName ||
-      row.CityName ||
-      row.name ||
-      row.Name ||
-      ""
-    ).toString().trim();
-  };
+  const readCityName = (row) =>
+    row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
   const readGrowthValue = (row, apiKey) => {
-    if (!row || !apiKey) return undefined;
     const candidates = [
-      apiKey,
-      apiKey.toLowerCase(),
-      apiKey.toUpperCase(),
-      apiKey.replace(/([A-Z])/g, "_$1").toLowerCase(),
-      "value",
-      "growth",
-      "val",
+      apiKey, apiKey?.toLowerCase(), apiKey?.toUpperCase(),
+      apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(), "value","growth","val",
     ];
     for (const key of candidates) {
-      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
-        return row[key];
+      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null) return row[key];
     }
     for (const key of Object.keys(row)) {
       const v = row[key];
@@ -113,103 +70,50 @@ function ReferenceeBarChartPage() {
     return undefined;
   };
 
-  // ---------- Build averaged dataset ----------
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
-    const cityTotals = {};
-    const cityCounts = {};
-
+    const totals = {};
+    const counts = {};
     (dataArr || []).forEach((row) => {
       const city = readCityName(row);
       const val = readGrowthValue(row, apiKey);
       const parsed = parseFloat(String(val).replace("%", "").trim());
       if (!isNaN(parsed)) {
-        cityTotals[city] = (cityTotals[city] || 0) + parsed;
-        cityCounts[city] = (cityCounts[city] || 0) + 1;
+        totals[city] = (totals[city] || 0) + parsed;
+        counts[city] = (counts[city] || 0) + 1;
       }
     });
-
     const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
-    const allCitiesUnordered = Object.keys(cityTotals);
-    const allCities = [
+    const allCities = Object.keys(totals);
+    const sortedCities = [
       ...preferredOrder.filter((c) =>
-        allCitiesUnordered.some((x) => x.toLowerCase() === c.toLowerCase())
+        allCities.some((x) => x.toLowerCase() === c.toLowerCase())
       ),
-      ...allCitiesUnordered
+      ...allCities
         .filter(
           (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
         )
         .sort((a, b) => a.localeCompare(b)),
     ];
-
-    return allCities.map((city) => ({
+    return sortedCities.map((city) => ({
       city,
-      value: cityCounts[city] ? cityTotals[city] / cityCounts[city] : 0,
+      value: parseFloat(((totals[city] || 0) / (counts[city] || 1)).toFixed(1)),
     }));
   };
 
   const chartData =
     selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
-  // ---------- Tooltip ----------
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <Box
-          sx={{
-            background: "white",
-            border: "1px solid #ccc",
-            borderRadius: 1,
-            p: 1,
-          }}
-        >
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {payload[0].payload.city}
-          </Typography>
-          <Typography variant="body2">
-            {`${payload[0].value.toFixed()}%`}
-          </Typography>
-        </Box>
-      );
-    }
-    return null;
-  };
-
-  // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">REFERENCE REPORT (City-wise)</Typography>
-
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => navigate("/DashboardHome/referencee")}
-          >
-            Graph
-          </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() =>
-              navigate("/DashboardHome/referencee_branches-bar-chart")
-            }
-          >
-            BranchWise
-          </Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/referencee")}>Graph</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/referencee_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>
 
-      {/* Filters Section */}
       <SlicerFilters
         monthOptions={monthOptions}
         months={months}
@@ -225,122 +129,23 @@ function ReferenceeBarChartPage() {
         setHalfYear={setHalfYear}
       />
 
-      {/* Growth Type Buttons */}
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 1.2,
-          mb: 2,
+      <GrowthButtons
+        growthOptions={growthOptions}
+        selectedGrowth={selectedGrowth}
+        setSelectedGrowth={(value) => {
+          setSelectedGrowthState(value);
+          setSelectedGrowth(value, "referencee");
         }}
-      >
-        {growthOptions.map((g, idx) => (
-          <Button
-            key={g}
-            variant={selectedGrowth === g ? "contained" : "outlined"}
-            color={selectedGrowth === g ? "secondary" : "primary"}
-            sx={{
-              borderRadius: "20px",
-              px: 2,
-              py: 0.5,
-              textTransform: "none",
-              fontWeight: 600,
-              transition: "all 0.3s ease",
-              background:
-                selectedGrowth === g
-                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
-                      (idx * 40 + 20) % 360
-                    }, 70%, 55%))`
-                  : "transparent",
-              color: selectedGrowth === g ? "white" : "inherit",
-              boxShadow:
-                selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
-              "&:hover": {
-                transform: "scale(1.05)",
-                background:
-                  selectedGrowth === g
-                    ? `linear-gradient(90deg, hsl(${idx * 40}, 65%, 40%), hsl(${
-                        (idx * 40 + 20) % 360
-                      }, 65%, 50%))`
-                    : "rgba(103,58,183,0.05)",
-              },
-            }}
-            onClick={() => setSelectedGrowth(g)}
-          >
-            {g.replace(" Growth %", "")}
-          </Button>
-        ))}
-      </Box>
+      />
 
-      {/* Chart Section */}
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
       ) : summary.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
-        <Box
-          sx={{
-            mt: 2,
-            width: "100%",
-            height: 520,
-            background: "#fff",
-            borderRadius: 2,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            p: 2,
-          }}
-        >
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            {selectedGrowth}
-          </Typography>
-
-          <ResponsiveContainer width="100%" height="92%">
-            <BarChart
-              data={chartData}
-              margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="city" tick={{ fontSize: 12 }} />
-              <YAxis
-                tick={{ fontSize: 12 }}
-                label={{
-                  value: "Growth %",
-                  angle: -90,
-                  position: "insideLeft",
-                }}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-
-              <Bar
-                dataKey="value"
-                fill="#1976d2"
-                barSize={35}
-                isAnimationActive={false}
-              >
-                <LabelList
-                  dataKey="value"
-                  position="top"
-                  fontSize={11}
-                  content={(props) => {
-                    const { x, y, value } = props;
-                    if (value == null) return null;
-                    return (
-                      <text
-                        x={x}
-                        y={y - 5}
-                        textAnchor="middle"
-                        fontSize={11}
-                        fill="#333"
-                      >
-                        {`${Number(value).toFixed()}%`}
-                      </text>
-                    );
-                  }}
-                />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Box>
+        <CityBarChart chartData={chartData} 
+        selectedGrowth={selectedGrowth} 
+        decimalPlaces={0} />
       )}
     </Box>
   );

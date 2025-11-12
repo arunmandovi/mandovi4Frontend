@@ -19,6 +19,7 @@ import MSGPProfitPage from "./pages/GraphView/MSGPProfitPage";
 import OilPage from "./pages/GraphView/OilPage";
 import PMSPartsPage from "./pages/GraphView/PMSPartsPage";
 import ProfitLossPage from "./pages/GraphView/ProfitLossPage";
+import ProfitLossSRBRLoaddPage from "./pages/GraphView/ProfitLossSRBRLoadd";
 import ReferenceePage from "./pages/GraphView/ReferenceePage";
 import RevenuePage from "./pages/GraphView/RevenuePage";
 import SparesPage from "./pages/GraphView/SparesPage";
@@ -29,7 +30,7 @@ import VASPage from "./pages/GraphView/VASPage";
 import BatteryTyreUploadPage from "./pages/FileUpload/BatteryTyreUploadPage";
 import BRConversionUploadPage from "./pages/FileUpload/BRConversionUploadPage";
 import LabourUploadPage from "./pages/FileUpload/LabourUpload";
-import LoaddUploadPage from "./pages/FileUpload/LoaddUpload";
+import LoaddUploadPage from "./pages/FileUpload/LoaddUploadPage";
 import MGAUploadPage from "./pages/FileUpload/MGAUploadPage";
 import MGAProfitUploadPage from "./pages/FileUpload/MGAProfitUploadPage";
 import MCPUploadPage from "./pages/FileUpload/MCPUploadPage";
@@ -135,6 +136,7 @@ function App() {
           <Route path="oil" element={<OilPage />} />
           <Route path="pms_parts" element={<PMSPartsPage />} />
           <Route path="profit_loss" element={<ProfitLossPage />} />
+          <Route path="profit_loss_srbr" element={<ProfitLossSRBRLoaddPage />} />
           <Route path="referencee" element={<ReferenceePage />} />
           <Route path="revenue" element={<RevenuePage />} />
           <Route path="spares" element={<SparesPage />} />

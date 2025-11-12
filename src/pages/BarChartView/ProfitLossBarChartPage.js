@@ -22,6 +22,12 @@ function ProfitLossBarChartPage() {
     "Jul 25",
     "Aug 25",
     "2025 - 26",
+    "SR&BR Apr 25",
+    "SR&BR May 25",
+    "SR&BR Jun 25",
+    "SR&BR Jul 25",
+    "SR&BR Aug 25",
+    "SR&BR 2025 - 26",
   ];
 
   const growthKeyMap = {
@@ -36,6 +42,12 @@ function ProfitLossBarChartPage() {
     "Jul 25": "jul_25",
     "Aug 25": "aug_25",
     "2025 - 26": "fy_2025_26",
+    "SR&BR Apr 25": "apr25_per_100k",
+    "SR&BR May 25": "may25_per_100k",
+    "SR&BR Jun 25": "jun25_per_100k",
+    "SR&BR Jul 25": "jul25_per_100k",
+    "SR&BR Aug 25": "aug25_per_100k",
+    "SR&BR 2025 - 26": "total25_per_100k",
   };
 
   // ---------- Fetch Data ----------

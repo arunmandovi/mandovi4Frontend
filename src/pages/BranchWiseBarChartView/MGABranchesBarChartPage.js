@@ -45,6 +45,7 @@ function MGABranchesBarChartPage() {
         const endpoint = `/api/mga/mga_branch_summary${
           params.toString() ? "?" + params.toString() : ""
         }`;
+
         const data = await fetchData(endpoint);
         setSummary(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -87,23 +88,31 @@ function MGABranchesBarChartPage() {
     const totals = {};
     const counts = {};
     const cityMap = {};
+
     (dataArr || []).forEach((row) => {
       const branch = readBranchName(row);
       const city = readCityName(row);
       const val = readGrowthValue(row, apiKey);
       const parsed = parseFloat(String(val).replace("%", "").trim());
+
       if (!isNaN(parsed)) {
         totals[branch] = (totals[branch] || 0) + parsed;
         counts[branch] = (counts[branch] || 0) + 1;
         cityMap[branch] = city;
       }
     });
+
     return Object.keys(totals)
-      .map((b) => ({
-        name: b,
-        city: cityMap[b],
-        value: counts[b] ? totals[b] / counts[b] : 0,
-      }))
+      .map((b) => {
+        const resultVal = counts[b] ? totals[b] / counts[b] : 0;
+
+        return {
+          name: b,
+          city: cityMap[b],
+          value: resultVal,
+          barColor: resultVal < 455 ? "red" : "#05f105ff",
+        };
+      })
       .sort((a, b) => b.value - a.value);
   };
 
@@ -158,10 +167,10 @@ function MGABranchesBarChartPage() {
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
       ) : (
-        <BranchBarChart 
-        chartData={chartData}
-        selectedGrowth={selectedGrowth}
-        decimalPlaces={0}
+        <BranchBarChart
+          chartData={chartData}
+          selectedGrowth={selectedGrowth}
+          decimalPlaces={0}
         />
       )}
     </Box>

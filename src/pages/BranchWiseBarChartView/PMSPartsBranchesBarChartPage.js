@@ -120,11 +120,16 @@ function PMSPartsBranchesBarChartPage() {
       }
     });
     return Object.keys(totals)
-      .map((b) => ({
-        name: b,
-        city: cityMap[b],
-        value: counts[b] ? totals[b] / counts[b] : 0,
-      }))
+      .map((b) => {
+        const resultVal = counts[b] ? totals[b] / counts[b] : 0;
+
+        return {
+          name: b,
+          city: cityMap[b],
+          value: resultVal,
+          barColor: resultVal < 98 ? "red" : "#05f105ff",
+        };
+      })
       .sort((a, b) => b.value - a.value);
   };
 
