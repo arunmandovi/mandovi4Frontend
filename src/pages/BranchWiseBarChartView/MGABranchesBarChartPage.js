@@ -131,12 +131,9 @@ function MGABranchesBarChartPage() {
       >
         <Typography variant="h4">MGA REPORT (Branch-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga")}>
-            Graph
-          </Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga-bar-chart")}>
-            CityWise
-          </Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga")}>Graph</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga-bar-chart")}>CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>
 

@@ -114,6 +114,7 @@ function BRConversionBarChartPage() {
         <Typography variant="h4">BR CONVERSION REPORT (City-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion")}>Graph</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}>CityWise</Button>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>

@@ -46,7 +46,6 @@ const SlicerFilters = ({
     let updatedHalf = selected
       ? halfYear.filter((x) => x !== h)
       : [...halfYear, h];
-
     setHalfYear(updatedHalf);
 
     let updatedMonths = [...months];
@@ -71,17 +70,14 @@ const SlicerFilters = ({
     let updatedQuarters = selected
       ? qtrWise.filter((x) => x !== q)
       : [...qtrWise, q];
-
     setQtrWise(updatedQuarters);
 
     let updatedMonths = [...months];
-
     if (!selected) {
       relatedMonths.forEach((m) => !updatedMonths.includes(m) && updatedMonths.push(m));
     } else {
       updatedMonths = updatedMonths.filter((m) => !relatedMonths.includes(m));
     }
-
     setMonths(updatedMonths);
   };
 
@@ -105,175 +101,168 @@ const SlicerFilters = ({
   });
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mb: 3 }}>
-
-      {/* ✅ Top Row → Months + Years + Cities */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-        
-        {/* ✅ Months */}
-        {monthOptions.length > 0 && (
-          <Box>
-            <Typography sx={{ fontWeight: 600, mb: 1 }}>
-              Select Month(s)
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-              {monthOptions.map((m) => {
-                const selected = months.includes(m);
-                return (
-                  <Button
-                    key={m}
-                    sx={commonButtonStyles(selected)}
-                    size="small"
-                    onClick={() =>
-                      selected
-                        ? setMonths(months.filter((x) => x !== m))
-                        : setMonths([...months, m])
-                    }
-                  >
-                    {m}
-                  </Button>
-                );
-              })}
-            </Box>
+    <Box
+      sx={{
+        display: "flex",
+        flexWrap: "nowrap",
+        overflowX: "auto",
+        gap: 4,
+        mb: 3,
+        p: 1,
+        "&::-webkit-scrollbar": { height: 6 },
+        "&::-webkit-scrollbar-thumb": {
+          background: "#bdbdbd",
+          borderRadius: "3px",
+        },
+      }}
+    >
+      {/* ✅ Months */}
+      {monthOptions.length > 0 && (
+        <Box sx={{ minWidth: 200 }}>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Month(s)</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+            {monthOptions.map((m) => {
+              const selected = months.includes(m);
+              return (
+                <Button
+                  key={m}
+                  sx={commonButtonStyles(selected)}
+                  size="small"
+                  onClick={() =>
+                    selected
+                      ? setMonths(months.filter((x) => x !== m))
+                      : setMonths([...months, m])
+                  }
+                >
+                  {m}
+                </Button>
+              );
+            })}
           </Box>
-        )}
+        </Box>
+      )}
 
-        {/* ✅ Years */}
-        {yearOptions.length > 0 && (
-          <Box>
-            <Typography sx={{ fontWeight: 600, mb: 1 }}>
-              Select Year(s)
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-              {yearOptions.map((y) => {
-                const selected = years.includes(y);
-                return (
-                  <Button
-                    key={y}
-                    sx={commonButtonStyles(selected)}
-                    size="small"
-                    onClick={() =>
-                      selected
-                        ? setYears(years.filter((x) => x !== y))
-                        : setYears([...years, y])
-                    }
-                  >
-                    {y}
-                  </Button>
-                );
-              })}
-            </Box>
+      {/* ✅ Years */}
+      {yearOptions.length > 0 && (
+        <Box sx={{ minWidth: 150 }}>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Year(s)</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+            {yearOptions.map((y) => {
+              const selected = years.includes(y);
+              return (
+                <Button
+                  key={y}
+                  sx={commonButtonStyles(selected)}
+                  size="small"
+                  onClick={() =>
+                    selected
+                      ? setYears(years.filter((x) => x !== y))
+                      : setYears([...years, y])
+                  }
+                >
+                  {y}
+                </Button>
+              );
+            })}
           </Box>
-        )}
+        </Box>
+      )}
 
-        {/* ✅ Cities */}
-        {cityOptions.length > 0 && (
-          <Box>
-            <Typography sx={{ fontWeight: 600, mb: 1 }}>
-              Select City(s)
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-              {cityOptions.map((c) => {
-                const selected = cities.includes(c);
-                return (
-                  <Button
-                    key={c}
-                    sx={commonButtonStyles(selected)}
-                    size="small"
-                    onClick={() =>
-                      selected
-                        ? setCities(cities.filter((x) => x !== c))
-                        : setCities([...cities, c])
-                    }
-                  >
-                    {c}
-                  </Button>
-                );
-              })}
-            </Box>
+      {/* ✅ Cities */}
+      {cityOptions.length > 0 && (
+        <Box sx={{ minWidth: 200 }}>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select City(s)</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+            {cityOptions.map((c) => {
+              const selected = cities.includes(c);
+              return (
+                <Button
+                  key={c}
+                  sx={commonButtonStyles(selected)}
+                  size="small"
+                  onClick={() =>
+                    selected
+                      ? setCities(cities.filter((x) => x !== c))
+                      : setCities([...cities, c])
+                  }
+                >
+                  {c}
+                </Button>
+              );
+            })}
           </Box>
-        )}
-      </Box>
+        </Box>
+      )}
 
-      {/* ✅ Bottom Row → Channels + Quarter + Half Year */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-        
-        {/* ✅ Channels */}
-        {channelOptions.length > 0 && (
-          <Box>
-            <Typography sx={{ fontWeight: 600, mb: 1 }}>
-              Select Channel(s)
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-              {channelOptions.map((ch) => {
-                const selected = channels.includes(ch);
-                return (
-                  <Button
-                    key={ch}
-                    sx={commonButtonStyles(selected)}
-                    size="small"
-                    onClick={() =>
-                      selected
-                        ? setChannels(channels.filter((x) => x !== ch))
-                        : setChannels([...channels, ch])
-                    }
-                  >
-                    {ch}
-                  </Button>
-                );
-              })}
-            </Box>
+      {/* ✅ Channels */}
+      {channelOptions.length > 0 && (
+        <Box sx={{ minWidth: 200 }}>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Channel(s)</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+            {channelOptions.map((ch) => {
+              const selected = channels.includes(ch);
+              return (
+                <Button
+                  key={ch}
+                  sx={commonButtonStyles(selected)}
+                  size="small"
+                  onClick={() =>
+                    selected
+                      ? setChannels(channels.filter((x) => x !== ch))
+                      : setChannels([...channels, ch])
+                  }
+                >
+                  {ch}
+                </Button>
+              );
+            })}
           </Box>
-        )}
+        </Box>
+      )}
 
-        {/* ✅ Quarters */}
-        {qtrWiseOptions.length > 0 && (
-          <Box>
-            <Typography sx={{ fontWeight: 600, mb: 1 }}>
-              Select Quarter(s)
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-              {qtrWiseOptions.map((q) => {
-                const selected = qtrWise.includes(q);
-                return (
-                  <Button
-                    key={q}
-                    sx={commonButtonStyles(selected)}
-                    size="small"
-                    onClick={() => handleQuarterClick(q)}
-                  >
-                    {q}
-                  </Button>
-                );
-              })}
-            </Box>
+      {/* ✅ Quarters */}
+      {qtrWiseOptions.length > 0 && (
+        <Box sx={{ minWidth: 180 }}>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Quarter(s)</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+            {qtrWiseOptions.map((q) => {
+              const selected = qtrWise.includes(q);
+              return (
+                <Button
+                  key={q}
+                  sx={commonButtonStyles(selected)}
+                  size="small"
+                  onClick={() => handleQuarterClick(q)}
+                >
+                  {q}
+                </Button>
+              );
+            })}
           </Box>
-        )}
+        </Box>
+      )}
 
-        {/* ✅ Half Years */}
-        {halfYearOptions.length > 0 && (
-          <Box>
-            <Typography sx={{ fontWeight: 600, mb: 1 }}>
-              Select Half Year(s)
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-              {halfYearOptions.map((h) => {
-                const selected = halfYear.includes(h);
-                return (
-                  <Button
-                    key={h}
-                    sx={commonButtonStyles(selected)}
-                    size="small"
-                    onClick={() => handleHalfYearClick(h)}
-                  >
-                    {h}
-                  </Button>
-                );
-              })}
-            </Box>
+      {/* ✅ Half Years */}
+      {halfYearOptions.length > 0 && (
+        <Box sx={{ minWidth: 180 }}>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Half Year(s)</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+            {halfYearOptions.map((h) => {
+              const selected = halfYear.includes(h);
+              return (
+                <Button
+                  key={h}
+                  sx={commonButtonStyles(selected)}
+                  size="small"
+                  onClick={() => handleHalfYearClick(h)}
+                >
+                  {h}
+                </Button>
+              );
+            })}
           </Box>
-        )}
-      </Box>
+        </Box>
+      )}
     </Box>
   );
 };

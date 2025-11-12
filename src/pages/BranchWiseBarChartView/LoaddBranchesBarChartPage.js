@@ -16,6 +16,7 @@ function LoaddBranchesBarChartPage() {
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState(null);
 
+  // Filter options
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
     "Nov", "Dec", "Jan", "Feb", "Mar",
@@ -25,6 +26,7 @@ function LoaddBranchesBarChartPage() {
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
 
+  // Growth button labels
   const growthOptions = [
     "Service Growth %",
     "BodyShop Growth %",
@@ -36,6 +38,7 @@ function LoaddBranchesBarChartPage() {
     "% BS on FPR Growth %",
   ];
 
+  // API key mapping for each growth type
   const growthKeyMap = {
     "Service Growth %": "growthService",
     "BodyShop Growth %": "growthBodyShop",
@@ -47,6 +50,7 @@ function LoaddBranchesBarChartPage() {
     "% BS on FPR Growth %": "growthBSFPR",
   };
 
+  // Fetch data when filters change
   useEffect(() => {
     const fetchSummary = async () => {
       try {
@@ -56,9 +60,11 @@ function LoaddBranchesBarChartPage() {
         if (channels.length > 0) params.append("channels", channels.join(","));
         if (qtrWise.length > 0) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length > 0) params.append("halfYear", halfYear.join(","));
+
         const endpoint = `/api/loadd/loadd_branch_summary${
           params.toString() ? "?" + params.toString() : ""
         }`;
+
         const data = await fetchData(endpoint);
         setSummary(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -66,45 +72,62 @@ function LoaddBranchesBarChartPage() {
         setSummary([]);
       }
     };
+
     fetchSummary();
   }, [months, cities, channels, qtrWise, halfYear]);
 
+  // Helper functions to read branch and city names
   const readBranchName = (row) =>
-    row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
+    row?.branch ||
+    row?.Branch ||
+    row?.branchName ||
+    row?.BranchName ||
+    row?.name ||
+    row?.Name ||
+    "";
+
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || "";
 
+  // ✅ Updated: return null for missing/invalid growth values
   const readGrowthValue = (row, apiKey) => {
+    if (!apiKey) return null;
+
     const candidates = [
       apiKey,
       apiKey?.toLowerCase(),
       apiKey?.toUpperCase(),
       apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(),
-      "value",
-      "growth",
-      "val",
     ];
+
     for (const key of candidates) {
-      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
-        return row[key];
+      if (Object.prototype.hasOwnProperty.call(row, key)) {
+        const val = row[key];
+        if (val === null || val === undefined || val === "") {
+          return null; // ✅ skip missing values
+        }
+        const num = parseFloat(String(val).replace("%", "").trim());
+        return !isNaN(num) ? num : null; // ✅ skip invalid numeric values
+      }
     }
-    for (const key of Object.keys(row)) {
-      const v = row[key];
-      if (typeof v === "number") return v;
-      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
-    }
-    return undefined;
+
+    return null; // ✅ skip if key not found
   };
 
+  // Build chart data (averages)
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const totals = {};
     const counts = {};
     const cityMap = {};
+
     (dataArr || []).forEach((row) => {
       const branch = readBranchName(row);
       const city = readCityName(row);
       const val = readGrowthValue(row, apiKey);
+
+      if (val === null) return; // ✅ skip branches with no valid growth
+
       const parsed = parseFloat(String(val).replace("%", "").trim());
       if (!isNaN(parsed)) {
         totals[branch] = (totals[branch] || 0) + parsed;
@@ -112,6 +135,7 @@ function LoaddBranchesBarChartPage() {
         cityMap[branch] = city;
       }
     });
+
     return Object.keys(totals)
       .map((b) => ({
         name: b,
@@ -121,11 +145,15 @@ function LoaddBranchesBarChartPage() {
       .sort((a, b) => b.value - a.value);
   };
 
+  // Prepare chart data
   const chartData =
-    selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
+    selectedGrowth && summary.length > 0
+      ? buildCombinedAverageData(summary)
+      : [];
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* Header */}
       <Box
         sx={{
           display: "flex",
@@ -135,16 +163,33 @@ function LoaddBranchesBarChartPage() {
         }}
       >
         <Typography variant="h4">LOAD REPORT (Branch-wise)</Typography>
+
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd")}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/loadd")}
+          >
             Graph
           </Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd-bar-chart")}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/loadd-bar-chart")}
+          >
             CityWise
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}
+          >
+            BranchWise
           </Button>
         </Box>
       </Box>
 
+      {/* Filters */}
       <SlicerFilters
         monthOptions={monthOptions}
         cityOptions={cityOptions}
@@ -163,16 +208,23 @@ function LoaddBranchesBarChartPage() {
         setHalfYear={setHalfYear}
       />
 
+      {/* Growth selection buttons */}
       <GrowthButtons
         growthOptions={growthOptions}
         selectedGrowth={selectedGrowth}
         setSelectedGrowth={setSelectedGrowth}
       />
 
+      {/* Chart */}
       {!selectedGrowth ? (
-        <Typography>👆 Select a growth type to view the chart below</Typography>
+        <Typography sx={{ mt: 2 }}>
+          👆 Select a growth type to view the chart below
+        </Typography>
       ) : (
-        <BranchBarChart chartData={chartData} selectedGrowth={selectedGrowth} />
+        <BranchBarChart
+          chartData={chartData}
+          selectedGrowth={selectedGrowth}
+        />
       )}
     </Box>
   );

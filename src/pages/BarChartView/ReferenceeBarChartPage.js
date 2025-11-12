@@ -110,6 +110,7 @@ function ReferenceeBarChartPage() {
         <Typography variant="h4">REFERENCE REPORT (City-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/referencee")}>Graph</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/referencee-bar-chart")}>CityWise</Button>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/referencee_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>

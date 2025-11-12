@@ -99,26 +99,10 @@ function ProfitLossSRBRLoaddPage() {
       </Typography>
 
       <Box sx={{ display: "flex", gap: 1 }}>
-        <Button
-                  variant="contained"
-                  onClick={() => navigate("/DashboardHome/profit_loss")}
-                >
-                  P&L Table
-                </Button>
-
-        <Button
-          variant="contained"
-          onClick={() => navigate("/DashboardHome/profit_loss-bar-chart")}
-        >
-          CityWise Chart
-        </Button>
-
-        <Button
-          variant="contained"
-          onClick={() => navigate("/DashboardHome/profit_loss_branches-bar-chart")}
-        >
-          BranchWise Chart
-        </Button>
+        <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss")}>P&L Table</Button>
+        <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_srbr")}>SR&BR Table</Button>
+        <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss-bar-chart")}>CityWise Chart</Button>
+        <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_branches-bar-chart")}>BranchWise Chart</Button>
       </Box>
     </Box>
 

@@ -90,7 +90,13 @@ const CityBarChart = ({
             }}
           />
           <Tooltip content={<CustomTooltip />} />
-          <ReferenceLine y={0} stroke="#003366" strokeWidth={2} />
+          <ReferenceLine
+          y={0}
+          stroke="#000"
+          strokeWidth={2.5}
+          ifOverflow="extendDomain"
+          alwaysShow={true}
+          />
 
           <Bar dataKey="value" fill="#1976d2" barSize={35} isAnimationActive={false}>
             <LabelList

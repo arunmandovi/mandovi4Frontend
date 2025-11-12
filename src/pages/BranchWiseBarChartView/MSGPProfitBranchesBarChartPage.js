@@ -123,12 +123,9 @@ function MSGPPRofitBranchesBarChartPage() {
       >
         <Typography variant="h4">MSGP PROFIT REPORT (Branch-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_profit")}>
-            Graph
-          </Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_profit-bar-chart")}>
-            CityWise
-          </Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_profit")}>Graph</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_profit-bar-chart")}>CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_profit_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>
 

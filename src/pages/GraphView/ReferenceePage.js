@@ -101,12 +101,9 @@ function ReferenceePage() {
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">REFERENCE REPORT</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/referencee-bar-chart")}>
-            CityWise
-          </Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/referencee_branches-bar-chart")}>
-            BranchWise
-          </Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/referencee")}>Graph</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/referencee-bar-chart")}>CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/referencee_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>
 

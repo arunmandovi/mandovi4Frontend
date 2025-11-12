@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
 import GrowthButtons from "../../components/GrowthButtons";
 import BranchBarChart from "../../components/BranchBarChart";
-import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
 function LabourBranchesBarChartPage() {
   const navigate = useNavigate();
@@ -15,14 +14,9 @@ function LabourBranchesBarChartPage() {
   const [channels, setChannels] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("labour"));
+  const [selectedGrowth, setSelectedGrowth] = useState(null);
 
-  // ✅ Re-sync with localStorage when page mounts
-  useEffect(() => {
-    const stored = getSelectedGrowth("labour");
-    if (stored) setSelectedGrowthState(stored);
-  }, []);
-
+  // Filter options
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
     "Nov", "Dec", "Jan", "Feb", "Mar",
@@ -32,6 +26,7 @@ function LabourBranchesBarChartPage() {
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
 
+  // Growth button labels
   const growthOptions = [
     "Service Growth %",
     "BodyShop Growth %",
@@ -54,15 +49,16 @@ function LabourBranchesBarChartPage() {
     "Others Growth %": "growthOthers",
   };
 
+  // Fetch data when filters change
   useEffect(() => {
     const fetchSummary = async () => {
       try {
         const params = new URLSearchParams();
-        if (months.length) params.append("months", months.join(","));
-        if (cities.length) params.append("cities", cities.join(","));
-        if (channels.length) params.append("channels", channels.join(","));
-        if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
-        if (halfYear.length) params.append("halfYear", halfYear.join(","));
+        if (months.length > 0) params.append("months", months.join(","));
+        if (cities.length > 0) params.append("cities", cities.join(","));
+        if (channels.length > 0) params.append("channels", channels.join(","));
+        if (qtrWise.length > 0) params.append("qtrWise", qtrWise.join(","));
+        if (halfYear.length > 0) params.append("halfYear", halfYear.join(","));
 
         const endpoint = `/api/labour/labour_branch_summary${
           params.toString() ? "?" + params.toString() : ""
@@ -79,37 +75,45 @@ function LabourBranchesBarChartPage() {
     fetchSummary();
   }, [months, cities, channels, qtrWise, halfYear]);
 
+  // Helper functions to read branch and city names
   const readBranchName = (row) =>
-    row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
+    row?.branch ||
+    row?.Branch ||
+    row?.branchName ||
+    row?.BranchName ||
+    row?.name ||
+    row?.Name ||
+    "";
 
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || "";
 
+  // ✅ Updated: return null for missing/invalid growth values
   const readGrowthValue = (row, apiKey) => {
+    if (!apiKey) return null;
+
     const candidates = [
       apiKey,
       apiKey?.toLowerCase(),
       apiKey?.toUpperCase(),
       apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(),
-      "value",
-      "growth",
-      "val",
     ];
 
     for (const key of candidates) {
-      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
-        return row[key];
+      if (Object.prototype.hasOwnProperty.call(row, key)) {
+        const val = row[key];
+        if (val === null || val === undefined || val === "") {
+          return null; // ✅ skip missing values
+        }
+        const num = parseFloat(String(val).replace("%", "").trim());
+        return !isNaN(num) ? num : null; // ✅ skip invalid numeric values
+      }
     }
 
-    for (const key of Object.keys(row)) {
-      const v = row[key];
-      if (typeof v === "number") return v;
-      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
-    }
-
-    return undefined;
+    return null; // ✅ skip if key not found
   };
 
+  // Build chart data (averages)
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const totals = {};
@@ -120,6 +124,9 @@ function LabourBranchesBarChartPage() {
       const branch = readBranchName(row);
       const city = readCityName(row);
       const val = readGrowthValue(row, apiKey);
+
+      if (val === null) return; // ✅ skip branches with no valid growth
+
       const parsed = parseFloat(String(val).replace("%", "").trim());
       if (!isNaN(parsed)) {
         totals[branch] = (totals[branch] || 0) + parsed;
@@ -137,11 +144,15 @@ function LabourBranchesBarChartPage() {
       .sort((a, b) => b.value - a.value);
   };
 
+  // Prepare chart data
   const chartData =
-    selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
+    selectedGrowth && summary.length > 0
+      ? buildCombinedAverageData(summary)
+      : [];
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* Header */}
       <Box
         sx={{
           display: "flex",
@@ -151,6 +162,7 @@ function LabourBranchesBarChartPage() {
         }}
       >
         <Typography variant="h4">LABOUR REPORT (Branch-wise)</Typography>
+
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="contained"
@@ -166,9 +178,17 @@ function LabourBranchesBarChartPage() {
           >
             CityWise
           </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/labour_branches-bar-chart")}
+          >
+            BranchWise
+          </Button>
         </Box>
       </Box>
 
+      {/* Filters */}
       <SlicerFilters
         monthOptions={monthOptions}
         cityOptions={cityOptions}
@@ -187,24 +207,22 @@ function LabourBranchesBarChartPage() {
         setHalfYear={setHalfYear}
       />
 
+      {/* Growth selection buttons */}
       <GrowthButtons
         growthOptions={growthOptions}
         selectedGrowth={selectedGrowth}
-        setSelectedGrowth={(value) => {
-          setSelectedGrowthState(value);
-          setSelectedGrowth(value, "labour");
-        }}
+        setSelectedGrowth={setSelectedGrowth}
       />
 
+      {/* Chart */}
       {!selectedGrowth ? (
-        <Typography>👆 Select a growth type to view the chart below</Typography>
-      ) : summary.length === 0 ? (
-        <Typography>No data available for the selected criteria.</Typography>
+        <Typography sx={{ mt: 2 }}>
+          👆 Select a growth type to view the chart below
+        </Typography>
       ) : (
         <BranchBarChart
           chartData={chartData}
           selectedGrowth={selectedGrowth}
-          decimalPlaces={1}
         />
       )}
     </Box>

@@ -217,12 +217,9 @@ function TATPage() {
           >
             <Typography variant="h4">TAT REPORT</Typography>
             <Box sx={{ display: "flex", gap: 1 }}>
-              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>
-                CityWise 
-              </Button>
-              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>
-                BranchWise
-              </Button>
+              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat")}>Graph</Button>
+              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>CityWise</Button>
+              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>BranchWise</Button>
             </Box>
           </Box>
 

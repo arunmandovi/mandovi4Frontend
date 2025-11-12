@@ -131,12 +131,9 @@ function RevenueBranchesBarChartPage() {
       >
         <Typography variant="h4">REVENUE REPORT (Branch-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/revenue")}>
-            Graph
-          </Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/revenue-bar-chart")}>
-            CityWise
-          </Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/revenue")}>Graph</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/revenue-bar-chart")}>CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/revenue_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>
 

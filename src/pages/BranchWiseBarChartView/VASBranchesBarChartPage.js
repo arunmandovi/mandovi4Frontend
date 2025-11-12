@@ -139,12 +139,9 @@ function VASBranchesBarChartPage() {
       >
         <Typography variant="h4">VAS REPORT (Branch-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/vas")}>
-            Graph
-          </Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/vas-bar-chart")}>
-            CityWise
-          </Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/vas")}>Graph</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/vas-bar-chart")}>CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/vas_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>
 

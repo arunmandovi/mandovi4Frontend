@@ -116,6 +116,7 @@ function PerVehicleBarChartPage() {
         <Typography variant="h4">PER VEHICLE REPORT (City-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/per_vehicle")}>Graph</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/per_vehicle-bar-chart")}>CityWise</Button>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/per_vehicle_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>
