@@ -12,16 +12,10 @@ function PerVehiclePage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [years, setYears] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("per_vehicle"));
+  const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
-  const yearOptions = ["2024", "2025"];
-
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  
   const growthOptions = [
     "SR LABOUR / VEH",
     "SR SPARES / VEH",
@@ -40,9 +34,12 @@ function PerVehiclePage() {
     "BR REVENUE /VEH": "brRevenueByVeh",
   };
 
-  const readCityName = (row) =>
-    row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
+  useEffect(() => {
+    const savedGrowth = getSelectedGrowth("per_vehicle");
+    if (savedGrowth) setSelectedGrowthState(savedGrowth);
+  }, []);
 
+  const readCityName = (row) => row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
   const readGrowthValue = (row, apiKey) => {
     const raw = row?.[apiKey];
     if (raw == null) return 0;
@@ -55,40 +52,27 @@ function PerVehiclePage() {
     const fetchCitySummary = async () => {
       try {
         const activeMonths = months.length ? months : monthOptions;
-        const activeYears = years.length ? years : yearOptions;
         const combined = [];
-
-        for (const y of activeYears) {
-          for (const m of activeMonths){        
-          let query = `?&months=${m}&years=${y}`;
-
+        for (const m of activeMonths) {
+          let query = `?&months=${m}`;
           const data = await fetchData(`/api/per_vehicle/per_vehicle_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
-          combined.push({ month: m, year: y, data: safeData });
-          }
+          combined.push({ month: m, data: safeData });
         }
-
         setSummary(combined);
       } catch (error) {
         console.error("fetchCitySummary error:", error);
       }
     };
-
     fetchCitySummary();
-  }, [months, years]);
+  }, [months]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
-
     const apiKey = growthKeyMap[selectedGrowth];
     const cities = new Set();
-
-    summary.forEach(({ data }) =>
-      (data || []).forEach((r) => cities.add(readCityName(r)))
-    );
-
+    summary.forEach(({ data }) => (data || []).forEach((r) => cities.add(readCityName(r))));
     const sortedCities = sortCities([...cities]);
-
     const formatted = summary.map(({ month, data }) => {
       const entry = { month };
       sortedCities.forEach((city) => (entry[city] = 0));
@@ -98,7 +82,6 @@ function PerVehiclePage() {
       });
       return entry;
     });
-
     return { formatted, sortedCities };
   };
 
@@ -119,9 +102,6 @@ function PerVehiclePage() {
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
-        yearOptions={yearOptions}
-        years={years}
-        setYears={setYears}
       />
 
       <GrowthButtons
@@ -139,14 +119,12 @@ function PerVehiclePage() {
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
         <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            {selectedGrowth}
-          </Typography>
+          <Typography variant="h6" sx={{ mb: 1 }}>{selectedGrowth}</Typography>
           <GrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
-            decimalDigits={0}
-            showPercentage={true}
+            decimalDigits={1}
+            showPercent={false}
           />
         </Box>
       )}

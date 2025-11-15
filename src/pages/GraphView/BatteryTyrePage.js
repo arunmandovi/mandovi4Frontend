@@ -12,27 +12,30 @@ function BatteryTyrePage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("battery_tyre"));
+  const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
 
   const growthOptions = [
-    "Battery Profit %",
-    "Tyre Profit %",
-    "Battery&Tyre Profit %",
+    "Battery Qty", "Tyre Qty", "Battery Profit", "Tyre Profit", "BatteryTyre Profit","Battery Growth","Tyre Growth",
   ];
 
   const growthKeyMap = {
-    "Battery Profit %": "batteryPercentageProfit",
-    "Tyre Profit %": "tyrePercentageProfit",
-    "Battery&Tyre Profit %": "batteryTyrePercentageProfit",
+    "Battery Qty": "batteryQty",
+    "Tyre Qty": "tyreQty",
+    "Battery Profit": "batteryProfit",
+    "Tyre Profit": "tyreProfit",
+    "BatteryTyre Profit": "batteryTyreProfit",
+    "Battery Growth": "sparesBatteryGrowth",
+    "Tyre Growth": "sparesTyreGrowth",
   };
-  const readCityName = (row) =>
-    row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
+  useEffect(() => {
+    const savedGrowth = getSelectedGrowth("battery_tyre");
+    if (savedGrowth) setSelectedGrowthState(savedGrowth);
+  }, []);
+
+  const readCityName = (row) => row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
   const readGrowthValue = (row, apiKey) => {
     const raw = row?.[apiKey];
     if (raw == null) return 0;
@@ -46,36 +49,26 @@ function BatteryTyrePage() {
       try {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
-
         for (const m of activeMonths) {
           let query = `?&months=${m}`;
-
           const data = await fetchData(`/api/battery_tyre/battery_tyre_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
           combined.push({ month: m, data: safeData });
         }
-
         setSummary(combined);
       } catch (error) {
         console.error("fetchCitySummary error:", error);
       }
     };
-
     fetchCitySummary();
   }, [months]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
-
     const apiKey = growthKeyMap[selectedGrowth];
     const cities = new Set();
-
-    summary.forEach(({ data }) =>
-      (data || []).forEach((r) => cities.add(readCityName(r)))
-    );
-
+    summary.forEach(({ data }) => (data || []).forEach((r) => cities.add(readCityName(r))));
     const sortedCities = sortCities([...cities]);
-
     const formatted = summary.map(({ month, data }) => {
       const entry = { month };
       sortedCities.forEach((city) => (entry[city] = 0));
@@ -85,7 +78,6 @@ function BatteryTyrePage() {
       });
       return entry;
     });
-
     return { formatted, sortedCities };
   };
 
@@ -123,18 +115,12 @@ function BatteryTyrePage() {
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
         <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            {selectedGrowth}
-          </Typography>
+          <Typography variant="h6" sx={{ mb: 1 }}>{selectedGrowth}</Typography>
           <GrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
             decimalDigits={0}
-            showPercent={[
-              "Battery Profit %",
-              "Tyre Profit %",
-              "Battery&Tyre Profit %",
-            ].includes(selectedGrowth)}
+            showPercent={false}
           />
         </Box>
       )}

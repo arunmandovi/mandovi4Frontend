@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
+import ProtectedRoute from "./utils/ProtectedRoute";
+import AdminProtectedRoute from "./utils/AdminProtectedRoute";
 import EmployeeLogin from "./pages/EmployeeLogin";
 import AdminLogin from "./pages/AdminPages/AdminLogin";
 import AdminDashboard from "./pages/AdminPages/AdminDashboard";
@@ -20,6 +22,8 @@ import OilPage from "./pages/GraphView/OilPage";
 import PMSPartsPage from "./pages/GraphView/PMSPartsPage";
 import ProfitLossPage from "./pages/GraphView/ProfitLossPage";
 import ProfitLossSRBRLoaddPage from "./pages/GraphView/ProfitLossSRBRLoadd";
+import ProfitLossMonthlyGraphPage from "./pages/GraphView/ProfitLossMonthlyGraphPage";
+import ProfitLossPerVehicleGraphPage from "./pages/GraphView/ProfitLossPerVehicleGraphPage";
 import ReferenceePage from "./pages/GraphView/ReferenceePage";
 import RevenuePage from "./pages/GraphView/RevenuePage";
 import SparesPage from "./pages/GraphView/SparesPage";
@@ -96,29 +100,43 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/EmployeeLogin" element={<EmployeeLogin />} />
         <Route path="/AdminLogin" element={<AdminLogin />} />
-        <Route path="/AdminDashboard" element={<AdminDashboard />} />
+        <Route 
+          path="/AdminDashboard" 
+          element={
+            <AdminProtectedRoute>
+              <AdminDashboard />
+            </AdminProtectedRoute>
+          } 
+        />
 
         {/* ✅ Upload Page (accessible from Admin Dashboard) */}
-        <Route path="/batterytyre-upload" element={<BatteryTyreUploadPage />} />
-        <Route path="/brconversion-upload" element={<BRConversionUploadPage />} />
-        <Route path="/labour-upload" element={<LabourUploadPage />} />
-        <Route path="/loadd-upload" element ={<LoaddUploadPage />} />
-        <Route path="/mcp-upload" element ={<MCPUploadPage />} />
-        <Route path="/mga-upload" element ={<MGAUploadPage />} />
-        <Route path="/mga_profit-upload" element ={<MGAProfitUploadPage />} />
-        <Route path="/msgp-upload" element={<MSGPUploadPage />} />
-        <Route path="/msgp_profit-upload" element={<MSGPProfitUploadPage />} />
-        <Route path="/oil-upload" element={<OilUploadPage />} />
-        <Route path="/pms_parts-upload" element={<PMSPartsUploadPage />} />
-        <Route path="/profit_loss-upload" element={<ProfitLossUploadPage />} />
-        <Route path="/referencee-upload" element={<ReferenceeUploadPage />} />
-        <Route path="/revenue-upload" element={<RevenueUploadPage />} />
-        <Route path="/spares-upload" element={<SparesUploadPage />} />
-        <Route path="/tat-upload" element={<TATUploadPage />} />
-        <Route path="/vas-upload" element={<VASUploadPage />} />
+        <Route path="/batterytyre-upload" element={ <AdminProtectedRoute> <BatteryTyreUploadPage /> </AdminProtectedRoute> } />
+        <Route path="/brconversion-upload" element={ <AdminProtectedRoute> <BRConversionUploadPage /> </AdminProtectedRoute> } />
+        <Route path="/labour-upload" element={ <AdminProtectedRoute><LabourUploadPage /></AdminProtectedRoute> } />
+        <Route path="/loadd-upload" element={ <AdminProtectedRoute><LoaddUploadPage /></AdminProtectedRoute> } />
+        <Route path="/mcp-upload" element={ <AdminProtectedRoute><MCPUploadPage /></AdminProtectedRoute> } />
+        <Route path="/mga-upload" element={ <AdminProtectedRoute><MGAUploadPage /></AdminProtectedRoute> } />
+        <Route path="/mga_profit-upload" element={ <AdminProtectedRoute><MGAProfitUploadPage /></AdminProtectedRoute> } />
+        <Route path="/msgp-upload" element={ <AdminProtectedRoute><MSGPUploadPage /></AdminProtectedRoute> } />
+        <Route path="/msgp_profit-upload" element={ <AdminProtectedRoute><MSGPProfitUploadPage /></AdminProtectedRoute> } />
+        <Route path="/oil-upload" element={ <AdminProtectedRoute><OilUploadPage /></AdminProtectedRoute> } />
+        <Route path="/pms_parts-upload" element={ <AdminProtectedRoute><PMSPartsUploadPage /></AdminProtectedRoute> } />
+        <Route path="/profit_loss-upload" element={ <AdminProtectedRoute><ProfitLossUploadPage /></AdminProtectedRoute> } />
+        <Route path="/referencee-upload" element={ <AdminProtectedRoute><ReferenceeUploadPage /></AdminProtectedRoute> } />
+        <Route path="/revenue-upload" element={ <AdminProtectedRoute><RevenueUploadPage /></AdminProtectedRoute> } />
+        <Route path="/spares-upload" element={ <AdminProtectedRoute><SparesUploadPage /></AdminProtectedRoute> } />
+        <Route path="/tat-upload" element={ <AdminProtectedRoute><TATUploadPage /></AdminProtectedRoute> } />
+        <Route path="/vas-upload" element={ <AdminProtectedRoute><VASUploadPage /></AdminProtectedRoute> } />
 
         {/* 🧭 Employee Dashboard Layout */}
-        <Route path="/DashboardHome" element={<Layout />}>
+        <Route 
+          path="/DashboardHome" 
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
           {/* Default route → Battery & Tyre */}
           <Route index element={<Navigate to="battery_tyre" replace />} />
 
@@ -137,6 +155,8 @@ function App() {
           <Route path="pms_parts" element={<PMSPartsPage />} />
           <Route path="profit_loss" element={<ProfitLossPage />} />
           <Route path="profit_loss_srbr" element={<ProfitLossSRBRLoaddPage />} />
+          <Route path="profit_loss_monthly" element={<ProfitLossMonthlyGraphPage />} />
+          <Route path="profit_loss_per_vehicle" element={<ProfitLossPerVehicleGraphPage />} />
           <Route path="referencee" element={<ReferenceePage />} />
           <Route path="revenue" element={<RevenuePage />} />
           <Route path="spares" element={<SparesPage />} />

@@ -7,12 +7,12 @@
 
 /* Navbar styling */
 .navbar {
-  position: fixed; /* 🔹 Keeps navbar fixed at top */
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000; /* 🔹 Keeps navbar above everything */
-  
+  z-index: 1000;
+
   background: linear-gradient(90deg, #0077b6, #0096c7, #00b4d8);
   padding: 12px 20px;
   display: flex;
@@ -20,11 +20,21 @@
   gap: 18px;
   flex-wrap: wrap;
   box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
-  overflow-x: auto; /* 🔹 If too many items, allows horizontal scroll */
-  white-space: nowrap;
 }
 
-/* Links */
+/* Links container */
+.nav-links {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+/* Nav links hidden in mobile by default */
+.nav-links.show {
+  display: block;
+}
+
+/* Each link */
 .navbar a {
   color: white;
   font-weight: 500;
@@ -34,16 +44,9 @@
   transition: all 0.3s ease;
 }
 
-/* Hover effect */
 .navbar a:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
-}
-
-/* Active link (optional: highlight current page) */
-.navbar a.active {
-  background: rgba(255, 255, 255, 0.3);
-  font-weight: 600;
 }
 
 /* Logout button */
@@ -59,10 +62,40 @@
   transition: all 0.3s ease;
 }
 
-/* Hover effect for logout */
-.logout-button:hover {
-  background: #d90429;
-  transform: scale(1.05);
+/* Hamburger button (hidden by default) */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+/* Responsive (mobile view) */
+@media (max-width: 768px) {
+  .hamburger {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    width: 100%;
+    background: #0077b6;
+    flex-direction: column;
+    padding: 10px 0;
+  }
+
+  .nav-links a {
+    display: block;
+    padding: 12px 20px;
+  }
+
+  .logout-button {
+    margin-left: 0;
+    margin-top: 10px;
+    width: 100%;
+  }
 }
 
 /* Page content */
@@ -70,5 +103,5 @@
   flex: 1;
   padding: 20px;
   background: #f8f9fa;
-  margin-top: 90px; /* 🔹 Prevent content from hiding behind fixed navbar */
+  margin-top: 90px;
 }

@@ -5,12 +5,13 @@ import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
 import GrowthButtons from "../../components/GrowthButtons";
 import BranchBarChart from "../../components/BranchBarChart";
+import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
 function ProfitLossBranchesBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [cities, setCities] = useState(["BLR"]);
-  const [selectedGrowth, setSelectedGrowth] = useState(null);
+    const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const cityOptions = [
     "Bangalore",
@@ -79,6 +80,18 @@ function ProfitLossBranchesBarChartPage() {
     "SR&BR Aug 25": "aug25_per_100k",
     "SR&BR 2025 - 26": "total25_per_100k",
   };
+
+  const twoDecimalGrowthOptions = [
+  "Apr 24", "May 24", "Jun 24", "Jul 24",
+  "2024 - 25", "Apr 25", "May 25",  "Jun 25",
+  "Jul 25", "Aug 25", "2025 - 26",
+];
+
+  useEffect(() => {
+      const savedGrowth = getSelectedGrowth("profit_loss");
+      if (savedGrowth) setSelectedGrowthState(savedGrowth);
+    }, []);
+  
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -170,6 +183,8 @@ function ProfitLossBranchesBarChartPage() {
         >
           <Typography variant="h4">PROFIT & LOSS REPORT (Branch-wise)</Typography>
           <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_monthly")}>P&L Monthly Graph</Button>
+            <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle")}>P&L PerVehicle Graph</Button>
             <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss")}>P&L Table</Button>
             <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_srbr")}>SR&BR Table</Button>
             <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss-bar-chart")}>CityWise Chart</Button>
@@ -186,7 +201,10 @@ function ProfitLossBranchesBarChartPage() {
       <GrowthButtons
         growthOptions={growthOptions}
         selectedGrowth={selectedGrowth}
-        setSelectedGrowth={setSelectedGrowth}
+        setSelectedGrowth={(value)=>{
+          setSelectedGrowthState(value);
+          setSelectedGrowth(value,"profit_loss");
+        }}
       />
 
       {!selectedGrowth ? (
@@ -195,7 +213,8 @@ function ProfitLossBranchesBarChartPage() {
         <BranchBarChart
           chartData={chartData}
           selectedGrowth={selectedGrowth}
-          decimalPlaces={2}
+          decimalPlaces={twoDecimalGrowthOptions.includes(selectedGrowth) ? 2 : 0}
+          chartType="MGABranchesBarChart"
         />
       )}
     </Box>

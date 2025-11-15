@@ -12,12 +12,9 @@ function BRConversionPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("br_conversion"));
+  const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
 
   const growthOptions = [
     "Arena BR Conversion %",
@@ -37,9 +34,18 @@ function BRConversionPage() {
     "Arena&Nexa Total Amount": "arenaNexaTotalAmount",
   };
 
-  const readCityName = (row) =>
-    row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
+  const percentGrowthOptions = [
+  "Arena BR Conversion %",
+  "Nexa BR Conversion %",
+  "Arena&Nexa BR Conversion %",
+];
 
+  useEffect(() => {
+    const savedGrowth = getSelectedGrowth("br_conversion");
+    if (savedGrowth) setSelectedGrowthState(savedGrowth);
+  }, []);
+
+  const readCityName = (row) => row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
   const readGrowthValue = (row, apiKey) => {
     const raw = row?.[apiKey];
     if (raw == null) return 0;
@@ -53,36 +59,26 @@ function BRConversionPage() {
       try {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
-
         for (const m of activeMonths) {
           let query = `?&months=${m}`;
-
           const data = await fetchData(`/api/br_conversion/br_conversion_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
           combined.push({ month: m, data: safeData });
         }
-
         setSummary(combined);
       } catch (error) {
         console.error("fetchCitySummary error:", error);
       }
     };
-
     fetchCitySummary();
   }, [months]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
-
     const apiKey = growthKeyMap[selectedGrowth];
     const cities = new Set();
-
-    summary.forEach(({ data }) =>
-      (data || []).forEach((r) => cities.add(readCityName(r)))
-    );
-
+    summary.forEach(({ data }) => (data || []).forEach((r) => cities.add(readCityName(r))));
     const sortedCities = sortCities([...cities]);
-
     const formatted = summary.map(({ month, data }) => {
       const entry = { month };
       sortedCities.forEach((city) => (entry[city] = 0));
@@ -92,7 +88,6 @@ function BRConversionPage() {
       });
       return entry;
     });
-
     return { formatted, sortedCities };
   };
 
@@ -130,19 +125,12 @@ function BRConversionPage() {
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
         <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            {selectedGrowth}
-          </Typography>
+          <Typography variant="h6" sx={{ mb: 1 }}>{selectedGrowth}</Typography>
           <GrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
             decimalDigits={1}
-            showPercentage={true}
-            showPercent={[
-              "Arena BR Conversion %",
-              "Nexa BR Conversion %",
-              "Arena&Nexa BR Conversion %",
-            ].includes(selectedGrowth)}
+            showPercent={percentGrowthOptions.includes(selectedGrowth)}
           />
         </Box>
       )}

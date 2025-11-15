@@ -4,11 +4,12 @@ import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import GrowthButtons from "../../components/GrowthButtons";
 import CityBarChart from "../../components/CityBarChart";
+import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
 function ProfitLossBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
-  const [selectedGrowth, setSelectedGrowth] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("profit_loss"));
 
   const growthOptions = [
     "Apr 24",
@@ -50,12 +51,16 @@ function ProfitLossBarChartPage() {
     "SR&BR 2025 - 26": "total25_per_100k",
   };
 
-  // ---------- Fetch Data ----------
+  const twoDecimalGrowthOptions = [
+  "Apr 24", "May 24", "Jun 24", "Jul 24",
+  "2024 - 25", "Apr 25", "May 25",  "Jun 25",
+  "Jul 25", "Aug 25", "2025 - 26",
+];
+
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
         const params = new URLSearchParams();
-
         const query = params.toString() ? `?${params.toString()}` : "";
         const data = await fetchData(`/api/profit_loss/profit_loss_summary${query}`);
         setSummary(Array.isArray(data) ? data : []);
@@ -66,23 +71,16 @@ function ProfitLossBarChartPage() {
     fetchCitySummary();
   }, []);
 
-  // ---------- Helpers ----------
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
   const readGrowthValue = (row, apiKey) => {
     const candidates = [
-      apiKey,
-      apiKey?.toLowerCase(),
-      apiKey?.toUpperCase(),
-      apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(),
-      "value",
-      "growth",
-      "val",
+      apiKey, apiKey?.toLowerCase(), apiKey?.toUpperCase(),
+      apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(), "value","growth","val",
     ];
     for (const key of candidates) {
-      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
-        return row[key];
+      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null) return row[key];
     }
     for (const key of Object.keys(row)) {
       const v = row[key];
@@ -96,7 +94,6 @@ function ProfitLossBarChartPage() {
     const apiKey = growthKeyMap[selectedGrowth];
     const totals = {};
     const counts = {};
-
     (dataArr || []).forEach((row) => {
       const city = readCityName(row);
       const val = readGrowthValue(row, apiKey);
@@ -106,7 +103,6 @@ function ProfitLossBarChartPage() {
         counts[city] = (counts[city] || 0) + 1;
       }
     });
-
     const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
     const allCities = Object.keys(totals);
     const sortedCities = [
@@ -119,7 +115,6 @@ function ProfitLossBarChartPage() {
         )
         .sort((a, b) => a.localeCompare(b)),
     ];
-
     return sortedCities.map((city) => ({
       city,
       value: parseFloat(((totals[city] || 0) / (counts[city] || 1)).toFixed(1)),
@@ -129,13 +124,13 @@ function ProfitLossBarChartPage() {
   const chartData =
     selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
-  // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">PROFIT & LOSS REPORT (City-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_monthly")}>P&L Monthly Graph</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle")}>P&L PerVehicle Graph</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss")}>P&L Table</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_srbr")}>SR&BR Table</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss-bar-chart")}>CityWise Chart</Button>
@@ -143,27 +138,24 @@ function ProfitLossBarChartPage() {
         </Box>
       </Box>
 
-      
-
-      {/* Growth Buttons */}
       <GrowthButtons
         growthOptions={growthOptions}
         selectedGrowth={selectedGrowth}
-        setSelectedGrowth={setSelectedGrowth}
+        setSelectedGrowth={(value) => {
+          setSelectedGrowthState(value);
+          setSelectedGrowth(value, "profit_loss");
+        }}
       />
 
-      {/* Chart */}
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
       ) : summary.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
-        <CityBarChart
-          chartData={chartData}
-          selectedGrowth={selectedGrowth}
-          decimalPlaces={2}
-          showPercent={false}
-        />
+        <CityBarChart chartData={chartData} 
+        selectedGrowth={selectedGrowth} 
+        decimalPlaces={twoDecimalGrowthOptions.includes(selectedGrowth) ? 2 : 0}
+        showPercent={false} />
       )}
     </Box>
   );

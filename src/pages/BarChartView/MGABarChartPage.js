@@ -28,6 +28,15 @@ function MGABarChartPage() {
   const growthKeyMap = {
     "MGA By VEH": "mgaVeh",
   };
+  
+   // ✅ Auto-select the only growth option when the page loads
+  useEffect(() => {
+    if (!selectedGrowth && growthOptions.length === 1) {
+      const defaultGrowth = growthOptions[0];
+      setSelectedGrowthState(defaultGrowth);
+      setSelectedGrowth(defaultGrowth, "mga");
+    }
+  }, [selectedGrowth]);
 
   useEffect(() => {
     const fetchCitySummary = async () => {

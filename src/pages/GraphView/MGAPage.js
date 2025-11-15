@@ -30,6 +30,15 @@ function MGAPage() {
     "MGA By VEH": "mgaVeh",
   };
 
+   // ✅ Auto-select the only growth option when the page loads
+  useEffect(() => {
+    if (!selectedGrowth && growthOptions.length === 1) {
+      const defaultGrowth = growthOptions[0];
+      setSelectedGrowthState(defaultGrowth);
+      setSelectedGrowth(defaultGrowth, "mga");
+    }
+  }, [selectedGrowth]);
+
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 

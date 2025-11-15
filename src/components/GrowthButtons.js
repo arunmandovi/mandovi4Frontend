@@ -31,7 +31,8 @@ const GrowthButtons = ({ growthOptions, selectedGrowth, setSelectedGrowth }) => 
           }}
           onClick={() => setSelectedGrowth(g)}
         >
-          {g.replace(" Growth %", "")}
+          {g.replace(" Growth %", "")
+          .replace("%", "")}
         </Button>
       ))}
     </Box>

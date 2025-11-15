@@ -31,6 +31,13 @@ function MCPBranchesBarChartPage() {
     "MCP NO": "mcp",
   };
 
+  // ✅ Auto-select if there’s only one growth option
+  useEffect(() => {
+  if (growthOptions.length === 1) {
+    setSelectedGrowth(growthOptions[0]);
+   }
+  }, []);
+
   useEffect(() => {
     const fetchSummary = async () => {
       try {
@@ -157,6 +164,7 @@ function MCPBranchesBarChartPage() {
         chartData={chartData}
         selectedGrowth={selectedGrowth}
         decimalPlaces={0}
+        chartType="MCPBranchesBarChart"
         />
       )}
     </Box>

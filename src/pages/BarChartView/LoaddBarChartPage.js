@@ -14,24 +14,16 @@ function LoaddBarChartPage() {
   const [channels, setChannels] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("loadd"));
+  const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const channelOptions = ["ARENA", "NEXA"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
-
   const growthOptions = [
-    "Service Growth %",
-    "BodyShop Growth %",
-    "Free Service Growth %",
-    "PMS Growth %",
-    "FPR Growth %",
-    "RR Growth %",
-    "Others Growth %",
-    "% BS on FPR Growth %",
+    "Service Growth %","BodyShop Growth %","Free Service Growth %",
+    "PMS Growth %","FPR Growth %","RR Growth %","Others Growth %","BS on FPR 2024-25 %","BS on FPR 2025-26 %"
   ];
-
   const growthKeyMap = {
     "Service Growth %": "growthService",
     "BodyShop Growth %": "growthBodyShop",
@@ -40,8 +32,15 @@ function LoaddBarChartPage() {
     "FPR Growth %": "growthFPR",
     "RR Growth %": "growthRR",
     "Others Growth %": "growthOthers",
-    "% BS on FPR Growth %": "growthBSFPR",
+    "BS on FPR 2024-25 %": "previousBSFPR",
+    "BS on FPR 2025-26 %": "currentBSFPR",
   };
+
+  useEffect(() => {
+    // Load saved growth type
+    const savedGrowth = getSelectedGrowth("loadd");
+    if (savedGrowth) setSelectedGrowthState(savedGrowth);
+  }, []);
 
   useEffect(() => {
     const fetchCitySummary = async () => {
@@ -61,23 +60,12 @@ function LoaddBarChartPage() {
     fetchCitySummary();
   }, [months, channels, qtrWise, halfYear]);
 
-  const readCityName = (row) =>
-    row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
-
+  const readCityName = (row) => row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
   const readGrowthValue = (row, apiKey) => {
-    const candidates = [
-      apiKey, apiKey?.toLowerCase(), apiKey?.toUpperCase(),
-      apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(), "value","growth","val",
-    ];
-    for (const key of candidates) {
-      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null) return row[key];
-    }
-    for (const key of Object.keys(row)) {
-      const v = row[key];
-      if (typeof v === "number") return v;
-      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
-    }
-    return undefined;
+    const val = row?.[apiKey];
+    if (val == null) return 0;
+    const num = parseFloat(String(val).replace("%","").trim());
+    return isNaN(num) ? 0 : num;
   };
 
   const buildCombinedAverageData = (dataArr) => {
@@ -87,57 +75,33 @@ function LoaddBarChartPage() {
     (dataArr || []).forEach((row) => {
       const city = readCityName(row);
       const val = readGrowthValue(row, apiKey);
-      const parsed = parseFloat(String(val).replace("%", "").trim());
-      if (!isNaN(parsed)) {
-        totals[city] = (totals[city] || 0) + parsed;
-        counts[city] = (counts[city] || 0) + 1;
-      }
+      totals[city] = (totals[city] || 0) + val;
+      counts[city] = (counts[city] || 0) + 1;
     });
-    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
-    const allCities = Object.keys(totals);
-    const sortedCities = [
-      ...preferredOrder.filter((c) =>
-        allCities.some((x) => x.toLowerCase() === c.toLowerCase())
-      ),
-      ...allCities
-        .filter(
-          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
-        )
-        .sort((a, b) => a.localeCompare(b)),
-    ];
-    return sortedCities.map((city) => ({
+    return Object.keys(totals).map((city) => ({
       city,
-      value: parseFloat(((totals[city] || 0) / (counts[city] || 1)).toFixed(1)),
+      value: parseFloat(((totals[city] || 0)/(counts[city]||1)).toFixed(1))
     }));
   };
 
-  const chartData =
-    selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
+  const chartData = selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+      <Box sx={{ display:"flex", justifyContent:"space-between", mb:3 }}>
         <Typography variant="h4">LOAD REPORT (City-wise)</Typography>
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd")}>Graph</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd-bar-chart")}>CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}>BranchWise</Button>
+        <Box sx={{ display:"flex", gap:1 }}>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/loadd")}>Graph</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/loadd-bar-chart")}>CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/loadd_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        channelOptions={channelOptions} channels={channels} setChannels={setChannels}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
       />
 
       <GrowthButtons
@@ -149,13 +113,10 @@ function LoaddBarChartPage() {
         }}
       />
 
-      {!selectedGrowth ? (
-        <Typography>👆 Select a growth type to view the chart below</Typography>
-      ) : summary.length === 0 ? (
-        <Typography>No data available for the selected criteria.</Typography>
-      ) : (
+      {!selectedGrowth ? <Typography>👆 Select a growth type to view the chart below</Typography> :
+        chartData.length === 0 ? <Typography>No data available for the selected criteria.</Typography> :
         <CityBarChart chartData={chartData} selectedGrowth={selectedGrowth} decimalPlaces={1} />
-      )}
+      }
     </Box>
   );
 }

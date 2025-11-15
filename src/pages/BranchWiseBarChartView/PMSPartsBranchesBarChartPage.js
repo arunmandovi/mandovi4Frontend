@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
 import GrowthButtons from "../../components/GrowthButtons";
 import BranchBarChart from "../../components/BranchBarChart";
+import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
 function PMSPartsBranchesBarChartPage() {
   const navigate = useNavigate();
@@ -13,16 +14,13 @@ function PMSPartsBranchesBarChartPage() {
   const [cities, setCities] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowth] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
-  const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
-  const halfYearOptions = ["H1", "H2"];
-
+  const qtrWiseOptions = ["Qtr1","Qtr2","Qtr3","Qtr4"];
+  const halfYearOptions = ["H1","H2"];
+  
   const growthOptions = [
     "Air filter %",
     "Belt water pump %",
@@ -31,12 +29,12 @@ function PMSPartsBranchesBarChartPage() {
     "Fuel Filter %",
     "Oil filter %",
     "Spark plug %",
-    "7 PARTS PMS",
-    "DRAIN PLUG GASKET",
-    "ISG BELT GENERATOR",
-    "CNG FILTER",
-    "3 PARTS PMS",
-    "Grand Total",
+    "7 PARTS PMS %",
+    "DRAIN PLUG GASKET %",
+    "ISG BELT GENERATOR %",
+    "CNG FILTER %",
+    "3 PARTS PMS %",
+    "Grand Total %",
   ];
 
   const growthKeyMap = {
@@ -47,60 +45,46 @@ function PMSPartsBranchesBarChartPage() {
     "Fuel Filter %": "fuelFilter",
     "Oil filter %": "oilFilter",
     "Spark plug %": "sparkPlug",
-    "7 PARTS PMS": "sevenPartsPMS",
-    "DRAIN PLUG GASKET": "drainPlugGasket",
-    "ISG BELT GENERATOR": "isgBeltGenerator",
-    "CNG FILTER": "cngFilter",
-    "3 PARTS PMS": "threePartsPMS",
-    "Grand Total": "grandTotal",
+    "7 PARTS PMS %": "sevenPartsPMS",
+    "DRAIN PLUG GASKET %": "drainPlugGasket",
+    "ISG BELT GENERATOR %": "isgBeltGenerator",
+    "CNG FILTER %": "cngFilter",
+    "3 PARTS PMS %": "threePartsPMS",
+    "Grand Total %": "grandTotal",
   };
+
+  useEffect(() => {
+    const savedGrowth = getSelectedGrowth("pms_parts");
+    if (savedGrowth) setSelectedGrowthState(savedGrowth);
+  }, []);
 
   useEffect(() => {
     const fetchSummary = async () => {
       try {
         const params = new URLSearchParams();
-        if (months.length > 0) params.append("months", months.join(","));
-        if (cities.length > 0) params.append("cities", cities.join(","));
-        if (qtrWise.length > 0) params.append("qtrWise", qtrWise.join(","));
-        if (halfYear.length > 0) params.append("halfYear", halfYear.join(","));
-        const endpoint = `/api/pms_parts/pms_parts_branch_summary${
-          params.toString() ? "?" + params.toString() : ""
-        }`;
+        if (months.length>0) params.append("months", months.join(","));
+        if (cities.length>0) params.append("cities", cities.join(","));
+        if (qtrWise.length>0) params.append("qtrWise", qtrWise.join(","));
+        if (halfYear.length>0) params.append("halfYear", halfYear.join(","));
+        const endpoint = `/api/pms_parts/pms_parts_branch_summary${params.toString()? "?"+params.toString():""}`;
         const data = await fetchData(endpoint);
-        setSummary(Array.isArray(data) ? data : []);
+        setSummary(Array.isArray(data)?data:[]);
       } catch (error) {
-        console.error("Error fetching pms parts tyre branch summary:", error);
+        console.error("Error fetching pms parts branch summary:", error);
         setSummary([]);
       }
     };
     fetchSummary();
-  }, [months, cities, qtrWise, halfYear]);
+  }, [months,cities,qtrWise,halfYear]);
 
-  const readBranchName = (row) =>
-    row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
-  const readCityName = (row) =>
-    row?.city || row?.City || row?.cityName || row?.CityName || "";
-
+  const readBranchName = (row) => row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
+  const readCityName = (row) => row?.city || row?.City || row?.cityName || row?.CityName || "";
   const readGrowthValue = (row, apiKey) => {
-    const candidates = [
-      apiKey,
-      apiKey?.toLowerCase(),
-      apiKey?.toUpperCase(),
-      apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(),
-      "value",
-      "growth",
-      "val",
-    ];
-    for (const key of candidates) {
-      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
-        return row[key];
-    }
-    for (const key of Object.keys(row)) {
-      const v = row[key];
-      if (typeof v === "number") return v;
-      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
-    }
-    return undefined;
+    if (!apiKey) return null;
+    const val = row?.[apiKey];
+    if (val === null || val === undefined || val === "") return null;
+    const num = parseFloat(String(val).replace("%","").trim());
+    return isNaN(num)?null:num;
   };
 
   const buildCombinedAverageData = (dataArr) => {
@@ -108,82 +92,61 @@ function PMSPartsBranchesBarChartPage() {
     const totals = {};
     const counts = {};
     const cityMap = {};
-    (dataArr || []).forEach((row) => {
+    (dataArr || []).forEach((row)=>{
       const branch = readBranchName(row);
       const city = readCityName(row);
       const val = readGrowthValue(row, apiKey);
-      const parsed = parseFloat(String(val).replace("%", "").trim());
-      if (!isNaN(parsed)) {
-        totals[branch] = (totals[branch] || 0) + parsed;
-        counts[branch] = (counts[branch] || 0) + 1;
-        cityMap[branch] = city;
-      }
+      if (val===null) return;
+      totals[branch] = (totals[branch]||0)+val;
+      counts[branch] = (counts[branch]||0)+1;
+      cityMap[branch] = city;
     });
     return Object.keys(totals)
-      .map((b) => {
-        const resultVal = counts[b] ? totals[b] / counts[b] : 0;
+    .map((b) => {
+      const value = counts[b] ? totals[b] / counts[b] : 0;
+  
+      return {
+        name: b,
+        city: cityMap[b],
+        value,
+        barColor: value > 98 ? "#05f105ff" : "#ff0000ff", 
+      };
+    })
+    .sort((a, b) => b.value - a.value);
+    };
 
-        return {
-          name: b,
-          city: cityMap[b],
-          value: resultVal,
-          barColor: resultVal < 98 ? "red" : "#05f105ff",
-        };
-      })
-      .sort((a, b) => b.value - a.value);
-  };
-
-  const chartData =
-    selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
+  const chartData = selectedGrowth && summary.length>0 ? buildCombinedAverageData(summary) : [];
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
+    <Box sx={{p:3}}>
+      <Box sx={{display:"flex", justifyContent:"space-between", alignItems:"center", mb:3}}>
         <Typography variant="h4">PMS PARTS REPORT (Branch-wise)</Typography>
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/pms_parts")}>Graph</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/pms_parts-bar-chart")}>CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/pms_parts_branches-bar-chart")}>BranchWise</Button>
+        <Box sx={{display:"flex", gap:1}}>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/pms_parts")}>Graph</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/pms_parts-bar-chart")}>CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/pms_parts_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        cityOptions={cityOptions}
-        qtrWiseOptions={qtrWiseOptions}
-        halfYearOptions={halfYearOptions}
-        months={months}
-        setMonths={setMonths}
-        cities={cities}
-        setCities={setCities}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        cityOptions={cityOptions} cities={cities} setCities={setCities}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
       />
 
       <GrowthButtons
         growthOptions={growthOptions}
         selectedGrowth={selectedGrowth}
-        setSelectedGrowth={setSelectedGrowth}
+        setSelectedGrowth={(value)=>{
+          setSelectedGrowthState(value);
+          setSelectedGrowth(value,"pms_parts");
+        }}
       />
 
-      {!selectedGrowth ? (
-        <Typography>👆 Select a growth type to view the chart below</Typography>
-      ) : (
-        <BranchBarChart 
-        chartData={chartData}
-        selectedGrowth={selectedGrowth}
-        decimalPlaces={2}
-        />
-      )}
+      {!selectedGrowth ? <Typography sx={{mt:2}}>👆 Select a growth type to view the chart below</Typography> :
+        <BranchBarChart chartData={chartData} selectedGrowth={selectedGrowth} />
+      }
     </Box>
   );
 }

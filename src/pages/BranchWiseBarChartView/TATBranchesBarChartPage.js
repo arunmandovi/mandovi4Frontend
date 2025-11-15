@@ -15,10 +15,60 @@ import {
   ResponsiveContainer,
   LabelList,
   Cell,
+  Rectangle,
 } from "recharts";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
+import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
+
+/* ---------------------------------------------
+   3D BAR SHAPE
+---------------------------------------------- */
+const ThreeDBarShape = (props) => {
+  const { x, y, width, height, fill } = props;
+
+  if (!height || width <= 0) return null;
+
+  const depth = 6;
+
+  return (
+    <g>
+      <Rectangle
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={fill}
+        radius={[4, 4, 0, 0]}
+      />
+
+      <polygon
+        points={`
+          ${x},${y}
+          ${x + depth},${y - depth}
+          ${x + width + depth},${y - depth}
+          ${x + width},${y}
+        `}
+        fill="#ffffff33"
+      />
+
+      <polygon
+        points={`
+          ${x + width},${y}
+          ${x + width + depth},${y - depth}
+          ${x + width + depth},${y + height - depth}
+          ${x + width},${y + height}
+        `}
+        fill="#00000022"
+      />
+    </g>
+  );
+};
+
+/* ---------------------------------------------
+   MAIN PAGE
+---------------------------------------------- */
 
 function TATBranchesBarChartPage() {
   const navigate = useNavigate();
@@ -27,7 +77,15 @@ function TATBranchesBarChartPage() {
   const [cities, setCities] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowth] = useState(null);
+
+  // ---------------------- FIXED ----------------------
+  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+
+  useEffect(() => {
+    const saved = getSelectedGrowth("tat");
+    if (saved) setSelectedGrowthState(saved);
+  }, []);
+  // --------------------------------------------------
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
@@ -37,7 +95,7 @@ function TATBranchesBarChartPage() {
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
-  
+
   const growthOptions = ["FR1", "FR2", "FR3", "PMS"];
 
   const growthKeyMap = {
@@ -47,7 +105,7 @@ function TATBranchesBarChartPage() {
     PMS: "paidService",
   };
 
-  // ------------------- Fetch API -------------------
+  /* ------------------- Fetch API ------------------- */
   useEffect(() => {
     const fetchSummary = async () => {
       try {
@@ -56,10 +114,10 @@ function TATBranchesBarChartPage() {
         if (cities.length > 0) params.append("cities", cities.join(","));
         if (qtrWise.length > 0) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length > 0) params.append("halfYear", halfYear.join(","));
-        const endpoint = `/api/tat/tat_branch_summary${
-          params.toString() ? "?" + params.toString() : ""
-        }`;
+
+        const endpoint = `/api/tat/tat_branch_summary${params.toString() ? "?" + params : ""}`;
         const data = await fetchData(endpoint);
+
         setSummary(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error fetching TAT branch summary:", error);
@@ -69,14 +127,17 @@ function TATBranchesBarChartPage() {
     fetchSummary();
   }, [months, cities, qtrWise, halfYear]);
 
-  // ------------------- Helpers -------------------
+  /* ------------------- Helpers ------------------- */
   const readBranchName = (row) =>
-    (row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "").toString().trim();
+    (row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "")
+      .toString()
+      .trim();
 
   const readCityName = (row) =>
-    (row?.city || row?.City || row?.cityName || row?.CityName || "").toString().trim();
+    (row?.city || row?.City || row?.cityName || row?.CityName || "")
+      .toString()
+      .trim();
 
-  // Convert "HH:MM:SS" → total seconds
   const timeToSeconds = (timeStr) => {
     if (!timeStr || typeof timeStr !== "string") return 0;
     const parts = timeStr.split(":").map(Number);
@@ -92,14 +153,12 @@ function TATBranchesBarChartPage() {
     }
   };
 
-  // Convert seconds → "HH:MM:SS"
   const secondsToHHMMSS = (seconds) => {
     if (isNaN(seconds)) return "00:00:00";
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = Math.floor(seconds % 60);
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
   };
 
   const readTimeValue = (row, apiKey) => {
@@ -108,7 +167,7 @@ function TATBranchesBarChartPage() {
     return timeToSeconds(val);
   };
 
-  // ------------------- Data Build -------------------
+  /* ------------------- Data Build ------------------- */
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const totals = {};
@@ -119,6 +178,7 @@ function TATBranchesBarChartPage() {
       const branch = readBranchName(row);
       const city = readCityName(row);
       const val = readTimeValue(row, apiKey);
+
       if (!isNaN(val)) {
         totals[branch] = (totals[branch] || 0) + val;
         counts[branch] = (counts[branch] || 0) + 1;
@@ -139,7 +199,7 @@ function TATBranchesBarChartPage() {
   const chartData =
     selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
-  // ------------------- Tooltip -------------------
+  /* ------------------- Tooltip ------------------- */
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const sec = payload[0].value;
@@ -162,38 +222,23 @@ function TATBranchesBarChartPage() {
     return null;
   };
 
-  // ------------------- Inside Label -------------------
+  /* ------------------- Inside Label ------------------- */
   const InsideBarLabel = (props) => {
-    const { x, y, width, height, value, fill } = props;
+    const { x, y, width, height, value } = props;
     if (value == null || width <= 0) return null;
 
     const textX = x + width / 2;
     const textY = y + height / 2;
-    const rotation = -90;
-
-    let textColor = "#000000";
-    try {
-      if (typeof fill === "string" && fill.startsWith("rgb")) {
-        const rgb = fill.match(/\d+/g);
-        if (rgb && rgb.length === 3) {
-          const [r, g, b] = rgb.map(Number);
-          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-          textColor = luminance > 0.6 ? "#000" : "#fff";
-        }
-      }
-    } catch {
-      textColor = "#000";
-    }
 
     return (
       <text
         x={textX}
         y={textY}
-        transform={`rotate(${rotation}, ${textX}, ${textY})`}
+        transform={`rotate(-90, ${textX}, ${textY})`}
         textAnchor="middle"
         dominantBaseline="middle"
         fontSize={11}
-        fill={textColor}
+        fill="#000"
         fontWeight={600}
         pointerEvents="none"
       >
@@ -202,13 +247,13 @@ function TATBranchesBarChartPage() {
     );
   };
 
-  // ------------------- Get Bar Color -------------------
+  /* ------------------- Bar Color Logic ------------------- */
   const getBarColor = (valueSec) => {
-    const threshold = 2 * 3600 + 30 * 60; // 2 hours 30 minutes = 9000 sec
-    return valueSec < threshold ? "#05f105ff" : "#ff0000ff"; 
+    const threshold = 2 * 3600 + 30 * 60;
+    return valueSec < threshold ? "#05f105" : "#ff0000";
   };
 
-  // ------------------- UI -------------------
+  /* ------------------- UI ------------------- */
   return (
     <Box sx={{ p: 3 }}>
       <Box
@@ -243,6 +288,7 @@ function TATBranchesBarChartPage() {
         setHalfYear={setHalfYear}
       />
 
+      {/* ---------------- GROWTH BUTTONS (FIXED) ---------------- */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2, mb: 2 }}>
         {growthOptions.map((g, idx) => (
           <Button
@@ -258,16 +304,17 @@ function TATBranchesBarChartPage() {
               transition: "all 0.3s ease",
               background:
                 selectedGrowth === g
-                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${
-                      (idx * 40 + 20) % 360
-                    }, 70%, 55%))`
+                  ? `linear-gradient(90deg, hsl(${idx * 40}, 70%, 45%), hsl(${(idx * 40 + 20) % 360}, 70%, 55%))`
                   : "transparent",
               color: selectedGrowth === g ? "white" : "inherit",
               boxShadow:
                 selectedGrowth === g ? `0 3px 10px rgba(0,0,0,0.15)` : "none",
               "&:hover": { transform: "scale(1.05)" },
             }}
-            onClick={() => setSelectedGrowth(g)}
+            onClick={() => {
+              setSelectedGrowthState(g);
+              setSelectedGrowth(g, "tat");
+            }}
           >
             {g}
           </Button>
@@ -319,7 +366,13 @@ function TATBranchesBarChartPage() {
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
-              <Bar dataKey="valueSec" barSize={35} isAnimationActive={false}>
+
+              <Bar
+                dataKey="valueSec"
+                barSize={35}
+                shape={<ThreeDBarShape />}
+                isAnimationActive={true}
+              >
                 {chartData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}

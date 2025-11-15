@@ -14,7 +14,6 @@ import {
   Rectangle,
 } from "recharts";
 import { Box, Typography } from "@mui/material";
-import { getBarColor } from "../utils/getBarColor";
 
 /* ---------- Tooltip ---------- */
 const CustomTooltip = ({
@@ -22,12 +21,25 @@ const CustomTooltip = ({
   payload,
   decimalPlaces = 1,
   showPercent = true,
+  isMCPChart = false,
 }) => {
   if (active && payload && payload.length) {
     const item = payload[0]?.payload || {};
     const value = item.value ?? 0;
     const name = item.name || "";
     const city = item.city || "";
+
+    const formattedValue = showPercent
+      ? `${Number(value).toFixed(decimalPlaces)}%`
+      : isMCPChart
+      ? `${Number(value).toLocaleString("en-IN", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: decimalPlaces,
+        })}`
+      : ` ${Number(value).toLocaleString("en-IN", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: decimalPlaces,
+        })}`;
 
     return (
       <Box
@@ -41,63 +53,90 @@ const CustomTooltip = ({
         <Typography variant="body2" sx={{ fontWeight: 600 }}>
           {name} {city ? `(${city})` : ""}
         </Typography>
-        <Typography variant="body2">
-          {showPercent
-            ? `${Number(value).toFixed(decimalPlaces)}%`
-            : `₹ ${Number(value).toLocaleString("en-IN", {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: decimalPlaces,
-              })}`}
-        </Typography>
+        <Typography variant="body2">{formattedValue}</Typography>
       </Box>
     );
   }
   return null;
 };
 
-/* ---------- Bar shape with ±100 cap ---------- */
+/* ---------- Custom bar shape (cap ±100%) ---------- */
 const CappedBarShape = (props) => {
-  const { y, height, value } = props;
-  if (value === 0 || value == null) return <Rectangle {...props} />;
+  const { x, y, width, height, value, yAxis, background, ...rest } = props;
 
-  const absValue = Math.abs(value);
-  if (absValue <= 100) return <Rectangle {...props} />;
+  if (value === 0 || value == null) return null;
 
-  const ratio = 100 / absValue;
-  const cappedHeight = Math.max(2, height * ratio);
+  // Get base height as if value was positive
+  const absHeight = Math.abs(height);
 
-  if (value > 0) {
-    const newY = y + (height - cappedHeight);
-    return (
-      <Rectangle {...props} y={newY} height={cappedHeight} radius={[4, 4, 0, 0]} />
-    );
-  }
+  // ✅ Force same visual height for all negatives
+  const visualHeight = absHeight; // keep same height for all
+  const barY = value >= 0 ? y : y - absHeight; // flip for negatives
+
   return (
-    <Rectangle {...props} y={y} height={cappedHeight} radius={[0, 0, 4, 4]} />
+    <Rectangle
+      {...rest}
+      x={x}
+      y={barY}
+      width={width}
+      height={visualHeight}
+      radius={value >= 0 ? [4, 4, 0, 0] : [0, 0, 4, 4]}
+      fill={rest.fill}
+    />
   );
 };
 
-/* ---------- Custom label that stays inside capped bar ---------- */
+
+/* ---------- Custom label ---------- */
 const CustomLabel = (props) => {
-  const { x, y, width, height, value, showPercent, decimalPlaces } = props;
+  const {
+    x,
+    y,
+    width,
+    height,
+    value,
+    showPercent,
+    decimalPlaces,
+    chartType,
+  } = props;
+
   if (value == null) return null;
 
   const absValue = Math.abs(value);
+  const isMCPChart = chartType === "MCPBranchesBarChart";
+  const isMGAChart = chartType === "MGABranchesBarChart";
+
   const formatted = showPercent
     ? `${value.toFixed(decimalPlaces)}%`
-    : `₹ ${value.toLocaleString("en-IN", {
+    : isMCPChart
+    ? `${value.toLocaleString("en-IN", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: decimalPlaces,
+      })}`
+    : ` ${value.toLocaleString("en-IN", {
         minimumFractionDigits: 0,
         maximumFractionDigits: decimalPlaces,
       })}`;
 
-  // Cap label inside the visible bar (use capped height if value > 100)
-  const capRatio = absValue > 100 ? 100 / absValue : 1;
+  const isCapped = absValue > 100;
+  const capRatio = isCapped ? 100 / absValue : 1;
   const visibleHeight = height * capRatio;
 
-  // Center text within the visible part
   const textX = x + width / 2;
-  const textY =
-    value >= 0 ? y + height - visibleHeight / 2 : y + visibleHeight / 2;
+  let textY;
+
+  if (isMGAChart) {
+    // ✅ Always center label for MGA chart
+    textY = y + height / 2;
+  } else {
+    if (value >= 0) {
+      // ✅ Positive bars - normal centering
+      textY = y + (height - visibleHeight) + visibleHeight / 2;
+    } else {
+      // ✅ Negative bars - center correctly within visible region
+      textY = y + visibleHeight / 2;
+    }
+  }
 
   return (
     <text
@@ -105,45 +144,67 @@ const CustomLabel = (props) => {
       y={textY}
       textAnchor="middle"
       transform={`rotate(-90, ${textX}, ${textY})`}
-      fontSize={11}
+      dominantBaseline="middle"
+      fontSize={13}
       fontWeight={600}
-      fill="#000"
+      fill={isCapped ? "#003366" : "#000"}
     >
       {formatted}
     </text>
   );
 };
 
-/* ---------- Main chart ---------- */
-const BranchBarChart = ({ chartData, selectedGrowth, decimalPlaces = 1 }) => {
+/* ---------- Main Chart ---------- */
+const BranchBarChart = ({
+  chartData,
+  selectedGrowth,
+  decimalPlaces = 1,
+  chartType,
+}) => {
+  const isMCPChart = chartType === "MCPBranchesBarChart";
+  const isMGAChart = chartType === "MGABranchesBarChart";
+
   if (!chartData || chartData.length === 0) {
-    return <Typography>No data available for the selected criteria.</Typography>;
+    return (
+      <Typography>No data available for the selected criteria.</Typography>
+    );
   }
 
-  // Ensure every branch renders even if 0
   const sanitizedData = chartData.map((item) => ({
     ...item,
     value: item.value == null ? 0 : item.value,
   }));
 
-  const showPercent = selectedGrowth?.includes("%");
-  const maxAbsValue = Math.max(...sanitizedData.map((d) => Math.abs(d.value ?? 0)));
+  const showPercent = !isMCPChart && selectedGrowth?.includes("%");
+
+  const values = sanitizedData.map((d) => d.value ?? 0);
+  const maxValue = Math.max(...values);
+  const minValue = Math.min(...values);
+  const maxAbsValue = Math.max(Math.abs(maxValue), Math.abs(minValue));
   const shouldCapAt100 = showPercent && maxAbsValue > 100;
 
-  const yAxisDomain = showPercent
-    ? shouldCapAt100
-      ? [-100, 100]
-      : [-Math.ceil(maxAbsValue + 5), Math.ceil(maxAbsValue + 5)]
-    : ["auto", "auto"];
+  // ✅ Domain logic
+  let yAxisDomain;
+  if (shouldCapAt100) {
+    yAxisDomain = [-100, 120]; // slight extra positive space
+  } else {
+    const roundTo = 5;
+    const roundedMax =
+      maxValue > 0 ? Math.ceil((maxValue + 1) / roundTo) * roundTo : 0;
+    const roundedMin =
+      minValue < 0 ? Math.floor((minValue - 1) / roundTo) * roundTo : 0;
+    if (minValue >= 0) yAxisDomain = [0, roundedMax];
+    else if (maxValue <= 0) yAxisDomain = [roundedMin, 0];
+    else yAxisDomain = [roundedMin, roundedMax];
+  }
 
-  const yTicks = showPercent
-    ? shouldCapAt100
-      ? Array.from({ length: 21 }, (_, i) => -100 + i * 10)
-      : Array.from(
-          { length: Math.ceil((Math.ceil(maxAbsValue + 5) * 2) / 10) + 1 },
-          (_, i) => -Math.ceil(maxAbsValue + 5) + i * 10
-        )
-    : undefined;
+  // ✅ Asymmetric ticks
+  let yTicks;
+  if (shouldCapAt100 && showPercent) {
+    const positiveTicks = Array.from({ length: 11 }, (_, i) => i * 10); // 0–100
+    const negativeTicks = [-100, -75, -50, -25];
+    yTicks = [...negativeTicks, ...positiveTicks];
+  }
 
   return (
     <Box
@@ -167,7 +228,6 @@ const BranchBarChart = ({ chartData, selectedGrowth, decimalPlaces = 1 }) => {
           margin={{ top: 10, right: 30, left: 10, bottom: 80 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-
           <XAxis
             dataKey="name"
             tick={{ fontSize: 11 }}
@@ -176,7 +236,6 @@ const BranchBarChart = ({ chartData, selectedGrowth, decimalPlaces = 1 }) => {
             interval={0}
             height={70}
           />
-
           <YAxis
             allowDataOverflow
             domain={yAxisDomain}
@@ -185,67 +244,56 @@ const BranchBarChart = ({ chartData, selectedGrowth, decimalPlaces = 1 }) => {
             tickFormatter={(val) =>
               showPercent
                 ? `${Number(val).toFixed(decimalPlaces)}%`
-                : `₹ ${Number(val).toLocaleString("en-IN", {
+                : isMCPChart
+                ? `${Number(val).toLocaleString("en-IN", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: decimalPlaces,
+                  })}`
+                : ` ${Number(val).toLocaleString("en-IN", {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: decimalPlaces,
                   })}`
             }
             label={{
-              value: showPercent ? "Growth %" : "Amount (₹)",
+              value: showPercent
+                ? ""
+                : isMCPChart
+                ? "Value"
+                : "",
               angle: -90,
               position: "insideLeft",
             }}
           />
-
           <Tooltip
             content={
               <CustomTooltip
                 decimalPlaces={decimalPlaces}
                 showPercent={showPercent}
+                isMCPChart={isMCPChart}
               />
             }
           />
           <Legend />
-
           <ReferenceLine y={0} stroke="#003366" strokeWidth={2} />
-
-          {shouldCapAt100 && (
-            <>
-              <ReferenceLine
-                y={100}
-                stroke="#999"
-                strokeDasharray="5 5"
-                label={{
-                  value: "Cap (+100%)",
-                  position: "right",
-                  fill: "#555",
-                  fontSize: 12,
-                }}
-              />
-              <ReferenceLine
-                y={-100}
-                stroke="#999"
-                strokeDasharray="5 5"
-                label={{
-                  value: "Cap (-100%)",
-                  position: "right",
-                  fill: "#555",
-                  fontSize: 12,
-                }}
-              />
-            </>
-          )}
 
           <Bar
             dataKey="value"
             barSize={35}
-            isAnimationActive={false}
+            isAnimationActive={true}
             shape={shouldCapAt100 ? <CappedBarShape /> : undefined}
           >
             {sanitizedData.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
-                fill={entry?.barColor || getBarColor(entry?.value ?? 0)}
+                fill={
+                  entry?.barColor
+                    ? entry.barColor
+                    : entry.value < 0
+                    ? "red"
+                    : entry.value >= 0 && entry.value <= 5
+                    ? "yellow"
+                    : "#05f105"
+                }
               />
             ))}
 
@@ -256,6 +304,7 @@ const BranchBarChart = ({ chartData, selectedGrowth, decimalPlaces = 1 }) => {
                   {...props}
                   showPercent={showPercent}
                   decimalPlaces={decimalPlaces}
+                  chartType={chartType}
                 />
               )}
             />

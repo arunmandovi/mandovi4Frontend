@@ -13,26 +13,14 @@ function LoaddPage() {
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [channels, setChannels] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("loadd"));
+  const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const channelOptions = ["Arena", "Nexa"];
-
   const growthOptions = [
-    "Service Growth %",
-    "BodyShop Growth %",
-    "Free Service Growth %",
-    "PMS Growth %",
-    "FPR Growth %",
-    "RR Growth %",
-    "Others Growth %",
-    "% BS on FPR Growth %",
+    "Service Growth %","BodyShop Growth %","Free Service Growth %",
+    "PMS Growth %","FPR Growth %","RR Growth %","Others Growth %","BS on FPR 2024-25 %","BS on FPR 2025-26 %",
   ];
-
   const growthKeyMap = {
     "Service Growth %": "growthService",
     "BodyShop Growth %": "growthBodyShop",
@@ -41,12 +29,17 @@ function LoaddPage() {
     "FPR Growth %": "growthFPR",
     "RR Growth %": "growthRR",
     "Others Growth %": "growthOthers",
-    "% BS on FPR Growth %": "growthBSFPR",
+    "BS on FPR 2024-25 %": "previousBSFPR",
+    "BS on FPR 2025-26 %": "currentBSFPR",
   };
 
-  const readCityName = (row) =>
-    row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
+  useEffect(() => {
+    // Auto-load saved growth type
+    const savedGrowth = getSelectedGrowth("loadd");
+    if (savedGrowth) setSelectedGrowthState(savedGrowth);
+  }, []);
 
+  const readCityName = (row) => row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
   const readGrowthValue = (row, apiKey) => {
     const raw = row?.[apiKey];
     if (raw == null) return 0;
@@ -60,37 +53,27 @@ function LoaddPage() {
       try {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
-
         for (const m of activeMonths) {
           let query = `?&months=${m}`;
           if (channels.length === 1) query += `&channels=${channels[0]}`;
-
           const data = await fetchData(`/api/loadd/loadd_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
           combined.push({ month: m, data: safeData });
         }
-
         setSummary(combined);
       } catch (error) {
         console.error("fetchCitySummary error:", error);
       }
     };
-
     fetchCitySummary();
   }, [months, channels]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
-
     const apiKey = growthKeyMap[selectedGrowth];
     const cities = new Set();
-
-    summary.forEach(({ data }) =>
-      (data || []).forEach((r) => cities.add(readCityName(r)))
-    );
-
+    summary.forEach(({ data }) => (data || []).forEach((r) => cities.add(readCityName(r))));
     const sortedCities = sortCities([...cities]);
-
     const formatted = summary.map(({ month, data }) => {
       const entry = { month };
       sortedCities.forEach((city) => (entry[city] = 0));
@@ -100,7 +83,6 @@ function LoaddPage() {
       });
       return entry;
     });
-
     return { formatted, sortedCities };
   };
 
@@ -141,23 +123,12 @@ function LoaddPage() {
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
         <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            {selectedGrowth}
-          </Typography>
+          <Typography variant="h6" sx={{ mb: 1 }}>{selectedGrowth}</Typography>
           <GrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
             decimalDigits={1}
-            showPercent={[
-              "Service Growth %",
-              "BodyShop Growth %",
-              "Free Service Growth %",
-              "PMS Growth %",
-              "FPR Growth %",
-              "RR Growth %",
-              "Others Growth %",
-              "% BS on FPR Growth %",
-            ].includes(selectedGrowth)}
+            showPercent={true}
           />
         </Box>
       )}

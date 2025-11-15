@@ -27,7 +27,7 @@ function TATBarChartPage() {
   const [months, setMonths] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-    const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("tat"));
+  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("tat"));
 
   // ---------- Filter Options ----------
   const monthOptions = [
@@ -37,7 +37,6 @@ function TATBarChartPage() {
 
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
-
   const growthOptions = ["FR1", "FR2", "FR3", "PMS"];
 
   const growthKeyMap = {
@@ -57,7 +56,6 @@ function TATBarChartPage() {
         const activeQtrWise = qtrWise.length ? qtrWise : [];
         const activeHalfYear = halfYear.length ? halfYear : [];
 
-        // ✅ Build query dynamically
         const queryParams = new URLSearchParams();
         if (activeMonths.length) queryParams.append("months", activeMonths.join(","));
         if (activeQtrWise.length) queryParams.append("qtrWise", activeQtrWise.join(","));
@@ -101,7 +99,6 @@ function TATBarChartPage() {
     const val = row[apiKey];
     if (!val) return 0;
 
-    // If it's in HH:MM:SS, convert to seconds
     if (typeof val === "string" && val.includes(":")) {
       const parts = val.split(":").map(Number);
       return parts[0] * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
@@ -247,6 +244,18 @@ function TATBarChartPage() {
               data={chartData}
               margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
             >
+              {/* ✅ 3D Gradient & Shadow Definitions */}
+              <defs>
+                <linearGradient id="bar3dGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#fff66b" />
+                  <stop offset="50%" stopColor="#ece004" />
+                  <stop offset="100%" stopColor="#b5a800" />
+                </linearGradient>
+                <filter id="barShadow" x="-20%" y="-20%" width="150%" height="150%">
+                  <feDropShadow dx="4" dy="4" stdDeviation="4" floodColor="#a1a1a1" />
+                </filter>
+              </defs>
+
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="city" tick={{ fontSize: 12 }} />
               <YAxis
@@ -260,33 +269,46 @@ function TATBarChartPage() {
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
+
+              
               <Bar
-                dataKey="value"
-                fill="#1976d2"
-                barSize={35}
-                isAnimationActive={false}
-              >
-                <LabelList
-                  dataKey="value"
-                  position="top"
-                  fontSize={11}
-                  content={(props) => {
-                    const { x, y, value } = props;
-                    if (value == null) return null;
-                    return (
-                      <text
-                        x={x}
-                        y={y - 5}
-                        textAnchor="middle"
-                        fontSize={11}
-                        fill="#333"
-                      >
-                        {formatSecondsToHHMMSS(value)}
-                      </text>
-                    );
-                  }}
-                />
-              </Bar>
+               dataKey="value"
+               fill="url(#bar3dGradient)"
+               barSize={90}
+               radius={[6, 6, 0, 0]}
+               isAnimationActive={true}
+               style={{ filter: "url(#barShadow)" }}
+              >             
+               <LabelList
+                 dataKey="value"
+                 position="insideTop"
+                 fontSize={11}
+                 content={(props) => {
+                   const { x, y, width, height, value } = props;
+                   if (value == null || height <= 0) return null;
+             
+                   // Center text inside the bar
+                   const textX = x + width / 2;
+                   const textY = y + height / 2 + 5; 
+             
+                   return (
+                     <text
+                       x={textX}
+                       y={textY}
+                       textAnchor="middle"
+                       fontSize={13}
+                       fontWeight={600}
+                       fill={height > 60 ? "rgba(5, 5, 5, 1)" : "#000"}
+                       transform={`rotate(-90, ${textX}, ${textY})`}
+                       dominantBaseline="middle"
+                       style={{ pointerEvents: "none" }}
+                     >
+                       {formatSecondsToHHMMSS(value)}
+                     </text>
+                   );
+                 }}
+               />
+             </Bar>
             </BarChart>
           </ResponsiveContainer>
         </Box>

@@ -11,10 +11,9 @@ function EmployeeLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // backend expects @RequestParam style, so we send params and no body
-      await axiosInstance.post(
+      const res = await axiosInstance.post(
         "/api/employee/login_employee",
-        null, // no body
+        null,
         {
           params: {
             employeeId: form.employeeId,
@@ -22,11 +21,13 @@ function EmployeeLogin() {
           },
         }
       );
-
-      // navigate to dashboard on success
+  
+      // ✅ Save login status (backend may not return token, so save true)
+      localStorage.setItem("employeeToken", "true");
+  
+      // Redirect to dashboard
       navigate("/DashboardHome/loadd");
     } catch (err) {
-      // prefer safe error access
       const msg = err?.response?.data || err.message || "Login failed";
       alert(msg);
     }

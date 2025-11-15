@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "@mui/material";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "../styles/Navbar.css";
 import { uploadNavbarButtons } from "../config/uploadNavBarButtons";
@@ -6,9 +7,10 @@ import { uploadNavbarButtons } from "../config/uploadNavBarButtons";
 const UploadNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
+  
   const handleLogout = () => {
-    navigate("/EmployeeLogin");
+    localStorage.removeItem("adminToken");
+    navigate("/AdminLogin");
   };
 
   return (
@@ -23,9 +25,14 @@ const UploadNavbar = () => {
         </Link>
       ))}
 
-      <button className="logout-button" onClick={handleLogout}>
+      <Button 
+        variant="contained" 
+        color="error"
+        onClick={handleLogout}
+        sx={{ ml: 2 }}
+      >
         Logout
-      </button>
+      </Button>
     </nav>
   );
 };

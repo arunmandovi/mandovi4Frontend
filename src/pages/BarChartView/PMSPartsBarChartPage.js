@@ -27,12 +27,12 @@ function PMSPartsBarChartPage() {
     "Fuel Filter %",
     "Oil filter %",
     "Spark plug %",
-    "7 PARTS PMS",
-    "DRAIN PLUG GASKET",
-    "ISG BELT GENERATOR",
-    "CNG FILTER",
-    "3 PARTS PMS",
-    "Grand Total",
+    "7 PARTS PMS %",
+    "DRAIN PLUG GASKET %",
+    "ISG BELT GENERATOR %",
+    "CNG FILTER %",
+    "3 PARTS PMS %",
+    "Grand Total %",
   ];
 
   const growthKeyMap = {
@@ -43,12 +43,12 @@ function PMSPartsBarChartPage() {
     "Fuel Filter %": "fuelFilter",
     "Oil filter %": "oilFilter",
     "Spark plug %": "sparkPlug",
-    "7 PARTS PMS": "sevenPartsPMS",
-    "DRAIN PLUG GASKET": "drainPlugGasket",
-    "ISG BELT GENERATOR": "isgBeltGenerator",
-    "CNG FILTER": "cngFilter",
-    "3 PARTS PMS": "threePartsPMS",
-    "Grand Total": "grandTotal",
+    "7 PARTS PMS %": "sevenPartsPMS",
+    "DRAIN PLUG GASKET %": "drainPlugGasket",
+    "ISG BELT GENERATOR %": "isgBeltGenerator",
+    "CNG FILTER %": "cngFilter",
+    "3 PARTS PMS %": "threePartsPMS",
+    "Grand Total %": "grandTotal",
   };
 
   useEffect(() => {

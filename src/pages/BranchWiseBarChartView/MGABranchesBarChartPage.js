@@ -24,14 +24,15 @@ function MGABranchesBarChartPage() {
   const channelOptions = ["ARENA", "NEXA"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
+  const growthOptions = ["MGA By VEH"];
+  const growthKeyMap = { "MGA By VEH": "mgaVeh" };
 
-  const growthOptions = [
-    "MGA By VEH",
-  ];
-
-  const growthKeyMap = {
-    "MGA By VEH": "mgaVeh",
-  };
+  // ✅ Auto-select if there’s only one growth option
+    useEffect(() => {
+    if (growthOptions.length === 1) {
+      setSelectedGrowth(growthOptions[0]);
+     }
+    }, []);
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -105,7 +106,6 @@ function MGABranchesBarChartPage() {
     return Object.keys(totals)
       .map((b) => {
         const resultVal = counts[b] ? totals[b] / counts[b] : 0;
-
         return {
           name: b,
           city: cityMap[b],
@@ -168,6 +168,7 @@ function MGABranchesBarChartPage() {
           chartData={chartData}
           selectedGrowth={selectedGrowth}
           decimalPlaces={0}
+          chartType="MGABranchesBarChart"
         />
       )}
     </Box>

@@ -13,30 +13,29 @@ function ReferenceePage() {
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [channels, setChannels] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("referencee"));
+  const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const channelOptions = ["Arena", "Nexa"];
-
+  
   const growthOptions = [
-    "E-B",
-    "E-R",
-    "B-R",
+    "E-B %",
+    "E-R %",
+    "B-R %",
   ];
 
   const growthKeyMap = {
-    "E-B": "percentageEnquiryBooking",
-    "E-R": "percentageEnquiryInvoice",
-    "B-R": "percentageBookingInvoice",
+    "E-B %": "percentageEnquiryBooking",
+    "E-R %": "percentageEnquiryInvoice",
+    "B-R %": "percentageBookingInvoice",
   };
 
-  const readCityName = (row) =>
-    row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
+  useEffect(() => {
+    const savedGrowth = getSelectedGrowth("referencee");
+    if (savedGrowth) setSelectedGrowthState(savedGrowth);
+  }, []);
 
+  const readCityName = (row) => row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
   const readGrowthValue = (row, apiKey) => {
     const raw = row?.[apiKey];
     if (raw == null) return 0;
@@ -50,37 +49,27 @@ function ReferenceePage() {
       try {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
-
         for (const m of activeMonths) {
           let query = `?&months=${m}`;
           if (channels.length === 1) query += `&channels=${channels[0]}`;
-
           const data = await fetchData(`/api/referencee/referencee_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
           combined.push({ month: m, data: safeData });
         }
-
         setSummary(combined);
       } catch (error) {
         console.error("fetchCitySummary error:", error);
       }
     };
-
     fetchCitySummary();
   }, [months, channels]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
-
     const apiKey = growthKeyMap[selectedGrowth];
     const cities = new Set();
-
-    summary.forEach(({ data }) =>
-      (data || []).forEach((r) => cities.add(readCityName(r)))
-    );
-
+    summary.forEach(({ data }) => (data || []).forEach((r) => cities.add(readCityName(r))));
     const sortedCities = sortCities([...cities]);
-
     const formatted = summary.map(({ month, data }) => {
       const entry = { month };
       sortedCities.forEach((city) => (entry[city] = 0));
@@ -90,7 +79,6 @@ function ReferenceePage() {
       });
       return entry;
     });
-
     return { formatted, sortedCities };
   };
 
@@ -99,7 +87,7 @@ function ReferenceePage() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">REFERENCE REPORT</Typography>
+        <Typography variant="h4">REFRERENCE REPORT</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/referencee")}>Graph</Button>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/referencee-bar-chart")}>CityWise</Button>
@@ -131,18 +119,12 @@ function ReferenceePage() {
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
         <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            {selectedGrowth}
-          </Typography>
+          <Typography variant="h6" sx={{ mb: 1 }}>{selectedGrowth}</Typography>
           <GrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
-            decimalDigits={0}
-            showPercent={[
-              "E-B",
-              "E-R",
-              "B-R",
-            ].includes(selectedGrowth)}
+            decimalDigits={1}
+            showPercent={true}
           />
         </Box>
       )}

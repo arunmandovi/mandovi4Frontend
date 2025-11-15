@@ -1,11 +1,17 @@
 // src/pages/AdminDashboard.js
 import { useState, useEffect } from "react";
+import { Button } from "@mui/material";
 import axiosInstance from "../../api/axiosConfig";
 import { useNavigate } from "react-router-dom";
 import "../../styles/AdminDashboard.css";
 
 function AdminDashboard() {
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    navigate("/AdminLogin");
+  };
 
   const [newAdmin, setNewAdmin] = useState({
     adminnName: "",
@@ -260,12 +266,14 @@ function AdminDashboard() {
           <button onClick={() => navigate("/EmployeeLogin")}>
             Go to Employee Login
           </button>
-          <button
-            onClick={() => navigate("/AdminLogin")}
-            style={{ marginLeft: "10px" }}
+          <Button 
+            variant="contained" 
+            color="error"
+            onClick={handleLogout}
+            sx={{ ml: 2 }}
           >
             Logout
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -10,6 +10,7 @@ import {
   ListItemText,
   Button,
 } from "@mui/material";
+
 import {
   LineChart,
   Line,
@@ -21,6 +22,7 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
+
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 import GrowthButtons from "../../components/GrowthButtons";
@@ -31,7 +33,13 @@ function TATPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-    const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("tat"));
+
+  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+
+  useEffect(() => {
+    const saved = getSelectedGrowth("tat");
+    if (saved) setSelectedGrowthState(saved);
+  }, []);
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
@@ -47,7 +55,6 @@ function TATPage() {
     PMS: "paidService",
   };
 
-  // Preferred city order for tooltip
   const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
 
   // ---------- Fetch city summary ----------
@@ -77,7 +84,6 @@ function TATPage() {
     fetchCitySummary();
   }, [months]);
 
-  // ---------- Helpers ----------
   const readCityName = (row) => {
     if (!row) return "";
     return (
@@ -111,12 +117,12 @@ function TATPage() {
     for (const key of Object.keys(row)) {
       const v = row[key];
       if (typeof v === "number") return v;
-      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
+      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/))
+        return v;
     }
     return undefined;
   };
 
-  // Converts seconds (or numeric time) into HH:MM:SS
   const formatSecondsToHHMMSS = (seconds) => {
     if (isNaN(seconds)) return "00:00:00";
     const h = Math.floor(seconds / 3600)
@@ -148,7 +154,6 @@ function TATPage() {
         let parsed = 0;
 
         if (typeof val === "string" && val.includes(":")) {
-          // Already in HH:MM:SS format
           const parts = val.split(":").map(Number);
           parsed = parts[0] * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
         } else {
@@ -159,16 +164,15 @@ function TATPage() {
       });
       return entry;
     });
+
     return { data: result, keys: allCities };
   };
 
   const { data: chartData, keys: cityKeys } = buildChartData(summary);
 
-  // ---------- Custom Tooltip ----------
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null;
 
-    // Reorder cities: Bangalore → Mysore → Mangalore → others alphabetically
     const sortedPayload = [...payload].sort((a, b) => {
       const aCity = a.name;
       const bCity = b.name;
@@ -204,31 +208,33 @@ function TATPage() {
     );
   };
 
-  // ---------- Render ----------
   return (
-        <Box sx={{ p: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
-            }}
-          >
-            <Typography variant="h4">TAT REPORT</Typography>
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat")}>Graph</Button>
-              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>CityWise</Button>
-              <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>BranchWise</Button>
-            </Box>
-          </Box>
+    <Box sx={{ p: 3 }}>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">TAT REPORT</Typography>
 
-      {/* Filters Section */}
-      <SlicerFilters
-      monthOptions={monthOptions}
-      months={months}
-      setMonths={setMonths}
-      />
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat")}>
+            Graph
+          </Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>
+            CityWise
+          </Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>
+            BranchWise
+          </Button>
+        </Box>
+      </Box>
+
+      <SlicerFilters monthOptions={monthOptions} months={months} setMonths={setMonths} />
 
       <GrowthButtons
         growthOptions={growthOptions}
@@ -275,18 +281,62 @@ function TATPage() {
                   position: "insideLeft",
                 }}
               />
+
               <Tooltip content={<CustomTooltip />} />
               <Legend />
 
+              {/* ---------- GLOW GRADIENTS ---------- */}
+              <defs>
+                {cityKeys.map((key, idx) => {
+                  const hue = (idx * 60) % 360;
+                  return (
+                    <linearGradient
+                      id={`color-${key}`}
+                      key={idx}
+                      x1="0"
+                      y1="0"
+                      x2="1"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor={`hsl(${hue}, 100%, 70%)`} stopOpacity={1} />
+                      <stop offset="50%" stopColor={`hsl(${hue}, 100%, 55%)`} stopOpacity={0.9} />
+                      <stop offset="100%" stopColor={`hsl(${hue}, 100%, 40%)`} stopOpacity={0.8} />
+                    </linearGradient>
+                  );
+                })}
+              </defs>
+
+              {/* ---------- NEON SHINING LINES ---------- */}
               {cityKeys.map((key, idx) => (
                 <Line
                   key={key}
                   dataKey={key}
                   type="monotone"
-                  stroke={`hsl(${(idx * 60) % 360}, 70%, 45%)`}
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  isAnimationActive={false}
+                  stroke={`url(#color-${key})`}
+                  strokeWidth={4}
+                  dot={{
+                    r: 5,
+                    fill: `hsl(${(idx * 60) % 360}, 100%, 65%)`,
+                    stroke: "white",
+                    strokeWidth: 1.5,
+                  }}
+                  activeDot={{
+                    r: 7,
+                    fill: `hsl(${(idx * 60) % 360}, 100%, 75%)`,
+                    stroke: "#fff",
+                    strokeWidth: 2,
+                    style: { filter: "drop-shadow(0 0 6px rgba(255,255,255,0.8))" },
+                  }}
+                  isAnimationActive={true}
+                  animationDuration={1300}
+                  animationEasing="ease-out"
+                  style={{
+                    filter: `
+                      drop-shadow(0 0 5px hsla(0,0%,100%,0.6))
+                      drop-shadow(0 0 8px hsla(0,0%,100%,0.45))
+                      drop-shadow(0 3px 4px rgba(0,0,0,0.25))
+                    `,
+                  }}
                 >
                   <LabelList
                     dataKey={key}
@@ -298,10 +348,15 @@ function TATPage() {
                       return (
                         <text
                           x={x}
-                          y={y - 5}
+                          y={y - 6}
                           textAnchor="middle"
                           fontSize={11}
                           fill="#333"
+                          style={{
+                            paintOrder: "stroke",
+                            stroke: "white",
+                            strokeWidth: 2,
+                          }}
                         >
                           {formatSecondsToHHMMSS(value)}
                         </text>

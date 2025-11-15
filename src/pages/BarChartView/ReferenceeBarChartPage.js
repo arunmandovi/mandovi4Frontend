@@ -22,15 +22,15 @@ function ReferenceeBarChartPage() {
   const halfYearOptions = ["H1", "H2"];
 
   const growthOptions = [
-    "E-B",
-    "E-R",
-    "B-R",
+    "E-B %",
+    "E-R %",
+    "B-R %",
   ];
 
   const growthKeyMap = {
-    "E-B": "percentageEnquiryBooking",
-    "E-R": "percentageEnquiryInvoice",
-    "B-R": "percentageBookingInvoice",
+    "E-B %": "percentageEnquiryBooking",
+    "E-R %": "percentageEnquiryInvoice",
+    "B-R %": "percentageBookingInvoice",
   };
 
   useEffect(() => {

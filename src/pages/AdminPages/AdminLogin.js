@@ -1,5 +1,4 @@
-// src/pages/AdminLogin.js
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axiosInstance from "../../api/axiosConfig";
 import { useNavigate } from "react-router-dom";
 import "../../styles/AdminLogin.css";
@@ -8,12 +7,20 @@ function AdminLogin() {
   const [form, setForm] = useState({ adminnId: "", adminnPassword: "" });
   const navigate = useNavigate();
 
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (token) {
+      navigate("/AdminDashboard");
+    }
+  }, [navigate]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const res = await axiosInstance.post(
         "/api/adminn/login_adminn",
-        null, // backend expects RequestParams
+        null,
         {
           params: {
             adminnId: form.adminnId,
@@ -22,15 +29,13 @@ function AdminLogin() {
         }
       );
 
-      // Save admin info if the backend returns it
+      // 🔥 Save admin token
       if (res?.data?.adminnId) {
-        localStorage.setItem("adminnId", res.data.adminnId);
+        localStorage.setItem("adminToken", res.data.adminnId);
       }
 
-      // Redirect to AdminDashboard
       navigate("/AdminDashboard");
     } catch (err) {
-      console.error(err?.response?.data || err);
       alert(err?.response?.data || "Admin login failed");
     }
   };
@@ -47,6 +52,7 @@ function AdminLogin() {
           onChange={(e) => setForm({ ...form, adminnId: e.target.value })}
           required
         />
+
         <input
           type="password"
           placeholder="Password"
@@ -58,11 +64,7 @@ function AdminLogin() {
         <button type="submit">Login</button>
 
         <div className="extra-buttons">
-          <button
-            type="button"
-            className="back-btn"
-            onClick={() => navigate("/")}
-          >
+          <button type="button" className="back-btn" onClick={() => navigate("/")}>
             Go Back
           </button>
         </div>

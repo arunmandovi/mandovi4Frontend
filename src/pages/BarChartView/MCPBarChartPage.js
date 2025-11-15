@@ -16,16 +16,22 @@ function MCPBarChartPage() {
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("mcp"));
 
-  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
   const channelOptions = ["ARENA", "NEXA"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
 
-  const growthOptions = ["MCP NO"]; 
+  const growthOptions = ["MCP NO"];
+  const growthKeyMap = { "MCP NO": "mcp" };
 
-  const growthKeyMap = {
-    "MCP NO": "mcp",
-  };
+   // ✅ Auto-select the only growth option when the page loads
+  useEffect(() => {
+    if (!selectedGrowth && growthOptions.length === 1) {
+      const defaultGrowth = growthOptions[0];
+      setSelectedGrowthState(defaultGrowth);
+      setSelectedGrowth(defaultGrowth, "mcp");
+    }
+  }, [selectedGrowth]);
 
   useEffect(() => {
     const fetchCitySummary = async () => {
@@ -50,8 +56,13 @@ function MCPBarChartPage() {
 
   const readGrowthValue = (row, apiKey) => {
     const candidates = [
-      apiKey, apiKey?.toLowerCase(), apiKey?.toUpperCase(),
-      apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(), "value","growth","val",
+      apiKey,
+      apiKey?.toLowerCase(),
+      apiKey?.toUpperCase(),
+      apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(),
+      "value",
+      "growth",
+      "val",
     ];
     for (const key of candidates) {
       if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null) return row[key];
@@ -68,6 +79,7 @@ function MCPBarChartPage() {
     const apiKey = growthKeyMap[selectedGrowth];
     const totals = {};
     const counts = {};
+
     (dataArr || []).forEach((row) => {
       const city = readCityName(row);
       const val = readGrowthValue(row, apiKey);
@@ -77,38 +89,38 @@ function MCPBarChartPage() {
         counts[city] = (counts[city] || 0) + 1;
       }
     });
-    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
-    const allCities = Object.keys(totals);
-    const sortedCities = [
-      ...preferredOrder.filter((c) =>
-        allCities.some((x) => x.toLowerCase() === c.toLowerCase())
-      ),
-      ...allCities
-        .filter(
-          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
-        )
-        .sort((a, b) => a.localeCompare(b)),
-    ];
-    return sortedCities.map((city) => ({
+
+    // Include all known cities even if they have no value
+    const knownCities = ["Bangalore", "Mysore", "Mangalore"];
+    const allCities = Array.from(new Set([...knownCities, ...Object.keys(totals)]));
+
+    return allCities.map((city) => ({
       city,
       value: parseFloat(((totals[city] || 0) / (counts[city] || 1)).toFixed(1)),
     }));
   };
 
-  const chartData =
-    selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
+  const chartData = selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">MCP REPORT (City-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mcp")}>Graph</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mcp-bar-chart")}>CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mcp_branches-bar-chart")}>BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/mcp")}>
+            Graph
+          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/mcp-bar-chart")}>
+            CityWise
+          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/mcp_branches-bar-chart")}>
+            BranchWise
+          </Button>
         </Box>
       </Box>
 
+      {/* Filters */}
       <SlicerFilters
         monthOptions={monthOptions}
         months={months}
@@ -124,6 +136,7 @@ function MCPBarChartPage() {
         setHalfYear={setHalfYear}
       />
 
+      {/* Growth Selector */}
       <GrowthButtons
         growthOptions={growthOptions}
         selectedGrowth={selectedGrowth}
@@ -133,15 +146,17 @@ function MCPBarChartPage() {
         }}
       />
 
+      {/* Chart */}
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
       ) : summary.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
-        <CityBarChart chartData={chartData} 
-        selectedGrowth={selectedGrowth} 
-        decimalPlaces={0} 
-        showPercent={false}
+        <CityBarChart
+          chartData={chartData}
+          selectedGrowth={selectedGrowth}
+          showPercent={"falseNumber"} 
+          decimalPlaces={0}
         />
       )}
     </Box>

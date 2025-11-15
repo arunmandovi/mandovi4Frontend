@@ -1,4 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Button } from "@mui/material";
+import { useState } from "react";
 import "../styles/Navbar.css";
 
 function Layout() {
@@ -6,16 +8,16 @@ function Layout() {
   const location = useLocation();
   const currentPath = location.pathname.toLowerCase();
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const handleLogout = () => {
     navigate("/EmployeeLogin");
   };
 
-  // ✅ Determine view mode (normal / bar-chart / branches-bar-chart)
   let viewMode = "default";
   if (currentPath.includes("branches-bar-chart")) viewMode = "branches-bar-chart";
   else if (currentPath.includes("bar-chart")) viewMode = "bar-chart";
 
-  // ✅ All dashboard modules
   const modules = [
     "loadd",
     "per_vehicle",
@@ -37,7 +39,6 @@ function Layout() {
     "profit_loss",
   ];
 
-  // ✅ Build dynamic link
   const buildLink = (module) => {
     if (viewMode === "bar-chart") return `/DashboardHome/${module}-bar-chart`;
     if (viewMode === "branches-bar-chart")
@@ -48,15 +49,33 @@ function Layout() {
   return (
     <div className="layout-container">
       <nav className="navbar">
-        {modules.map((module) => (
-          <Link key={module} to={buildLink(module)}>
-            {formatLabel(module)}
-          </Link>
-        ))}
 
-        <button className="logout-button" onClick={handleLogout}>
-          Logout
+        {/* Hamburger button for small screens */}
+        <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
+          ☰
         </button>
+
+        {/* Navigation links */}
+        <div className={`nav-links ${menuOpen ? "show" : ""}`}>
+          {modules.map((module) => (
+            <Link
+              key={module}
+              to={buildLink(module)}
+              onClick={() => setMenuOpen(false)}
+            >
+              {formatLabel(module)}
+            </Link>
+          ))}
+        </div>
+
+        <Button 
+          variant="contained" 
+          color="error"
+          onClick={handleLogout}
+          sx={{ ml: 2 }}
+        >
+          Logout
+        </Button>
       </nav>
 
       <main className="content">
@@ -66,7 +85,6 @@ function Layout() {
   );
 }
 
-// ✅ Label formatter with readable titles
 function formatLabel(name) {
   const specialCases = {
     loadd: "Load",

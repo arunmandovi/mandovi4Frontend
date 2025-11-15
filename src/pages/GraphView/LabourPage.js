@@ -13,15 +13,11 @@ function LabourPage() {
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [channels, setChannels] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("labour"));
+  const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const channelOptions = ["Arena", "Nexa"];
-
+  
   const growthOptions = [
     "Service Growth %",
     "BodyShop Growth %",
@@ -44,9 +40,12 @@ function LabourPage() {
     "Others Growth %": "growthOthers",
   };
 
-  const readCityName = (row) =>
-    row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
+  useEffect(() => {
+    const savedGrowth = getSelectedGrowth("labour");
+    if (savedGrowth) setSelectedGrowthState(savedGrowth);
+  }, []);
 
+  const readCityName = (row) => row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
   const readGrowthValue = (row, apiKey) => {
     const raw = row?.[apiKey];
     if (raw == null) return 0;
@@ -60,37 +59,27 @@ function LabourPage() {
       try {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
-
         for (const m of activeMonths) {
           let query = `?&months=${m}`;
           if (channels.length === 1) query += `&channels=${channels[0]}`;
-
           const data = await fetchData(`/api/labour/labour_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
           combined.push({ month: m, data: safeData });
         }
-
         setSummary(combined);
       } catch (error) {
         console.error("fetchCitySummary error:", error);
       }
     };
-
     fetchCitySummary();
   }, [months, channels]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
-
     const apiKey = growthKeyMap[selectedGrowth];
     const cities = new Set();
-
-    summary.forEach(({ data }) =>
-      (data || []).forEach((r) => cities.add(readCityName(r)))
-    );
-
+    summary.forEach(({ data }) => (data || []).forEach((r) => cities.add(readCityName(r))));
     const sortedCities = sortCities([...cities]);
-
     const formatted = summary.map(({ month, data }) => {
       const entry = { month };
       sortedCities.forEach((city) => (entry[city] = 0));
@@ -100,7 +89,6 @@ function LabourPage() {
       });
       return entry;
     });
-
     return { formatted, sortedCities };
   };
 
@@ -112,8 +100,8 @@ function LabourPage() {
         <Typography variant="h4">LABOUR REPORT</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/labour")}>Graph</Button>
-                    <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/labour-bar-chart")}>CityWise</Button>
-                    <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/labour_branches-bar-chart")}>BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/labour-bar-chart")}>CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/labour_branches-bar-chart")}>BranchWise</Button>
         </Box>
       </Box>
 
@@ -141,23 +129,12 @@ function LabourPage() {
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
         <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            {selectedGrowth}
-          </Typography>
+          <Typography variant="h6" sx={{ mb: 1 }}>{selectedGrowth}</Typography>
           <GrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
             decimalDigits={1}
-            showPercent={[
-              "Service Growth %",
-              "BodyShop Growth %",
-              "SR&BR Growth %",
-              "Free Service Growth %",
-              "PMS Growth %",
-              "FPR Growth %",
-              "RR Growth %",
-              "Others Growth %",
-            ].includes(selectedGrowth)}
+            showPercent={true}
           />
         </Box>
       )}

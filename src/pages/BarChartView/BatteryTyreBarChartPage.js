@@ -20,15 +20,17 @@ function BatteryTyreBarChartPage() {
   const halfYearOptions = ["H1", "H2"];
 
   const growthOptions = [
-    "Battery Profit %",
-    "Tyre Profit %",
-    "Battery&Tyre Profit %",
+    "Battery Qty", "Tyre Qty", "Battery Profit", "Tyre Profit", "BatteryTyre Profit","Battery Growth","Tyre Growth",
   ];
 
   const growthKeyMap = {
-    "Battery Profit %": "batteryPercentageProfit",
-    "Tyre Profit %": "tyrePercentageProfit",
-    "Battery&Tyre Profit %": "batteryTyrePercentageProfit",
+    "Battery Qty": "batteryQty",
+    "Tyre Qty": "tyreQty",
+    "Battery Profit": "batteryProfit",
+    "Tyre Profit": "tyreProfit",
+    "BatteryTyre Profit": "batteryTyreProfit",
+    "Battery Growth": "sparesBatteryGrowth",
+    "Tyre Growth": "sparesTyreGrowth",
   };
 
   useEffect(() => {
@@ -138,7 +140,18 @@ function BatteryTyreBarChartPage() {
       ) : summary.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
-        <CityBarChart chartData={chartData} selectedGrowth={selectedGrowth} decimalPlaces={0} />
+        <CityBarChart
+          chartData={chartData}
+          selectedGrowth={selectedGrowth}
+          decimalPlaces={
+            selectedGrowth === "Battery Growth" || selectedGrowth === "Tyre Growth"
+              ? 1
+              : 0
+          }
+          showPercent={
+            selectedGrowth === "Battery Growth" || selectedGrowth === "Tyre Growth"
+          }
+        />
       )}
     </Box>
   );

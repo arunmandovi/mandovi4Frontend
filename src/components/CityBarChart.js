@@ -16,14 +16,46 @@ import InsideBarLabel from "../utils/InsideBarLabel";
 const CityBarChart = ({
   chartData = [],
   selectedGrowth = "",
-  decimalPlaces = 1, // ✅ Always default to 1 decimal
-  showPercent = true, // ✅ Determines whether to show % or ₹
+  decimalPlaces = 1,
+  showPercent = true, // true → %, false → , "falseNumber" → plain number
 }) => {
+  // ✅ Ensure all missing or null values become 0
+  const safeData = chartData.map((d) => ({
+    ...d,
+    value:
+      d.value === null || d.value === undefined || d.value === ""
+        ? 0
+        : Number(d.value),
+  }));
+
+  // ✅ Calculate Y-axis domain
+  const values = safeData.map((d) => d.value);
+  const maxValue = Math.max(...values);
+  const minValue = Math.min(...values);
+  const domain =
+    showPercent === true && (maxValue >= 100 || minValue <= -100)
+      ? [-100, 100]
+      : [Math.min(minValue, 0), Math.max(maxValue, 0)];
+
   // ---------- Tooltip ----------
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const { value, payload: data } = payload[0];
       const city = data?.city ?? data?.name ?? "";
+
+      // 💬 Format value based on showPercent mode
+      let formattedValue;
+      if (showPercent === true) {
+        formattedValue = `${Number(value).toFixed(decimalPlaces)}%`;
+      } else if (showPercent === false) {
+        formattedValue = ` ${Number(value).toLocaleString("en-IN", {
+          maximumFractionDigits: decimalPlaces,
+        })}`;
+      } else if (showPercent === "falseNumber") {
+        formattedValue = `${Number(value).toLocaleString("en-IN", {
+          maximumFractionDigits: decimalPlaces,
+        })}`;
+      }
 
       return (
         <Box
@@ -37,13 +69,7 @@ const CityBarChart = ({
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {city}
           </Typography>
-          <Typography variant="body2">
-            {showPercent
-              ? `${Number(value).toFixed(decimalPlaces)}%`
-              : `₹ ${Number(value).toLocaleString("en-IN", {
-                  maximumFractionDigits: 0,
-                })}`}
-          </Typography>
+          <Typography variant="body2">{formattedValue}</Typography>
         </Box>
       );
     }
@@ -69,36 +95,70 @@ const CityBarChart = ({
 
       <ResponsiveContainer width="100%" height="92%">
         <BarChart
-          data={chartData}
+          data={safeData}
           margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
         >
+          {/* ✅ Gradient + shadow */}
+          <defs>
+            <linearGradient id="bar3dGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="hsla(238, 62%, 63%, 1.00)" />
+              <stop offset="50%" stopColor="hsla(238, 62%, 63%, 1.00)" />
+              <stop offset="100%" stopColor="hsla(238, 62%, 63%, 1.00)" />
+            </linearGradient>
+            <filter id="barShadow" x="-20%" y="-20%" width="150%" height="150%">
+              <feDropShadow dx="4" dy="4" stdDeviation="4" floodColor="#a1a1a1" />
+            </filter>
+          </defs>
+
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="city" tick={{ fontSize: 12 }} />
+
+          {/* ✅ Dynamic Y-axis formatting */}
           <YAxis
+            domain={domain}
             tick={{ fontSize: 12 }}
-            tickFormatter={(val) =>
-              showPercent
-                ? `${Number(val).toFixed(decimalPlaces)}%`
-                : `₹ ${Number(val).toLocaleString("en-IN", {
-                    maximumFractionDigits: 0,
-                  })}`
-            }
+            tickFormatter={(val) => {
+              if (showPercent === true)
+                return `${Number(val).toFixed(decimalPlaces)}%`;
+              if (showPercent === false)
+                return ` ${Number(val).toLocaleString("en-IN", {
+                  maximumFractionDigits: 0,
+                })}`;
+              if (showPercent === "falseNumber")
+                return `${Number(val).toLocaleString("en-IN", {
+                  maximumFractionDigits: 0,
+                })}`;
+              return val;
+            }}
             label={{
-              value: showPercent ? "Growth %" : "Amount (₹)",
+              value:
+                showPercent === true
+                  ? ""
+                  : showPercent === false
+                  ? ""
+                  : "Value",
               angle: -90,
               position: "insideLeft",
             }}
           />
+
           <Tooltip content={<CustomTooltip />} />
           <ReferenceLine
-          y={0}
-          stroke="#000"
-          strokeWidth={2.5}
-          ifOverflow="extendDomain"
-          alwaysShow={true}
+            y={0}
+            stroke="#000"
+            strokeWidth={2.5}
+            ifOverflow="extendDomain"
+            alwaysShow={true}
           />
 
-          <Bar dataKey="value" fill="#1976d2" barSize={35} isAnimationActive={false}>
+          <Bar
+            dataKey="value"
+            fill="url(#bar3dGradient)"
+            barSize={100}
+            isAnimationActive={true}
+            radius={[6, 6, 0, 0]}
+            style={{ filter: "url(#barShadow)" }}
+          >
             <LabelList
               dataKey="value"
               content={(props) => (
