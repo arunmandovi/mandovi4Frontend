@@ -16,29 +16,32 @@ function AdminLogin() {
   }, [navigate]);
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await axiosInstance.post(
-        "/api/adminn/login_adminn",
-        null,
-        {
-          params: {
-            adminnId: form.adminnId,
-            adminnPassword: form.adminnPassword,
-          },
-        }
-      );
-
-      // 🔥 Save admin token
-      if (res?.data?.adminnId) {
-        localStorage.setItem("adminToken", res.data.adminnId);
+  e.preventDefault();
+  try {
+    const res = await axiosInstance.post(
+      "/api/adminn/login_adminn",
+      null,
+      {
+        params: {
+          adminnId: form.adminnId,
+          adminnPassword: form.adminnPassword,
+        },
       }
+    );
 
-      navigate("/AdminDashboard");
-    } catch (err) {
-      alert(err?.response?.data || "Admin login failed");
+    // 🔥 Save admin token
+    if (res?.data?.adminnId) {
+      localStorage.setItem("adminToken", res.data.adminnId);
+
+      // ⏳ Save last activity timestamp for auto-logout
+      localStorage.setItem("adminLastActive", Date.now());
     }
-  };
+
+    navigate("/AdminDashboard");
+  } catch (err) {
+    alert(err?.response?.data || "Admin login failed");
+  }
+};
 
   return (
     <div className="login-container">

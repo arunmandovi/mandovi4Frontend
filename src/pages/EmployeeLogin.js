@@ -22,10 +22,13 @@ function EmployeeLogin() {
         }
       );
   
-      // ✅ Save login status (backend may not return token, so save true)
+      // Save login status
       localStorage.setItem("employeeToken", "true");
   
-      // Redirect to dashboard
+      // ⏳ save last activity timestamp
+      localStorage.setItem("employeeLastActive", Date.now());
+  
+      // redirect to dashboard
       navigate("/DashboardHome/loadd");
     } catch (err) {
       const msg = err?.response?.data || err.message || "Login failed";

@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "../styles/Navbar.css";
 
 function Layout() {
@@ -10,8 +10,17 @@ function Layout() {
 
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // 🔥 Reset activity timestamp when user navigates to another page
+  useEffect(() => {
+    localStorage.setItem("employeeLastActive", Date.now());
+  }, [location.pathname]);
+
   const handleLogout = () => {
-    navigate("/EmployeeLogin");
+    localStorage.removeItem("employeeToken");
+    localStorage.removeItem("employeeLastActive");
+
+    // Hard redirect so route protection always runs
+    window.location.href = "/EmployeeLogin";
   };
 
   let viewMode = "default";
@@ -50,12 +59,10 @@ function Layout() {
     <div className="layout-container">
       <nav className="navbar">
 
-        {/* Hamburger button for small screens */}
         <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
           ☰
         </button>
 
-        {/* Navigation links */}
         <div className={`nav-links ${menuOpen ? "show" : ""}`}>
           {modules.map((module) => (
             <Link
@@ -68,8 +75,8 @@ function Layout() {
           ))}
         </div>
 
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           color="error"
           onClick={handleLogout}
           sx={{ ml: 2 }}

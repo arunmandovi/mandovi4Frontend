@@ -10,7 +10,8 @@ const UploadNavbar = () => {
   
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
-    navigate("/AdminLogin");
+    localStorage.removeItem("adminLastActive");
+    window.location.href = "/AdminLogin";  // safest logout
   };
 
   return (
