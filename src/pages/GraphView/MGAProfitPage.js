@@ -86,9 +86,9 @@ function MGAProfitPage() {
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">MGA PROFIT REPORT</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga_profit")}>Graph</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga_profit-bar-chart")}>CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga_profit_branches-bar-chart")}>BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga_profit")}>Graph-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga_profit-bar-chart")}>BarChart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mga_profit_branches-bar-chart")}>BarChart-BranchWise</Button>
         </Box>
       </Box>
 

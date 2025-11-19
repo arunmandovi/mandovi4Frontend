@@ -91,11 +91,12 @@ function LoaddPage() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">LOAD REPORT</Typography>
+        <Typography variant="h4">LOAD GRAPH(CityWise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd")}>Graph</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd-bar-chart")}>CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}>BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd")}>Graph-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd-bar-chart")}>BarChart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}>BarChart-BranchWise</Button>
         </Box>
       </Box>
 

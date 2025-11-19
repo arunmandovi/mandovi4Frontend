@@ -3,23 +3,28 @@ import React from "react";
 const CustomGrowthTooltip = ({ active, payload, label, formatter }) => {
   if (!active || !payload || payload.length === 0) return null;
 
-  // ✅ Filter values: show only non-zero & valid data points
-  const filteredPayload = payload.filter((item) => {
-    const v = Number(item.value);
-    return v !== 0 && !isNaN(v);
-  });
+  // ⭐ FIX: Sort order of cities inside tooltip
+  const ORDER = ["Bangalore", "Mysore", "Mangalore"];
 
-  if (filteredPayload.length === 0) return null;
+  const sortedPayload = [...payload].sort(
+    (a, b) => ORDER.indexOf(a.name) - ORDER.indexOf(b.name)
+  );
 
   return (
-    <div style={{ background: "#fff", border: "1px solid #ccc", padding: "8px", borderRadius: "6px" }}>
-      <p><strong>{label}</strong></p>
-      {filteredPayload.map((item, i) => (
-        <p key={i} style={{ margin: 0 }}>
-          <span style={{ color: item.color, fontWeight: "bold" }}>
-            {item.name}:
-          </span>{" "}
-          {formatter ? formatter(item.value) : item.value}
+    <div
+      style={{
+        background: "#fff",
+        padding: "10px 12px",
+        borderRadius: "6px",
+        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+      }}
+    >
+      <p style={{ margin: 0, fontWeight: "bold" }}>{label}</p>
+
+      {sortedPayload.map((entry) => (
+        <p key={entry.name} style={{ margin: 0, color: entry.color }}>
+          <strong>{entry.name}: </strong>
+          {formatter(entry.value)}
         </p>
       ))}
     </div>

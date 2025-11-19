@@ -94,16 +94,29 @@ function LoaddBranchesBarChartPage() {
     })).sort((a,b)=>b.value-a.value);
   };
 
-  const chartData = selectedGrowth && summary.length>0 ? buildCombinedAverageData(summary) : [];
+  const chartData = selectedGrowth && summary.length > 0 
+  ? buildCombinedAverageData(summary)
+      .filter(item => {
+        if (selectedGrowth === "BodyShop Growth %" || selectedGrowth === "BS on FPR 2024-25 %" || selectedGrowth === "BS on FPR 2025-26 %") {
+          return item.name !== "Vittla" && item.name !== "Naravi" && item.name !== "Gowribidanur" && item.name !== "Malur SOW" &&
+          item.name !== "Maluru WS" && item.name !== "Kollegal" && item.name !== "Narasipura" && item.name !== "Nagamangala" &&
+          item.name !== "Maddur" && item.name !== "Somvarpet" && item.name !== "Krishnarajapet" && item.name !== "ChamrajNagar" &&
+          item.name !== "KRS Road" && item.name !== "Naravi" && item.name !== "Gowribidanur" && item.name !== "Malur SOW" && 
+          item.name !== "Balmatta" && item.name !== "Bantwal" && item.name !== "Nexa Service" && item.name !== "Kadaba" && item.name !== "Sujith Bagh Lane";
+        }
+        return true;
+      })
+  : [];
 
   return (
     <Box sx={{p:3}}>
       <Box sx={{display:"flex", justifyContent:"space-between", alignItems:"center", mb:3}}>
         <Typography variant="h4">LOAD REPORT (Branch-wise)</Typography>
         <Box sx={{display:"flex", gap:1}}>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/loadd")}>Graph</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/loadd-bar-chart")}>CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/loadd_branches-bar-chart")}>BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd")}>Graph-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd-bar-chart")}>BarChart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}>BarChart-BranchWise</Button>
         </Box>
       </Box>
 

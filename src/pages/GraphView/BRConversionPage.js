@@ -17,12 +17,7 @@ function BRConversionPage() {
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
 
   const growthOptions = [
-    "Arena BR Conversion %",
-    "Nexa BR Conversion %",
-    "Arena&Nexa BR Conversion %",
-    "Arena Total Amount",
-    "Nexa Total Amount",
-    "Arena&Nexa Total Amount",
+    "Arena BR Conversion %", "Nexa BR Conversion %", "Arena&Nexa BR Conversion %", "Arena Total Amount", "Nexa Total Amount", "Arena&Nexa Total Amount",
   ];
 
   const growthKeyMap = {
@@ -98,9 +93,9 @@ function BRConversionPage() {
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">BR CONVERSION REPORT</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion")}>Graph</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}>CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion")}>Graph-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}>BarChart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>BarChart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -129,8 +124,8 @@ function BRConversionPage() {
           <GrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
-            decimalDigits={1}
-            showPercent={percentGrowthOptions.includes(selectedGrowth)}
+            decimalDigits={["Arena BR Conversion %", "Nexa BR Conversion %", "Arena&Nexa BR Conversion %"].includes(selectedGrowth) ? 1 : 0}
+            showPercent={selectedGrowth.includes("%")}
           />
         </Box>
       )}

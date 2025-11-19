@@ -7,7 +7,7 @@ import AdminLogin from "./pages/AdminPages/AdminLogin";
 import AdminDashboard from "./pages/AdminPages/AdminDashboard";
 import Layout from "./components/Layout"; // ✅ Navbar + Outlet
 
-// Employee dashboard graph pages
+// Graph pages
 import BatteryTyrePage from "./pages/GraphView/BatteryTyrePage";
 import BRConversionPage from "./pages/GraphView/BRConversionPage";
 import LabourPage from "./pages/GraphView/LabourPage";
@@ -30,7 +30,10 @@ import SparesPage from "./pages/GraphView/SparesPage";
 import TATPage from "./pages/GraphView/TATPage";
 import VASPage from "./pages/GraphView/VASPage";
 
-// Admin upload pages
+// BranchWise Graph pages
+import LoaddBranchWisePage from "./pages/BranchWiseGraph/LoaddBranchWisePage";
+
+// File upload pages
 import BatteryTyreUploadPage from "./pages/FileUpload/BatteryTyreUploadPage";
 import BRConversionUploadPage from "./pages/FileUpload/BRConversionUploadPage";
 import LabourUploadPage from "./pages/FileUpload/LabourUpload";
@@ -49,7 +52,7 @@ import SparesUploadPage from "./pages/FileUpload/SparesUploadPage";
 import TATUploadPage from "./pages/FileUpload/TATUploadPage";
 import VASUploadPage from "./pages/FileUpload/VASUploadPage";
 
-// Employee Dashboard BarChart Pages
+// BarChart Pages
 import BatteryTyreBarChartPage from "./pages/BarChartView/BatteryTyreBarChartPage";
 import BRConversionBarChartPage from "./pages/BarChartView/BRConversionBarChartPage";
 import LabourBarChartPage from "./pages/BarChartView/LabourBarChartPage";
@@ -140,12 +143,13 @@ function App() {
           {/* Default route → Battery & Tyre */}
           <Route index element={<Navigate to="battery_tyre" replace />} />
 
-          {/* 🧭 Employee Dashboard Pages */}
+          {/* 🧭 CityWise & BranchWise Graph Pages */}
           <Route path="battery_tyre" element={<BatteryTyrePage />} />
           <Route path="br_conversion" element={<BRConversionPage />} />
           <Route path="labour" element={<LabourPage />} />
           <Route path="per_vehicle" element={<PerVehiclePage />} />
           <Route path="loadd" element={<LoaddPage />} />
+          <Route path="loadd_branches" element={<LoaddBranchWisePage />} />
           <Route path="mcp" element={<MCPPage />} />
           <Route path="mga" element={<MGAPage />} />
           <Route path="mga_profit" element={<MGAProfitPage />} />

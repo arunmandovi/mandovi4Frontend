@@ -5,7 +5,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   CartesianGrid,
   ResponsiveContainer,
   LabelList,
@@ -14,20 +13,64 @@ import CustomGrowthTooltip from "./CustomGrowthTooltip";
 
 const GrowthLineChart = ({
   chartData,
-  cityKeys,
-  decimalDigits,
-  showPercentage,
-  showPercent = false,
+  cityKeys = [],
+  decimalDigits = 1,
+  showPercent, // true | false | "falseNumber"
 }) => {
+  // Desired final visual order
+  const DESIRED_ORDER = ["Bangalore", "Mysore", "Mangalore"];
+
+  // Normalizer
+  const normalize = (k = "") =>
+    String(k).toLowerCase().replace(/[^a-z]/g, "");
+
+  const desiredNorm = DESIRED_ORDER.map((x) => normalize(x));
+
+  // Sort cities in forced order
+  const sortedCityKeys = [...cityKeys].sort((a, b) => {
+    const na = normalize(a);
+    const nb = normalize(b);
+
+    const ia = desiredNorm.indexOf(na);
+    const ib = desiredNorm.indexOf(nb);
+
+    if (ia !== -1 && ib !== -1) return ia - ib;
+    if (ia !== -1 && ib === -1) return -1;
+    if (ia === -1 && ib !== -1) return 1;
+
+    return na.localeCompare(nb);
+  });
+
   const filteredData = chartData.filter((row) =>
-    cityKeys.some((key) => Number(row[key]) !== 0)
+    sortedCityKeys.some((key) => Number(row[key]) !== 0)
   );
 
+  const COLOR_MAP = {
+    Bangalore: "#B30000",
+    Mysore: "#003399",
+    Mangalore: "rgba(101, 189, 7, 1)",
+    BANGALORE: "#B30000",
+    MYSORE: "#003399",
+    MANGALORE: "rgba(101, 189, 7, 1)",
+  };
+
+  // Indian numbering format
+  const formatIndian = (num) => num.toLocaleString("en-IN");
+
+  // FINAL VALUE FORMATTER
   const formatValue = (value) => {
     const num = Number(value) || 0;
-    return showPercent
-      ? `${num.toFixed(decimalDigits)}%`
-      : num.toFixed(decimalDigits);
+
+    if (showPercent === true) {
+      return `${num.toFixed(decimalDigits)}%`;
+    }
+
+    if (showPercent === "falseNumber") {
+      return num.toFixed(decimalDigits); // Plain number
+    }
+
+    // showPercent === false → Indian formatted number
+    return formatIndian(Number(num.toFixed(decimalDigits)));
   };
 
   return (
@@ -37,66 +80,74 @@ const GrowthLineChart = ({
         margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
       >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+
+        {/* X-Axis: Only months, no city names */}
+        <XAxis
+          dataKey="month"
+          tick={{ fontSize: 12, fontWeight: 600 }}
+        />
+
         <YAxis
           label={{
-            value: showPercent ? "Growth %" : "Growth",
+            value: showPercent === true ? "Growth %" : "Growth",
             angle: -90,
             position: "insideLeft",
           }}
           tick={{ fontSize: 12 }}
+          tickFormatter={(value) =>
+            showPercent === true
+              ? `${Number(value).toFixed(decimalDigits)}%`
+              : showPercent === "falseNumber"
+              ? Number(value).toFixed(decimalDigits)
+              : formatIndian(Number(value.toFixed(decimalDigits)))
+          }
         />
-        <Tooltip content={<CustomGrowthTooltip formatter={formatValue} />} />
-        <Legend />
 
-        {/* ---------- Neon Glow Gradients ---------- */}
+        <Tooltip content={<CustomGrowthTooltip formatter={formatValue} />} />
+
+        {/* ❌ Removed LEGEND (this was showing city names under X-axis) */}
+        {/* <Legend /> */}
+
+        {/* Gradients */}
         <defs>
-          {cityKeys.map((key, idx) => {
+          {sortedCityKeys.map((key, idx) => {
             const hue = (idx * 60) % 360;
             return (
-              <linearGradient id={`color-${key}`} key={idx} x1="0" y1="0" x2="1" y2="1">
-                {/* bright top */}
-                <stop offset="0%" stopColor={`hsl(${hue}, 100%, 70%)`} stopOpacity={1} />
-                {/* neon glow */}
-                <stop offset="50%" stopColor={`hsl(${hue}, 100%, 55%)`} stopOpacity={0.9} />
-                {/* darker base */}
-                <stop offset="100%" stopColor={`hsl(${hue}, 100%, 40%)`} stopOpacity={0.8} />
+              <linearGradient
+                id={`color-${key}`}
+                key={key}
+                x1="0"
+                y1="0"
+                x2="1"
+                y2="1"
+              >
+                <stop offset="0%" stopColor={`hsl(${hue}, 100%, 70%)`} />
+                <stop offset="50%" stopColor={`hsl(${hue}, 100%, 55%)`} />
+                <stop offset="100%" stopColor={`hsl(${hue}, 100%, 40%)`} />
               </linearGradient>
             );
           })}
         </defs>
 
-        {/* ---------- Neon/Radium Shiny Lines ---------- */}
-        {cityKeys.map((key, idx) => (
+        {/* Lines */}
+        {sortedCityKeys.map((key) => (
           <Line
             key={key}
             type="monotone"
             dataKey={key}
-            stroke={`url(#color-${key})`}
+            stroke={COLOR_MAP[key] || "#000"}
             strokeWidth={4}
             dot={{
               r: 5,
-              fill: `hsl(${(idx * 60) % 360}, 100%, 65%)`,
+              fill: COLOR_MAP[key] || "#000",
               stroke: "white",
               strokeWidth: 1.5,
             }}
             activeDot={{
               r: 7,
-              fill: `hsl(${(idx * 60) % 360}, 100%, 75%)`,
+              fill: COLOR_MAP[key] || "#000",
               stroke: "#fff",
               strokeWidth: 2,
-              style: { filter: "drop-shadow(0 0 6px rgba(255,255,255,0.8))" },
-            }}
-            isAnimationActive={true}
-            animationDuration={800}
-            animationEasing="ease-out"
-            /* ✨ NEON GLOW EFFECT + SHINE */
-            style={{
-              filter: `
-                drop-shadow(0 0 6px hsla(0,0%,100%,0.6))
-                drop-shadow(0 0 10px hsla(0,0%,100%,0.4))
-                drop-shadow(0 3px 4px rgba(0,0,0,0.3))
-              `,
             }}
           >
             <LabelList

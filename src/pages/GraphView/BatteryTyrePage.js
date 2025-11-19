@@ -17,7 +17,7 @@ function BatteryTyrePage() {
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
 
   const growthOptions = [
-    "Battery Qty", "Tyre Qty", "Battery Profit", "Tyre Profit", "BatteryTyre Profit","Battery Growth","Tyre Growth",
+    "Battery Qty", "Tyre Qty", "Battery Profit", "Tyre Profit", "BatteryTyre Profit","Battery Growth %","Tyre Growth %",
   ];
 
   const growthKeyMap = {
@@ -26,8 +26,8 @@ function BatteryTyrePage() {
     "Battery Profit": "batteryProfit",
     "Tyre Profit": "tyreProfit",
     "BatteryTyre Profit": "batteryTyreProfit",
-    "Battery Growth": "sparesBatteryGrowth",
-    "Tyre Growth": "sparesTyreGrowth",
+    "Battery Growth %": "sparesBatteryGrowth",
+    "Tyre Growth %": "sparesTyreGrowth",
   };
 
   useEffect(() => {
@@ -88,9 +88,9 @@ function BatteryTyrePage() {
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">BATTERY & TYRE REPORT</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre")}>Graph</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre-bar-chart")}>CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre_branches-bar-chart")}>BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre")}>Graph-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre-bar-chart")}>BarChart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre_branches-bar-chart")}>BarChart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -119,8 +119,8 @@ function BatteryTyrePage() {
           <GrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
-            decimalDigits={0}
-            showPercent={false}
+            decimalDigits={["Battery Growth %","Tyre Growth %"].includes(selectedGrowth) ? 1 : 0}
+            showPercent={selectedGrowth.includes("%")}
           />
         </Box>
       )}

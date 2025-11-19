@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Box, Button } from "@mui/material";
-import { fetchData, uploadFile } from "../../api/uploadService"; // ✅ Only for fetch & upload
-import { deleteData } from "../../api/deleteService"; // ✅ NEW SEPARATE FILE
 import { apiModules } from "../../config/modules";
 import { useNavigate } from "react-router-dom";
+
+import {
+  fetchAllRecords,
+  filterByMonthYear,
+  uploadExcelFile,
+  deleteAllRecords,
+} from "../../services/uploadPageService";
 
 import UploadNavbar from "../../components/UploadNavbar";
 import { uploadNavbarButtons } from "../../config/uploadNavBarButtons";
@@ -11,95 +16,85 @@ import TitleBar from "../../components/common/TitleBar";
 import UploadSection from "../../components/common/UploadSection";
 import MonthYearFilter from "../../components/common/MonthYearFilter";
 import DataTable from "../../components/common/DataTable";
+import LoadingAnimation from "../../components/LoadingAnimation";
 
 function VASUploadPage() {
   const config = apiModules.find((m) => m.name === "VAS");
+
   const [tableData, setTableData] = useState([]);
   const [months, setMonths] = useState([]);
   const [years, setYears] = useState([]);
   const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   // 🔹 Fetch all data
   const handleFetch = async () => {
-    try {
-      const data = await fetchData(config.get);
-      setTableData(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Fetch all error:", err);
-      setTableData([]);
-    }
+    setLoading(true);
+    const data = await fetchAllRecords(config.get);
+    setTableData(data);
+    setLoading(false);
   };
 
-  // 🔹 Apply filter (multiple month/year support)
+  // 🔹 Apply filter
   const handleFilter = async () => {
-    if ((!months || months.length === 0) && (!years || years.length === 0)) {
-      alert("⚠ Please select at least one Month and/or Year before applying the filter.");
+    if (months.length === 0 && years.length === 0) {
+      alert("⚠ Please select Month or Year!");
       return;
     }
 
-    try {
-      const params = new URLSearchParams();
-      if (Array.isArray(months)) months.forEach((m) => params.append("months", m));
-      if (Array.isArray(years)) years.forEach((y) => params.append("years", y));
-
-      const url = `${config.getByMonthYear}?${params.toString()}`;
-      const data = await fetchData(url);
-      setTableData(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Filter error:", err);
-      setTableData([]);
-    }
+    setLoading(true);
+    const data = await filterByMonthYear(config.getByMonthYear, months, years);
+    setTableData(data);
+    setLoading(false);
   };
 
   // 🔹 Upload file
   const handleUpload = async () => {
-    if (!file) {
-      alert("⚠ Please select a file first!");
-      return;
-    }
+    if (!file) return alert("⚠ Select a file first!");
 
+    setLoading(true);
     try {
-      await uploadFile(config.upload, file);
+      await uploadExcelFile(config.upload, file);
       alert("✅ File uploaded successfully!");
       setFile(null);
       handleFetch();
     } catch (err) {
       alert("❌ Upload failed: " + (err.response?.data?.message || err.message));
     }
+    setLoading(false);
   };
 
-  // 🔹 Delete all data (using separate deleteService)
+  // 🔹 Delete all
   const handleDeleteAll = async () => {
-    if (!window.confirm("⚠ Are you sure you want to delete ALL VAS data? This action cannot be undone.")) {
-      return;
-    }
+    if (!window.confirm("⚠ Delete ALL VAS data?")) return;
 
+    setLoading(true);
     try {
-      const res = await deleteData(config.deleteAll);
-      alert("🗑️ All VAS data deleted successfully!");
+      await deleteAllRecords(config.deleteAll);
+      alert("🗑 All VAS data deleted!");
       setTableData([]);
     } catch (err) {
-      console.error("Delete all error:", err);
-      alert("❌ Failed to delete all data: " + (err.response?.data?.message || err.message));
+      alert("❌ Delete failed: " + (err.response?.data?.message || err.message));
     }
+    setLoading(false);
   };
 
   useEffect(() => {
     handleFetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 🔹 Show loader when loading
+  if (loading) return <LoadingAnimation />;
 
   return (
     <Box sx={{ width: "100%" }}>
-      {/* Fixed Upload Navbar */}
       <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1200 }}>
         <UploadNavbar buttons={uploadNavbarButtons} />
       </Box>
 
-      {/* Add top padding for fixed navbar */}
       <Box sx={{ pt: "140px" }}>
-        {/* TitleBar Row with Delete All + Back Button */}
         <Box
           sx={{
             display: "flex",
@@ -114,13 +109,12 @@ function VASUploadPage() {
             <Button variant="contained" color="error" onClick={handleDeleteAll}>
               Delete All
             </Button>
-            <Button variant="outlined" color="primary" onClick={() => navigate("/AdminDashboard")}>
+            <Button variant="outlined" onClick={() => navigate("/AdminDashboard")}>
               Back
             </Button>
           </Box>
         </Box>
 
-        {/* Main Content */}
         <Box sx={{ p: 3 }}>
           <UploadSection file={file} setFile={setFile} onUpload={handleUpload} />
 
@@ -133,7 +127,7 @@ function VASUploadPage() {
             onViewAll={handleFetch}
           />
 
-          <DataTable tableData={Array.isArray(tableData) ? tableData : []} />
+          <DataTable tableData={tableData} />
         </Box>
       </Box>
     </Box>

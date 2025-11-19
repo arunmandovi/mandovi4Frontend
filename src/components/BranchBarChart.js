@@ -86,6 +86,18 @@ const CappedBarShape = (props) => {
   );
 };
 
+const BRANCH_COLOR_MAP = {
+  // case-insensitive (we will lowercase keys)
+  Bangalore: "#B30000",   // Dark Red
+  mysore: "#003399",      // Dark Blue
+  Balmatta: "#006600",   // Dark Green
+
+  // add more if needed
+  udupi: "#B30000",
+  shimoga: "#003399",
+  hassan: "#006600",
+};
+
 
 /* ---------- Custom label ---------- */
 const CustomLabel = (props) => {
@@ -183,6 +195,50 @@ const BranchBarChart = ({
   const maxAbsValue = Math.max(Math.abs(maxValue), Math.abs(minValue));
   const shouldCapAt100 = showPercent && maxAbsValue > 100;
 
+  const BRANCH_NAME_COLORS = {
+    "ns palya": "#B30000", sarjapura: "#B30000", basaveshwarnagar: "#B30000", "kolar nexa": "#B30000", basavangudi: "#B30000",
+    gowribidanur: "#B30000", hennur: "#B30000", "jp nagar": "#B30000", kolar: "#B30000", "basavanagudi-sow": "#B30000",
+    "malur sow": "#B30000", "maluru ws": "#B30000", "uttarahali kengeri": "#B30000", vidyarannapura: "#B30000", 
+    vijayanagar: "#B30000", "wilson garden": "#B30000", yelahanka: "#B30000", "yeshwanthpur ws": "#B30000",
+    bannur: "#003399", chamrajnagar: "#003399", "hunsur road": "#003399", maddur: "#003399", gonikoppa: "#003399",
+    mandya: "#003399", "krs road": "#003399", kushalnagar: "#003399", krishnarajapet: "#003399", "mysore nexa": "#003399",
+    nagamangala: "#003399", somvarpet: "#003399", narasipura: "#003399", kollegal: "#003399",
+    balmatta: "rgba(6, 176, 6, 1)",
+    bantwal: "rgba(6, 176, 6, 1)",
+    vittla: "rgba(6, 176, 6, 1)",
+    kadaba: "rgba(6, 176, 6, 1)",
+    uppinangady: "rgba(6, 176, 6, 1)",
+    surathkal: "rgba(6, 176, 6, 1)",
+    sullia: "rgba(6, 176, 6, 1)",
+    adyar: "rgba(6, 176, 6, 1)",
+    "yeyyadi br": "rgba(6, 176, 6, 1)",
+    "nexa service": "rgba(6, 176, 6, 1)",
+    "sujith bagh lane": "rgba(6, 176, 6, 1)",
+    naravi: "rgba(6, 176, 6, 1)",
+  };
+
+  const CustomAxisTick = ({ x, y, payload }) => {
+  const branch = payload?.value || "";
+  const key = branch.toLowerCase();
+
+  const color = BRANCH_NAME_COLORS[key] || "#000"; // default = black
+
+  return (
+    <text
+      x={x}
+      y={y + 10}
+      textAnchor="end"
+      fill={color}
+      fontSize={14}
+      fontWeight="bold"
+      transform={`rotate(-45, ${x}, ${y + 10})`}
+    >
+      {branch}
+    </text>
+  );
+};
+
+
   // ✅ Domain logic
   let yAxisDomain;
   if (shouldCapAt100) {
@@ -230,11 +286,9 @@ const BranchBarChart = ({
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 11 }}
-            angle={-45}
-            textAnchor="end"
             interval={0}
-            height={70}
+            height={120}
+            tick={<CustomAxisTick />}
           />
           <YAxis
             allowDataOverflow

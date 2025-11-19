@@ -101,9 +101,9 @@ function PerVehicleBranchesBarChartPage() {
       <Box sx={{display:"flex", justifyContent:"space-between", alignItems:"center", mb:3}}>
         <Typography variant="h4">PER VEHICLE REPORT (Branch-wise)</Typography>
         <Box sx={{display:"flex", gap:1}}>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle")}>Graph</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle-bar-chart")}>CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle_branches-bar-chart")}>BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle")}>Graph-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle-bar-chart")}>BarChart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle_branches-bar-chart")}>BarChart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -124,7 +124,11 @@ function PerVehicleBranchesBarChartPage() {
       />
 
       {!selectedGrowth ? <Typography sx={{mt:2}}>👆 Select a growth type to view the chart below</Typography> :
-        <BranchBarChart chartData={chartData} selectedGrowth={selectedGrowth} chartType="MGABranchesBarChart"/>
+        <BranchBarChart 
+        chartData={chartData} 
+        selectedGrowth={selectedGrowth}
+        decimalPlaces={0} 
+        chartType="MGABranchesBarChart"/>
       }
     </Box>
   );

@@ -109,13 +109,13 @@ function MCPBarChartPage() {
         <Typography variant="h4">MCP REPORT (City-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/mcp")}>
-            Graph
+            Graph-CityWise
           </Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/mcp-bar-chart")}>
-            CityWise
+            BarChart-CityWise
           </Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/mcp_branches-bar-chart")}>
-            BranchWise
+            BarChart-BranchWise
           </Button>
         </Box>
       </Box>
