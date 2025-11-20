@@ -115,8 +115,8 @@ function MSGPBarChartPage() {
         <Typography variant="h4">MSGP REPORT (City-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp-bar-chart")}>BarChart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_branches-bar-chart")}>BarChart-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 

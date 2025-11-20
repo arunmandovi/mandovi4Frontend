@@ -96,8 +96,8 @@ function OilBranchesBarChartPage() {
         <Typography variant="h4">OIL REPORT (Branch-wise)</Typography>
         <Box sx={{display:"flex", gap:1}}>
           <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/oil")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/oil-bar-chart")}>BarChart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/oil_branches-bar-chart")}>BarChart-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/oil-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/oil_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 

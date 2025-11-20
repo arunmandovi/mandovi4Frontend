@@ -89,8 +89,8 @@ function BatteryTyrePage() {
         <Typography variant="h4">BATTERY & TYRE REPORT</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre-bar-chart")}>BarChart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre_branches-bar-chart")}>BarChart-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 

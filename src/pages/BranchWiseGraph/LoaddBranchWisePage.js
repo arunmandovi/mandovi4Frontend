@@ -159,10 +159,10 @@ function LoaddBranchWisePage() {
             Graph-BranchWise
           </Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/loadd-bar-chart")}>
-            BarChart-CityWise
+            Bar Chart-CityWise
           </Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}>
-            BarChart-BranchWise
+            Bar Chart-BranchWise
           </Button>
         </Box>
       </Box>

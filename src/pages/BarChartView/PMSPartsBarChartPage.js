@@ -127,8 +127,8 @@ function PMSPartsBarChartPage() {
         <Typography variant="h4">PMS PARTS REPORT (City-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/pms_parts")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/pms_parts-bar-chart")}>BarChart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/pms_parts_branches-bar-chart")}>BarChart-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/pms_parts-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/pms_parts_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 

@@ -100,8 +100,8 @@ function SparesBranchesBarChartPage() {
         <Typography variant="h4">SPARES REPORT (Branch-wise)</Typography>
         <Box sx={{display:"flex", gap:1}}>
           <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/spares")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/spares-bar-chart")}>BarChart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/spares_branches-bar-chart")}>BarChart-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/spares-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/spares_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 

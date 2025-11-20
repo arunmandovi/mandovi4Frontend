@@ -87,8 +87,8 @@ function MSGPProfitPage() {
         <Typography variant="h4">MSGP PROFIT REPORT</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_profit")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_profit-bar-chart")}>BarChart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_profit_branches-bar-chart")}>BarChart-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_profit-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_profit_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 

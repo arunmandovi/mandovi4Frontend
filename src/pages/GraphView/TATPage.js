@@ -224,8 +224,8 @@ function TATPage() {
         <Box sx={{ display: "flex", gap: 1 }}>
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat")}>Graph-BranchWise</Button>
-            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>BarChart-CityWise</Button>
-            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>BarChart-BranchWise</Button>
+            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>Bar Chart-CityWise</Button>
+            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>Bar Chart-BranchWise</Button>
           </Box>
         </Box>
       </Box>

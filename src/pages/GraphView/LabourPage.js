@@ -100,8 +100,8 @@ function LabourPage() {
         <Typography variant="h4">LABOUR REPORT</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/labour")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/labour-bar-chart")}>BarChart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/labour_branches-bar-chart")}>BarChart-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/labour-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/labour_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 

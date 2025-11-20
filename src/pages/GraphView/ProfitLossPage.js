@@ -113,8 +113,8 @@ function ProfitLossPage() {
         <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle")}>P&L PerVehicle Graph</Button>
         <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss")}>P&L Table</Button>
         <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_srbr")}>SR&BR Table</Button>
-        <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss-bar-chart")}>CityWise Chart</Button>
-        <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_branches-bar-chart")}>BranchWise Chart</Button>
+        <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss-bar-chart")}>Bar Chart-CityWise</Button>
+        <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_branches-bar-chart")}>Bar Chart-BranchWise</Button>
       </Box>
     </Box>
 

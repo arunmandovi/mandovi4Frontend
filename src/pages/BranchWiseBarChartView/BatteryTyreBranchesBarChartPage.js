@@ -22,7 +22,7 @@ function BatteryTyreBranchesBarChartPage() {
   const halfYearOptions = ["H1","H2"];
 
   const growthOptions = [
-    "Battery Qty", "Tyre Qty", "Battery Profit", "Tyre Profit", "BatteryTyre Profit","Spares Battery Growth %","Spares Tyre Growth %",
+    "Battery Qty", "Tyre Qty", "Battery Profit", "Tyre Profit", "BatteryTyre Profit","Battery GR %","Tyre GR %",
   ];
 
   const growthKeyMap = {
@@ -31,8 +31,8 @@ function BatteryTyreBranchesBarChartPage() {
     "Battery Profit": "batteryProfit",
     "Tyre Profit": "tyreProfit",
     "BatteryTyre Profit": "batteryTyreProfit",
-    "Spares Battery Growth %": "sparesBatteryGrowth",
-    "Spares Tyre Growth %": "sparesTyreGrowth",
+    "Battery GR %": "sparesBatteryGrowth",
+    "Tyre GR %": "sparesTyreGrowth",
   };
 
   const qtyProfitOptions = [
@@ -106,8 +106,8 @@ function BatteryTyreBranchesBarChartPage() {
         <Typography variant="h4">BATTERY & TYRE REPORT (Branch-wise)</Typography>
         <Box sx={{display:"flex", gap:1}}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre-bar-chart")}>BarChart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre_branches-bar-chart")}>BarChart-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/battery_tyre_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 

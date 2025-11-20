@@ -11,12 +11,14 @@ function PerVehicleBranchesBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [years, setYears] = useState(["2025"]);
   const [cities, setCities] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const yearOptions = ["2024", "2025"];
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
   const qtrWiseOptions = ["Qtr1","Qtr2","Qtr3","Qtr4"];
   const halfYearOptions = ["H1","H2"];
@@ -49,6 +51,7 @@ function PerVehicleBranchesBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length>0) params.append("months", months.join(","));
+        if (years.length>0) params.append("years", years.join(","));
         if (cities.length>0) params.append("cities", cities.join(","));
         if (qtrWise.length>0) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length>0) params.append("halfYear", halfYear.join(","));
@@ -61,7 +64,7 @@ function PerVehicleBranchesBarChartPage() {
       }
     };
     fetchSummary();
-  }, [months,cities,qtrWise,halfYear]);
+  }, [months,years,cities,qtrWise,halfYear]);
 
   const readBranchName = (row) => row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
   const readCityName = (row) => row?.city || row?.City || row?.cityName || row?.CityName || "";
@@ -102,13 +105,14 @@ function PerVehicleBranchesBarChartPage() {
         <Typography variant="h4">PER VEHICLE REPORT (Branch-wise)</Typography>
         <Box sx={{display:"flex", gap:1}}>
           <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle-bar-chart")}>BarChart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle_branches-bar-chart")}>BarChart-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
       <SlicerFilters
         monthOptions={monthOptions} months={months} setMonths={setMonths}
+        yearOptions={yearOptions} years={years} setYears={setYears}
         cityOptions={cityOptions} cities={cities} setCities={setCities}
         qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
         halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}

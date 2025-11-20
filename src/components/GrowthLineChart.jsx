@@ -154,11 +154,27 @@ const GrowthLineChart = ({
               dataKey={key}
               position="top"
               fontSize={13}
-              formatter={formatValue}
-              style={{
-                paintOrder: "stroke",
-                stroke: "white",
-                strokeWidth: 1,
+              formatter={(val) => formatValue(val)}
+              content={(props) => {
+                const { x, y, value } = props;
+                const isNegative = Number(value) < 0;
+            
+                return (
+                  <text
+                    x={x}
+                    y={y - 5}
+                    textAnchor="middle"
+                    fill={isNegative ? "rgba(215, 7, 7, 1)" : "#000000ff"}
+                    fontSize={16}
+                    style={{
+                      paintOrder: "stroke",
+                      stroke: "white",
+                      strokeWidth: 1,
+                    }}
+                  >
+                    {formatValue(value)}
+                  </text>
+                );
               }}
             />
           </Line>

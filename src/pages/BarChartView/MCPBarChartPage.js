@@ -112,10 +112,10 @@ function MCPBarChartPage() {
             Graph-CityWise
           </Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/mcp-bar-chart")}>
-            BarChart-CityWise
+            Bar Chart-CityWise
           </Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/mcp_branches-bar-chart")}>
-            BarChart-BranchWise
+            Bar Chart-BranchWise
           </Button>
         </Box>
       </Box>

@@ -115,8 +115,8 @@ function LoaddBarChartPage() {
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd")}>Graph-CityWise</Button>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd_branches")}>Graph-BranchWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd-bar-chart")}>BarChart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}>BarChart-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 

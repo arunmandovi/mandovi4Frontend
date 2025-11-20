@@ -191,8 +191,8 @@ function TATBarChartPage() {
 
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat")}>Graph-BranchWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>BarChart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>BarChart-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -247,9 +247,9 @@ function TATBarChartPage() {
               {/* ✅ 3D Gradient & Shadow Definitions */}
               <defs>
                 <linearGradient id="bar3dGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsla(238, 62%, 63%, 1.00)" />
-                  <stop offset="50%" stopColor="hsla(238, 62%, 63%, 1.00)" />
-                  <stop offset="100%" stopColor="hsla(238, 62%, 63%, 1.00)" />
+                  <stop offset="0%" stopColor="#05f105" />
+                  <stop offset="50%" stopColor="#05f105" />
+                  <stop offset="100%" stopColor="#05f105" />
                 </linearGradient>
                 <filter id="barShadow" x="-20%" y="-20%" width="150%" height="150%">
                   <feDropShadow dx="4" dy="4" stdDeviation="4" floodColor="#a1a1a1" />

@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   LabelList,
   ReferenceLine,
+  Cell
 } from "recharts";
 import { Box, Typography } from "@mui/material";
 import InsideBarLabel from "../utils/InsideBarLabel";
@@ -152,24 +153,29 @@ const CityBarChart = ({
           />
 
           <Bar
-            dataKey="value"
-            fill="url(#bar3dGradient)"
-            barSize={100}
-            isAnimationActive={true}
-            radius={[6, 6, 0, 0]}
-            style={{ filter: "url(#barShadow)" }}
-          >
-            <LabelList
-              dataKey="value"
-              content={(props) => (
-                <InsideBarLabel
-                  {...props}
-                  decimalPlaces={decimalPlaces}
-                  showPercent={showPercent}
-                />
-              )}
-            />
-          </Bar>
+  dataKey="value"
+  barSize={100}
+  isAnimationActive={true}
+  radius={[6, 6, 0, 0]}
+>
+  {safeData.map((entry, index) => (
+    <Cell
+      key={`cell-${index}`}
+      fill={entry.value < 0 ? "#ff0000" : "#05f105"} // Red below 0, Green above 0
+    />
+  ))}
+
+  <LabelList
+    dataKey="value"
+    content={(props) => (
+      <InsideBarLabel
+        {...props}
+        decimalPlaces={decimalPlaces}
+        showPercent={showPercent}
+      />
+    )}
+  />
+</Bar>
         </BarChart>
       </ResponsiveContainer>
     </Box>
