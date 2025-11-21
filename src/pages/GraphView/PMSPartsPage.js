@@ -142,6 +142,7 @@ function PMSPartsPage() {
             cityKeys={cityKeys}
             decimalDigits={1}
             showPercent={true}
+            lowThreshold={98}
           />
         </Box>
       )}

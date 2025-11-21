@@ -2,7 +2,7 @@ import * as React from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box, Typography } from "@mui/material";
 
-export default function DataTable({ data, title, hiddenColumns = [] }) {
+export default function DataTable({ data, title, hiddenColumns = [], decimalPlaces = 0 }) {
   if (!data || data.length === 0) {
     return (
       <Typography variant="body1" color="text.secondary">
@@ -13,12 +13,16 @@ export default function DataTable({ data, title, hiddenColumns = [] }) {
 
   const formatValue = (value) => {
     if (value === null || value === undefined) return "-";
-    if (typeof value === "number") return value.toFixed(2);
-    if (!isNaN(value) && value !== "-") return Number(value).toFixed(2);
+
+    // 🔹 If number → apply decimalPlaces
+    if (typeof value === "number") return value.toFixed(decimalPlaces);
+
+    // 🔹 If numeric string → convert & apply decimalPlaces
+    if (!isNaN(value) && value !== "-") return Number(value).toFixed(decimalPlaces);
+
     return value;
   };
 
-  // 🔹 Dynamically generate columns from object keys
   const allKeys = Object.keys(data[0]);
 
   const columns = allKeys
@@ -34,20 +38,15 @@ export default function DataTable({ data, title, hiddenColumns = [] }) {
       renderCell: (params) => {
         let value = params.value;
 
-        // ✅ Right-align percentage
+        // Right-align percentage text
         if (typeof value === "string" && value.includes("%")) {
-          return (
-            <Box sx={{ textAlign: "right", width: "100%" }}>{value}</Box>
-          );
+          return <Box sx={{ textAlign: "right", width: "100%" }}>{value}</Box>;
         }
 
-        // ✅ Apply 2-decimal formatting for numbers
-        const formattedValue = formatValue(value);
-        return formattedValue;
+        return formatValue(value);
       },
     }));
 
-  // 🔹 Generate rows for DataGrid
   const rows = data.map((row, index) => ({
     id: index + 1,
     ...row,

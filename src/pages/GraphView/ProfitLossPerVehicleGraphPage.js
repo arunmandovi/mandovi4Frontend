@@ -21,6 +21,7 @@ const timeline = [
   { label: "SR&BR Apr 25", key: "jun25_per_100k", month: "Jun" },
   { label: "SR&BR Apr 25", key: "jul25_per_100k", month: "Jul" },
   { label: "SR&BR Aug 25", key: "aug25_per_100k", month: "Aug" },
+  { label: "SR&BR Sep 25", key: "sep25_per_100k", month: "Sep" },
   { label: "SR&BR Apr 25", key: "total25_per_100k", month: "Total" },
 ];
 
@@ -80,7 +81,7 @@ export default function ProfitLossPerVehicleGraphPage() {
   /* ------- 2 DECIMAL FORMATTER ------- */
   const formatTwoDecimals = (value) => {
     if (value == null || isNaN(value)) return value;
-    return Number(value).toFixed(2);
+    return Number(value).toFixed(0);
   };
 
   return (

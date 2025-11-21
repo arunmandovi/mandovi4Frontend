@@ -153,6 +153,7 @@ function MGABarChartPage() {
         selectedGrowth={selectedGrowth} 
         decimalPlaces={0} 
         showPercent={selectedGrowth.includes("%")}
+        threshold={455}
         />
       )}
     </Box>

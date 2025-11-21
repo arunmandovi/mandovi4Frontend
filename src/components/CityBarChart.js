@@ -18,7 +18,8 @@ const CityBarChart = ({
   chartData = [],
   selectedGrowth = "",
   decimalPlaces = 1,
-  showPercent = true, // true → %, false → , "falseNumber" → plain number
+  showPercent = true,
+  threshold,
 }) => {
   // ✅ Ensure all missing or null values become 0
   const safeData = chartData.map((d) => ({
@@ -152,30 +153,25 @@ const CityBarChart = ({
             alwaysShow={true}
           />
 
-          <Bar
-  dataKey="value"
-  barSize={100}
-  isAnimationActive={true}
-  radius={[6, 6, 0, 0]}
->
-  {safeData.map((entry, index) => (
-    <Cell
-      key={`cell-${index}`}
-      fill={entry.value < 0 ? "#ff0000" : "#05f105"} // Red below 0, Green above 0
-    />
-  ))}
-
-  <LabelList
-    dataKey="value"
-    content={(props) => (
-      <InsideBarLabel
-        {...props}
-        decimalPlaces={decimalPlaces}
-        showPercent={showPercent}
-      />
-    )}
-  />
-</Bar>
+          <Bar dataKey="value" barSize={100} isAnimationActive={true} radius={[6, 6, 0, 0]}>
+            {safeData.map((entry, index) => (
+              <Cell
+                key={index}
+                fill={entry.value < threshold ? "#ff0000" : "#05f105"}
+              />
+            ))}
+          
+            <LabelList
+              dataKey="value"
+              content={(props) => (
+                <InsideBarLabel
+                  {...props}
+                  decimalPlaces={decimalPlaces}
+                  showPercent={showPercent}
+                />
+              )}
+            />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </Box>

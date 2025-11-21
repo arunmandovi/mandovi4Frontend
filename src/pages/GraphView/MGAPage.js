@@ -144,6 +144,7 @@ function MGAPage() {
             cityKeys={cityKeys}
             decimalDigits={0}
             showPercentage={true}
+            lowThreshold={455}
           />
         </Box>
       )}

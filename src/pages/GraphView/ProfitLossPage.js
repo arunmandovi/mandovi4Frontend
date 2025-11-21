@@ -17,28 +17,54 @@ function ProfitLossPage() {
     { code: "MLR", label: "Mangalore" },
   ];
 
-  // ✅ Fetch City Wise Summary
+  const CITY_ORDER = [ "Bangalore", "Mysore", "Mangalore" ];
+
   const loadCitySummary = async () => {
     try {
       const data = await fetchData("/api/profit_loss/profit_loss_summary");
-
-      const formatted = Array.isArray(data)
-        ? data.map((row) => ({
-            City: row.city || "-",
-            "Apr 2024": row.apr_24 ?? "-",
-            "May 2024": row.may_24 ?? "-",
-            "Jun 2024": row.jun_24 ?? "-",
-            "Jul 2024": row.jul_24 ?? "-",
-            "2024-25": row.total_24 ?? "-",
-            "Apr 2025": row.apr_25 ?? "-",
-            "May 2025": row.may_25 ?? "-",
-            "Jun 2025": row.jun_25 ?? "-",
-            "Jul 2025": row.jul_25 ?? "-",
-            "Aug 2025": row.aug_25 ?? "-",
-            "2025-26": row.fy_2025_26 ?? "-",
-          }))
-        : [];
-
+  
+      if (!Array.isArray(data)) {
+        setCitySummary([]);
+        return;
+      }
+  
+      let formatted = data.map((row) => ({
+        City: row.city || "-",
+        "Apr 2024": row.apr_24 ?? "-",
+        "May 2024": row.may_24 ?? "-",
+        "Jun 2024": row.jun_24 ?? "-",
+        "Jul 2024": row.jul_24 ?? "-",
+        "2024-25": row.total_24 ?? "-",
+        "Apr 2025": row.apr_25 ?? "-",
+        "May 2025": row.may_25 ?? "-",
+        "Jun 2025": row.jun_25 ?? "-",
+        "Jul 2025": row.jul_25 ?? "-",
+        "Aug 2025": row.aug_25 ?? "-",
+        "Sep 2025": row.sep_25 ?? "-",
+        "2025-26": row.fy_2025_26 ?? "-",
+      }));
+  
+      formatted.sort(
+        (a, b) => CITY_ORDER.indexOf(a.City) - CITY_ORDER.indexOf(b.City)
+      );
+  
+      const totalRow = { City: "Grand Total" };
+  
+      const columns = Object.keys(formatted[0]).filter((col) => col !== "City");
+  
+      columns.forEach((col) => {
+        let sum = 0;
+  
+        formatted.forEach((row) => {
+          const value = Number(row[col]);
+          if (!isNaN(value)) sum += value;
+        });
+  
+        totalRow[col] = sum.toFixed(2);
+      });
+  
+      formatted.push(totalRow);
+  
       setCitySummary(formatted);
     } catch (err) {
       console.error("City Summary Fetch Error:", err);
@@ -47,7 +73,18 @@ function ProfitLossPage() {
     }
   };
 
-  // ✅ Fetch Branch Wise Summary (supports filter)
+  const BRANCH_ORDER = [
+  "Wilson Garden", "Vijayanagar", "JP Nagar", "Yeshwanthpur WS", "Basaveshwarnagar", "Hennur", "Sarjapura",
+  "NS Palya", "Kolar","Gowribidanur", "Uttarahali Kengeri", "Vidyarannapura", "Yelahanka", "Malur SOW",
+  "Basavangudi", "Basavanagudi-SOW", "Kolar Nexa", "Maluru WS", "BANGALORE",
+
+  "KRS Road", "Hunsur Road", "Bannur", "Mandya", "Gonikoppa", "Kushalnagar", "ChamrajNagar",
+  "Krishnarajapet","Somvarpet", "Maddur", "Nagamangala", "Narasipura", "Mysore Nexa", "Kollegal", "MYSORE",
+   
+  "Balmatta", "Sujith Bagh Lane", "Nexa Service", "Yeyyadi BR", "Adyar", "Surathkal", "Bantwal",
+  "Uppinangady", "Sullia", "Kadaba", "Vittla", "Naravi", "MANGALORE"
+  ];
+
   const loadBranchSummary = async (cityFilter = null) => {
     try {
       let url = "/api/profit_loss/profit_loss_branch_summary";
@@ -71,8 +108,14 @@ function ProfitLossPage() {
             "Jun 2025": row.jun_25 ?? "-",
             "Jul 2025": row.jul_25 ?? "-",
             "Aug 2025": row.aug_25 ?? "-",
+            "Sep 2025": row.sep_25 ?? "-",
             "2025-26": row.fy_2025_26 ?? "-",
           }))
+          .sort((a, b) => {
+            return (
+              BRANCH_ORDER.indexOf(a.Branch) - BRANCH_ORDER.indexOf(b.Branch)
+            );
+          })
         : [];
 
       setBranchSummary(formatted);
@@ -118,7 +161,11 @@ function ProfitLossPage() {
       </Box>
     </Box>
 
-      <DataTable data={citySummary} title="📍 City Wise P&L Summary" />
+      <DataTable 
+      data={citySummary} 
+      title="📍 City Wise P&L Summary"
+      decimalPlaces={2}
+      />
 
       <Box sx={{ mt: 5, mb: 2, display: "flex", gap: 1 }}>
         <Button
@@ -139,7 +186,11 @@ function ProfitLossPage() {
         ))}
       </Box>
 
-      <DataTable data={branchSummary} title="🏢 Branch Wise P&L Summary" />
+      <DataTable 
+      data={branchSummary} 
+      title="🏢 Branch Wise P&L Summary"
+      decimalPlaces={2}
+      />
     </Box>
   );
 }

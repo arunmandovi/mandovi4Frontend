@@ -158,7 +158,12 @@ function PMSPartsBarChartPage() {
       ) : summary.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
-        <CityBarChart chartData={chartData} selectedGrowth={selectedGrowth} decimalPlaces={2} />
+        <CityBarChart 
+        chartData={chartData} 
+        selectedGrowth={selectedGrowth} 
+        decimalPlaces={2}
+        threshold={98}
+        />
       )}
     </Box>
   );

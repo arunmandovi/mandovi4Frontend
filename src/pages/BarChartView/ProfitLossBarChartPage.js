@@ -22,12 +22,14 @@ function ProfitLossBarChartPage() {
     "Jun 25",
     "Jul 25",
     "Aug 25",
+    "Sep 25",
     "2025 - 26",
     "SR&BR Apr 25",
     "SR&BR May 25",
     "SR&BR Jun 25",
     "SR&BR Jul 25",
     "SR&BR Aug 25",
+    "SR&BR Sep 25",
     "SR&BR 2025 - 26",
   ];
 
@@ -42,19 +44,21 @@ function ProfitLossBarChartPage() {
     "Jun 25": "jun_25",
     "Jul 25": "jul_25",
     "Aug 25": "aug_25",
+    "Sep 25": "sep_25",
     "2025 - 26": "fy_2025_26",
     "SR&BR Apr 25": "apr25_per_100k",
     "SR&BR May 25": "may25_per_100k",
     "SR&BR Jun 25": "jun25_per_100k",
     "SR&BR Jul 25": "jul25_per_100k",
     "SR&BR Aug 25": "aug25_per_100k",
+    "SR&BR Sep 25": "sep25_per_100k",
     "SR&BR 2025 - 26": "total25_per_100k",
   };
 
   const twoDecimalGrowthOptions = [
   "Apr 24", "May 24", "Jun 24", "Jul 24",
   "2024 - 25", "Apr 25", "May 25",  "Jun 25",
-  "Jul 25", "Aug 25", "2025 - 26",
+  "Jul 25", "Aug 25", "Sep 25", "2025 - 26",
 ];
 
   useEffect(() => {

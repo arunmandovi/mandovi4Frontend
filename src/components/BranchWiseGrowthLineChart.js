@@ -86,13 +86,24 @@ function BranchWiseGrowthLineChart({
             <LabelList
               dataKey={key}
               position="top"
-              formatter={(value) =>
-                value === null || value === undefined
-                  ? ""
-                  : showPercent
-                  ? `${value.toFixed(decimalDigits)}%`
-                  : value.toFixed(decimalDigits)
-              }
+              content={({ x, y, value }) => {
+                const isNegative = Number(value) < 0;
+                
+                return (
+                  <text
+                    x={x}
+                    y={y - 5}
+                    fill={isNegative ? "rgba(215, 7, 7, 1)" : "#000000ff"}
+                    fontSize={12}
+                    fontWeight="bold"
+                    textAnchor="middle"
+                  >
+                    {showPercent
+                      ? `${value.toFixed(decimalDigits)}%`
+                      : value.toFixed(decimalDigits)}
+                  </text>
+                );
+              }}
             />
           </Line>
         ))}

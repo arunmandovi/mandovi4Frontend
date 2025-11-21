@@ -15,7 +15,8 @@ const GrowthLineChart = ({
   chartData,
   cityKeys = [],
   decimalDigits = 1,
-  showPercent, // true | false | "falseNumber"
+  showPercent,
+  lowThreshold,
 }) => {
   // Desired final visual order
   const DESIRED_ORDER = ["Bangalore", "Mysore", "Mangalore"];
@@ -164,7 +165,13 @@ const GrowthLineChart = ({
                     x={x}
                     y={y - 5}
                     textAnchor="middle"
-                    fill={isNegative ? "rgba(215, 7, 7, 1)" : "#000000ff"}
+                    fill={
+                          Number(value) < 0
+                            ? "rgba(215, 7, 7, 1)"                                  
+                            : lowThreshold && Number(value) < lowThreshold
+                            ? "rgba(215, 7, 7, 1)"                                 
+                            : "#000000ff"                                         
+                        }
                     fontSize={16}
                     style={{
                       paintOrder: "stroke",
