@@ -1,4 +1,4 @@
-// FULL UPDATED CODE WITH TABLE SHOWING ONLY CHART MONTHS
+// FULL UPDATED CODE WITH TABLE SHOWING ONLY CHART MONTHS + RENAMED HEADERS
 import React, { useState, useEffect } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { fetchData } from "../../api/uploadService";
@@ -53,6 +53,14 @@ function LoaddPage() {
     "BS on FPR 2025-26 %": ["previousBSFPR", "currentBSFPR", "growthBSFPR"],
   };
 
+  // MAP FOR RENAMING HEADERS
+  const beautifyHeader = (key) => {
+    if (key.startsWith("previous")) return "2024-25";
+    if (key.startsWith("current")) return "2025-26";
+    if (key.startsWith("growth")) return "Growth";
+    return key;
+  };
+
   useEffect(() => {
     const saved = getSelectedGrowth("loadd");
     if (saved) setSelectedGrowthState(saved);
@@ -97,73 +105,73 @@ function LoaddPage() {
 
   // Build chart data
   const buildChartData = () => {
-  if (!selectedGrowth) return { formatted: [], sortedCities: [] };
+    if (!selectedGrowth) return { formatted: [], sortedCities: [] };
 
-  const apiKey = growthKeyMap[selectedGrowth];
-  const cities = new Set();
+    const apiKey = growthKeyMap[selectedGrowth];
+    const cities = new Set();
 
-  const filteredSummary = summary.filter((s) => s.data && s.data.length > 0);
+    const filteredSummary = summary.filter((s) => s.data && s.data.length > 0);
 
-  filteredSummary.forEach(({ data }) =>
-    (data || []).forEach((r) => cities.add(readCityName(r)))
-  );
+    filteredSummary.forEach(({ data }) =>
+      (data || []).forEach((r) => cities.add(readCityName(r)))
+    );
 
-  const sortedCities = sortCities([...cities]);
+    const sortedCities = sortCities([...cities]);
 
-  const formatted = filteredSummary.map(({ month, data }) => {
-    const row = { month };
-    sortedCities.forEach((c) => (row[c] = 0));
+    const formatted = filteredSummary.map(({ month, data }) => {
+      const row = { month };
+      sortedCities.forEach((c) => (row[c] = 0));
 
-    (data || []).forEach((r) => {
-      const c = readCityName(r);
-      row[c] = readGrowthValue(r, apiKey);
+      (data || []).forEach((r) => {
+        const c = readCityName(r);
+        row[c] = readGrowthValue(r, apiKey);
+      });
+
+      return row;
     });
 
-    return row;
-  });
-
-  return { formatted, sortedCities };
-};
+    return { formatted, sortedCities };
+  };
 
   const { formatted: chartData, sortedCities: cityKeys } = buildChartData();
 
   // Build pivot table using only chart months
   const buildPivotTable = () => {
-  if (!selectedGrowth) return [];
+    if (!selectedGrowth) return [];
+
+    const chartMonths = summary
+      .filter((s) => s.data && s.data.length > 0)
+      .map((s) => s.month);
+
+    const keys = valueKeyMap[selectedGrowth];
+    const citiesToShow = ["Bangalore", "Mysore", "Mangalore"];
+
+    const rows = [];
+
+    citiesToShow.forEach((city) => {
+      const r = { city };
+
+      chartMonths.forEach((m) => {
+        const summaryEntry = summary.find((x) => x.month === m);
+        const cityRow = summaryEntry?.data?.find((it) => readCityName(it) === city);
+
+        keys.forEach((k) => {
+          r[`${m}_${k}`] = cityRow ? readGrowthValue(cityRow, k) : 0;
+        });
+      });
+
+      rows.push(r);
+    });
+
+    return rows;
+  };
 
   const chartMonths = summary
     .filter((s) => s.data && s.data.length > 0)
     .map((s) => s.month);
 
-  const keys = valueKeyMap[selectedGrowth];
-  const citiesToShow = ["Bangalore", "Mysore", "Mangalore"];
-
-  const rows = [];
-
-  citiesToShow.forEach((city) => {
-    const r = { city };
-
-    chartMonths.forEach((m) => {
-      const summaryEntry = summary.find((x) => x.month === m);
-      const cityRow = summaryEntry?.data?.find((it) => readCityName(it) === city);
-
-      keys.forEach((k) => {
-        r[`${m}_${k}`] = cityRow ? readGrowthValue(cityRow, k) : 0;
-      });
-    });
-
-    rows.push(r);
-  });
-
-  return rows;
-};
-
-  const chartMonths = summary
-  .filter((s) => s.data && s.data.length > 0)
-  .map((s) => s.month);
-
-const tableData = buildPivotTable();
-const keys = selectedGrowth ? valueKeyMap[selectedGrowth] : [];
+  const tableData = buildPivotTable();
+  const keys = selectedGrowth ? valueKeyMap[selectedGrowth] : [];
 
   return (
     <Box sx={{ p: 3 }}>
@@ -239,18 +247,24 @@ const keys = selectedGrowth ? valueKeyMap[selectedGrowth] : [];
                   <th style={{ padding: 8, border: "1px solid #ccc" }}>City</th>
 
                   {chartMonths.map((m) => (
-                    <th key={m} colSpan={keys.length} style={{ padding: 8, border: "1px solid #ccc", textAlign: "center" }}>
+                    <th
+                      key={m}
+                      colSpan={keys.length}
+                      style={{ padding: 8, border: "1px solid #ccc", textAlign: "center" }}
+                    >
                       {m}
                     </th>
                   ))}
                 </tr>
 
+                {/* RENAMED HEADERS */}
                 <tr style={{ background: "#fafafa" }}>
                   <th style={{ padding: 8, border: "1px solid #ccc" }}></th>
+
                   {chartMonths.flatMap((m) =>
                     keys.map((k) => (
                       <th key={`${m}_${k}`} style={{ padding: 8, border: "1px solid #ccc" }}>
-                        {k}
+                        {beautifyHeader(k)}
                       </th>
                     ))
                   )}
@@ -260,7 +274,9 @@ const keys = selectedGrowth ? valueKeyMap[selectedGrowth] : [];
               <tbody>
                 {tableData.map((row, i) => (
                   <tr key={i}>
-                    <td style={{ padding: 8, border: "1px solid #ccc", fontWeight: "bold" }}>{row.city}</td>
+                    <td style={{ padding: 8, border: "1px solid #ccc", fontWeight: "bold" }}>
+                      {row.city}
+                    </td>
 
                     {chartMonths.flatMap((m) =>
                       keys.map((k) => {
@@ -301,10 +317,17 @@ const keys = selectedGrowth ? valueKeyMap[selectedGrowth] : [];
                         const prev = keys[0];
                         const curr = keys[1];
 
-                        const prevTotal = tableData.reduce((s, r) => s + (r[`${m}_${prev}`] || 0), 0);
-                        const currTotal = tableData.reduce((s, r) => s + (r[`${m}_${curr}`] || 0), 0);
+                        const prevTotal = tableData.reduce(
+                          (s, r) => s + (r[`${m}_${prev}`] || 0),
+                          0
+                        );
+                        const currTotal = tableData.reduce(
+                          (s, r) => s + (r[`${m}_${curr}`] || 0),
+                          0
+                        );
 
-                        const growth = prevTotal === 0 ? 0 : ((currTotal - prevTotal) / prevTotal) * 100;
+                        const growth =
+                          prevTotal === 0 ? 0 : ((currTotal - prevTotal) / prevTotal) * 100;
                         return (
                           <td key={`${m}_${k}`} style={{ padding: 8, border: "1px solid #ccc" }}>
                             {growth.toFixed(1)}%
