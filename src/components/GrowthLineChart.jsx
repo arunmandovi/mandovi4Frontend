@@ -17,6 +17,8 @@ const GrowthLineChart = ({
   decimalDigits = 1,
   showPercent,
   lowThreshold,
+  yAxisMin,
+  yAxisMax
 }) => {
   // Desired final visual order
   const DESIRED_ORDER = ["Bangalore", "Mysore", "Mangalore"];
@@ -94,6 +96,10 @@ const GrowthLineChart = ({
             angle: -90,
             position: "insideLeft",
           }}
+          domain={[
+            yAxisMin !== undefined ? yAxisMin : "auto",
+            yAxisMax !== undefined ? yAxisMax : "auto",
+          ]}
           tick={{ fontSize: 12 }}
           tickFormatter={(value) =>
             showPercent === true

@@ -143,6 +143,8 @@ function PMSPartsPage() {
             decimalDigits={1}
             showPercent={true}
             lowThreshold={98}
+            yAxisMin={95}  
+            yAxisMax={100}
           />
         </Box>
       )}
