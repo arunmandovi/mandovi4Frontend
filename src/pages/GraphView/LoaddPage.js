@@ -51,8 +51,8 @@ function LoaddPage() {
   };
 
   const beautifyHeader = (key) => {
-    if (key.startsWith("previous")) return "2024-25";
-    if (key.startsWith("current")) return "2025-26";
+    if (key.startsWith("previous")) return "LY";
+    if (key.startsWith("current")) return "TY";
     if (key.startsWith("growth")) return "GR %";
     return key;
   };

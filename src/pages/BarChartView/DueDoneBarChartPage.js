@@ -149,7 +149,7 @@ function DueDoneBarChartPage() {
       ) : summary.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
-        <CityBarChart chartData={chartData} selectedGrowth={selectedGrowth} decimalPlaces={1} />
+        <CityBarChart chartData={chartData} selectedGrowth={selectedGrowth} decimalPlaces={0} />
       )}
     </Box>
   );

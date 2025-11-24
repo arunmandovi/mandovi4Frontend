@@ -75,25 +75,47 @@ function DueDoneBranchesBarChartPage() {
   };
 
   const buildCombinedAverageData = (dataArr) => {
-    const apiKey = growthKeyMap[selectedGrowth];
-    const totals = {};
-    const counts = {};
-    const cityMap = {};
-    (dataArr || []).forEach((row)=>{
-      const branch = readBranchName(row);
-      const city = readCityName(row);
-      const val = readGrowthValue(row, apiKey);
-      if (val===null) return;
-      totals[branch] = (totals[branch]||0)+val;
-      counts[branch] = (counts[branch]||0)+1;
-      cityMap[branch] = city;
-    });
-    return Object.keys(totals).map((b)=>({
-      name:b,
-      city:cityMap[b],
-      value:counts[b]?totals[b]/counts[b]:0
-    })).sort((a,b)=>b.value-a.value);
-  };
+  const apiKey = growthKeyMap[selectedGrowth];
+
+  const totals = {};
+  const counts = {};
+  const cityMap = {};
+
+  (dataArr || []).forEach((row) => {
+    const branch = readBranchName(row);
+    const city = readCityName(row);
+
+    const val = readGrowthValue(row, apiKey);
+    if (val === null) return;
+
+    totals[branch] = (totals[branch] || 0) + val;
+    counts[branch] = (counts[branch] || 0) + 1;
+    cityMap[branch] = city;
+  });
+
+  // 1️⃣ Calculate average per branch
+  const resultValues = Object.keys(totals).map(
+    (b) => (counts[b] ? totals[b] / counts[b] : 0)
+  );
+
+  // 2️⃣ Calculate overall average
+  const overallAverage =
+    resultValues.reduce((sum, v) => sum + v, 0) / resultValues.length;
+
+  // 3️⃣ Build formatted array + color logic
+  return Object.keys(totals)
+    .map((b, i) => {
+      const resultVal = resultValues[i];
+      return {
+        name: b,
+        city: cityMap[b],
+        value: resultVal,
+        barColor: resultVal < overallAverage ? "red" : "#05f105ff",
+      };
+    })
+    .sort((a, b) => b.value - a.value);
+};
+
 
   const chartData = selectedGrowth && summary.length > 0 
   ? buildCombinedAverageData(summary)
@@ -108,6 +130,7 @@ function DueDoneBranchesBarChartPage() {
         return true;
       })
   : [];
+  
 
   return (
     <Box sx={{p:3}}>
@@ -143,6 +166,7 @@ function DueDoneBranchesBarChartPage() {
         chartData={chartData} 
         selectedGrowth={selectedGrowth} 
         showPercent={true}
+        decimalPlaces={0}
         />
       }
     </Box>
