@@ -1,5 +1,6 @@
 export const uploadNavbarButtons = [
   { label: "Load", path: "/loadd-upload" },
+  { label: "Due VS Done", path: "/due_done-upload" },
   { label: "BR Conversion", path: "/brconversion-upload" },
   { label: "Labour", path: "/labour-upload" },
   { label: "Spares", path: "/spares-upload" },

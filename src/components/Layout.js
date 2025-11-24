@@ -29,6 +29,7 @@ function Layout() {
 
   const modules = [
     "loadd",
+    "due_done",
     "per_vehicle",
     "br_conversion",
     "labour",
@@ -95,6 +96,7 @@ function Layout() {
 function formatLabel(name) {
   const specialCases = {
     loadd: "Load",
+    due_done: "Due VS Done",
     per_vehicle: "Per Vehicle",
     br_conversion: "BR Conversion",
     battery_tyre: "Battery & Tyre",

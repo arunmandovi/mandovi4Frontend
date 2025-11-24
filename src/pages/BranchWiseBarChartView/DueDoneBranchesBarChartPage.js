@@ -7,7 +7,7 @@ import GrowthButtons from "../../components/GrowthButtons";
 import BranchBarChart from "../../components/BranchBarChart";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
-function LoaddBranchesBarChartPage() {
+function DueDoneBranchesBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -15,32 +15,32 @@ function LoaddBranchesBarChartPage() {
   const [channels, setChannels] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("due_done"));
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
   const channelOptions = ["ARENA","NEXA"];
   const qtrWiseOptions = ["Qtr1","Qtr2","Qtr3","Qtr4"];
   const halfYearOptions = ["H1","H2"];
-  
+
   const growthOptions = [
-    "Service Growth %","BodyShop Growth %","Free Service Growth %",
-    "PMS Growth %","FPR Growth %","RR Growth %","Others Growth %","BS on FPR 2024-25 %","BS on FPR 2025-26 %",
+    "Done %"
   ];
   const growthKeyMap = {
-    "Service Growth %": "growthService",
-    "BodyShop Growth %": "growthBodyShop",
-    "Free Service Growth %": "growthFreeService",
-    "PMS Growth %": "growthPMS",
-    "FPR Growth %": "growthFPR",
-    "RR Growth %": "growthRR",
-    "Others Growth %": "growthOthers",
-    "BS on FPR 2024-25 %": "previousBSFPR",
-    "BS on FPR 2025-26 %": "currentBSFPR",
+    "Done %": "percentageDone",
   };
 
   useEffect(() => {
-    const savedGrowth = getSelectedGrowth("loadd");
+        if (!selectedGrowth && growthOptions.length === 1) {
+          const defaultGrowth = growthOptions[0];
+          setSelectedGrowthState(defaultGrowth);
+          setSelectedGrowth(defaultGrowth, "due_done");
+        }
+      }, [selectedGrowth]);
+  
+
+  useEffect(() => {
+    const savedGrowth = getSelectedGrowth("due_done");
     if (savedGrowth) setSelectedGrowthState(savedGrowth);
   }, []);
 
@@ -53,11 +53,11 @@ function LoaddBranchesBarChartPage() {
         if (channels.length>0) params.append("channels", channels.join(","));
         if (qtrWise.length>0) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length>0) params.append("halfYear", halfYear.join(","));
-        const endpoint = `/api/loadd/loadd_branch_summary${params.toString()? "?"+params.toString():""}`;
+        const endpoint = `/api/due_done/due_done_branch_summary${params.toString()? "?"+params.toString():""}`;
         const data = await fetchData(endpoint);
         setSummary(Array.isArray(data)?data:[]);
       } catch (error) {
-        console.error("Error fetching load branch summary:", error);
+        console.error("Error fetching due vs done branch summary:", error);
         setSummary([]);
       }
     };
@@ -112,12 +112,12 @@ function LoaddBranchesBarChartPage() {
   return (
     <Box sx={{p:3}}>
       <Box sx={{display:"flex", justifyContent:"space-between", alignItems:"center", mb:3}}>
-        <Typography variant="h4">LOAD REPORT (Branch-wise)</Typography>
+        <Typography variant="h4">DUE VS DONE REPORT (Branch-wise)</Typography>
         <Box sx={{display:"flex", gap:1}}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd_branches")}>Graph-BranchWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/due_done")}>Graph-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/due_done_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/due_done-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/due_done_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -134,7 +134,7 @@ function LoaddBranchesBarChartPage() {
         selectedGrowth={selectedGrowth}
         setSelectedGrowth={(value)=>{
           setSelectedGrowthState(value);
-          setSelectedGrowth(value,"loadd");
+          setSelectedGrowth(value,"due_done");
         }}
       />
 
@@ -149,4 +149,4 @@ function LoaddBranchesBarChartPage() {
   );
 }
 
-export default LoaddBranchesBarChartPage;
+export default DueDoneBranchesBarChartPage;
