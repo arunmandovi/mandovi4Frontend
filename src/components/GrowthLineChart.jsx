@@ -49,12 +49,12 @@ const GrowthLineChart = ({
   );
 
   const COLOR_MAP = {
-    Bangalore: "#B30000",
+    Bangalore: "rgba(101, 189, 7, 1)",
     Mysore: "#003399",
-    Mangalore: "rgba(101, 189, 7, 1)",
-    BANGALORE: "#B30000",
+    Mangalore: "#cb0606ff",
+    BANGALORE: "rgba(101, 189, 7, 1)",
     MYSORE: "#003399",
-    MANGALORE: "rgba(101, 189, 7, 1)",
+    MANGALORE: "#cb0606ff",
   };
 
   // Indian numbering format

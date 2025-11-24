@@ -19,11 +19,15 @@ const COLORS = [
   "#2980B9", "#C0392B", "#BA55D3", "#20B2AA", "#FF8C00"
 ];
 
+const formatIndian = (num) => num.toLocaleString("en-IN");
+
 function BranchWiseGrowthLineChart({
   chartData = [],
   cityKeys = [],
   decimalDigits = 1,
   showPercent = true,
+  yAxisMin,
+  yAxisMax
 }) {
   // Tooltip formatter
   const tooltipFormatter = (value) => {
@@ -61,14 +65,25 @@ function BranchWiseGrowthLineChart({
           tick={{ fontSize: 12, fontWeight: 600 }}
         />
 
-        <YAxis tickFormatter={axisFormatter} width={60}>
-          <Label
-            value={showPercent ? "Growth (%)" : "Values"}
-            angle={-90}
-            position="insideLeft"
-            offset={10}
-          />
-        </YAxis>
+        <YAxis
+                  label={{
+                    value: showPercent === true ? "Growth %" : "Growth",
+                    angle: -90,
+                    position: "insideLeft",
+                  }}
+                  domain={[
+                    yAxisMin !== undefined ? yAxisMin : "auto",
+                    yAxisMax !== undefined ? yAxisMax : "auto",
+                  ]}
+                  tick={{ fontSize: 12 }}
+                  tickFormatter={(value) =>
+                    showPercent === true
+                      ? `${Number(value).toFixed(decimalDigits)}%`
+                      : showPercent === "falseNumber"
+                      ? Number(value).toFixed(decimalDigits)
+                      : formatIndian(Number(value.toFixed(decimalDigits)))
+                  }
+                />
 
         <Tooltip formatter={tooltipFormatter} />
 

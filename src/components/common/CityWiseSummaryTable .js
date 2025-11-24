@@ -7,35 +7,41 @@ const CityWiseSummaryTable = ({
   keys,
   beautifyHeader,
   tableData,
-  decimalDigits = 1,             // non-growth values
-  growthDecimalDigits = 1,       // growth %
-  percentageDecimalDigits = 0    // percentage %
+  decimalDigits = 1,
+  growthDecimalDigits = 1,
+  percentageDecimalDigits = 0
 }) => {
 
-  // -----------------------------------------
-  // CALCULATE GRAND TOTAL PERCENTAGES FIRST
-  // -----------------------------------------
+  // ----------------------------------------------------
+  // GRAND TOTAL DONE% PER MONTH
+  // ----------------------------------------------------
   const grandTotals = {};
 
   chartMonths.forEach((m) => {
-    grandTotals[m] = {};
+    const LY = keys[0];
+    const TY = keys[1];
 
-    const prevKey = keys[0];
-    const currKey = keys[1];
-
-    const prevTotal = tableData.reduce(
-      (sum, r) => sum + (r[`${m}_${prevKey}`] || 0),
+    const totalLY = tableData.reduce(
+      (sum, r) => sum + Number(r[`${m}_${LY}`] || 0),
       0
     );
 
-    const currTotal = tableData.reduce(
-      (sum, r) => sum + (r[`${m}_${currKey}`] || 0),
+    const totalTY = tableData.reduce(
+      (sum, r) => sum + Number(r[`${m}_${TY}`] || 0),
       0
     );
 
-    grandTotals[m]["percentage"] =
-      prevTotal === 0 ? 0 : (currTotal / prevTotal) * 100;
+    grandTotals[m] = {
+      percentage: totalLY === 0 ? 0 : (totalTY / totalLY) * 100
+    };
   });
+
+  // ----------------------------------------------------
+  // BENCHMARK = AVERAGE OF ALL MONTH DONE%
+  // ----------------------------------------------------
+  const avgBenchmark =
+    chartMonths.reduce((s, m) => s + grandTotals[m].percentage, 0) /
+    chartMonths.length;
 
   return (
     <Box sx={{ mt: 4 }}>
@@ -45,12 +51,10 @@ const CityWiseSummaryTable = ({
 
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
-          {/* ------------------------------- */}
-          {/* FIRST HEADER ROW (Months)      */}
-          {/* ------------------------------- */}
+          {/* ROW 1 – MONTH HEADER */}
           <tr style={{ background: "#f0f0f0" }}>
             <th style={{ padding: 8, border: "1px solid #ccc" }}>City</th>
-        
+
             {chartMonths.map((m) => (
               <th
                 key={m}
@@ -64,45 +68,36 @@ const CityWiseSummaryTable = ({
                 {m}
               </th>
             ))}
-        
-            {/* NEW — ALL BLOCK */}
+
             <th
-              key="ALL"
               colSpan={keys.length}
               style={{
                 padding: 8,
                 border: "1px solid #ccc",
-                textAlign: "center",
                 background: "#ffeccc",
+                textAlign: "center",
                 fontWeight: "bold"
               }}
             >
               ALL
             </th>
           </tr>
-        
-          {/* ------------------------------- */}
-          {/* SECOND HEADER ROW (Keys)       */}
-          {/* ------------------------------- */}
+
+          {/* ROW 2 – KEY HEADER */}
           <tr style={{ background: "#fafafa" }}>
             <th style={{ padding: 8, border: "1px solid #ccc" }}></th>
-        
-            {/* month-wise keys */}
+
             {chartMonths.flatMap((m) =>
               keys.map((k) => (
                 <th
                   key={`${m}_${k}`}
-                  style={{
-                    padding: 8,
-                    border: "1px solid #ccc"
-                  }}
+                  style={{ padding: 8, border: "1px solid #ccc" }}
                 >
                   {beautifyHeader(k)}
                 </th>
               ))
             )}
-        
-            {/* NEW — ALL keys */}
+
             {keys.map((k) => (
               <th
                 key={`ALL_${k}`}
@@ -120,252 +115,337 @@ const CityWiseSummaryTable = ({
         </thead>
 
         <tbody>
-          {tableData.map((row, i) => {
+          {/* ----------------------------------------------------
+             CITY ROWS
+          ---------------------------------------------------- */}
+          {tableData.map((row, idx) => {
             const allTotals = {};
-        
-            // Calculate ALL totals for each key
+
+            // ----------------------------------------------------
+            // ALL TOTAL CALCULATION (PER CITY)
+            // ----------------------------------------------------
             keys.forEach((k) => {
-              const monthlyValues = chartMonths.map((m) => row[`${m}_${k}`] || 0);
-              const sum = monthlyValues.reduce((a, b) => a + b, 0);
-        
-              if (k.includes("growth")) {
-                // Recalculate growth = (All Current - All Previous)/ All Previous *100
-                const prevKey = keys[0];
-                const currKey = keys[1];
-        
-                const prevAll = chartMonths.reduce(
-                  (s, m) => s + (row[`${m}_${prevKey}`] || 0),
+              const LY = keys[0];
+              const TY = keys[1];
+
+              if (k.includes("percentage")) {
+                const LYtotal = chartMonths.reduce(
+                  (s, m) => s + Number(row[`${m}_${LY}`] || 0),
                   0
                 );
-                const currAll = chartMonths.reduce(
-                  (s, m) => s + (row[`${m}_${currKey}`] || 0),
+                const TYtotal = chartMonths.reduce(
+                  (s, m) => s + Number(row[`${m}_${TY}`] || 0),
                   0
                 );
-        
+
                 allTotals[k] =
-                  prevAll === 0 ? 0 : ((currAll - prevAll) / prevAll) * 100;
-              } else if (k.includes("percentage")) {
-                // All percentage = (Total curr / Total prev) * 100
-                const prevKey = keys[0];
-                const currKey = keys[1];
-        
-                const prevAll = chartMonths.reduce(
-                  (s, m) => s + (row[`${m}_${prevKey}`] || 0),
+                  LYtotal === 0 ? 0 : (TYtotal / LYtotal) * 100;
+              }
+
+              else if (k.includes("growth")) {
+                const LYtotal = chartMonths.reduce(
+                  (s, m) => s + Number(row[`${m}_${LY}`] || 0),
                   0
                 );
-                const currAll = chartMonths.reduce(
-                  (s, m) => s + (row[`${m}_${currKey}`] || 0),
+                const TYtotal = chartMonths.reduce(
+                  (s, m) => s + Number(row[`${m}_${TY}`] || 0),
                   0
                 );
-        
+
                 allTotals[k] =
-                  prevAll === 0 ? 0 : (currAll / prevAll) * 100;
-              } else {
-                allTotals[k] = sum;
+                  LYtotal === 0 ? 0 : ((TYtotal - LYtotal) / LYtotal) * 100;
+              }
+
+              else {
+                allTotals[k] = chartMonths.reduce(
+                  (s, m) => s + Number(row[`${m}_${k}`] || 0),
+                  0
+                );
               }
             });
-        
+
             return (
-              <tr key={i}>
-                <td style={{
-                  padding: 8,
-                  border: "1px solid #ccc",
-                  textAlign: "center",
-                  fontWeight: "bold"
-                }}>
+              <tr key={idx}>
+                {/* CITY NAME */}
+                <td
+                  style={{
+                    padding: 8,
+                    border: "1px solid #ccc",
+                    fontWeight: "bold",
+                    textAlign: "center"
+                  }}
+                >
                   {row.city}
                 </td>
-        
-                {/* NORMAL MONTH VALUES */}
+
+                {/* MONTH CELLS */}
                 {chartMonths.flatMap((m) =>
                   keys.map((k) => {
-                    const val = row[`${m}_${k}`] || 0;
-                    let formattedValue = "";
-        
-                    if (k.includes("growth")) formattedValue = `${val.toFixed(growthDecimalDigits)}%`;
-                    else if (k.includes("percentage")) formattedValue = `${val.toFixed(percentageDecimalDigits)}%`;
-                    else formattedValue = val.toFixed(decimalDigits);
-        
+                    const val = Number(row[`${m}_${k}`] || 0);
+                    let formatted =
+                      k.includes("growth")
+                        ? `${val.toFixed(growthDecimalDigits)}%`
+                        : k.includes("percentage")
+                        ? `${val.toFixed(percentageDecimalDigits)}%`
+                        : val.toFixed(decimalDigits);
+
                     let color = "black";
+
                     if (k.includes("percentage")) {
-                      const grandPct = grandTotals[m]["percentage"];
-                      color = val < grandPct ? "rgba(215,7,7,1)" : "rgba(6,226,24,1)";
-                    } else if (k.includes("growth")) {
-                      color = val > 0 ? "rgba(6,226,24,1)" : val < 0 ? "rgba(215,7,7,1)" : "black";
+                      const bench = grandTotals[m].percentage;
+                      color =
+                        val < bench
+                          ? "rgba(215,7,7,1)"
+                          : "rgba(6,226,24,1)";
                     }
-        
+
+                    if (k.includes("growth")) {
+                      color =
+                        val > 0
+                          ? "rgba(6,226,24,1)"
+                          : val < 0
+                          ? "rgba(215,7,7,1)"
+                          : "black";
+                    }
+
                     return (
-                      <td key={`${m}_${k}`} style={{
-                        padding: 8,
-                        border: "1px solid #ccc",
-                        textAlign: "center",
-                        color,
-                        fontWeight:
-                          (k.includes("growth") || k.includes("percentage")) && val !== 0
-                            ? "600"
-                            : "400"
-                      }}>
-                        {formattedValue}
+                      <td
+                        key={`${m}_${k}`}
+                        style={{
+                          padding: 8,
+                          border: "1px solid #ccc",
+                          textAlign: "center",
+                          color
+                        }}
+                      >
+                        {formatted}
                       </td>
                     );
                   })
                 )}
-        
-                {/* NEW — ALL COLUMN */}
+
+                {/* ALL COLUMN */}
                 {keys.map((k) => {
                   const val = allTotals[k];
-                  let formattedValue = "";
-        
-                  if (k.includes("growth")) formattedValue = `${val.toFixed(growthDecimalDigits)}%`;
-                  else if (k.includes("percentage")) formattedValue = `${val.toFixed(percentageDecimalDigits)}%`;
-                  else formattedValue = val.toFixed(decimalDigits);
-        
+
+                  const formatted =
+                    k.includes("percentage")
+                      ? `${val.toFixed(percentageDecimalDigits)}%`
+                      : k.includes("growth")
+                      ? `${val.toFixed(growthDecimalDigits)}%`
+                      : val.toFixed(decimalDigits);
+
+                  let color = "black";
+
+                  if (k.includes("percentage")) {
+                    color =
+                      val < avgBenchmark
+                        ? "rgba(215,7,7,1)"
+                        : "rgba(6,226,24,1)";
+                  }
+
+                  if (k.includes("growth")) {
+                    color =
+                      val > 0
+                        ? "rgba(6,226,24,1)"
+                        : val < 0
+                        ? "rgba(215,7,7,1)"
+                        : "black";
+                  }
+
                   return (
-                    <td key={`all_${k}`} style={{
-                      padding: 8,
-                      border: "1px solid #ccc",
-                      textAlign: "center",
-                      background: "#fff7e6",
-                      fontWeight: "600"
-                    }}>
-                      {formattedValue}
+                    <td
+                      key={`all_${k}`}
+                      style={{
+                        padding: 8,
+                        border: "1px solid #ccc",
+                        background: "#fff7e6",
+                        textAlign: "center",
+                        fontWeight: "600",
+                        color
+                      }}
+                    >
+                      {formatted}
                     </td>
                   );
                 })}
               </tr>
             );
           })}
-        
-          {/* ----------------------- */}
-          {/* GRAND TOTAL ROW WITH ALL */}
-          {/* ----------------------- */}
+
+          {/* ----------------------------------------------------
+             GRAND TOTAL ROW
+          ---------------------------------------------------- */}
           <tr style={{ background: "#d9edf7", fontWeight: "bold" }}>
-            <td style={{ padding: 8, border: "1px solid #ccc" }}>Grand Total</td>
-        
-            {/* Per-month totals */}
+            <td style={{ padding: 8, border: "1px solid #ccc" }}>
+              Grand Total
+            </td>
+
+            {/* MONTH-WISE GRAND TOTAL ROW */}
             {chartMonths.flatMap((m) =>
               keys.map((k) => {
-                const prev = keys[0];
-                const curr = keys[1];
-        
-                const prevTotal = tableData.reduce(
-                  (sum, r) => sum + (r[`${m}_${prev}`] || 0),
+                const LY = keys[0];
+                const TY = keys[1];
+
+                const totalLY = tableData.reduce(
+                  (sum, r) => sum + Number(r[`${m}_${LY}`] || 0),
                   0
                 );
-        
-                const currTotal = tableData.reduce(
-                  (sum, r) => sum + (r[`${m}_${curr}`] || 0),
+
+                const totalTY = tableData.reduce(
+                  (sum, r) => sum + Number(r[`${m}_${TY}`] || 0),
                   0
                 );
-        
+
+                // FIXED!!!
                 if (k.includes("growth")) {
-                  const growth =
-                    prevTotal === 0 ? 0 : ((currTotal - prevTotal) / prevTotal) * 100;
-        
+                  const pct =
+                    totalLY === 0 ? 0 : ((totalTY - totalLY) / totalLY) * 100;
+
                   return (
-                    <td key={`${m}_${k}`}
+                    <td
+                      key={`${m}_${k}`}
                       style={{
                         padding: 8,
                         border: "1px solid #ccc",
                         textAlign: "center",
-                        color: growth < 0 ? "rgba(215,7,7,1)" : "rgba(6,226,24,1)"
-                      }}>
-                      {growth.toFixed(growthDecimalDigits)}%
+                        color: pct >= 0 ? "rgba(6,226,24,1)" : "rgba(215,7,7,1)"
+                      }}
+                    >
+                      {pct.toFixed(growthDecimalDigits)}%
                     </td>
                   );
                 }
-        
+
                 if (k.includes("percentage")) {
-                  const pct = grandTotals[m]["percentage"];
-        
+                  const pct =
+                    totalLY === 0 ? 0 : (totalTY / totalLY) * 100;
+
                   return (
-                    <td key={`${m}_${k}`} style={{
-                      padding: 8,
-                      border: "1px solid #ccc",
-                      textAlign: "center",
-                      color: "rgba(6,226,24,1)"
-                    }}>
+                    <td
+                      key={`${m}_${k}`}
+                      style={{
+                        padding: 8,
+                        border: "1px solid #ccc",
+                        textAlign: "center",
+                        color: "rgba(6,226,24,1)"
+                      }}
+                    >
                       {pct.toFixed(percentageDecimalDigits)}%
                     </td>
                   );
                 }
-        
+
+                // normal month totals
                 const total = tableData.reduce(
-                  (sum, r) => sum + (r[`${m}_${k}`] || 0),
+                  (sum, r) => sum + Number(r[`${m}_${k}`] || 0),
                   0
                 );
-        
+
                 return (
-                  <td key={`${m}_${k}`} style={{
-                    padding: 8,
-                    border: "1px solid #ccc",
-                    textAlign: "center"
-                  }}>
+                  <td
+                    key={`${m}_${k}`}
+                    style={{
+                      padding: 8,
+                      border: "1px solid #ccc",
+                      textAlign: "center"
+                    }}
+                  >
                     {total.toFixed(decimalDigits)}
                   </td>
                 );
               })
             )}
-        
-            {/* NEW — GRAND TOTAL (ALL) */}
+
+            {/* GRAND TOTAL ALL */}
             {keys.map((k) => {
-              const prev = keys[0];
-              const curr = keys[1];
-        
-              // Sum all months for all cities
-              const fullSum = tableData.reduce((sum, r) => {
-                return (
+              const LY = keys[0];
+              const TY = keys[1];
+
+              const fullLY = tableData.reduce(
+                (sum, r) =>
                   sum +
                   chartMonths.reduce(
-                    (sub, m) => sub + (r[`${m}_${k}`] || 0),
+                    (ss, m) => ss + Number(r[`${m}_${LY}`] || 0),
                     0
-                  )
-                );
-              }, 0);
-        
-              if (k.includes("growth")) {
-                const prevAll = tableData.reduce(
-                  (s, r) =>
-                    s +
-                    chartMonths.reduce(
-                      (ss, m) => ss + (r[`${m}_${prev}`] || 0),
-                      0
-                    ),
-                  0
-                );
-        
-                const currAll = tableData.reduce(
-                  (s, r) =>
-                    s +
-                    chartMonths.reduce(
-                      (ss, m) => ss + (r[`${m}_${curr}`] || 0),
-                      0
-                    ),
-                  0
-                );
-        
-                const g =
-                  prevAll === 0 ? 0 : ((currAll - prevAll) / prevAll) * 100;
-        
+                  ),
+                0
+              );
+
+              const fullTY = tableData.reduce(
+                (sum, r) =>
+                  sum +
+                  chartMonths.reduce(
+                    (ss, m) => ss + Number(r[`${m}_${TY}`] || 0),
+                    0
+                  ),
+                0
+              );
+
+              if (k.includes("percentage")) {
+                const pct = fullLY === 0 ? 0 : (fullTY / fullLY) * 100;
+
                 return (
-                  <td key={`all_gt_${k}`} style={{
-                    padding: 8,
-                    border: "1px solid #ccc",
-                    textAlign: "center",
-                    color: g < 0 ? "rgba(215,7,7,1)" : "rgba(6,226,24,1)"
-                  }}>
-                    {g.toFixed(growthDecimalDigits)}%
+                  <td
+                    key={`all_gt_${k}`}
+                    style={{
+                      padding: 8,
+                      border: "1px solid #ccc",
+                      background: "#c8e6ff",
+                      textAlign: "center",
+                      color: "rgba(6,226,24,1)"
+                    }}
+                  >
+                    {pct.toFixed(percentageDecimalDigits)}%
                   </td>
                 );
               }
-        
+
+              if (k.includes("growth")) {
+                const pct =
+                  fullLY === 0 ? 0 : ((fullTY - fullLY) / fullLY) * 100;
+
+                return (
+                  <td
+                    key={`all_gt_${k}`}
+                    style={{
+                      padding: 8,
+                      border: "1px solid #ccc",
+                      background: "#c8e6ff",
+                      textAlign: "center",
+                      color:
+                        pct > 0
+                          ? "rgba(6,226,24,1)"
+                          : pct < 0
+                          ? "rgba(215,7,7,1)"
+                          : "black"
+                    }}
+                  >
+                    {pct.toFixed(growthDecimalDigits)}%
+                  </td>
+                );
+              }
+
+              const fullSum = tableData.reduce(
+                (sum, r) =>
+                  sum +
+                  chartMonths.reduce(
+                    (ss, m) => ss + Number(r[`${m}_${k}`] || 0),
+                    0
+                  ),
+                0
+              );
+
               return (
-                <td key={`all_gt_${k}`} style={{
-                  padding: 8,
-                  border: "1px solid #ccc",
-                  textAlign: "center",
-                  background: "#c8e6ff"
-                }}>
+                <td
+                  key={`all_gt_${k}`}
+                  style={{
+                    padding: 8,
+                    border: "1px solid #ccc",
+                    background: "#c8e6ff",
+                    textAlign: "center"
+                  }}
+                >
                   {fullSum.toFixed(decimalDigits)}
                 </td>
               );

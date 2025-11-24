@@ -145,7 +145,11 @@ function PMSPartsBranchesBarChartPage() {
       />
 
       {!selectedGrowth ? <Typography sx={{mt:2}}>👆 Select a growth type to view the chart below</Typography> :
-        <BranchBarChart chartData={chartData} selectedGrowth={selectedGrowth} />
+        <BranchBarChart 
+        chartData={chartData} 
+        selectedGrowth={selectedGrowth} 
+        
+        />
       }
     </Box>
   );

@@ -35,11 +35,18 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
 ).sort((a, b) => a.localeCompare(b));
 
 // Growth Key Map
-  const growthKeyMap = {
-    "Done %": "percentageDone",
+const growthKeyMap = {
+    "Service Growth %": "growthService",
+    "BodyShop Growth %": "growthBodyShop",
+    "SR&BR Growth %": "growthSrBr",
+    "Free Service Growth %": "growthFreeService",
+    "PMS Growth %": "growthPMS",
+    "FPR Growth %": "growthFPR",
+    "RR Growth %": "growthRunningRepair",
+    "Others Growth %": "growthOthers",
   };
 
-function DueDoneBranchWisePage() {
+function LabourBranchWisePage() {
   const navigate = useNavigate();
 
   const [summary, setSummary] = useState([]);
@@ -67,7 +74,7 @@ function DueDoneBranchWisePage() {
   };
 
   useEffect(() => {
-    const saved = getSelectedGrowth("due_done");
+    const saved = getSelectedGrowth("labour");
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
@@ -82,7 +89,7 @@ function DueDoneBranchWisePage() {
           let query = `?&months=${m}`;
           if (channels.length === 1) query += `&channels=${channels[0]}`;
 
-          const data = await fetchData(`/api/due_done/due_done_branch_summary${query}`);
+          const data = await fetchData(`/api/labour/labour_branch_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
 
           combined.push({ month: m, data: safeData });
@@ -141,15 +148,13 @@ function DueDoneBranchWisePage() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">DUE VS DONE GRAPH (BranchWise)</Typography>
+        <Typography variant="h4">LABOUR GRAPH (BranchWise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/due_done")}>Graph-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/due_done_branches")}> Graph-BranchWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/due_done-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/due_done_branches-bar-chart")}>
-            Bar Chart-BranchWise
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/labour")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/labour_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/labour-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/labour_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -214,7 +219,7 @@ function DueDoneBranchWisePage() {
         selectedGrowth={selectedGrowth}
         setSelectedGrowth={(value) => {
           setSelectedGrowthState(value);
-          setSelectedGrowth(value, "due_done");
+          setSelectedGrowth(value, "labour");
         }}
       />
 
@@ -243,11 +248,8 @@ function DueDoneBranchWisePage() {
           <BranchWiseGrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
-            decimalDigits={0}
+            decimalDigits={1}
             showPercent={true}
-            lowThreshold={98}
-            yAxisMin={50}  
-            yAxisMax={65}
           />
         </Box>
       )}
@@ -255,4 +257,4 @@ function DueDoneBranchWisePage() {
   );
 }
 
-export default DueDoneBranchWisePage;
+export default LabourBranchWisePage;

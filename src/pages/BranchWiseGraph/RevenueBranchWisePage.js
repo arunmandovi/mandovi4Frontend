@@ -35,22 +35,26 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
 ).sort((a, b) => a.localeCompare(b));
 
 // Growth Key Map
-  const growthKeyMap = {
-    "Done %": "percentageDone",
+const growthKeyMap = {
+    "SR LABOUR Growth %": "growthSRLabour",
+    "BR LABOUR Growth %": "growthBRLabour",
+    "SR&BR LABOUR Growth %": "growthSRBRLabour",
+    "SR Spares Growth %": "growthSRSpares",
+    "BR Spares Growth %": "growthBRSpares",
+    "SR&BR Spares Growth %": "growthSRBRSpares",
+    "SR&Br Total Growth %": "growthSRBRTotal",
   };
 
-function DueDoneBranchWisePage() {
+function RevenueBranchWisePage() {
   const navigate = useNavigate();
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [channels, setChannels] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const [selectedBranches, setSelectedBranches] = useState([]);
 
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
-  const channelOptions = ["Arena", "Nexa"];
   const growthOptions = Object.keys(growthKeyMap);
 
   // Read branch exactly as API sends
@@ -67,7 +71,7 @@ function DueDoneBranchWisePage() {
   };
 
   useEffect(() => {
-    const saved = getSelectedGrowth("due_done");
+    const saved = getSelectedGrowth("revenue");
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
@@ -80,9 +84,8 @@ function DueDoneBranchWisePage() {
 
         for (const m of activeMonths) {
           let query = `?&months=${m}`;
-          if (channels.length === 1) query += `&channels=${channels[0]}`;
 
-          const data = await fetchData(`/api/due_done/due_done_branch_summary${query}`);
+          const data = await fetchData(`/api/revenue/revenue_branch_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
 
           combined.push({ month: m, data: safeData });
@@ -95,7 +98,7 @@ function DueDoneBranchWisePage() {
     };
 
     fetchCitySummary();
-  }, [months, channels]);
+  }, [months]);
 
   // Build Chart Data
   const buildChartData = () => {
@@ -141,15 +144,13 @@ function DueDoneBranchWisePage() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">DUE VS DONE GRAPH (BranchWise)</Typography>
+        <Typography variant="h4">REVENUE GRAPH (BranchWise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/due_done")}>Graph-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/due_done_branches")}> Graph-BranchWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/due_done-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/due_done_branches-bar-chart")}>
-            Bar Chart-BranchWise
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/revenue")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/revenue_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/revenue-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/revenue_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -204,9 +205,6 @@ function DueDoneBranchWisePage() {
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
       />
 
       <GrowthButtons
@@ -214,7 +212,7 @@ function DueDoneBranchWisePage() {
         selectedGrowth={selectedGrowth}
         setSelectedGrowth={(value) => {
           setSelectedGrowthState(value);
-          setSelectedGrowth(value, "due_done");
+          setSelectedGrowth(value, "revenue");
         }}
       />
 
@@ -243,11 +241,8 @@ function DueDoneBranchWisePage() {
           <BranchWiseGrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
-            decimalDigits={0}
+            decimalDigits={1}
             showPercent={true}
-            lowThreshold={98}
-            yAxisMin={50}  
-            yAxisMax={65}
           />
         </Box>
       )}
@@ -255,4 +250,4 @@ function DueDoneBranchWisePage() {
   );
 }
 
-export default DueDoneBranchWisePage;
+export default RevenueBranchWisePage;

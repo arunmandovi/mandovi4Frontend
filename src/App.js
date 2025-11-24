@@ -31,8 +31,11 @@ import TATPage from "./pages/GraphView/TATPage";
 import VASPage from "./pages/GraphView/VASPage";
 
 // BranchWise Graph pages
-import LoaddBranchWisePage from "./pages/BranchWiseGraph/LoaddBranchWisePage";
 import DueDoneBranchWisePage from "./pages/BranchWiseGraph/DueDoneBranchWisePage";
+import LabourBranchWisePage from "./pages/BranchWiseGraph/LabourBranchWisePage";
+import LoaddBranchWisePage from "./pages/BranchWiseGraph/LoaddBranchWisePage";
+import RevenueBranchWisePage from "./pages/BranchWiseGraph/RevenueBranchWisePage";
+
 
 // File upload pages
 import BatteryTyreUploadPage from "./pages/FileUpload/BatteryTyreUploadPage";
@@ -153,11 +156,12 @@ function App() {
           <Route path="battery_tyre" element={<BatteryTyrePage />} />
           <Route path="br_conversion" element={<BRConversionPage />} />
           <Route path="due_done" element={<DueDonePage />} />
-          <Route path="due_done_branches" element={<DueDoneBranchWisePage />} />
+          
           <Route path="labour" element={<LabourPage />} />
+          
           <Route path="per_vehicle" element={<PerVehiclePage />} />
           <Route path="loadd" element={<LoaddPage />} />
-          <Route path="loadd_branches" element={<LoaddBranchWisePage />} />
+          
           <Route path="mcp" element={<MCPPage />} />
           <Route path="mga" element={<MGAPage />} />
           <Route path="mga_profit" element={<MGAProfitPage />} />
@@ -174,6 +178,12 @@ function App() {
           <Route path="spares" element={<SparesPage />} />
           <Route path="tat" element={<TATPage />} />
           <Route path="vas" element={<VASPage />} />
+
+          {/* BranchWise Graph Pages */}
+          <Route path="due_done_branches" element={<DueDoneBranchWisePage />} />
+          <Route path="labour_branches" element={<LabourBranchWisePage />} />
+          <Route path="loadd_branches" element={<LoaddBranchWisePage />} />
+          <Route path="revenue_branches" element={<RevenueBranchWisePage />} />
 
           {/* 🧭 Employee Dashboard BarChart Pages */}
           <Route path="battery_tyre-bar-chart" element={<BatteryTyreBarChartPage />} />
