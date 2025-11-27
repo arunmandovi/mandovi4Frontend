@@ -17,7 +17,7 @@ function LabourPage() {
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [channels, setChannels] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState("SR&BR Growth %");
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep",

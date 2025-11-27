@@ -16,7 +16,7 @@ function RevenuePage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState("SR&Br Total Growth %");
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep",

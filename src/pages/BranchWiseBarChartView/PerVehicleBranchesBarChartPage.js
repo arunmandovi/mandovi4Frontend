@@ -15,7 +15,7 @@ function PerVehicleBranchesBarChartPage() {
   const [cities, setCities] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState("SR LABOUR / VEH");
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const yearOptions = ["2024", "2025"];
@@ -104,9 +104,10 @@ function PerVehicleBranchesBarChartPage() {
       <Box sx={{display:"flex", justifyContent:"space-between", alignItems:"center", mb:3}}>
         <Typography variant="h4">PER VEHICLE REPORT (Branch-wise)</Typography>
         <Box sx={{display:"flex", gap:1}}>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/per_vehicle_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 

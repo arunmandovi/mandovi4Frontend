@@ -14,7 +14,7 @@ function BRConversionBranchesBarChartPage() {
   const [cities, setCities] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState("Arena&Nexa BR Conversion %");
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
@@ -22,12 +22,8 @@ function BRConversionBranchesBarChartPage() {
   const halfYearOptions = ["H1","H2"];
 
   const growthOptions = [
-    "Arena BR Conversion %",
-    "Nexa BR Conversion %",
-    "Arena&Nexa BR Conversion %",
-    "Arena Total Amount",
-    "Nexa Total Amount",
-    "Arena&Nexa Total Amount",
+    "Arena BR Conversion %", "Nexa BR Conversion %", "Arena&Nexa BR Conversion %",
+    "Arena Total Amount", "Nexa Total Amount", "Arena&Nexa Total Amount",
   ];
 
   const growthKeyMap = {
@@ -101,9 +97,10 @@ function BRConversionBranchesBarChartPage() {
       <Box sx={{display:"flex", justifyContent:"space-between", alignItems:"center", mb:3}}>
         <Typography variant="h4">BR CONVERSION REPORT (Branch-wise)</Typography>
         <Box sx={{display:"flex", gap:1}}>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/br_conversion")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/br_conversion-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/br_conversion_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -126,8 +123,11 @@ function BRConversionBranchesBarChartPage() {
       {!selectedGrowth ? <Typography sx={{mt:2}}>👆 Select a growth type to view the chart below</Typography> :
         <BranchBarChart 
         chartData={chartData} 
-        selectedGrowth={selectedGrowth} 
-        chartType="MGABranchesBarChart"
+        selectedGrowth={selectedGrowth}
+        decimalPlaces={["Arena Total Amount", "Nexa Total Amount", "Arena&Nexa Total Amount"]
+          .includes(selectedGrowth) ? 0 : 1 }
+        chartType={["Arena Total Amount", "Nexa Total Amount", "Arena&Nexa Total Amount"]
+          .includes(selectedGrowth) ? "MGABranchesBarChart" : "absValue"}
         />
       }
     </Box>

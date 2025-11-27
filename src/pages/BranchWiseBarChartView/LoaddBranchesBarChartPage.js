@@ -15,7 +15,7 @@ function LoaddBranchesBarChartPage() {
   const [channels, setChannels] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState("PMS Growth %");
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];

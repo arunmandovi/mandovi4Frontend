@@ -12,7 +12,7 @@ function BRConversionPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState("Arena&Nexa BR Conversion %");
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
 
@@ -91,11 +91,12 @@ function BRConversionPage() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">BR CONVERSION REPORT</Typography>
+        <Typography variant="h4">BR CONVERSION GRAPH (CityWise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 

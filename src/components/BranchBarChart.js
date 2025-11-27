@@ -195,33 +195,33 @@ const BranchBarChart = ({
   const maxAbsValue = Math.max(Math.abs(maxValue), Math.abs(minValue));
   const shouldCapAt100 = showPercent && maxAbsValue > 100;
 
+  const BangaloreBranches = [
+    "ns palya", "sarjapura", "basaveshwarnagar", "kolar nexa", "gowribidanur", "hennur", "jp nagar", 
+     "kolar", "basavanagudi-sow", "basavangudi", "malur sow", "maluru ws", "uttarahali kengeri", 
+     "vidyarannapura", "vijayanagar", "wilson garden", "yelahanka","yeshwanthpur ws",
+  ];
+
+  const MysoreBranches = [
+    "bannur", "chamrajnagar","hunsur road", "maddur", "gonikoppa", "mandya", "krs road", "kushalnagar",
+     "krishnarajapet", "mysore nexa","nagamangala", "somvarpet", "narasipura", "kollegal",
+  ];
+
+  const MangaloreBranches = [
+    "balmatta", "bantwal", "vittla", "kadaba", "uppinangady", "surathkal", "sullia",
+    "adyar", "yeyyadi br", "nexa service", "sujith bagh lane", "naravi",
+  ];
+
   const BRANCH_NAME_COLORS = {
-    "ns palya": "#B30000", sarjapura: "#B30000", basaveshwarnagar: "#B30000", "kolar nexa": "#B30000", basavangudi: "#B30000",
-    gowribidanur: "#B30000", hennur: "#B30000", "jp nagar": "#B30000", kolar: "#B30000", "basavanagudi-sow": "#B30000",
-    "malur sow": "#B30000", "maluru ws": "#B30000", "uttarahali kengeri": "#B30000", vidyarannapura: "#B30000", 
-    vijayanagar: "#B30000", "wilson garden": "#B30000", yelahanka: "#B30000", "yeshwanthpur ws": "#B30000",
-    bannur: "#003399", chamrajnagar: "#003399", "hunsur road": "#003399", maddur: "#003399", gonikoppa: "#003399",
-    mandya: "#003399", "krs road": "#003399", kushalnagar: "#003399", krishnarajapet: "#003399", "mysore nexa": "#003399",
-    nagamangala: "#003399", somvarpet: "#003399", narasipura: "#003399", kollegal: "#003399",
-    balmatta: "rgba(6, 176, 6, 1)",
-    bantwal: "rgba(6, 176, 6, 1)",
-    vittla: "rgba(6, 176, 6, 1)",
-    kadaba: "rgba(6, 176, 6, 1)",
-    uppinangady: "rgba(6, 176, 6, 1)",
-    surathkal: "rgba(6, 176, 6, 1)",
-    sullia: "rgba(6, 176, 6, 1)",
-    adyar: "rgba(6, 176, 6, 1)",
-    "yeyyadi br": "rgba(6, 176, 6, 1)",
-    "nexa service": "rgba(6, 176, 6, 1)",
-    "sujith bagh lane": "rgba(6, 176, 6, 1)",
-    naravi: "rgba(6, 176, 6, 1)",
+    ...Object.fromEntries(BangaloreBranches.map((b) => [b.toLowerCase(), "rgba(6, 176, 6, 1)"])),
+    ...Object.fromEntries(MysoreBranches.map((b) => [b.toLowerCase(), "#003399"])),
+    ...Object.fromEntries(MangaloreBranches.map((b) => [b.toLowerCase(), "#B30000"])),
   };
 
   const CustomAxisTick = ({ x, y, payload }) => {
   const branch = payload?.value || "";
   const key = branch.toLowerCase();
 
-  const color = BRANCH_NAME_COLORS[key] || "#000"; // default = black
+  const color = BRANCH_NAME_COLORS[key] || "#000";
 
   return (
     <text
@@ -239,10 +239,9 @@ const BranchBarChart = ({
 };
 
 
-  // ✅ Domain logic
   let yAxisDomain;
   if (shouldCapAt100) {
-    yAxisDomain = [-100, 120]; // slight extra positive space
+    yAxisDomain = [-100, 120];
   } else {
     const roundTo = 5;
     const roundedMax =
@@ -254,7 +253,6 @@ const BranchBarChart = ({
     else yAxisDomain = [roundedMin, roundedMax];
   }
 
-  // ✅ Asymmetric ticks
   let yTicks;
   if (shouldCapAt100 && showPercent) {
     const positiveTicks = Array.from({ length: 11 }, (_, i) => i * 10); // 0–100

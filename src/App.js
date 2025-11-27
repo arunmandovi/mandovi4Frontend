@@ -31,10 +31,26 @@ import TATPage from "./pages/GraphView/TATPage";
 import VASPage from "./pages/GraphView/VASPage";
 
 // BranchWise Graph pages
+import BatteryTyreBranchWisePage from "./pages/BranchWiseGraph/BatteryTyreBranchWisePage";
+import BRConversionBranchWisePage from "./pages/BranchWiseGraph/BRConversionBranchWisePage";
 import DueDoneBranchWisePage from "./pages/BranchWiseGraph/DueDoneBranchWisePage";
 import LabourBranchWisePage from "./pages/BranchWiseGraph/LabourBranchWisePage";
 import LoaddBranchWisePage from "./pages/BranchWiseGraph/LoaddBranchWisePage";
+import MCPBranchWisePage from "./pages/BranchWiseGraph/MCPBranchWisePage";
+import MGABranchWisePage from "./pages/BranchWiseGraph/MGABranchWisePage";
+import MGAProfitBranchWisePage from "./pages/BranchWiseGraph/MGAProfitBranchWisePage";
+import MSGPBranchWisePage from "./pages/BranchWiseGraph/MSGPBranchWisePage";
+import MSGPProfitBranchWisePage from "./pages/BranchWiseGraph/MSGPProfitBranchWisePage";
+import OilBranchWisePage from "./pages/BranchWiseGraph/OilBranchWisePage";
+import PerVehicleBranchWisePage from "./pages/BranchWiseGraph/PerVehicleBranchWisePage";
+import PMSPartsBranchWisePage from "./pages/BranchWiseGraph/PMSPartsBranchWisePage";
+import ProfitLossMonthlyBranchWisePage from "./pages/BranchWiseGraph/ProfitLossMonthlyBranchWisePage";
+import ProfitLossPerVehicleBranchWisePage from "./pages/BranchWiseGraph/ProfitLossPerVehicleBranchWisePage";
+import ReferenceeBranchWisePage from "./pages/BranchWiseGraph/ReferenceeBranchWisePage";
 import RevenueBranchWisePage from "./pages/BranchWiseGraph/RevenueBranchWisePage";
+import SparesBranchWisePage from "./pages/BranchWiseGraph/SparesBranchWisePage";
+import TATBranchWisePage from "./pages/BranchWiseGraph/TATBranchWisePage";
+import VASBranchWisePage from "./pages/BranchWiseGraph/VASBranchWisePage";
 
 
 // File upload pages
@@ -156,12 +172,9 @@ function App() {
           <Route path="battery_tyre" element={<BatteryTyrePage />} />
           <Route path="br_conversion" element={<BRConversionPage />} />
           <Route path="due_done" element={<DueDonePage />} />
-          
           <Route path="labour" element={<LabourPage />} />
-          
           <Route path="per_vehicle" element={<PerVehiclePage />} />
           <Route path="loadd" element={<LoaddPage />} />
-          
           <Route path="mcp" element={<MCPPage />} />
           <Route path="mga" element={<MGAPage />} />
           <Route path="mga_profit" element={<MGAProfitPage />} />
@@ -180,10 +193,27 @@ function App() {
           <Route path="vas" element={<VASPage />} />
 
           {/* BranchWise Graph Pages */}
+          <Route path="battery_tyre_branches" element={<BatteryTyreBranchWisePage />} />
+          <Route path="br_conversion_branches" element={<BRConversionBranchWisePage />} />
           <Route path="due_done_branches" element={<DueDoneBranchWisePage />} />
           <Route path="labour_branches" element={<LabourBranchWisePage />} />
           <Route path="loadd_branches" element={<LoaddBranchWisePage />} />
+          <Route path="mcp_branches" element={<MCPBranchWisePage />} />
+          <Route path="mga_branches" element={<MGABranchWisePage />} />
+          <Route path="mga_profit_branches" element={<MGAProfitBranchWisePage />} />
+          <Route path="msgp_branches" element={<MSGPBranchWisePage />} />
+          <Route path="msgp_profit_branches" element={<MSGPProfitBranchWisePage />} />
+          <Route path="oil_branches" element={<OilBranchWisePage />} />
+          <Route path="per_vehicle_branches" element={<PerVehicleBranchWisePage />} />
+          <Route path="profit_loss_monthly_branch" element={<ProfitLossMonthlyBranchWisePage />} />
+          <Route path="profit_loss_per_vehicle_branch" element={<ProfitLossPerVehicleBranchWisePage />} />
+          <Route path="pms_parts_branches" element={<PMSPartsBranchWisePage />} />
+          <Route path="referencee_branches" element={<ReferenceeBranchWisePage />} />
           <Route path="revenue_branches" element={<RevenueBranchWisePage />} />
+          <Route path="spares_branches" element={<SparesBranchWisePage />} />
+          <Route path="tat_branches" element={<TATBranchWisePage />} />
+          <Route path="vas_branches" element={<VASBranchWisePage />} />
+
 
           {/* 🧭 Employee Dashboard BarChart Pages */}
           <Route path="battery_tyre-bar-chart" element={<BatteryTyreBarChartPage />} />

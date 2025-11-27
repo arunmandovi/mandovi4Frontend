@@ -45,9 +45,9 @@ function DueDoneBranchWisePage() {
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [channels, setChannels] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState("Done %");
 
-  const [selectedBranches, setSelectedBranches] = useState([]);
+  const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden", "Balmatta", "KRS Road"]);
 
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
   const channelOptions = ["Arena", "Nexa"];

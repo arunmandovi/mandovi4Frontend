@@ -14,7 +14,7 @@ function PMSPartsBranchesBarChartPage() {
   const [cities, setCities] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState("7 PARTS PMS %");
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
@@ -122,9 +122,10 @@ function PMSPartsBranchesBarChartPage() {
       <Box sx={{display:"flex", justifyContent:"space-between", alignItems:"center", mb:3}}>
         <Typography variant="h4">PMS PARTS REPORT (Branch-wise)</Typography>
         <Box sx={{display:"flex", gap:1}}>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/pms_parts")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/pms_parts-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={()=>navigate("/DashboardHome/pms_parts_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/pms_parts")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/pms_parts_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/pms_parts-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/pms_parts_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -148,7 +149,7 @@ function PMSPartsBranchesBarChartPage() {
         <BranchBarChart 
         chartData={chartData} 
         selectedGrowth={selectedGrowth} 
-        
+        decimalPlaces={2}
         />
       }
     </Box>

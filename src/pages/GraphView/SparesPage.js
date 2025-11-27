@@ -16,15 +16,12 @@ function SparesPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [channels, setChannels] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState("SR&BR Spares Growth %");
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep",
     "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
-
-  const channelOptions = ["Arena", "Nexa"];
 
   const growthOptions = [
     "SR Spares Growth %", "BR Spares Growth %", "SR&BR Spares Growth %", "Battery Growth %", "Tyre Growth %",
@@ -78,7 +75,6 @@ function SparesPage() {
 
         for (const m of activeMonths) {
           let q = `?&months=${m}`;
-          if (channels.length === 1) q += `&channels=${channels[0]}`;
 
           const data = await fetchData(`/api/spares/spares_summary${q}`);
           const safe = Array.isArray(data) ? data : data?.result || [];
@@ -93,7 +89,7 @@ function SparesPage() {
     };
 
     fetchCitySummary();
-  }, [months, channels]);
+  }, [months]);
 
   // Build chart data
   const buildChartData = () => {
@@ -138,9 +134,10 @@ function SparesPage() {
         <Typography variant="h4">SPARES GRAPH (CityWise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/spares")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/spares-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/spares_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/spares")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/spares_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/spares-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/spares_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -148,9 +145,6 @@ function SparesPage() {
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
       />
 
       <GrowthButtons

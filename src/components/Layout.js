@@ -23,9 +23,15 @@ function Layout() {
     window.location.href = "/EmployeeLogin";
   };
 
-  let viewMode = "default";
-  if (currentPath.includes("branches-bar-chart")) viewMode = "branches-bar-chart";
-  else if (currentPath.includes("bar-chart")) viewMode = "bar-chart";
+  const modeMap = {
+    "branches-bar-chart": "branches-bar-chart",
+    "branches": "branches",
+    "bar-chart": "bar-chart",
+  };
+
+  const viewMode =
+    Object.entries(modeMap).find(([key]) => currentPath.includes(key))?.[1] ||
+    "default";
 
   const modules = [
     "loadd",
@@ -49,12 +55,14 @@ function Layout() {
     "profit_loss",
   ];
 
-  const buildLink = (module) => {
-    if (viewMode === "bar-chart") return `/DashboardHome/${module}-bar-chart`;
-    if (viewMode === "branches-bar-chart")
-      return `/DashboardHome/${module}_branches-bar-chart`;
-    return `/DashboardHome/${module}`;
+  const linkMap = {
+    "bar-chart": (m) => `/DashboardHome/${m}-bar-chart`,
+    "branches-bar-chart": (m) => `/DashboardHome/${m}_branches-bar-chart`,
+    "branches": (m) => `/DashboardHome/${m}_branches`,
   };
+  
+  const buildLink = (module) =>
+    (linkMap[viewMode] ? linkMap[viewMode](module) : `/DashboardHome/${module}`);
 
   return (
     <div className="layout-container">

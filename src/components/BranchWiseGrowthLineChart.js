@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Label,
   LabelList,
 } from "recharts";
 
@@ -19,7 +18,24 @@ const COLORS = [
   "#2980B9", "#C0392B", "#BA55D3", "#20B2AA", "#FF8C00"
 ];
 
+// Indian format helper
 const formatIndian = (num) => num.toLocaleString("en-IN");
+
+// 🔥 Common formatter function (used everywhere)
+const formatValue = (value, showPercent, digits) => {
+  if (value === null || value === undefined) return "-";
+
+  if (showPercent === true) {
+    return `${value.toFixed(digits)}%`;
+  }
+
+  if (showPercent === "falseNumber") {
+    return value.toFixed(digits);
+  }
+
+  // showPercent === false → Indian Format
+  return formatIndian(Number(value.toFixed(digits)));
+};
 
 function BranchWiseGrowthLineChart({
   chartData = [],
@@ -29,21 +45,12 @@ function BranchWiseGrowthLineChart({
   yAxisMin,
   yAxisMax
 }) {
+
   // Tooltip formatter
-  const tooltipFormatter = (value) => {
-    if (value === null || value === undefined) return "-";
-    return showPercent
-      ? `${value.toFixed(decimalDigits)}%`
-      : value.toFixed(decimalDigits);
-  };
+  const tooltipFormatter = (value) =>
+    formatValue(value, showPercent, decimalDigits);
 
-  // Y-axis formatter
-  const axisFormatter = (value) => {
-    if (value === null || value === undefined) return "";
-    return showPercent ? `${value}%` : value;
-  };
-
-  // ✅ Remove months where ALL city values are 0/null/undefined
+  // Remove months where all values are 0/null
   const filteredData = chartData.filter((item) =>
     cityKeys.some((key) => {
       const v = item[key];
@@ -59,35 +66,46 @@ function BranchWiseGrowthLineChart({
       >
         <CartesianGrid strokeDasharray="3 3" />
 
-        {/* X-Axis → Only Months */}
         <XAxis
           dataKey="month"
           tick={{ fontSize: 12, fontWeight: 600 }}
         />
 
         <YAxis
-                  label={{
-                    value: showPercent === true ? "Growth %" : "Growth",
-                    angle: -90,
-                    position: "insideLeft",
-                  }}
-                  domain={[
-                    yAxisMin !== undefined ? yAxisMin : "auto",
-                    yAxisMax !== undefined ? yAxisMax : "auto",
-                  ]}
-                  tick={{ fontSize: 12 }}
-                  tickFormatter={(value) =>
-                    showPercent === true
-                      ? `${Number(value).toFixed(decimalDigits)}%`
-                      : showPercent === "falseNumber"
-                      ? Number(value).toFixed(decimalDigits)
-                      : formatIndian(Number(value.toFixed(decimalDigits)))
-                  }
-                />
+          label={{
+            value: showPercent === true ? "Growth %" : "Growth",
+            angle: -90,
+            position: "insideLeft",
+          }}
+          domain={[
+            yAxisMin !== undefined ? yAxisMin : "auto",
+            yAxisMax !== undefined ? yAxisMax : "auto",
+          ]}
+          tick={{ fontSize: 12 }}
+          tickFormatter={(value) =>
+            formatValue(Number(value), showPercent, decimalDigits)
+          }
+        />
 
-        <Tooltip formatter={tooltipFormatter} />
+        <Tooltip
+          content={({ payload, label }) => {
+            if (!payload || payload.length === 0) return null;
 
-        {/* Multi-color lines */}
+            const sorted = [...payload].sort((a, b) => b.value - a.value);
+
+            return (
+              <div style={{ background: "#fff", padding: 10, border: "1px solid #000" }}>
+                <strong>{label}</strong>
+                {sorted.map((item) => (
+                  <div key={item.dataKey} style={{ color: item.color }}>
+                    {item.name}: {formatValue(item.value, showPercent, decimalDigits)}
+                  </div>
+                ))}
+              </div>
+            );
+          }}
+        />
+
         {cityKeys.map((key, index) => (
           <Line
             key={key}
@@ -103,19 +121,17 @@ function BranchWiseGrowthLineChart({
               position="top"
               content={({ x, y, value }) => {
                 const isNegative = Number(value) < 0;
-                
+
                 return (
                   <text
                     x={x}
                     y={y - 5}
-                    fill={isNegative ? "rgba(215, 7, 7, 1)" : "#000000ff"}
+                    fill={isNegative ? "rgba(215, 7, 7, 1)" : "#000"}
                     fontSize={12}
                     fontWeight="bold"
                     textAnchor="middle"
                   >
-                    {showPercent
-                      ? `${value.toFixed(decimalDigits)}%`
-                      : value.toFixed(decimalDigits)}
+                    {formatValue(Number(value), showPercent, decimalDigits)}
                   </text>
                 );
               }}

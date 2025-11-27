@@ -79,7 +79,7 @@ function TATBranchesBarChartPage() {
   const [halfYear, setHalfYear] = useState([]);
 
   // ---------------------- FIXED ----------------------
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState("FR1");
 
   useEffect(() => {
     const saved = getSelectedGrowth("tat");
@@ -268,9 +268,10 @@ function TATBranchesBarChartPage() {
 
         <Box sx={{ display: "flex", gap: 1 }}>
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat")}>Graph-BranchWise</Button>
-            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>Bar Chart-CityWise</Button>
-            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+            <Button variant="contained" onClick={() => navigate("/DashboardHome/tat")}>Graph-CityWise</Button>
+            <Button variant="contained" onClick={() => navigate("/DashboardHome/tat_branches")}>Graph-BranchWise</Button>
+            <Button variant="contained" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>Bar Chart-CityWise</Button>
+            <Button variant="contained" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>Bar Chart-BranchWise</Button>
           </Box>
         </Box>
       </Box>

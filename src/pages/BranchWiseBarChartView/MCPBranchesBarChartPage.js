@@ -127,9 +127,10 @@ function MCPBranchesBarChartPage() {
       >
         <Typography variant="h4">MCP REPORT (Branch-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mcp")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mcp-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/mcp_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/mcp")}>Graph-CityWise</Button>
+                    <Button variant="contained" onClick={() => navigate("/DashboardHome/mcp_branches")}>Graph-BranchWise</Button>
+                    <Button variant="contained" onClick={() => navigate("/DashboardHome/mcp-bar-chart")}>Bar Chart-CityWise</Button>
+                    <Button variant="contained" onClick={() => navigate("/DashboardHome/mcp_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 

@@ -16,13 +16,14 @@ import {
   LabelList,
 } from "recharts";
 import { fetchData } from "../../api/uploadService";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import GrowthButtons from "../../components/GrowthButtons";
 import SlicerFilters from "../../components/SlicerFilters";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
 function TATBarChartPage() {
   const navigate = useNavigate();
+  const location =useLocation();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
@@ -47,6 +48,23 @@ function TATBarChartPage() {
   };
 
   const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
+
+  useEffect(() => {
+      const prev = getSelectedGrowth("tat");
+  
+      const fromPages = location.state?.fromNavigation === true;
+  
+      if (!fromPages) {
+        if (!prev) {
+          setSelectedGrowthState("FR1");
+          setSelectedGrowth("FR1", "tat");
+        } else {
+          setSelectedGrowthState(prev);
+        }
+      } else {
+        setSelectedGrowthState(prev || "FR1");
+      }
+    }, []);
 
   // ---------- Fetch data ----------
   useEffect(() => {
@@ -190,7 +208,8 @@ function TATBarChartPage() {
         <Typography variant="h4">TAT REPORT (City-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat")}>Graph-BranchWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat")}>Graph-CityWise</Button>
+          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>

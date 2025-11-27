@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { fetchData } from "../../api/uploadService";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
 import GrowthButtons from "../../components/GrowthButtons";
 import CityBarChart from "../../components/CityBarChart";
@@ -9,11 +9,13 @@ import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelectio
 
 function MSGPBarChartPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("msgp"));
+  const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
@@ -40,6 +42,23 @@ function MSGPBarChartPage() {
   };
 
   useEffect(() => {
+    const prev = getSelectedGrowth("msgp");
+
+    const fromPages = location.state?.fromNavigation === true;
+
+    if (!fromPages) {
+      if (!prev) {
+        setSelectedGrowthState("SR&BR Growth %");
+        setSelectedGrowth("SR&BR Growth %", "msgp");
+      } else {
+        setSelectedGrowthState(prev);
+      }
+    } else {
+      setSelectedGrowthState(prev || "SR&BR Growth %");
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchCitySummary = async () => {
       try {
         const params = new URLSearchParams();
@@ -56,22 +75,30 @@ function MSGPBarChartPage() {
     fetchCitySummary();
   }, [months, qtrWise, halfYear]);
 
+  // -----------------------------------------
+  // Helpers
+  // -----------------------------------------
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
   const readGrowthValue = (row, apiKey) => {
     const candidates = [
       apiKey, apiKey?.toLowerCase(), apiKey?.toUpperCase(),
-      apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(), "value","growth","val",
+      apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(),
+      "value", "growth", "val",
     ];
+
     for (const key of candidates) {
-      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null) return row[key];
+      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
+        return row[key];
     }
+
     for (const key of Object.keys(row)) {
       const v = row[key];
       if (typeof v === "number") return v;
       if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
     }
+
     return undefined;
   };
 
@@ -79,17 +106,21 @@ function MSGPBarChartPage() {
     const apiKey = growthKeyMap[selectedGrowth];
     const totals = {};
     const counts = {};
+
     (dataArr || []).forEach((row) => {
       const city = readCityName(row);
       const val = readGrowthValue(row, apiKey);
       const parsed = parseFloat(String(val).replace("%", "").trim());
+
       if (!isNaN(parsed)) {
         totals[city] = (totals[city] || 0) + parsed;
         counts[city] = (counts[city] || 0) + 1;
       }
     });
+
     const preferredOrder = ["BANGALORE", "MYSORE", "MANGALORE"];
     const allCities = Object.keys(totals);
+
     const sortedCities = [
       ...preferredOrder.filter((c) =>
         allCities.some((x) => x.toLowerCase() === c.toLowerCase())
@@ -100,6 +131,7 @@ function MSGPBarChartPage() {
         )
         .sort((a, b) => a.localeCompare(b)),
     ];
+
     return sortedCities.map((city) => ({
       city,
       value: parseFloat(((totals[city] || 0) / (counts[city] || 1)).toFixed(1)),
@@ -109,14 +141,50 @@ function MSGPBarChartPage() {
   const chartData =
     selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
+  // -----------------------------------------
+  // Render
+  // -----------------------------------------
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">MSGP REPORT (City-wise)</Typography>
+
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp")}>Graph-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/msgp_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/msgp", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Graph-CityWise
+          </Button>
+
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/msgp_branches", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Graph-BranchWise
+          </Button>
+
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/msgp-bar-chart", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Bar Chart-CityWise
+          </Button>
+
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/msgp_branches-bar-chart", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Bar Chart-BranchWise
+          </Button>
         </Box>
       </Box>
 
@@ -146,7 +214,11 @@ function MSGPBarChartPage() {
       ) : summary.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
-        <CityBarChart chartData={chartData} selectedGrowth={selectedGrowth} decimalPlaces={1} />
+        <CityBarChart
+          chartData={chartData}
+          selectedGrowth={selectedGrowth}
+          decimalPlaces={1}
+        />
       )}
     </Box>
   );

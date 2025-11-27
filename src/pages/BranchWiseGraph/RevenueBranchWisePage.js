@@ -50,9 +50,9 @@ function RevenueBranchWisePage() {
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState("SR&Br Total Growth %");
 
-  const [selectedBranches, setSelectedBranches] = useState([]);
+  const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden", "Balmatta", "KRS Road"]);
 
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
   const growthOptions = Object.keys(growthKeyMap);

@@ -34,7 +34,7 @@ function TATPage() {
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
 
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState("FR1");
 
   useEffect(() => {
     const saved = getSelectedGrowth("tat");
@@ -219,13 +219,14 @@ function TATPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">TAT REPORT</Typography>
+        <Typography variant="h4">TAT GRAPH (CityWise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat")}>Graph-BranchWise</Button>
-            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>Bar Chart-CityWise</Button>
-            <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+            <Button variant="contained" onClick={() => navigate("/DashboardHome/tat")}>Graph-CityWise</Button>
+                      <Button variant="contained" onClick={() => navigate("/DashboardHome/tat_branches")}>Graph-BranchWise</Button>
+                      <Button variant="contained" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>Bar Chart-CityWise</Button>
+                      <Button variant="contained" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>Bar Chart-BranchWise</Button>
           </Box>
         </Box>
       </Box>
