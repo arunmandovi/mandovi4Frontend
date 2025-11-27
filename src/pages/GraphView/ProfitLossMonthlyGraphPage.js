@@ -101,7 +101,7 @@ export default function ProfitLossMonthlyGraphPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">PROFIT & LOSS Monthly Graph(CityWies)</Typography>
+        <Typography variant="h4">PROFIT & LOSS Monthly Graph(CityWise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_monthly")}>P&L Monthly Graph(CityWise)</Button>
