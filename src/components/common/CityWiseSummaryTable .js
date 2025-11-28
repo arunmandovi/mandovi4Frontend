@@ -9,12 +9,10 @@ const CityWiseSummaryTable = ({
   tableData,
   decimalDigits = 1,
   growthDecimalDigits = 1,
-  percentageDecimalDigits = 0
+  percentageDecimalDigits = 0,
+  percentageProfitDecimalDigits = 1,
 }) => {
 
-  // ----------------------------------------------------
-  // GRAND TOTAL DONE% PER MONTH
-  // ----------------------------------------------------
   const grandTotals = {};
 
   chartMonths.forEach((m) => {
@@ -36,9 +34,6 @@ const CityWiseSummaryTable = ({
     };
   });
 
-  // ----------------------------------------------------
-  // BENCHMARK = AVERAGE OF ALL MONTH DONE%
-  // ----------------------------------------------------
   const avgBenchmark =
     chartMonths.reduce((s, m) => s + grandTotals[m].percentage, 0) /
     chartMonths.length;
@@ -186,7 +181,7 @@ const CityWiseSummaryTable = ({
                       k.includes("growth")
                         ? `${val.toFixed(growthDecimalDigits)}%`
                         : k.includes("percentage")
-                        ? `${val.toFixed(percentageDecimalDigits)}%`
+                        ? `${val.toFixed(k.includes("percentageProfit") ? 1 : percentageDecimalDigits)}%`
                         : val.toFixed(decimalDigits);
 
                     let color = "black";
@@ -230,7 +225,7 @@ const CityWiseSummaryTable = ({
 
                   const formatted =
                     k.includes("percentage")
-                      ? `${val.toFixed(percentageDecimalDigits)}%`
+                      ? `${val.toFixed(k.includes("percentageProfit") ? 1 : percentageDecimalDigits)}%`
                       : k.includes("growth")
                       ? `${val.toFixed(growthDecimalDigits)}%`
                       : val.toFixed(decimalDigits);
@@ -273,15 +268,11 @@ const CityWiseSummaryTable = ({
             );
           })}
 
-          {/* ----------------------------------------------------
-             GRAND TOTAL ROW
-          ---------------------------------------------------- */}
           <tr style={{ background: "#d9edf7", fontWeight: "bold" }}>
             <td style={{ padding: 8, border: "1px solid #ccc" }}>
               Grand Total
             </td>
 
-            {/* MONTH-WISE GRAND TOTAL ROW */}
             {chartMonths.flatMap((m) =>
               keys.map((k) => {
                 const LY = keys[0];
@@ -297,7 +288,6 @@ const CityWiseSummaryTable = ({
                   0
                 );
 
-                // FIXED!!!
                 if (k.includes("growth")) {
                   const pct =
                     totalLY === 0 ? 0 : ((totalTY - totalLY) / totalLY) * 100;
@@ -331,12 +321,11 @@ const CityWiseSummaryTable = ({
                         color: "rgba(6,226,24,1)"
                       }}
                     >
-                      {pct.toFixed(percentageDecimalDigits)}%
+                      {pct.toFixed(k.includes("percentageProfit") ? 1 : percentageDecimalDigits)}%
                     </td>
                   );
                 }
 
-                // normal month totals
                 const total = tableData.reduce(
                   (sum, r) => sum + Number(r[`${m}_${k}`] || 0),
                   0
@@ -357,7 +346,6 @@ const CityWiseSummaryTable = ({
               })
             )}
 
-            {/* GRAND TOTAL ALL */}
             {keys.map((k) => {
               const LY = keys[0];
               const TY = keys[1];
@@ -396,7 +384,7 @@ const CityWiseSummaryTable = ({
                       color: "rgba(6,226,24,1)"
                     }}
                   >
-                    {pct.toFixed(percentageDecimalDigits)}%
+                    {pct.toFixed(k.includes("percentageProfit") ? 1 : percentageDecimalDigits)}%
                   </td>
                 );
               }

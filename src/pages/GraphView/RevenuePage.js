@@ -176,7 +176,7 @@ function RevenuePage() {
           <Box
             sx={{
               mt: 2,
-              height: 520,
+              height: 400,
               background: "#fff",
               borderRadius: 2,
               boxShadow: 3,

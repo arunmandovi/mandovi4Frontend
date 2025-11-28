@@ -265,7 +265,7 @@ const BranchBarChart = ({
       sx={{
         mt: 2,
         width: "100%",
-        height: 750,
+        height: 700,
         background: "#fff",
         borderRadius: 2,
         boxShadow: "0 2px 8px rgba(0,0,0,0.06)",

@@ -20,16 +20,13 @@ const GrowthLineChart = ({
   yAxisMin,
   yAxisMax
 }) => {
-  // Desired final visual order
   const DESIRED_ORDER = ["Bangalore", "Mysore", "Mangalore"];
 
-  // Normalizer
   const normalize = (k = "") =>
     String(k).toLowerCase().replace(/[^a-z]/g, "");
 
   const desiredNorm = DESIRED_ORDER.map((x) => normalize(x));
 
-  // Sort cities in forced order
   const sortedCityKeys = [...cityKeys].sort((a, b) => {
     const na = normalize(a);
     const nb = normalize(b);
@@ -57,10 +54,8 @@ const GrowthLineChart = ({
     MANGALORE: "#cb0606ff",
   };
 
-  // Indian numbering format
   const formatIndian = (num) => num.toLocaleString("en-IN");
 
-  // FINAL VALUE FORMATTER
   const formatValue = (value) => {
     const num = Number(value) || 0;
 
@@ -69,10 +64,9 @@ const GrowthLineChart = ({
     }
 
     if (showPercent === "falseNumber") {
-      return num.toFixed(decimalDigits); // Plain number
+      return num.toFixed(decimalDigits); 
     }
 
-    // showPercent === false → Indian formatted number
     return formatIndian(Number(num.toFixed(decimalDigits)));
   };
 
@@ -84,7 +78,6 @@ const GrowthLineChart = ({
       >
         <CartesianGrid strokeDasharray="3 3" />
 
-        {/* X-Axis: Only months, no city names */}
         <XAxis
           dataKey="month"
           tick={{ fontSize: 12, fontWeight: 600 }}
@@ -112,10 +105,6 @@ const GrowthLineChart = ({
 
         <Tooltip content={<CustomGrowthTooltip formatter={formatValue} />} />
 
-        {/* ❌ Removed LEGEND (this was showing city names under X-axis) */}
-        {/* <Legend /> */}
-
-        {/* Gradients */}
         <defs>
           {sortedCityKeys.map((key, idx) => {
             const hue = (idx * 60) % 360;
@@ -136,7 +125,6 @@ const GrowthLineChart = ({
           })}
         </defs>
 
-        {/* Lines */}
         {sortedCityKeys.map((key) => (
           <Line
             key={key}

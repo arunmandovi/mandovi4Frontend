@@ -23,9 +23,9 @@ function OilPage() {
   ];
 
   const growthKeyMap = {
-    "Full Synthetic QTY %": "fullSyntheticPercentageQTY",
-    "Semi Synthetic QTY %": "semiSyntheticPercentageQTY",
-    "Full & Semi Synthetic QTY %": "fullSemiSyntheticPercentageQTY",
+    "Full Synthetic QTY %": "percentageFullSyntheticQTY",
+    "Semi Synthetic QTY %": "percentageSemiSyntheticQTY",
+    "Full & Semi Synthetic QTY %": "percentageFullSemiSyntheticQTY",
   };
 
   useEffect(() => {

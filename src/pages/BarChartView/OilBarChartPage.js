@@ -67,9 +67,6 @@ function OilBarChartPage() {
     fetchCitySummary();
   }, [months, qtrWise, halfYear]);
 
-  // -----------------------------------------
-  // Helpers
-  // -----------------------------------------
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 

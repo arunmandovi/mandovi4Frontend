@@ -33,9 +33,9 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
 
 // Growth Key Map
 const growthKeyMap = {
-    "Full Synthetic QTY %": "fullSyntheticPercentageQTY",
-    "Semi Synthetic QTY %": "semiSyntheticPercentageQTY",
-    "Full & Semi Synthetic QTY %": "fullSemiSyntheticPercentageQTY",
+    "Full Synthetic QTY %": "percentageFullSyntheticQTY",
+    "Semi Synthetic QTY %": "percentageSemiSyntheticQTY",
+    "Full & Semi Synthetic QTY %": "percentageFullSemiSyntheticQTY",
   };
 
 

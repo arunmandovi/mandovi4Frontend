@@ -176,7 +176,7 @@ function LoaddPage() {
           <Box
             sx={{
               mt: 2,
-              height: 520,
+              height: 400,
               background: "#fff",
               borderRadius: 2,
               boxShadow: 3,
@@ -190,7 +190,6 @@ function LoaddPage() {
             <GrowthLineChart chartData={chartData} cityKeys={cityKeys} decimalDigits={1} showPercent={true} />
           </Box>
 
-          {/* TABLE USING REUSABLE LOGIC */}
           <CityWiseSummaryTable
             selectedGrowth={selectedGrowth}
             chartMonths={chartMonths}

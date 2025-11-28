@@ -27,12 +27,12 @@ function BRConversionBranchesBarChartPage() {
   ];
 
   const growthKeyMap = {
-    "Arena BR Conversion %": "arenaPercentageBRConversion",
-    "Nexa BR Conversion %": "nexaPercentageBRConversion",
-    "Arena&Nexa BR Conversion %": "arenaNexaPercentageBRConversion",
-    "Arena Total Amount": "arenaTotalAmount",
-    "Nexa Total Amount": "nexaTotalAmount",
-    "Arena&Nexa Total Amount": "arenaNexaTotalAmount",
+    "Arena BR Conversion %": "percentageArenaBRConversion",
+    "Nexa BR Conversion %": "percentageNexaBRConversion",
+    "Arena&Nexa BR Conversion %": "percentageArenaNexaBRConversion",
+    "Arena Total Amount": "totalArenaAmount",
+    "Nexa Total Amount": "totalNexaAmount",
+    "Arena&Nexa Total Amount": "totalArenaNexaAmount",
   };
 
   useEffect(() => {
