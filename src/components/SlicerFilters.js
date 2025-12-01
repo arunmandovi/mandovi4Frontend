@@ -3,21 +3,32 @@ import { Box, Button, Typography } from "@mui/material";
 
 const SlicerFilters = ({
   monthOptions = [],
+  dateOptions = [],
   yearOptions = [],
   channelOptions = [],
   qtrWiseOptions = [],
   halfYearOptions = [],
   cityOptions = [],
+
   months = [],
   setMonths = () => {},
+
+  dates = [],
+  setDates = () => {},
+  dateSingleSelect = false,   // ✅ NEW PROP
+
   years = [],
   setYears = () => {},
+
   channels = [],
   setChannels = () => {},
+
   qtrWise = [],
   setQtrWise = () => {},
+
   halfYear = [],
   setHalfYear = () => {},
+
   cities = [],
   setCities = () => {},
 }) => {
@@ -52,8 +63,12 @@ const SlicerFilters = ({
     let updatedQuarters = [...qtrWise];
 
     if (!selected) {
-      autoMonths.forEach((m) => !updatedMonths.includes(m) && updatedMonths.push(m));
-      autoQuarters.forEach((q) => !updatedQuarters.includes(q) && updatedQuarters.push(q));
+      autoMonths.forEach(
+        (m) => !updatedMonths.includes(m) && updatedMonths.push(m)
+      );
+      autoQuarters.forEach(
+        (q) => !updatedQuarters.includes(q) && updatedQuarters.push(q)
+      );
     } else {
       updatedMonths = updatedMonths.filter((m) => !autoMonths.includes(m));
       updatedQuarters = updatedQuarters.filter((q) => !autoQuarters.includes(q));
@@ -74,7 +89,9 @@ const SlicerFilters = ({
 
     let updatedMonths = [...months];
     if (!selected) {
-      relatedMonths.forEach((m) => !updatedMonths.includes(m) && updatedMonths.push(m));
+      relatedMonths.forEach(
+        (m) => !updatedMonths.includes(m) && updatedMonths.push(m)
+      );
     } else {
       updatedMonths = updatedMonths.filter((m) => !relatedMonths.includes(m));
     }
@@ -96,7 +113,7 @@ const SlicerFilters = ({
     boxShadow: selected ? "0 3px 10px rgba(0,0,0,0.15)" : "none",
     "&:hover": {
       transform: "scale(1.05)",
-      background: selected ? selectedGradient : "rgba(0, 0, 0, 0.04)",
+      background: selected ? selectedGradient : "rgba(0,0,0,0.04)",
     },
   });
 
@@ -135,6 +152,38 @@ const SlicerFilters = ({
                   }
                 >
                   {m}
+                </Button>
+              );
+            })}
+          </Box>
+        </Box>
+      )}
+
+      {/* ✅ Dates */}
+      {dateOptions.length > 0 && (
+        <Box sx={{ minWidth: 180 }}>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Date(s)</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+            {dateOptions.map((d) => {
+              const selected = dates.includes(d);
+              return (
+                <Button
+                  key={d}
+                  sx={commonButtonStyles(selected)}
+                  size="small"
+                  onClick={() => {
+                    if (dateSingleSelect) {
+                      // ✅ Single select mode (for bar chart / monthly report)
+                      setDates([d]);
+                    } else {
+                      // Multi-select mode
+                      selected
+                        ? setDates(dates.filter((x) => x !== d))
+                        : setDates([...dates, d]);
+                    }
+                  }}
+                >
+                  {d}
                 </Button>
               );
             })}
@@ -197,7 +246,9 @@ const SlicerFilters = ({
       {/* ✅ Channels */}
       {channelOptions.length > 0 && (
         <Box sx={{ minWidth: 200 }}>
-          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Channel(s)</Typography>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>
+            Select Channel(s)
+          </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
             {channelOptions.map((ch) => {
               const selected = channels.includes(ch);
@@ -245,7 +296,9 @@ const SlicerFilters = ({
       {/* ✅ Half Years */}
       {halfYearOptions.length > 0 && (
         <Box sx={{ minWidth: 180 }}>
-          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Half Year(s)</Typography>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>
+            Select Half Year(s)
+          </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
             {halfYearOptions.map((h) => {
               const selected = halfYear.includes(h);

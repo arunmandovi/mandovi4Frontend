@@ -10,6 +10,7 @@ import Layout from "./components/Layout"; // ✅ Navbar + Outlet
 // Graph pages
 import BatteryTyrePage from "./pages/GraphView/BatteryTyrePage";
 import BRConversionPage from "./pages/GraphView/BRConversionPage";
+import HoldUpPage from "./pages/GraphView/HoldUpPage";
 import LabourPage from "./pages/GraphView/LabourPage";
 import PerVehiclePage from "./pages/GraphView/PerVehiclePage";
 import LoaddPage from "./pages/GraphView/LoaddPage";
@@ -34,6 +35,7 @@ import VASPage from "./pages/GraphView/VASPage";
 import BatteryTyreBranchWisePage from "./pages/BranchWiseGraph/BatteryTyreBranchWisePage";
 import BRConversionBranchWisePage from "./pages/BranchWiseGraph/BRConversionBranchWisePage";
 import DueDoneBranchWisePage from "./pages/BranchWiseGraph/DueDoneBranchWisePage";
+import HoldUpBranchWisePage from "./pages/BranchWiseGraph/HoldUpBranchWisePage";
 import LabourBranchWisePage from "./pages/BranchWiseGraph/LabourBranchWisePage";
 import LoaddBranchWisePage from "./pages/BranchWiseGraph/LoaddBranchWisePage";
 import MCPBranchWisePage from "./pages/BranchWiseGraph/MCPBranchWisePage";
@@ -77,6 +79,7 @@ import VASUploadPage from "./pages/FileUpload/VASUploadPage";
 import BatteryTyreBarChartPage from "./pages/BarChartView/BatteryTyreBarChartPage";
 import BRConversionBarChartPage from "./pages/BarChartView/BRConversionBarChartPage";
 import DueDoneBarChartPage from "./pages/BarChartView/DueDoneBarChartPage";
+import HoldUpBarChartPage from "./pages/BarChartView/HoldUpBarChartPage";
 import LabourBarChartPage from "./pages/BarChartView/LabourBarChartPage";
 import PerVehicleBarChartPage from "./pages/BarChartView/PerVehicleBarChartPage";
 import LoaddBarChartPage from "./pages/BarChartView/LoaddBarChartPage";
@@ -99,6 +102,7 @@ import VASBarChartPage from "./pages/BarChartView/VASBarChartPage";
 import BatteryTyreBranchesBarChartPage from "./pages/BranchWiseBarChartView/BatteryTyreBranchesBarChartPage";
 import BRConversionBranchesBarChartPage from "./pages/BranchWiseBarChartView/BRConversionBranchesBarChartPage";
 import DueDoneBranchesBarChartPage from "./pages/BranchWiseBarChartView/DueDoneBranchesBarChartPage";
+import HoldUpBranchesBarChartPage from "./pages/BranchWiseBarChartView/HoldUpBranchesBarChartPage";
 import LabourBranchesBarChartPage from "./pages/BranchWiseBarChartView/LabourBranchesBarChartPage";
 import PerVehicleBranchesBarChartPage from "./pages/BranchWiseBarChartView/PerVehicleBranchesBarChartPage";
 import LoaddBranchesBarChartPage from "./pages/BranchWiseBarChartView/LoaddBranchesBarChartPage";
@@ -168,9 +172,10 @@ function App() {
           {/* Default route → Battery & Tyre */}
           <Route index element={<Navigate to="battery_tyre" replace />} />
 
-          {/* 🧭 CityWise & BranchWise Graph Pages */}
+          {/* 🧭 CityWise Graph Pages */}
           <Route path="battery_tyre" element={<BatteryTyrePage />} />
           <Route path="br_conversion" element={<BRConversionPage />} />
+          <Route path="hold_up" element={<HoldUpPage />} />
           <Route path="due_done" element={<DueDonePage />} />
           <Route path="labour" element={<LabourPage />} />
           <Route path="per_vehicle" element={<PerVehiclePage />} />
@@ -196,6 +201,7 @@ function App() {
           <Route path="battery_tyre_branches" element={<BatteryTyreBranchWisePage />} />
           <Route path="br_conversion_branches" element={<BRConversionBranchWisePage />} />
           <Route path="due_done_branches" element={<DueDoneBranchWisePage />} />
+          <Route path="hold_up_branches" element={<HoldUpBranchWisePage />} />
           <Route path="labour_branches" element={<LabourBranchWisePage />} />
           <Route path="loadd_branches" element={<LoaddBranchWisePage />} />
           <Route path="mcp_branches" element={<MCPBranchWisePage />} />
@@ -215,10 +221,11 @@ function App() {
           <Route path="vas_branches" element={<VASBranchWisePage />} />
 
 
-          {/* 🧭 Employee Dashboard BarChart Pages */}
+          {/* 🧭 CityWise BarChart Pages */}
           <Route path="battery_tyre-bar-chart" element={<BatteryTyreBarChartPage />} />
           <Route path="br_conversion-bar-chart" element={<BRConversionBarChartPage />} />
           <Route path="due_done-bar-chart" element={<DueDoneBarChartPage />} />
+          <Route path="hold_up-bar-chart" element={<HoldUpBarChartPage />} />
           <Route path="labour-bar-chart" element={<LabourBarChartPage />} />
           <Route path="per_vehicle-bar-chart" element={<PerVehicleBarChartPage />} />
           <Route path="loadd-bar-chart" element={<LoaddBarChartPage />} />
@@ -240,6 +247,7 @@ function App() {
           <Route path="battery_tyre_branches-bar-chart" element={<BatteryTyreBranchesBarChartPage />} />
           <Route path="br_conversion_branches-bar-chart" element={<BRConversionBranchesBarChartPage />} />
           <Route path="due_done_branches-bar-chart" element={<DueDoneBranchesBarChartPage />} />
+          <Route path="hold_up_branches-bar-chart" element={<HoldUpBranchesBarChartPage />} />
           <Route path="labour_branches-bar-chart" element={<LabourBranchesBarChartPage />} />
           <Route path="per_vehicle_branches-bar-chart" element={<PerVehicleBranchesBarChartPage />} />
           <Route path="loadd_branches-bar-chart" element={<LoaddBranchesBarChartPage />} />

@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   LabelList,
   ReferenceLine,
-  Cell
+  Cell,
 } from "recharts";
 import { Box, Typography } from "@mui/material";
 import InsideBarLabel from "../utils/InsideBarLabel";
@@ -34,6 +34,7 @@ const CityBarChart = ({
   const values = safeData.map((d) => d.value);
   const maxValue = Math.max(...values);
   const minValue = Math.min(...values);
+
   const domain =
     showPercent === true && (maxValue >= 100 || minValue <= -100)
       ? [-100, 100]
@@ -45,12 +46,12 @@ const CityBarChart = ({
       const { value, payload: data } = payload[0];
       const city = data?.city ?? data?.name ?? "";
 
-      // 💬 Format value based on showPercent mode
       let formattedValue;
+
       if (showPercent === true) {
         formattedValue = `${Number(value).toFixed(decimalPlaces)}%`;
       } else if (showPercent === false) {
-        formattedValue = ` ${Number(value).toLocaleString("en-IN", {
+        formattedValue = `${Number(value).toLocaleString("en-IN", {
           maximumFractionDigits: decimalPlaces,
         })}`;
       } else if (showPercent === "falseNumber") {
@@ -100,7 +101,7 @@ const CityBarChart = ({
           data={safeData}
           margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
         >
-          {/* ✅ Gradient + shadow */}
+          {/* Gradient + Shadow */}
           <defs>
             <linearGradient id="bar3dGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="hsla(238, 62%, 63%, 1.00)" />
@@ -115,36 +116,30 @@ const CityBarChart = ({
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="city" tick={{ fontSize: 12 }} />
 
-          {/* ✅ Dynamic Y-axis formatting */}
+          {/* Dynamic Y-Axis Formatting */}
           <YAxis
             domain={domain}
             tick={{ fontSize: 12 }}
             tickFormatter={(val) => {
               if (showPercent === true)
                 return `${Number(val).toFixed(decimalPlaces)}%`;
+
               if (showPercent === false)
-                return ` ${Number(val).toLocaleString("en-IN", {
+                return `${Number(val).toLocaleString("en-IN", {
                   maximumFractionDigits: 0,
                 })}`;
+
               if (showPercent === "falseNumber")
                 return `${Number(val).toLocaleString("en-IN", {
                   maximumFractionDigits: 0,
                 })}`;
+
               return val;
-            }}
-            label={{
-              value:
-                showPercent === true
-                  ? ""
-                  : showPercent === false
-                  ? ""
-                  : "Value",
-              angle: -90,
-              position: "insideLeft",
             }}
           />
 
           <Tooltip content={<CustomTooltip />} />
+
           <ReferenceLine
             y={0}
             stroke="#000"
@@ -153,14 +148,19 @@ const CityBarChart = ({
             alwaysShow={true}
           />
 
-          <Bar dataKey="value" barSize={100} isAnimationActive={true} radius={[6, 6, 0, 0]}>
+          <Bar
+            dataKey="value"
+            barSize={100}
+            isAnimationActive={true}
+            radius={[6, 6, 0, 0]}
+          >
             {safeData.map((entry, index) => (
               <Cell
                 key={index}
                 fill={entry.value < threshold ? "#ff0000" : "#05f105"}
               />
             ))}
-          
+
             <LabelList
               dataKey="value"
               content={(props) => (
