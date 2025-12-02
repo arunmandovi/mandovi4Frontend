@@ -42,16 +42,28 @@ export default function DataTable({ tableData }) {
   return (
     <Box sx={{ width: "100%", mt: 2 }}>
       <DataGrid
-        autoHeight
         rows={safeData.map((row, index) => ({
-          id: index + 1, // required by DataGrid
-          serialNo: index + 1, // shown in table
+          id: index + 1,
+          serialNo: index + 1,
           ...row,
         }))}
         columns={columns}
         pageSize={25}
         rowsPerPageOptions={[5, 10, 25, 50]}
         disableSelectionOnClick
+        style={{ height: 600 }}     // ⬅ FIXED HEIGHT FOR SCROLLING
+        sx={{
+          "& .MuiDataGrid-columnHeaders": {
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            backgroundColor: "#f1f1f1",
+            fontWeight: "bold",
+          },
+          "& .MuiDataGrid-columnHeaderTitle": {
+            fontWeight: "bold",
+          },
+        }}
       />
     </Box>
   );
