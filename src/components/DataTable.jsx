@@ -22,10 +22,17 @@ export default function DataTable({
     );
   }
 
+  // ⬅️ UPDATED: Show blank ("-") when value is 0
   const formatValue = (value) => {
     if (value === null || value === undefined) return "-";
+
+    // Blank for zero
+    if (Number(value) === 0) return "-";
+
     if (typeof value === "number") return value.toFixed(decimalPlaces);
+
     if (!isNaN(value) && value !== "-") return Number(value).toFixed(decimalPlaces);
+
     return value;
   };
 
@@ -33,19 +40,27 @@ export default function DataTable({
 
   const columns = allKeys
     .filter((key) => !hiddenColumns.includes(key))
-    .map((key) => ({
+    .map((key, index) => ({
       field: key,
       headerName: key,
-      flex: 1,
-      minWidth: 90,
+      flex: index === 0 ? 1.8 : 1,
+      minWidth: index === 0 ? 180 : 90,
       sortable: false,
       headerAlign: "center",
-      align: "center",
+      align: "left",
+
       renderCell: (params) => {
         let value = params.value;
+
+        // ⬅️ UPDATED: If "0%" then show blank
         if (typeof value === "string" && value.includes("%")) {
-          return <Box sx={{ textAlign: "right", width: "100%" }}>{value}</Box>;
+          return (
+            <Box sx={{ textAlign: "right", width: "100%" }}>
+              {value.startsWith("0") ? "-" : value}
+            </Box>
+          );
         }
+
         return formatValue(value);
       },
     }));
@@ -82,7 +97,7 @@ export default function DataTable({
             fontWeight: "900 !important",
             fontSize: "22px",
             color: "#002b5b",
-            textAlign: "center",
+            textAlign: "left",
             textTransform: "uppercase",
             letterSpacing: "1.2px",
             textShadow: "0px 1px 3px rgba(0,0,0,0.35)",
@@ -101,9 +116,8 @@ export default function DataTable({
         sx={{
           borderRadius: "14px",
           overflow: "hidden",
-          border: "2px solid #b9c9df",
+          border: "5px solid #b9c9df",
 
-          // 🟦 HEADER STYLE (more bold)
           "& .MuiDataGrid-columnHeaders": {
             background: "linear-gradient(135deg, #d1e2ff, #f0f6ff)",
             borderBottom: "3px solid #99b3d8",
@@ -112,17 +126,16 @@ export default function DataTable({
           },
           "& .MuiDataGrid-columnHeaderTitle": {
             fontWeight: "900 !important",
-            color: "#002a54",
+            color: "rgba(0, 0, 0, 1)",
             fontSize: "17px",
             textTransform: "uppercase",
             letterSpacing: "0.7px",
           },
 
-          // 🟥 BORDER FOR EVERY CELL (horizontal + vertical)
           "& .MuiDataGrid-cell": {
             borderRight: "1px solid #c7d4e6",
             borderBottom: "1px solid #c7d4e6",
-            fontSize: "22px",
+            fontSize: "20px",
             fontWeight: "500",
             color: "rgba(8, 8, 8, 1)",
           },
@@ -131,7 +144,6 @@ export default function DataTable({
             borderBottom: "1px solid #c7d4e6",
           },
 
-          // Alternate row soft shades
           "& .MuiDataGrid-row:nth-of-type(odd)": {
             backgroundColor: "#f7faff",
           },
@@ -139,7 +151,6 @@ export default function DataTable({
             backgroundColor: "#eef4ff",
           },
 
-          // Row hover
           "& .MuiDataGrid-row:hover": {
             backgroundColor: "#dcedff !important",
             transform: "scale(1.004)",
