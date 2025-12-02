@@ -18,6 +18,13 @@ export const apiModules = [
   getByMonthYear :'/api/due_done/getdue_done',
   deleteAll: "/api/due_done/delete_all",
 },
+
+{ name: 'Hold Up', 
+  upload: '/api/hold_up/upload', 
+  get: '/api/hold_up/getallhold_up',
+  getByMonthYear :'/api/hold_up/gethold_up',
+  deleteAll: "/api/hold_up/delete_all",
+},
 { name: 'Labour', 
   upload: '/api/labour/upload', 
   get: '/api/labour/getalllabour',

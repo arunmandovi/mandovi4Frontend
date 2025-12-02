@@ -34,13 +34,13 @@ function HoldUpBarChartPage() {
 
     if (!fromPages) {
       if (!prev) {
-        setSelectedGrowthState("Service");
-        setSelectedGrowth("Service", "hold_up");
+        setSelectedGrowthState("ServiceBodyShop");
+        setSelectedGrowth("ServiceBodyShop", "hold_up");
       } else {
         setSelectedGrowthState(prev);
       }
     } else {
-      setSelectedGrowthState(prev || "Service");
+      setSelectedGrowthState(prev || "ServiceBodyShop");
     }
   }, []);
 
@@ -160,6 +160,17 @@ function HoldUpBarChartPage() {
         <Typography variant="h4">HOLD UP REPORT (City-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="contained"
+            onClick={() =>
+              navigate("/DashboardHome/hold_up_table", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Hold Up Summary
+          </Button>
+
           <Button
             variant="contained"
             onClick={() =>

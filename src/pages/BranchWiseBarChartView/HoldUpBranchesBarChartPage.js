@@ -14,7 +14,6 @@ function HoldUpBranchesBarChartPage() {
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState(["Nov"]);
   const [days, setDays] = useState([]);
-
   const [selectedDate, setSelectedDate] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
@@ -46,6 +45,7 @@ function HoldUpBranchesBarChartPage() {
     }
   }, []);
 
+  // Generate days
   useEffect(() => {
     if (!months || months.length === 0) return;
 
@@ -59,7 +59,10 @@ function HoldUpBranchesBarChartPage() {
     const jsMonth = monthMap[month];
     const daysInMonth = new Date(currentYear, jsMonth + 1, 0).getDate();
 
-    const validDays = Array.from({ length: daysInMonth }, (_, i) => String(i + 1).padStart(2, "0"));
+    const validDays = Array.from({ length: daysInMonth }, (_, i) =>
+      String(i + 1).padStart(2, "0")
+    );
+
     setDays(validDays);
   }, [months]);
 
@@ -69,38 +72,81 @@ function HoldUpBranchesBarChartPage() {
     }
   }, [days]);
 
+  // Fetch summary
   useEffect(() => {
-  if (!months || selectedDate.length === 0) return;
+    if (!months || selectedDate.length === 0) return;
 
-  const fetchSummary = async () => {
-    try {
-      const month = Array.isArray(months) ? months[0] : months;
-      const day = selectedDate[0];
-      const cityQuery = selectedCities.length > 0 ? `&cities=${selectedCities.join(",")}` : "";
-      const query = `?month=${month}&day=${day}${cityQuery}`;
+    const fetchSummary = async () => {
+      try {
+        const month = Array.isArray(months) ? months[0] : months;
+        const day = selectedDate[0];
 
-      const data = await fetchData(`/api/hold_up/hold_up_branch_summary${query}`);
-      setSummary(Array.isArray(data) ? data : data?.result || []);
-    } catch (error) {
-      console.error("Error fetching hold up branch summary:", error);
-      setSummary([]);
-    }
-  };
+        const cityQuery = selectedCities.length > 0
+          ? `&cities=${selectedCities.join(",")}`
+          : "";
 
-  fetchSummary();
-}, [months, selectedDate, selectedCities]);
+        const query = `?month=${month}&day=${day}${cityQuery}`;
 
-  const readBranchName = (row) => row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
-  const readCityName = (row) => row?.city || row?.City || row?.cityName || row?.CityName || "";
+        const data = await fetchData(
+          `/api/hold_up/hold_up_branch_summary${query}`
+        );
+
+        setSummary(Array.isArray(data) ? data : data?.result || []);
+      } catch (error) {
+        console.error("Error fetching hold up branch summary:", error);
+        setSummary([]);
+      }
+    };
+
+    fetchSummary();
+  }, [months, selectedDate, selectedCities]);
+
+  // Readers
+  const readBranchName = (row) =>
+    row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
+
+  const readCityName = (row) =>
+    row?.city || row?.City || row?.cityName || row?.CityName || "";
 
   const readGrowthValue = (row, apiKey) => {
     if (!apiKey) return null;
     const val = row?.[apiKey];
     if (val === null || val === undefined || val === "") return null;
+
     const num = parseFloat(String(val).replace("%", "").trim());
     return isNaN(num) ? null : num;
   };
 
+  const getFillColor = (value, max) => {
+    if (max === 0) return "rgb(0,200,0)"; 
+  
+    const ratio = value / max; 
+  
+    const colors = [
+      { stop: 1.0, r: 180, g: 0,   b: 0 }, { stop: 0.75, r: 255, g: 0,   b: 0 }, { stop: 0.5, r: 255, g: 140, b: 0 },  
+      { stop: 0.25, r: 255, g: 255, b: 0 }, { stop: 0.0, r: 0,   g: 200, b: 0 }   
+    ];
+  
+    for (let i = 0; i < colors.length - 1; i++) {
+      const c1 = colors[i];
+      const c2 = colors[i + 1];
+  
+      if (ratio <= c1.stop && ratio >= c2.stop) {
+        const range = c1.stop - c2.stop;
+        const t = (ratio - c2.stop) / range;
+  
+        const r = Math.round(c2.r + (c1.r - c2.r) * t);
+        const g = Math.round(c2.g + (c1.g - c2.g) * t);
+        const b = Math.round(c2.b + (c1.b - c2.b) * t);
+  
+        return `rgb(${r},${g},${b})`;
+      }
+    }
+  
+    return "rgb(0,200,0)";
+  };
+
+  // Build enriched chart data
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const totals = {};
@@ -111,43 +157,111 @@ function HoldUpBranchesBarChartPage() {
       const branch = readBranchName(row);
       const city = readCityName(row);
       const val = readGrowthValue(row, apiKey);
+
       if (val === null) return;
+
       totals[branch] = (totals[branch] || 0) + val;
       counts[branch] = (counts[branch] || 0) + 1;
       cityMap[branch] = city;
     });
 
-    return Object.keys(totals)
-      .map((b) => ({
-        name: b,
-        city: cityMap[b],
-        value: counts[b] ? totals[b] / counts[b] : 0
+    const raw = Object.keys(totals).map((b) => ({
+      name: b,
+      city: cityMap[b],
+      value: counts[b] ? totals[b] / counts[b] : 0
+    }));
+
+    const max = Math.max(...raw.map((x) => x.value), 0);
+
+    // 🎨 Add fill color (OVERRIDES BranchBarChart colors)
+    return raw
+      .map((item) => ({
+        ...item,
+        fill: getFillColor(item.value, max)
       }))
       .sort((a, b) => b.value - a.value);
   };
 
-  const chartData = selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
+  const chartData =
+    selectedGrowth && summary.length > 0
+      ? buildCombinedAverageData(summary)
+      : [];
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3
+        }}
+      >
         <Typography variant="h4">HOLD UP REPORT (Branch-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up", { state: { fromNavigation: true } })}>Graph-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches", { state: { fromNavigation: true } })}>Graph-BranchWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up-bar-chart", { state: { fromNavigation: true } })}>Bar Chart-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches-bar-chart", { state: { fromNavigation: true } })}>Bar Chart-BranchWise</Button>
+           <Button
+            variant="contained"
+            onClick={() =>
+              navigate("/DashboardHome/hold_up_table", { state: { fromNavigation: true } })
+            }
+          >
+            Hold Up Summary
+          </Button>
+
+          <Button
+            variant="contained"
+            onClick={() =>
+              navigate("/DashboardHome/hold_up", { state: { fromNavigation: true } })
+            }
+          >
+            Graph-CityWise
+          </Button>
+
+          <Button
+            variant="contained"
+            onClick={() =>
+              navigate("/DashboardHome/hold_up_branches", { state: { fromNavigation: true } })
+            }
+          >
+            Graph-BranchWise
+          </Button>
+
+          <Button
+            variant="contained"
+            onClick={() =>
+              navigate("/DashboardHome/hold_up-bar-chart", { state: { fromNavigation: true } })
+            }
+          >
+            Bar Chart-CityWise
+          </Button>
+
+          <Button
+            variant="contained"
+            onClick={() =>
+              navigate("/DashboardHome/hold_up_branches-bar-chart", {
+                state: { fromNavigation: true }
+              })
+            }
+          >
+            Bar Chart-BranchWise
+          </Button>
         </Box>
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions} months={months} setMonths={(selected) => {
+        monthOptions={monthOptions}
+        months={months}
+        setMonths={(selected) => {
           const lastSelected = selected[selected.length - 1];
           setMonths(lastSelected ? [lastSelected] : []);
         }}
-        cityOptions={cityOptions} cities={selectedCities} setCities={setSelectedCities}
-        dateOptions={days} dates={selectedDate} setDates={(arr) => {
+        cityOptions={cityOptions}
+        cities={selectedCities}
+        setCities={setSelectedCities}
+        dateOptions={days}
+        dates={selectedDate}
+        setDates={(arr) => {
           const last = arr[arr.length - 1];
           setSelectedDate(last ? [last.padStart(2, "0")] : []);
         }}
@@ -163,7 +277,9 @@ function HoldUpBranchesBarChartPage() {
       />
 
       {!selectedGrowth ? (
-        <Typography sx={{ mt: 2 }}>👆 Select a growth type to view the chart below</Typography>
+        <Typography sx={{ mt: 2 }}>
+          👆 Select a growth type to view the chart below
+        </Typography>
       ) : summary.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (

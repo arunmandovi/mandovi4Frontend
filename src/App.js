@@ -11,6 +11,7 @@ import Layout from "./components/Layout"; // ✅ Navbar + Outlet
 import BatteryTyrePage from "./pages/GraphView/BatteryTyrePage";
 import BRConversionPage from "./pages/GraphView/BRConversionPage";
 import HoldUpPage from "./pages/GraphView/HoldUpPage";
+import HoldUpSummaryPage from "./pages/GraphView/HoldUpSummaryPage";
 import LabourPage from "./pages/GraphView/LabourPage";
 import PerVehiclePage from "./pages/GraphView/PerVehiclePage";
 import LoaddPage from "./pages/GraphView/LoaddPage";
@@ -59,6 +60,7 @@ import VASBranchWisePage from "./pages/BranchWiseGraph/VASBranchWisePage";
 import BatteryTyreUploadPage from "./pages/FileUpload/BatteryTyreUploadPage";
 import BRConversionUploadPage from "./pages/FileUpload/BRConversionUploadPage";
 import DueDoneUploadPage from "./pages/FileUpload/DueDoneUploadPage";
+import HoldUpUploadPage from "./pages/FileUpload/HoldUpUploadPage";
 import LabourUploadPage from "./pages/FileUpload/LabourUpload";
 import LoaddUploadPage from "./pages/FileUpload/LoaddUploadPage";
 import MGAUploadPage from "./pages/FileUpload/MGAUploadPage";
@@ -144,6 +146,7 @@ function App() {
         <Route path="/batterytyre-upload" element={ <AdminProtectedRoute> <BatteryTyreUploadPage /> </AdminProtectedRoute> } />
         <Route path="/brconversion-upload" element={ <AdminProtectedRoute> <BRConversionUploadPage /> </AdminProtectedRoute> } />
         <Route path="/due_done-upload" element={ <AdminProtectedRoute> <DueDoneUploadPage /> </AdminProtectedRoute>} />
+        <Route path="/hold_up-upload" element={ <AdminProtectedRoute> <HoldUpUploadPage /> </AdminProtectedRoute>} />
         <Route path="/labour-upload" element={ <AdminProtectedRoute><LabourUploadPage /></AdminProtectedRoute> } />
         <Route path="/loadd-upload" element={ <AdminProtectedRoute><LoaddUploadPage /></AdminProtectedRoute> } />
         <Route path="/mcp-upload" element={ <AdminProtectedRoute><MCPUploadPage /></AdminProtectedRoute> } />
@@ -176,6 +179,7 @@ function App() {
           <Route path="battery_tyre" element={<BatteryTyrePage />} />
           <Route path="br_conversion" element={<BRConversionPage />} />
           <Route path="hold_up" element={<HoldUpPage />} />
+          <Route path="hold_up_table" element={<HoldUpSummaryPage />} />
           <Route path="due_done" element={<DueDonePage />} />
           <Route path="labour" element={<LabourPage />} />
           <Route path="per_vehicle" element={<PerVehiclePage />} />

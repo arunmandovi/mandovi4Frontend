@@ -4,7 +4,7 @@ import DataTable from "../../components/DataTable";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function ProfitLossSRBRLoaddPage() {
+function HoldUpSummaryPage() {
   const [citySummary, setCitySummary] = useState([]);
   const [branchSummary, setBranchSummary] = useState([]);
   const [selectedCity, setSelectedCity] = useState("ALL");
@@ -21,16 +21,16 @@ function ProfitLossSRBRLoaddPage() {
   };
 
   const CITY_FILTERS = [
-    { code: "BLR", label: "Bangalore" },
-    { code: "MYS", label: "Mysore" },
-    { code: "MLR", label: "Mangalore" },
+    { code: "BANGALORE", label: "BANGALORE" },
+    { code: "MYSORE", label: "MYSORE" },
+    { code: "MANGALORE", label: "MANGALORE" },
   ];
 
-  const CITY_ORDER = [ "Bangalore", "Mysore", "Mangalore" ];
+  const CITY_ORDER = [ "BANGALORE", "MYSORE", "MANGALORE" ];
 
   const loadCitySummary = async () => {
     try {
-      const data = await fetchData("/api/profit_loss/profit_loss_summary");
+      const data = await fetchData("/api/hold_up/hold_up_table_summary");
 
       if (!Array.isArray(data)) {
         setCitySummary([]);
@@ -39,13 +39,26 @@ function ProfitLossSRBRLoaddPage() {
 
       let formatted = data.map((row) => ({
             City: row.city || "-",
-            "Apr 2025": formatNumber(row.apr25_per_100k),
-            "May 2025": formatNumber(row.may25_per_100k),
-            "Jun 2025": formatNumber(row.jun25_per_100k),
-            "Jul 2025": formatNumber(row.jul25_per_100k),
-            "Aug 2025": formatNumber(row.aug25_per_100k),
-            "Sep 2025": formatNumber(row.sep25_per_100k),
-            "2025-26": formatNumber(row.total25_per_100k),
+            "PMS": formatNumber(row.countPMS),
+            "Sr 1": formatNumber(row.count1Service),
+            "Sr 1-2": formatNumber(row.count1to2Service),
+            "Sr 3-5": formatNumber(row.count3to5Service),
+            "Sr 6-7": formatNumber(row.count6to7Service),
+            "Sr 8-15": formatNumber(row.count8to15Service),
+            "Sr 16-30": formatNumber(row.count16to30Service),
+            "Sr >30": formatNumber(row.countAbove30Service),
+            "Service": formatNumber(row.countService),
+            "Br 1": formatNumber(row.count1BodyShop),
+            "Br 1-2": formatNumber(row.count1to2BodyShop),
+            "Br 3-5": formatNumber(row.count3to5BodyShop),
+            "Br 6-7": formatNumber(row.count6to7BodyShop),
+            "Br 8-15": formatNumber(row.count8to15BodyShop),
+            "Br 16-30": formatNumber(row.count16to30BodyShop),
+            "Br >30": formatNumber(row.countAbove30BodyShop),
+            "BodyShop": formatNumber(row.countBodyShop),
+            "Service": formatNumber(row.countService1),
+            "BodyShop": formatNumber(row.countBodyShop1),
+            "Total": formatNumber(row.countTotal),
           }));
           formatted.sort(
         (a, b) => CITY_ORDER.indexOf(a.City) - CITY_ORDER.indexOf(b.City)
@@ -73,7 +86,7 @@ function ProfitLossSRBRLoaddPage() {
 
   const loadBranchSummary = async (cityFilter = null) => {
     try {
-      let url = "/api/profit_loss/profit_loss_branch_summary";
+      let url = "/api/hold_up/hold_up_table_branch_summary";
 
       if (cityFilter && cityFilter !== "ALL") {
         url += `?cities=${cityFilter}`;
@@ -84,13 +97,26 @@ function ProfitLossSRBRLoaddPage() {
       const formatted = Array.isArray(data)
         ? data.filter((row) => !["BANGALORE", "MYSORE", "MANGALORE"].includes(row.branch)).map((row) => ({
             Branch: row.branch || "-",
-            "Apr 2025": formatNumber(row.apr25_per_100k),
-            "May 2025": formatNumber(row.may25_per_100k),
-            "Jun 2025": formatNumber(row.jun25_per_100k),
-            "Jul 2025": formatNumber(row.jul25_per_100k),
-            "Aug 2025": formatNumber(row.aug25_per_100k),
-            "Sep 2025": formatNumber(row.sep25_per_100k),
-            "2025-26": formatNumber(row.total25_per_100k),
+            "PMS": formatNumber(row.countPMS),
+            "Sr 1": formatNumber(row.count1Service),
+            "Sr 1-2": formatNumber(row.count1to2Service),
+            "Sr 3-5": formatNumber(row.count3to5Service),
+            "Sr 6-7": formatNumber(row.count6to7Service),
+            "Sr 8-15": formatNumber(row.count8to15Service),
+            "Sr 16-30": formatNumber(row.count16to30Service),
+            "Sr >30": formatNumber(row.countAbove30Service),
+            "Service": formatNumber(row.countService),
+            "Br 1": formatNumber(row.count1BodyShop),
+            "Br 1-2": formatNumber(row.count1to2BodyShop),
+            "Br 3-5": formatNumber(row.count3to5BodyShop),
+            "Br 6-7": formatNumber(row.count6to7BodyShop),
+            "Br 8-15": formatNumber(row.count8to15BodyShop),
+            "Br 16-30": formatNumber(row.count16to30BodyShop),
+            "Br >30": formatNumber(row.countAbove30BodyShop),
+            "BodyShop": formatNumber(row.countBodyShop),
+            "Service": formatNumber(row.countService1),
+            "BodyShop": formatNumber(row.countBodyShop1),
+            "Total": formatNumber(row.countTotal),
           }))
           .sort((a, b) => {
             return (
@@ -128,21 +154,15 @@ function ProfitLossSRBRLoaddPage() {
         }}
       >
         <Typography variant="h4" sx={{ fontWeight: 600 }}>
-          Profit & Loss Summary
+          Hold Up Summary
         </Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_monthly")}>
-            P&L Monthly Graph
-          </Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_monthly")}>P&L Monthly Graph(CityWise)</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_monthly_branch")}>P&L Monthly Graph(BranchWise)</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle")}>P&L PerVehicle Graph(CityWise)</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle_branch")}>P&L PerVehicle Graph(BranchWise)</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss")}>P&L Table</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_srbr")}>SR&BR Table</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_table")}>Hold Up Summary</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -175,4 +195,4 @@ function ProfitLossSRBRLoaddPage() {
   );
 }
 
-export default ProfitLossSRBRLoaddPage;
+export default HoldUpSummaryPage;

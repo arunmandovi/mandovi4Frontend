@@ -110,7 +110,7 @@ function MGABranchesBarChartPage() {
           name: b,
           city: cityMap[b],
           value: resultVal,
-          barColor: resultVal < 455 ? "red" : "#05f105ff",
+          fill: resultVal < 455 ? "red" : "#05f105ff",
         };
       })
       .sort((a, b) => b.value - a.value);

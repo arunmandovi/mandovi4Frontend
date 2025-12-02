@@ -109,7 +109,7 @@ function PMSPartsBranchesBarChartPage() {
         name: b,
         city: cityMap[b],
         value,
-        barColor: value > 98 ? "#05f105ff" : "#ff0000ff", 
+        fill: value > 98 ? "#05f105ff" : "#ff0000ff", 
       };
     })
     .sort((a, b) => b.value - a.value);

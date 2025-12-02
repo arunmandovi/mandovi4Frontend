@@ -15,7 +15,7 @@ function HoldUpPage() {
   const [months, setMonths] = useState("Nov");
   const [days, setDays] = useState([]);
   const [selectedDate, setSelectedDate] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState("Service");
+  const [selectedGrowth, setSelectedGrowthState] = useState("ServiceBodyShop");
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep",
@@ -115,6 +115,7 @@ function HoldUpPage() {
         <Typography variant="h4">HOLD UP GRAPH (CityWise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_table")}>Hold Up Summary</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up")}>Graph-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up-bar-chart")}>Bar Chart-CityWise</Button>

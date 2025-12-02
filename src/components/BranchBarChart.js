@@ -338,8 +338,8 @@ const BranchBarChart = ({
               <Cell
                 key={`cell-${index}`}
                 fill={
-                  entry?.barColor
-                    ? entry.barColor
+                  entry?.fill
+                    ? entry.fill
                     : entry.value < 0
                     ? "red"
                     : entry.value >= 0 && entry.value <= 5
