@@ -57,6 +57,18 @@ function TATPage() {
 
   const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
 
+  // ---------------- FIXED COLORS ------------------
+  const COLOR_MAP = {
+    Bangalore: "rgba(101, 189, 7, 1)",
+    Mysore: "#003399",
+    Mangalore: "#cb0606ff",
+
+    BANGALORE: "rgba(101, 189, 7, 1)",
+    MYSORE: "#003399",
+    MANGALORE: "#cb0606ff",
+  };
+  // ------------------------------------------------
+
   // ---------- Fetch city summary ----------
   useEffect(() => {
     const fetchCitySummary = async () => {
@@ -222,12 +234,10 @@ function TATPage() {
         <Typography variant="h4">TAT GRAPH (CityWise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="contained" onClick={() => navigate("/DashboardHome/tat")}>Graph-CityWise</Button>
-                      <Button variant="contained" onClick={() => navigate("/DashboardHome/tat_branches")}>Graph-BranchWise</Button>
-                      <Button variant="contained" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>Bar Chart-CityWise</Button>
-                      <Button variant="contained" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>Bar Chart-BranchWise</Button>
-          </Box>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/tat")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/tat_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -282,86 +292,65 @@ function TATPage() {
               <Tooltip content={<CustomTooltip />} />
               <Legend />
 
-              {/* ---------- GLOW GRADIENTS ---------- */}
-              <defs>
-                {cityKeys.map((key, idx) => {
-                  const hue = (idx * 60) % 360;
-                  return (
-                    <linearGradient
-                      id={`color-${key}`}
-                      key={idx}
-                      x1="0"
-                      y1="0"
-                      x2="1"
-                      y2="1"
-                    >
-                      <stop offset="0%" stopColor={`hsl(${hue}, 100%, 70%)`} stopOpacity={1} />
-                      <stop offset="50%" stopColor={`hsl(${hue}, 100%, 55%)`} stopOpacity={0.9} />
-                      <stop offset="100%" stopColor={`hsl(${hue}, 100%, 40%)`} stopOpacity={0.8} />
-                    </linearGradient>
-                  );
-                })}
-              </defs>
+              {/* -------------- FIXED COLOR LINES ---------------- */}
+              {cityKeys.map((key) => {
+                const color =
+                  COLOR_MAP[key] ||
+                  COLOR_MAP[key.toUpperCase()] ||
+                  COLOR_MAP[key.toLowerCase()] ||
+                  "#8884d8";
 
-              {/* ---------- NEON SHINING LINES ---------- */}
-              {cityKeys.map((key, idx) => (
-                <Line
-                  key={key}
-                  dataKey={key}
-                  type="monotone"
-                  stroke={`url(#color-${key})`}
-                  strokeWidth={4}
-                  dot={{
-                    r: 5,
-                    fill: `hsl(${(idx * 60) % 360}, 100%, 65%)`,
-                    stroke: "white",
-                    strokeWidth: 1.5,
-                  }}
-                  activeDot={{
-                    r: 7,
-                    fill: `hsl(${(idx * 60) % 360}, 100%, 75%)`,
-                    stroke: "#fff",
-                    strokeWidth: 2,
-                    style: { filter: "drop-shadow(0 0 6px rgba(255,255,255,0.8))" },
-                  }}
-                  isAnimationActive={true}
-                  animationDuration={1300}
-                  animationEasing="ease-out"
-                  style={{
-                    filter: `
-                      drop-shadow(0 0 5px hsla(0,0%,100%,0.6))
-                      drop-shadow(0 0 8px hsla(0,0%,100%,0.45))
-                      drop-shadow(0 3px 4px rgba(0,0,0,0.25))
-                    `,
-                  }}
-                >
-                  <LabelList
+                return (
+                  <Line
+                    key={key}
                     dataKey={key}
-                    position="top"
-                    fontSize={11}
-                    content={(props) => {
-                      const { x, y, value } = props;
-                      if (value == null) return null;
-                      return (
-                        <text
-                          x={x}
-                          y={y - 6}
-                          textAnchor="middle"
-                          fontSize={11}
-                          fill="#333"
-                          style={{
-                            paintOrder: "stroke",
-                            stroke: "white",
-                            strokeWidth: 2,
-                          }}
-                        >
-                          {formatSecondsToHHMMSS(value)}
-                        </text>
-                      );
+                    type="monotone"
+                    stroke={color}
+                    strokeWidth={4}
+                    dot={{
+                      r: 5,
+                      fill: color,
+                      stroke: "white",
+                      strokeWidth: 1.5,
                     }}
-                  />
-                </Line>
-              ))}
+                    activeDot={{
+                      r: 7,
+                      fill: color,
+                      stroke: "#fff",
+                      strokeWidth: 2,
+                    }}
+                    isAnimationActive={true}
+                    animationDuration={1300}
+                    animationEasing="ease-out"
+                  >
+                    <LabelList
+                      dataKey={key}
+                      position="top"
+                      fontSize={11}
+                      content={(props) => {
+                        const { x, y, value } = props;
+                        if (value == null) return null;
+                        return (
+                          <text
+                            x={x}
+                            y={y - 6}
+                            textAnchor="middle"
+                            fontSize={11}
+                            fill="#333"
+                            style={{
+                              paintOrder: "stroke",
+                              stroke: "white",
+                              strokeWidth: 2,
+                            }}
+                          >
+                            {formatSecondsToHHMMSS(value)}
+                          </text>
+                        );
+                      }}
+                    />
+                  </Line>
+                );
+              })}
             </LineChart>
           </ResponsiveContainer>
         </Box>
