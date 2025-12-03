@@ -1,11 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Checkbox,
+  ListItemText,
+} from "@mui/material";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate, useLocation } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
 import GrowthButtons from "../../components/GrowthButtons";
 import BranchBarChart from "../../components/BranchBarChart";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
+
+import {
+  CITY_ORDER,
+  BRANCH_CITY_MAP,
+} from "../../helpers/SortByCityAndBranch";
+
+const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
+  Object.entries(BRANCH_CITY_MAP)
+    .filter(([_, c]) => c === city)
+    .map(([br]) => br)
+).sort((a, b) => a.localeCompare(b));
 
 function HoldUpBranchesBarChartPage() {
   const navigate = useNavigate();
@@ -16,6 +37,7 @@ function HoldUpBranchesBarChartPage() {
   const [days, setDays] = useState([]);
   const [selectedDate, setSelectedDate] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedBranches, setSelectedBranches] = useState(ALL_BRANCHES);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const cityOptions = ["BANGALORE", "MYSORE", "MANGALORE"];
@@ -28,7 +50,6 @@ function HoldUpBranchesBarChartPage() {
     ServiceBodyShop: "countServiceBodyShop"
   };
 
-  // Set default growth on mount
   useEffect(() => {
     const prev = getSelectedGrowth("hold_up");
     const fromNavigation = location.state?.fromNavigation === true;
@@ -45,7 +66,6 @@ function HoldUpBranchesBarChartPage() {
     }
   }, []);
 
-  // Generate days
   useEffect(() => {
     if (!months || months.length === 0) return;
 
@@ -183,9 +203,47 @@ function HoldUpBranchesBarChartPage() {
   };
 
   const chartData =
-    selectedGrowth && summary.length > 0
-      ? buildCombinedAverageData(summary)
-      : [];
+  selectedGrowth && summary.length > 0
+    ? buildCombinedAverageData(summary)
+        .filter(item => {
+
+          // ❗ 1) Filter based on your special rules
+          if (
+            selectedGrowth === "BodyShop Growth %" ||
+            selectedGrowth === "BS on FPR 2024-25 %" ||
+            selectedGrowth === "BS on FPR 2025-26 %"
+          ) {
+            return !(
+              item.name === "Vittla" ||
+              item.name === "Naravi" ||
+              item.name === "Gowribidanur" ||
+              item.name === "Malur SOW" ||
+              item.name === "Maluru WS" ||
+              item.name === "Kollegal" ||
+              item.name === "Narasipura" ||
+              item.name === "Nagamangala" ||
+              item.name === "Maddur" ||
+              item.name === "Somvarpet" ||
+              item.name === "Krishnarajapet" ||
+              item.name === "ChamrajNagar" ||
+              item.name === "KRS Road" ||
+              item.name === "Balmatta" ||
+              item.name === "Bantwal" ||
+              item.name === "Nexa Service" ||
+              item.name === "Kadaba" ||
+              item.name === "Sujith Bagh Lane"
+            );
+          }
+
+          return true;
+        })
+        .filter(item => selectedBranches.includes(item.name))
+    : [];
+
+  const handleBranchChange = (e) => {
+    const value = e.target.value;
+    setSelectedBranches(value);
+  };
 
   return (
     <Box sx={{ p: 3 }}>
@@ -247,6 +305,53 @@ function HoldUpBranchesBarChartPage() {
             Bar Chart-BranchWise
           </Button>
         </Box>
+      </Box>
+
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+        <FormControl size="small" sx={{ minWidth: 260 }}>
+         <InputLabel>Select Branches</InputLabel>
+         <Select
+           multiple
+           label="Select Branches"
+           value={selectedBranches}
+           onChange={handleBranchChange}
+           displayEmpty
+           renderValue={() => "Select Branches"}  // << ALWAYS SHOWN
+           MenuProps={{
+             PaperProps: {
+               style: { maxHeight: 300 },
+             },
+           }}
+         >
+           <ListItemText primary="Bangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+           {Object.entries(BRANCH_CITY_MAP)
+             .filter(([_, c]) => c === "Bangalore")
+             .map(([br]) => (
+               <MenuItem value={br} key={br}>
+                 <Checkbox checked={selectedBranches.includes(br)} />
+                 <ListItemText primary={br} />
+               </MenuItem>
+             ))}
+           <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+           {Object.entries(BRANCH_CITY_MAP)
+             .filter(([_, c]) => c === "Mysore")
+             .map(([br]) => (
+               <MenuItem value={br} key={br}>
+                 <Checkbox checked={selectedBranches.includes(br)} />
+                 <ListItemText primary={br} />
+               </MenuItem>
+             ))}
+           <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+           {Object.entries(BRANCH_CITY_MAP)
+             .filter(([_, c]) => c === "Mangalore")
+             .map(([br]) => (
+               <MenuItem value={br} key={br}>
+                 <Checkbox checked={selectedBranches.includes(br)} />
+                 <ListItemText primary={br} />
+               </MenuItem>
+             ))}
+         </Select>
+        </FormControl>
       </Box>
 
       <SlicerFilters

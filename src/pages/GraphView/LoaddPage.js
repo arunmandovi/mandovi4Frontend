@@ -9,7 +9,6 @@ import { sortCities } from "../../components/CityOrderHelper";
 import CityWiseSummaryTable from "../../components/common/CityWiseSummaryTable ";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
-// NEW IMPORT
 import { buildPivotTable } from "../../utils/buildPivotTable";
 
 function LoaddPage() {
@@ -73,7 +72,6 @@ function LoaddPage() {
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  // Fetch summary data
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
@@ -99,7 +97,6 @@ function LoaddPage() {
     fetchCitySummary();
   }, [months, channels]);
 
-  // Build chart data
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
 
@@ -132,7 +129,6 @@ function LoaddPage() {
   const { formatted: chartData, sortedCities: cityKeys } = buildChartData();
   const keys = selectedGrowth ? valueKeyMap[selectedGrowth] : [];
 
-  // NEW REUSABLE PIVOT TABLE LOGIC
   const citiesToShow = ["Bangalore", "Mysore", "Mangalore"];
   const { tableData, chartMonths } = buildPivotTable(summary, keys, citiesToShow);
 

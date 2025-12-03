@@ -226,7 +226,7 @@ function VASBarChartPage() {
         <CityBarChart
           chartData={chartData}
           selectedGrowth={selectedGrowth}
-          decimalPlaces={1}
+          decimalPlaces={0}
         />
       )}
     </Box>

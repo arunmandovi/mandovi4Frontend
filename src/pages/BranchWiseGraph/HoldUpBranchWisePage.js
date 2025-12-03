@@ -25,7 +25,6 @@ import {
   BRANCH_CITY_MAP,
 } from "../../helpers/SortByCityAndBranch";
 
-// All branches sorted
 const ALL_BRANCHES = CITY_ORDER.flatMap(city =>
   Object.entries(BRANCH_CITY_MAP)
     .filter(([_, c]) => c === city)
@@ -75,13 +74,11 @@ function HoldUpBranchWisePage() {
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  // Load saved growth option
   useEffect(() => {
     const saved = getSelectedGrowth("hold_up");
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
-  // Detect valid days like CityWise page
   useEffect(() => {
     if (!months) return;
 
@@ -106,14 +103,12 @@ function HoldUpBranchWisePage() {
     fetchValidDays();
   }, [months]);
 
-  // Auto-select LAST available day
   useEffect(() => {
     if (days.length > 0 ) {
       setSelectedDate(days);
     }
   }, [days]);
 
-  // Fetch summary (month + day + city-query)
   useEffect(() => {
     const fetchSummary = async () => {
       if (!months || selectedDate.length === 0) return;
@@ -128,7 +123,6 @@ function HoldUpBranchWisePage() {
   
       let allData = [];
   
-      // Fetch EACH day's data
       for (const day of selectedDate) {
         const query = `?month=${months}&day=${day}${cityQuery}`;
         const data = await fetchData(
@@ -140,7 +134,7 @@ function HoldUpBranchWisePage() {
         safe.forEach((row) =>
           allData.push({
             ...row,
-            __day: day, // store day for graph
+            __day: day, 
           })
         );
       }
@@ -179,7 +173,7 @@ function HoldUpBranchWisePage() {
     });
   
     return {
-      formatted: chartRows, // MULTIPLE ROWS FOR 01...LAST
+      formatted: chartRows, 
       sortedBranches: selectedBranches,
     };
   };
@@ -196,7 +190,6 @@ function HoldUpBranchWisePage() {
   return (
     <Box sx={{ p: 3 }}>
 
-      {/* Header Bar (matches CityWise) */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">HOLD UP GRAPH (BranchWise)</Typography>
 
@@ -209,54 +202,53 @@ function HoldUpBranchWisePage() {
         </Box>
       </Box>
 
-      {/* Branch Dropdown */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
-          <Select
+           <Select
             multiple
-            value={selectedBranches}
             label="Select Branches"
+            value={selectedBranches}
             onChange={handleBranchChange}
-            renderValue={(selected) => selected.join(", ")}
+            displayEmpty
+            renderValue={() => "Select Branches"}  // << ALWAYS SHOWN
+            MenuProps={{
+              PaperProps: {
+                style: { maxHeight: 300 },
+              },
+            }}
           >
-            {/* Bangalore */}
             <ListItemText primary="Bangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, city]) => city === "Bangalore")
-              .map(([branch]) => (
-                <MenuItem key={branch} value={branch}>
-                  <Checkbox checked={selectedBranches.includes(branch)} />
-                  <ListItemText primary={branch} />
+              .filter(([_, c]) => c === "Bangalore")
+              .map(([br]) => (
+                <MenuItem value={br} key={br}>
+                  <Checkbox checked={selectedBranches.includes(br)} />
+                  <ListItemText primary={br} />
                 </MenuItem>
               ))}
-
-            {/* Mysore */}
-            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold", mt: 1 }} />
+             <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, city]) => city === "Mysore")
-              .map(([branch]) => (
-                <MenuItem key={branch} value={branch}>
-                  <Checkbox checked={selectedBranches.includes(branch)} />
-                  <ListItemText primary={branch} />
+              .filter(([_, c]) => c === "Mysore")
+              .map(([br]) => (
+                <MenuItem value={br} key={br}>
+                  <Checkbox checked={selectedBranches.includes(br)} />
+                  <ListItemText primary={br} />
                 </MenuItem>
               ))}
-
-            {/* Mangalore */}
-            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold", mt: 1 }} />
+             <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, city]) => city === "Mangalore")
-              .map(([branch]) => (
-                <MenuItem key={branch} value={branch}>
-                  <Checkbox checked={selectedBranches.includes(branch)} />
-                  <ListItemText primary={branch} />
+              .filter(([_, c]) => c === "Mangalore")
+              .map(([br]) => (
+                <MenuItem value={br} key={br}>
+                  <Checkbox checked={selectedBranches.includes(br)} />
+                  <ListItemText primary={br} />
                 </MenuItem>
               ))}
           </Select>
         </FormControl>
       </Box>
 
-      {/* Month + Day Slicer */}
       <SlicerFilters
         monthOptions={monthOptions}
         months={months ? [months] : []}
@@ -272,7 +264,6 @@ function HoldUpBranchWisePage() {
         }}
       />
 
-      {/* Growth Selection */}
       <GrowthButtons
         growthOptions={Object.keys(growthKeyMap)}
         selectedGrowth={selectedGrowth}
@@ -282,7 +273,6 @@ function HoldUpBranchWisePage() {
         }}
       />
 
-      {/* Chart */}
       {selectedBranches.length === 0 ? (
         <Typography sx={{ mt: 2, color: "red" }}>
           Please select at least one branch.

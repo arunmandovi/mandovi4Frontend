@@ -210,7 +210,7 @@ export default function ProfitLossPerVehicleBranchWisePage() {
 
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_monthly")}>P&L Monthly Graph(CityWise)</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_monthly_branch")}>P&L Monthly Graph(BranchWise)</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_branches")}>P&L Monthly Graph(BranchWise)</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle")}>P&L PerVehicle Graph(CityWise)</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle_branch")}>P&L PerVehicle Graph(BranchWise)</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss")}>P&L Table</Button>

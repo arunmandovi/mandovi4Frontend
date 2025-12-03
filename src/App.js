@@ -215,7 +215,7 @@ function App() {
           <Route path="msgp_profit_branches" element={<MSGPProfitBranchWisePage />} />
           <Route path="oil_branches" element={<OilBranchWisePage />} />
           <Route path="per_vehicle_branches" element={<PerVehicleBranchWisePage />} />
-          <Route path="profit_loss_monthly_branch" element={<ProfitLossMonthlyBranchWisePage />} />
+          <Route path="profit_loss_branches" element={<ProfitLossMonthlyBranchWisePage />} />
           <Route path="profit_loss_per_vehicle_branch" element={<ProfitLossPerVehicleBranchWisePage />} />
           <Route path="pms_parts_branches" element={<PMSPartsBranchWisePage />} />
           <Route path="referencee_branches" element={<ReferenceeBranchWisePage />} />

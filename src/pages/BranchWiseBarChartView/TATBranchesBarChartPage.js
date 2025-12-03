@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Typography,
   Button,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Checkbox,
+  ListItemText,
 } from "@mui/material";
 import {
   BarChart,
@@ -22,9 +28,17 @@ import { useNavigate } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
-/* ---------------------------------------------
-   3D BAR SHAPE
----------------------------------------------- */
+import {
+  CITY_ORDER,
+  BRANCH_CITY_MAP,
+} from "../../helpers/SortByCityAndBranch";
+
+const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
+  Object.entries(BRANCH_CITY_MAP)
+    .filter(([_, c]) => c === city)
+    .map(([br]) => br)
+).sort((a, b) => a.localeCompare(b));
+
 const ThreeDBarShape = (props) => {
   const { x, y, width, height, fill } = props;
 
@@ -66,9 +80,6 @@ const ThreeDBarShape = (props) => {
   );
 };
 
-/* ---------------------------------------------
-   MAIN PAGE
----------------------------------------------- */
 
 function TATBranchesBarChartPage() {
   const navigate = useNavigate();
@@ -78,14 +89,13 @@ function TATBranchesBarChartPage() {
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
 
-  // ---------------------- FIXED ----------------------
   const [selectedGrowth, setSelectedGrowthState] = useState("FR1");
+  const [selectedBranches, setSelectedBranches] = useState(ALL_BRANCHES);
 
   useEffect(() => {
     const saved = getSelectedGrowth("tat");
     if (saved) setSelectedGrowthState(saved);
   }, []);
-  // --------------------------------------------------
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
@@ -105,7 +115,6 @@ function TATBranchesBarChartPage() {
     PMS: "paidService",
   };
 
-  /* ------------------- Fetch API ------------------- */
   useEffect(() => {
     const fetchSummary = async () => {
       try {
@@ -127,7 +136,6 @@ function TATBranchesBarChartPage() {
     fetchSummary();
   }, [months, cities, qtrWise, halfYear]);
 
-  /* ------------------- Helpers ------------------- */
   const readBranchName = (row) =>
     (row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "")
       .toString()
@@ -167,7 +175,6 @@ function TATBranchesBarChartPage() {
     return timeToSeconds(val);
   };
 
-  /* ------------------- Data Build ------------------- */
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const totals = {};
@@ -197,9 +204,47 @@ function TATBranchesBarChartPage() {
   };
 
   const chartData =
-    selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
+  selectedGrowth && summary.length > 0
+    ? buildCombinedAverageData(summary)
+        .filter(item => {
 
-  /* ------------------- Tooltip ------------------- */
+          if (
+            selectedGrowth === "BodyShop Growth %" ||
+            selectedGrowth === "BS on FPR 2024-25 %" ||
+            selectedGrowth === "BS on FPR 2025-26 %"
+          ) {
+            return !(
+              item.name === "Vittla" ||
+              item.name === "Naravi" ||
+              item.name === "Gowribidanur" ||
+              item.name === "Malur SOW" ||
+              item.name === "Maluru WS" ||
+              item.name === "Kollegal" ||
+              item.name === "Narasipura" ||
+              item.name === "Nagamangala" ||
+              item.name === "Maddur" ||
+              item.name === "Somvarpet" ||
+              item.name === "Krishnarajapet" ||
+              item.name === "ChamrajNagar" ||
+              item.name === "KRS Road" ||
+              item.name === "Balmatta" ||
+              item.name === "Bantwal" ||
+              item.name === "Nexa Service" ||
+              item.name === "Kadaba" ||
+              item.name === "Sujith Bagh Lane"
+            );
+          }
+
+          return true;
+        })
+        .filter(item => selectedBranches.includes(item.name))
+    : [];
+
+    const handleBranchChange = (e) => {
+      const value = e.target.value;
+      setSelectedBranches(value);
+    };
+
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const sec = payload[0].value;
@@ -222,7 +267,6 @@ function TATBranchesBarChartPage() {
     return null;
   };
 
-  /* ------------------- Inside Label ------------------- */
   const InsideBarLabel = (props) => {
     const { x, y, width, height, value } = props;
     if (value == null || width <= 0) return null;
@@ -247,13 +291,11 @@ function TATBranchesBarChartPage() {
     );
   };
 
-  /* ------------------- Bar Color Logic ------------------- */
   const getBarColor = (valueSec) => {
     const threshold = 2 * 3600 + 30 * 60;
     return valueSec < threshold ? "#05f105" : "#ff0000";
   };
 
-  /* ------------------- UI ------------------- */
   return (
     <Box sx={{ p: 3 }}>
       <Box
@@ -276,6 +318,56 @@ function TATBranchesBarChartPage() {
         </Box>
       </Box>
 
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+              <FormControl size="small" sx={{ minWidth: 260 }}>
+                <InputLabel>Select Branches</InputLabel>
+      
+                <Select
+                  multiple
+                  label="Select Branches"
+                  value={selectedBranches}
+                  onChange={handleBranchChange}
+                  displayEmpty
+                  renderValue={() => "Select Branches"}  // << ALWAYS SHOWN
+                  MenuProps={{
+                    PaperProps: {
+                      style: { maxHeight: 300 },
+                    },
+                  }}
+                >
+                  <ListItemText primary="Bangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+                  {Object.entries(BRANCH_CITY_MAP)
+                    .filter(([_, c]) => c === "Bangalore")
+                    .map(([br]) => (
+                      <MenuItem value={br} key={br}>
+                        <Checkbox checked={selectedBranches.includes(br)} />
+                        <ListItemText primary={br} />
+                      </MenuItem>
+                    ))}
+      
+                  <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+                  {Object.entries(BRANCH_CITY_MAP)
+                    .filter(([_, c]) => c === "Mysore")
+                    .map(([br]) => (
+                      <MenuItem value={br} key={br}>
+                        <Checkbox checked={selectedBranches.includes(br)} />
+                        <ListItemText primary={br} />
+                      </MenuItem>
+                    ))}
+      
+                  <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+                  {Object.entries(BRANCH_CITY_MAP)
+                    .filter(([_, c]) => c === "Mangalore")
+                    .map(([br]) => (
+                      <MenuItem value={br} key={br}>
+                        <Checkbox checked={selectedBranches.includes(br)} />
+                        <ListItemText primary={br} />
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            </Box>
+
       <SlicerFilters
         monthOptions={monthOptions}
         cityOptions={cityOptions}
@@ -291,7 +383,6 @@ function TATBranchesBarChartPage() {
         setHalfYear={setHalfYear}
       />
 
-      {/* ---------------- GROWTH BUTTONS (FIXED) ---------------- */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2, mb: 2 }}>
         {growthOptions.map((g, idx) => (
           <Button

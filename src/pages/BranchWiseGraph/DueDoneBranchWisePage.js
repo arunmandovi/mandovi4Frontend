@@ -25,16 +25,12 @@ import {
   BRANCH_CITY_MAP,
 } from "../../helpers/SortByCityAndBranch";
 
-// ----------------------------------------------
-// Build Branch List (ALL branches together)
-// ----------------------------------------------
 const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
   Object.entries(BRANCH_CITY_MAP)
     .filter(([_, c]) => c === city)
     .map(([br]) => br)
 ).sort((a, b) => a.localeCompare(b));
 
-// Growth Key Map
   const growthKeyMap = {
     "Done %": "percentageDone",
   };
@@ -53,7 +49,6 @@ function DueDoneBranchWisePage() {
   const channelOptions = ["Arena", "Nexa"];
   const growthOptions = Object.keys(growthKeyMap);
 
-  // Read branch exactly as API sends
   const readBranchName = (row) => {
     return row?.branch || row?.Branch || row?.branchName || row?.BranchName || "";
   };
@@ -71,7 +66,6 @@ function DueDoneBranchWisePage() {
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
-  // API Fetch
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
@@ -97,7 +91,6 @@ function DueDoneBranchWisePage() {
     fetchCitySummary();
   }, [months, channels]);
 
-  // Build Chart Data
   const buildChartData = () => {
     if (!selectedGrowth || selectedBranches.length === 0)
       return { formatted: [], sortedBranches: [] };
@@ -127,7 +120,6 @@ function DueDoneBranchWisePage() {
 
   const { formatted: chartData, sortedBranches: cityKeys } = buildChartData();
 
-  // Select Branches
   const handleBranchChange = (e) => {
     const value = e.target.value;
 
@@ -153,48 +145,47 @@ function DueDoneBranchWisePage() {
         </Box>
       </Box>
 
-      {/* Branch Dropdown (ONLY dropdown now) */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
-          <Select
+           <Select
             multiple
-            value={selectedBranches}
             label="Select Branches"
+            value={selectedBranches}
             onChange={handleBranchChange}
-            renderValue={(selected) => selected.join(", ")}
+            displayEmpty
+            renderValue={() => "Select Branches"}  // << ALWAYS SHOWN
+            MenuProps={{
+              PaperProps: {
+                style: { maxHeight: 300 },
+              },
+            }}
           >
-      
-            {/* Group: Bangalore */}
             <ListItemText primary="Bangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, city]) => city === "Bangalore")
-              .map(([branch]) => (
-                <MenuItem key={branch} value={branch}>
-                  <Checkbox checked={selectedBranches.includes(branch)} />
-                  <ListItemText primary={branch} />
+              .filter(([_, c]) => c === "Bangalore")
+              .map(([br]) => (
+                <MenuItem value={br} key={br}>
+                  <Checkbox checked={selectedBranches.includes(br)} />
+                  <ListItemText primary={br} />
                 </MenuItem>
               ))}
-      
-            {/* Group: Mysore */}
-            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold", mt: 1 }} />
+             <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, city]) => city === "Mysore")
-              .map(([branch]) => (
-                <MenuItem key={branch} value={branch}>
-                  <Checkbox checked={selectedBranches.includes(branch)} />
-                  <ListItemText primary={branch} />
+              .filter(([_, c]) => c === "Mysore")
+              .map(([br]) => (
+                <MenuItem value={br} key={br}>
+                  <Checkbox checked={selectedBranches.includes(br)} />
+                  <ListItemText primary={br} />
                 </MenuItem>
               ))}
-      
-            {/* Group: Mangalore */}
-            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold", mt: 1 }} />
+             <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, city]) => city === "Mangalore")
-              .map(([branch]) => (
-                <MenuItem key={branch} value={branch}>
-                  <Checkbox checked={selectedBranches.includes(branch)} />
-                  <ListItemText primary={branch} />
+              .filter(([_, c]) => c === "Mangalore")
+              .map(([br]) => (
+                <MenuItem value={br} key={br}>
+                  <Checkbox checked={selectedBranches.includes(br)} />
+                  <ListItemText primary={br} />
                 </MenuItem>
               ))}
           </Select>
@@ -218,7 +209,6 @@ function DueDoneBranchWisePage() {
         }}
       />
 
-      {/* Graph */}
       {selectedBranches.length === 0 ? (
         <Typography sx={{ mt: 2, color: "red" }}>Please select at least one branch.</Typography>
       ) : !selectedGrowth ? (

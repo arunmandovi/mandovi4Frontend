@@ -134,7 +134,7 @@ function VASPage() {
           <GrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
-            decimalDigits={1}
+            decimalDigits={0}
             showPercent={true}
           />
         </Box>
