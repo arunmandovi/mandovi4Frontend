@@ -22,14 +22,12 @@ function HoldUpBranchesBarChartPage() {
   const [summary, setSummary] = useState([]);
   const getCurrentFYMonth = () => {
   const monthMapReverse = {
-    0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun", 6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
+      0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun", 6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
+    };
+    const today = new Date();
+    const jsMonth = today.getMonth();
+    return monthMapReverse[jsMonth] || "Apr";
   };
-
-  const today = new Date();
-  const jsMonth = today.getMonth(); // 0–11
-
-  return monthMapReverse[jsMonth] || "Apr";
-};
 
 const [months, setMonths] = useState([getCurrentFYMonth()]);
   const [days, setDays] = useState([]);

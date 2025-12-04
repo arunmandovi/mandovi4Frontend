@@ -43,7 +43,17 @@ function HoldUpBranchWisePage() {
 
   const [summary, setSummary] = useState([]);
 
-  const [months, setMonths] = useState("Nov");
+  const getCurrentFYMonth = () => {
+  const jsMonthToName = [
+    "Jan","Feb","Mar","Apr","May","Jun",
+    "Jul","Aug","Sep","Oct","Nov","Dec",
+  ];
+
+  const today = new Date();
+  return jsMonthToName[today.getMonth()];
+};
+
+const [months, setMonths] = useState(getCurrentFYMonth());
   const [days, setDays] = useState([]);
   const [selectedDate, setSelectedDate] = useState([]);
 
