@@ -12,13 +12,27 @@ function HoldUpBarChartPage() {
   const location = useLocation();
 
   const [summary, setSummary] = useState([]);
-  const [months, setMonths] = useState(["Nov"]);
+  const getCurrentFYMonth = () => {
+  const monthMapReverse = {
+    0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun", 6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
+  };
+
+  const today = new Date();
+  const jsMonth = today.getMonth();
+
+  return monthMapReverse[jsMonth] || "Apr";
+};
+
+const [months, setMonths] = useState([getCurrentFYMonth()]);
   const [days, setDays] = useState([]);
   const [selectedDate, setSelectedDate] = useState([]);
 
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
-  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const monthOptions = [
+    "Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"
+  ];
+
   const growthOptions = ["Service", "BodyShop", "PMS", "ServiceBodyShop"];
 
   const growthKeyMap = {
@@ -28,6 +42,7 @@ function HoldUpBarChartPage() {
     ServiceBodyShop: "countServiceBodyShop"
   };
 
+  // Load previous selected growth
   useEffect(() => {
     const prev = getSelectedGrowth("hold_up");
     const fromPages = location.state?.fromNavigation === true;
@@ -44,26 +59,7 @@ function HoldUpBarChartPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!months || selectedDate.length === 0) return;
-
-    const fetchCitySummary = async () => {
-      try {
-        const day = selectedDate[0];   // <-- ONLY ONE DAY
-        const query = `?month=${months}&day=${day}`;
-
-        const data = await fetchData(`/api/hold_up/hold_up_summary${query}`);
-        const safeData = Array.isArray(data) ? data : data?.result || [];
-
-        setSummary(safeData);
-      } catch (error) {
-        console.error("fetchCitySummary error:", error);
-      }
-    };
-
-    fetchCitySummary();
-  }, [months, selectedDate]);
-
+  // Generate all days in selected month
   useEffect(() => {
     if (!months) return;
 
@@ -79,17 +75,69 @@ function HoldUpBarChartPage() {
     const daysInMonth = new Date(currentYear, jsMonth + 1, 0).getDate();
 
     const validDays = Array.from({ length: daysInMonth }, (_, i) =>
-      String(i + 1).padStart(2, "0") 
+      String(i + 1).padStart(2, "0")
     );
 
     setDays(validDays);
   }, [months]);
 
+  // ⭐ AUTO-SELECT LAST AVAILABLE DATE WITH DATA
   useEffect(() => {
-    if (days.length > 0 && selectedDate.length === 0) {
-      setSelectedDate([days[days.length - 1]]); 
-    }
+    const autoSelectLastAvailableDate = async () => {
+      if (days.length === 0) return;
+
+      let latestDateWithData = null;
+
+      // CHECK EACH DATE'S DATA
+      for (let i = days.length - 1; i >= 0; i--) {
+        const day = days[i];
+        const query = `?month=${months}&day=${day}`;
+
+        try {
+          const res = await fetchData(`/api/hold_up/hold_up_summary${query}`);
+          const safe = Array.isArray(res) ? res : res?.result || [];
+
+          if (safe.length > 0) {
+            latestDateWithData = day;
+            break; // STOP when first (latest) valid day is found
+          }
+        } catch (err) {
+          console.error("Error checking date:", day, err);
+        }
+      }
+
+      // If found → auto select
+      if (latestDateWithData) {
+        setSelectedDate([latestDateWithData]);
+      } else {
+        // fallback to last day of month
+        setSelectedDate([days[days.length - 1]]);
+      }
+    };
+
+    autoSelectLastAvailableDate();
   }, [days]);
+
+  // Fetch summary for selected day
+  useEffect(() => {
+    if (!months || selectedDate.length === 0) return;
+
+    const fetchCitySummary = async () => {
+      try {
+        const day = selectedDate[0];
+        const query = `?month=${months}&day=${day}`;
+
+        const data = await fetchData(`/api/hold_up/hold_up_summary${query}`);
+        const safeData = Array.isArray(data) ? data : data?.result || [];
+
+        setSummary(safeData);
+      } catch (error) {
+        console.error("fetchCitySummary error:", error);
+      }
+    };
+
+    fetchCitySummary();
+  }, [months, selectedDate]);
 
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
@@ -219,12 +267,14 @@ function HoldUpBarChartPage() {
 
       <SlicerFilters
         monthOptions={monthOptions}
-        months={months}  
+        months={months}
         setMonths={(selected) => {
           const lastSelected = selected[selected.length - 1];
           setMonths(lastSelected ? [lastSelected] : []);
         }}
-        dateOptions={days} dates={selectedDate} setDates={(arr) => {
+        dateOptions={days}
+        dates={selectedDate}
+        setDates={(arr) => {
           const last = arr[arr.length - 1];
           setSelectedDate(last ? [last.padStart(2, "0")] : []);
         }}

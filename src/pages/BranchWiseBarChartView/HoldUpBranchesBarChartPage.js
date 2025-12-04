@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Button,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Checkbox,
-  ListItemText,
-} from "@mui/material";
+import { Box, Button, Typography, FormControl, InputLabel, Select, MenuItem, Checkbox, ListItemText, } from "@mui/material";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate, useLocation } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
@@ -17,10 +7,7 @@ import GrowthButtons from "../../components/GrowthButtons";
 import BranchBarChart from "../../components/BranchBarChart";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
-import {
-  CITY_ORDER,
-  BRANCH_CITY_MAP,
-} from "../../helpers/SortByCityAndBranch";
+import { CITY_ORDER, BRANCH_CITY_MAP, } from "../../helpers/SortByCityAndBranch";
 
 const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
   Object.entries(BRANCH_CITY_MAP)
@@ -33,7 +20,18 @@ function HoldUpBranchesBarChartPage() {
   const location = useLocation();
   const [selectedCities, setSelectedCities] = useState([]);
   const [summary, setSummary] = useState([]);
-  const [months, setMonths] = useState(["Nov"]);
+  const getCurrentFYMonth = () => {
+  const monthMapReverse = {
+    0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun", 6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
+  };
+
+  const today = new Date();
+  const jsMonth = today.getMonth(); // 0–11
+
+  return monthMapReverse[jsMonth] || "Apr";
+};
+
+const [months, setMonths] = useState([getCurrentFYMonth()]);
   const [days, setDays] = useState([]);
   const [selectedDate, setSelectedDate] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
@@ -92,7 +90,49 @@ function HoldUpBranchesBarChartPage() {
     }
   }, [days]);
 
-  // Fetch summary
+  useEffect(() => {
+    const autoSelectLastAvailableDate = async () => {
+      if (days.length === 0) return;
+  
+      let latestDateWithData = null;
+  
+      for (let i = days.length - 1; i >= 0; i--) {
+        const day = days[i];
+        const month = Array.isArray(months) ? months[0] : months;
+  
+        const cityQuery =
+          selectedCities.length > 0
+            ? `&cities=${selectedCities.join(",")}`
+            : "";
+  
+        const query = `?month=${month}&day=${day}${cityQuery}`;
+  
+        try {
+          const res = await fetchData(
+            `/api/hold_up/hold_up_branch_summary${query}`
+          );
+  
+          const safe = Array.isArray(res) ? res : res?.result || [];
+  
+          if (safe.length > 0) {
+            latestDateWithData = day;
+            break;
+          }
+        } catch (err) {
+          console.error("Error checking date:", day, err);
+        }
+      }
+  
+      if (latestDateWithData) {
+        setSelectedDate([latestDateWithData]);
+      } else {
+        setSelectedDate([days[days.length - 1]]);
+      }
+    };
+  
+    autoSelectLastAvailableDate();
+  }, [days, months, selectedCities]);
+
   useEffect(() => {
     if (!months || selectedDate.length === 0) return;
 
@@ -121,7 +161,6 @@ function HoldUpBranchesBarChartPage() {
     fetchSummary();
   }, [months, selectedDate, selectedCities]);
 
-  // Readers
   const readBranchName = (row) =>
     row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
 
@@ -162,11 +201,9 @@ function HoldUpBranchesBarChartPage() {
         return `rgb(${r},${g},${b})`;
       }
     }
-  
     return "rgb(0,200,0)";
   };
 
-  // Build enriched chart data
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const totals = {};
@@ -193,7 +230,6 @@ function HoldUpBranchesBarChartPage() {
 
     const max = Math.max(...raw.map((x) => x.value), 0);
 
-    // 🎨 Add fill color (OVERRIDES BranchBarChart colors)
     return raw
       .map((item) => ({
         ...item,
@@ -206,32 +242,15 @@ function HoldUpBranchesBarChartPage() {
   selectedGrowth && summary.length > 0
     ? buildCombinedAverageData(summary)
         .filter(item => {
-
-          // ❗ 1) Filter based on your special rules
           if (
-            selectedGrowth === "BodyShop Growth %" ||
-            selectedGrowth === "BS on FPR 2024-25 %" ||
-            selectedGrowth === "BS on FPR 2025-26 %"
+            selectedGrowth === "BodyShop Growth %" ||  selectedGrowth === "BS on FPR 2024-25 %" || selectedGrowth === "BS on FPR 2025-26 %"
           ) {
             return !(
-              item.name === "Vittla" ||
-              item.name === "Naravi" ||
-              item.name === "Gowribidanur" ||
-              item.name === "Malur SOW" ||
-              item.name === "Maluru WS" ||
-              item.name === "Kollegal" ||
-              item.name === "Narasipura" ||
-              item.name === "Nagamangala" ||
-              item.name === "Maddur" ||
-              item.name === "Somvarpet" ||
-              item.name === "Krishnarajapet" ||
-              item.name === "ChamrajNagar" ||
-              item.name === "KRS Road" ||
-              item.name === "Balmatta" ||
-              item.name === "Bantwal" ||
-              item.name === "Nexa Service" ||
-              item.name === "Kadaba" ||
-              item.name === "Sujith Bagh Lane"
+              item.name === "Vittla" || item.name === "Naravi" || item.name === "Gowribidanur" || item.name === "Malur SOW" ||
+              item.name === "Maluru WS" || item.name === "Kollegal" || item.name === "Narasipura" || item.name === "Nagamangala" ||
+              item.name === "Maddur" || item.name === "Somvarpet" || item.name === "Krishnarajapet" || item.name === "ChamrajNagar" ||
+              item.name === "KRS Road" || item.name === "Balmatta" || item.name === "Bantwal" ||
+              item.name === "Nexa Service" || item.name === "Kadaba" || item.name === "Sujith Bagh Lane"
             );
           }
 
@@ -316,7 +335,7 @@ function HoldUpBranchesBarChartPage() {
            value={selectedBranches}
            onChange={handleBranchChange}
            displayEmpty
-           renderValue={() => "Select Branches"}  // << ALWAYS SHOWN
+           renderValue={() => "Select Branches"}  
            MenuProps={{
              PaperProps: {
                style: { maxHeight: 300 },
