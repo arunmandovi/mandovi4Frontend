@@ -49,7 +49,6 @@ function HoldUpPage() {
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  // Fetch summary whenever month changes
   useEffect(() => {
     if (!months) return;
 
@@ -80,7 +79,6 @@ function HoldUpPage() {
     fetchCitySummary();
   }, [months]);
 
-  // Build chart data
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
 
@@ -93,7 +91,6 @@ function HoldUpPage() {
 
     const sortedCities = sortCities([...cities]);
 
-    // Use all detected days automatically
     const filteredSummary = summary.filter(({ month }) => {
       const day = month.split("-")[1];
       return days.includes(day);
@@ -129,7 +126,6 @@ function HoldUpPage() {
         </Box>
       </Box>
 
-      {/* Month Filter Only (date hidden) */}
       <SlicerFilters
         monthOptions={monthOptions}
         months={[months]}
@@ -137,13 +133,12 @@ function HoldUpPage() {
           const selected = value[value.length - 1];
           setMonths(selected);
         }}
-        dateOptions={[]} // hide date picker completely
-        dates={[]}       // no dates selected
-        setDates={() => {}} // disable date setter
+        dateOptions={[]} 
+        dates={[]}       
+        setDates={() => {}} 
         singleMonthSelect={true}
       />
 
-      {/* Growth Buttons */}
       <GrowthButtons
         growthOptions={growthOptions}
         selectedGrowth={selectedGrowth}
@@ -153,7 +148,6 @@ function HoldUpPage() {
         }}
       />
 
-      {/* Chart */}
       {!selectedGrowth ? (
         <Typography>Select a growth type to view the chart</Typography>
       ) : chartData.length === 0 ? (
