@@ -27,6 +27,7 @@ import ProfitLossSRBRLoaddPage from "./pages/GraphView/ProfitLossSRBRLoadd";
 import ProfitLossMonthlyGraphPage from "./pages/GraphView/ProfitLossMonthlyGraphPage";
 import ProfitLossPerVehicleGraphPage from "./pages/GraphView/ProfitLossPerVehicleGraphPage";
 import ReferenceePage from "./pages/GraphView/ReferenceePage";
+import ReferenceeTablePage from "./pages/GraphView/ReferenceeTablePage";
 import RevenuePage from "./pages/GraphView/RevenuePage";
 import SparesPage from "./pages/GraphView/SparesPage";
 import TATPage from "./pages/GraphView/TATPage";
@@ -196,6 +197,7 @@ function App() {
           <Route path="profit_loss_monthly" element={<ProfitLossMonthlyGraphPage />} />
           <Route path="profit_loss_per_vehicle" element={<ProfitLossPerVehicleGraphPage />} />
           <Route path="referencee" element={<ReferenceePage />} />
+          <Route path="referencee_table" element={<ReferenceeTablePage />} />
           <Route path="revenue" element={<RevenuePage />} />
           <Route path="spares" element={<SparesPage />} />
           <Route path="tat" element={<TATPage />} />

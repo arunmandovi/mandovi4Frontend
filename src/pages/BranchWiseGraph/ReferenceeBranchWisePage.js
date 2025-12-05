@@ -136,6 +136,7 @@ function ReferenceeBranchWisePage() {
         <Typography variant="h4">REFERENCE GRAPH (BranchWise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee_table")}>Referencee Table</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee")}>Graph-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee-bar-chart")}>Bar Chart-CityWise</Button>

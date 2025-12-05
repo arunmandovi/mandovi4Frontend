@@ -136,6 +136,14 @@ function ReferenceeBarChartPage() {
         <Typography variant="h4">REFRENCE REPORT (City-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
+          <Button 
+          variant="contained" onClick={() => navigate("/DashboardHome/referencee_table", {
+            state: { fromNavigation: true },
+            })
+            }
+          >
+              Referencee Table
+          </Button>
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/referencee", {
                 state: { fromNavigation: true },

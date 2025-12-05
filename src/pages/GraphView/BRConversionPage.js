@@ -196,7 +196,12 @@ function BRConversionPage() {
             keys={keys}
             beautifyHeader={beautifyHeader}
             tableData={tableData}
-            decimalDigits={0} 
+          
+            decimalDigits={0}
+            percentageDecimalDigits={
+              selectedGrowth.includes("%") ? 1 : 0   
+            }
+            growthDecimalDigits={1}
           />
         </>
       )}

@@ -11,38 +11,21 @@ import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelectio
 function HoldUpPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
+  const [days, setDays] = useState([]);
+  const [selectedGrowth, setSelectedGrowthState] = useState("ServiceBodyShop");
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep",
     "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"
   ];
 
-  const getCurrentFYMonth = () => {
-    const monthMapReverse = {
-      0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr",
-      4: "May", 5: "Jun", 6: "Jul", 7: "Aug",
-      8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
-    };
-
-    const today = new Date();
-    const jsMonth = today.getMonth();
-    const month = monthMapReverse[jsMonth];
-
-    // 🔥 FIX: Return only months that exist in FY monthOptions
-    return monthOptions.includes(month) ? month : "Apr";
-  };
-
-  const [months, setMonths] = useState(getCurrentFYMonth());
-  const [days, setDays] = useState([]);
-  const [selectedDate, setSelectedDate] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState("ServiceBodyShop");
+  const [months, setMonths] = useState("Dec");
 
   const allDayOptions = Array.from({ length: 31 }, (_, i) =>
     String(i + 1).padStart(2, "0")
   );
 
   const growthOptions = ["Service", "BodyShop", "PMS", "ServiceBodyShop"];
-
   const growthKeyMap = {
     Service: "countService",
     BodyShop: "countBodyShop",
@@ -56,13 +39,7 @@ function HoldUpPage() {
   }, []);
 
   const readCityName = (row) =>
-    row?.city ||
-    row?.City ||
-    row?.cityName ||
-    row?.CityName ||
-    row?.name ||
-    row?.Name ||
-    "";
+    row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
   const readGrowthValue = (row, apiKey) => {
     const raw = row?.[apiKey];
@@ -72,6 +49,7 @@ function HoldUpPage() {
     return isNaN(parsed) ? 0 : parsed;
   };
 
+  // Fetch summary whenever month changes
   useEffect(() => {
     if (!months) return;
 
@@ -93,6 +71,7 @@ function HoldUpPage() {
 
         setDays([...detectedDays]);
         setSummary(combined);
+
       } catch (error) {
         console.error("fetchCitySummary error:", error);
       }
@@ -101,6 +80,7 @@ function HoldUpPage() {
     fetchCitySummary();
   }, [months]);
 
+  // Build chart data
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
 
@@ -113,6 +93,7 @@ function HoldUpPage() {
 
     const sortedCities = sortCities([...cities]);
 
+    // Use all detected days automatically
     const filteredSummary = summary.filter(({ month }) => {
       const day = month.split("-")[1];
       return days.includes(day);
@@ -135,37 +116,34 @@ function HoldUpPage() {
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">HOLD UP GRAPH (CityWise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_table")}>
-            Hold Up Summary
-          </Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up")}>
-            Graph-CityWise
-          </Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches")}>
-            Graph-BranchWise
-          </Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up-bar-chart")}>
-            Bar Chart-CityWise
-          </Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches-bar-chart")}>
-            Bar Chart-BranchWise
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_table")}>Hold Up Summary</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
+      {/* Month Filter Only (date hidden) */}
       <SlicerFilters
         monthOptions={monthOptions}
-        months={months}
-        setMonths={(value) => setMonths(value)}
-        dateOptions={[]}
-        dates={selectedDate}
-        setDates={(value) => setSelectedDate(value ? [value] : [])}
+        months={[months]}
+        setMonths={(value) => {
+          const selected = value[value.length - 1];
+          setMonths(selected);
+        }}
+        dateOptions={[]} // hide date picker completely
+        dates={[]}       // no dates selected
+        setDates={() => {}} // disable date setter
+        singleMonthSelect={true}
       />
 
+      {/* Growth Buttons */}
       <GrowthButtons
         growthOptions={growthOptions}
         selectedGrowth={selectedGrowth}
@@ -175,31 +153,15 @@ function HoldUpPage() {
         }}
       />
 
+      {/* Chart */}
       {!selectedGrowth ? (
         <Typography>Select a growth type to view the chart</Typography>
       ) : chartData.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
-        <Box
-          sx={{
-            mt: 2,
-            height: 520,
-            background: "#fff",
-            borderRadius: 2,
-            boxShadow: 3,
-            p: 2,
-          }}
-        >
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            {selectedGrowth}
-          </Typography>
-
-          <GrowthLineChart
-            chartData={chartData}
-            cityKeys={cityKeys}
-            decimalDigits={0}
-            showPercent={false}
-          />
+        <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>{selectedGrowth}</Typography>
+          <GrowthLineChart chartData={chartData} cityKeys={cityKeys} decimalDigits={0} showPercent={false} />
         </Box>
       )}
     </Box>

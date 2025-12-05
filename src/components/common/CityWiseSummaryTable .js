@@ -10,9 +10,22 @@ const CityWiseSummaryTable = ({
   decimalDigits = 1,
   growthDecimalDigits = 1,
   percentageDecimalDigits = 0,
-  percentageProfitDecimalDigits = 1,
 }) => {
+  const isQtyKey = (k) =>
+    k === "qtyFullSynthetic" ||
+    k === "qtySemiSynthetic" ||
+    k === "qtyFullSemiSynthetic";
 
+  const baseQtyKeyMap = {
+    qtyFullSynthetic: "fullSyntheticQTY",
+    qtySemiSynthetic: "semiSyntheticQTY",
+    qtyFullSemiSynthetic: "fullAndSemiSyntheticQty",
+  };
+
+  const computeQtyPercent = (base, total) =>
+    total === 0 ? 0 : (base / total) * 100;
+
+  // -------- GRAND TOTAL BENCHMARK --------
   const grandTotals = {};
 
   chartMonths.forEach((m) => {
@@ -30,7 +43,7 @@ const CityWiseSummaryTable = ({
     );
 
     grandTotals[m] = {
-      percentage: totalLY === 0 ? 0 : (totalTY / totalLY) * 100
+      percentage: totalLY === 0 ? 0 : (totalTY / totalLY) * 100,
     };
   });
 
@@ -46,7 +59,7 @@ const CityWiseSummaryTable = ({
 
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
-          {/* ROW 1 – MONTH HEADER */}
+          {/* -------- HEADER MONTH ROW -------- */}
           <tr style={{ background: "#f0f0f0" }}>
             <th style={{ padding: 8, border: "1px solid #ccc" }}>City</th>
 
@@ -57,7 +70,7 @@ const CityWiseSummaryTable = ({
                 style={{
                   padding: 8,
                   border: "1px solid #ccc",
-                  textAlign: "center"
+                  textAlign: "center",
                 }}
               >
                 {m}
@@ -71,14 +84,14 @@ const CityWiseSummaryTable = ({
                 border: "1px solid #ccc",
                 background: "#ffeccc",
                 textAlign: "center",
-                fontWeight: "bold"
+                fontWeight: "bold",
               }}
             >
               ALL
             </th>
           </tr>
 
-          {/* ROW 2 – KEY HEADER */}
+          {/* -------- HEADER KEYS ROW -------- */}
           <tr style={{ background: "#fafafa" }}>
             <th style={{ padding: 8, border: "1px solid #ccc" }}></th>
 
@@ -100,7 +113,7 @@ const CityWiseSummaryTable = ({
                   padding: 8,
                   border: "1px solid #ccc",
                   background: "#fff7e6",
-                  fontWeight: "bold"
+                  fontWeight: "bold",
                 }}
               >
                 {beautifyHeader(k)}
@@ -110,20 +123,29 @@ const CityWiseSummaryTable = ({
         </thead>
 
         <tbody>
-          {/* ----------------------------------------------------
-             CITY ROWS
-          ---------------------------------------------------- */}
+          {/* -------- CITY ROWS -------- */}
           {tableData.map((row, idx) => {
             const allTotals = {};
+            const LY = keys[0];
+            const TY = keys[1];
 
-            // ----------------------------------------------------
-            // ALL TOTAL CALCULATION (PER CITY)
-            // ----------------------------------------------------
+            // ------------ CITY TOTAL CALCULATIONS ------------
             keys.forEach((k) => {
-              const LY = keys[0];
-              const TY = keys[1];
+              if (isQtyKey(k)) {
+                const baseKey = baseQtyKeyMap[k];
 
-              if (k.includes("percentage")) {
+                const totalBase = chartMonths.reduce(
+                  (s, m) => s + Number(row[`${m}_${baseKey}`] || 0),
+                  0
+                );
+
+                const totalGT = chartMonths.reduce(
+                  (s, m) => s + Number(row[`${m}_grandTotal`] || 0),
+                  0
+                );
+
+                allTotals[k] = computeQtyPercent(totalBase, totalGT);
+              } else if (k.includes("percentage")) {
                 const LYtotal = chartMonths.reduce(
                   (s, m) => s + Number(row[`${m}_${LY}`] || 0),
                   0
@@ -135,9 +157,7 @@ const CityWiseSummaryTable = ({
 
                 allTotals[k] =
                   LYtotal === 0 ? 0 : (TYtotal / LYtotal) * 100;
-              }
-
-              else if (k.includes("growth")) {
+              } else if (k.includes("growth")) {
                 const LYtotal = chartMonths.reduce(
                   (s, m) => s + Number(row[`${m}_${LY}`] || 0),
                   0
@@ -149,9 +169,7 @@ const CityWiseSummaryTable = ({
 
                 allTotals[k] =
                   LYtotal === 0 ? 0 : ((TYtotal - LYtotal) / LYtotal) * 100;
-              }
-
-              else {
+              } else {
                 allTotals[k] = chartMonths.reduce(
                   (s, m) => s + Number(row[`${m}_${k}`] || 0),
                   0
@@ -167,41 +185,33 @@ const CityWiseSummaryTable = ({
                     padding: 8,
                     border: "1px solid #ccc",
                     fontWeight: "bold",
-                    textAlign: "center"
+                    textAlign: "center",
                   }}
                 >
                   {row.city}
                 </td>
 
-                {/* MONTH CELLS */}
+                {/* -------- MONTH VALUES -------- */}
                 {chartMonths.flatMap((m) =>
                   keys.map((k) => {
-                    const val = Number(row[`${m}_${k}`] || 0);
-                    let formatted =
-                      k.includes("growth")
+                    let val = Number(row[`${m}_${k}`] || 0);
+
+                    if (isQtyKey(k)) {
+                      const baseKey = baseQtyKeyMap[k];
+                      const baseVal = Number(row[`${m}_${baseKey}`] || 0);
+                      const totalVal = Number(row[`${m}_grandTotal`] || 0);
+                      val = computeQtyPercent(baseVal, totalVal);
+                    }
+
+                    // -------- UNIFIED FORMATTING RULE ----------
+                    const formatted =
+                      k.includes("percentage")
+                        ? `${val.toFixed(percentageDecimalDigits)}%`
+                        : k.includes("growth")
                         ? `${val.toFixed(growthDecimalDigits)}%`
-                        : k.includes("percentage")
-                        ? `${val.toFixed(k.includes("percentageProfit") ? 1 : percentageDecimalDigits)}%`
+                        : isQtyKey(k)
+                        ? `${val.toFixed(0)}%`
                         : val.toFixed(decimalDigits);
-
-                    let color = "black";
-
-                    if (k.includes("percentage")) {
-                      const bench = grandTotals[m].percentage;
-                      color =
-                        val < bench
-                          ? "rgba(215,7,7,1)"
-                          : "rgba(6,226,24,1)";
-                    }
-
-                    if (k.includes("growth")) {
-                      color =
-                        val > 0
-                          ? "rgba(6,226,24,1)"
-                          : val < 0
-                          ? "rgba(215,7,7,1)"
-                          : "black";
-                    }
 
                     return (
                       <td
@@ -210,7 +220,6 @@ const CityWiseSummaryTable = ({
                           padding: 8,
                           border: "1px solid #ccc",
                           textAlign: "center",
-                          color
                         }}
                       >
                         {formatted}
@@ -219,34 +228,18 @@ const CityWiseSummaryTable = ({
                   })
                 )}
 
-                {/* ALL COLUMN */}
+                {/* -------- ALL TOTAL (CITY) -------- */}
                 {keys.map((k) => {
                   const val = allTotals[k];
 
                   const formatted =
                     k.includes("percentage")
-                      ? `${val.toFixed(k.includes("percentageProfit") ? 1 : percentageDecimalDigits)}%`
+                      ? `${val.toFixed(percentageDecimalDigits)}%`
                       : k.includes("growth")
                       ? `${val.toFixed(growthDecimalDigits)}%`
+                      : isQtyKey(k)
+                      ? `${val.toFixed(0)}%`
                       : val.toFixed(decimalDigits);
-
-                  let color = "black";
-
-                  if (k.includes("percentage")) {
-                    color =
-                      val < avgBenchmark
-                        ? "rgba(215,7,7,1)"
-                        : "rgba(6,226,24,1)";
-                  }
-
-                  if (k.includes("growth")) {
-                    color =
-                      val > 0
-                        ? "rgba(6,226,24,1)"
-                        : val < 0
-                        ? "rgba(215,7,7,1)"
-                        : "black";
-                  }
 
                   return (
                     <td
@@ -257,7 +250,6 @@ const CityWiseSummaryTable = ({
                         background: "#fff7e6",
                         textAlign: "center",
                         fontWeight: "600",
-                        color
                       }}
                     >
                       {formatted}
@@ -268,29 +260,30 @@ const CityWiseSummaryTable = ({
             );
           })}
 
+          {/* -------- GRAND TOTAL ROW -------- */}
           <tr style={{ background: "#d9edf7", fontWeight: "bold" }}>
-            <td style={{ padding: 8, border: "1px solid #ccc" }}>
-              Grand Total
-            </td>
+            <td style={{ padding: 8, border: "1px solid #ccc" }}>Grand Total</td>
 
             {chartMonths.flatMap((m) =>
               keys.map((k) => {
                 const LY = keys[0];
                 const TY = keys[1];
 
-                const totalLY = tableData.reduce(
-                  (sum, r) => sum + Number(r[`${m}_${LY}`] || 0),
-                  0
-                );
+                // Qty% monthly grand total
+                if (isQtyKey(k)) {
+                  const baseKey = baseQtyKeyMap[k];
 
-                const totalTY = tableData.reduce(
-                  (sum, r) => sum + Number(r[`${m}_${TY}`] || 0),
-                  0
-                );
+                  const baseSum = tableData.reduce(
+                    (sum, r) => sum + Number(r[`${m}_${baseKey}`] || 0),
+                    0
+                  );
 
-                if (k.includes("growth")) {
-                  const pct =
-                    totalLY === 0 ? 0 : ((totalTY - totalLY) / totalLY) * 100;
+                  const totalSum = tableData.reduce(
+                    (sum, r) => sum + Number(r[`${m}_grandTotal`] || 0),
+                    0
+                  );
+
+                  const pct = computeQtyPercent(baseSum, totalSum);
 
                   return (
                     <td
@@ -299,15 +292,25 @@ const CityWiseSummaryTable = ({
                         padding: 8,
                         border: "1px solid #ccc",
                         textAlign: "center",
-                        color: pct >= 0 ? "rgba(6,226,24,1)" : "rgba(215,7,7,1)"
                       }}
                     >
-                      {pct.toFixed(growthDecimalDigits)}%
+                      {pct.toFixed(0)}%
                     </td>
                   );
                 }
 
+                // BR% monthly
                 if (k.includes("percentage")) {
+                  const totalLY = tableData.reduce(
+                    (sum, r) => sum + Number(r[`${m}_${LY}`] || 0),
+                    0
+                  );
+
+                  const totalTY = tableData.reduce(
+                    (sum, r) => sum + Number(r[`${m}_${TY}`] || 0),
+                    0
+                  );
+
                   const pct =
                     totalLY === 0 ? 0 : (totalTY / totalLY) * 100;
 
@@ -318,14 +321,45 @@ const CityWiseSummaryTable = ({
                         padding: 8,
                         border: "1px solid #ccc",
                         textAlign: "center",
-                        color: "rgba(6,226,24,1)"
                       }}
                     >
-                      {pct.toFixed(k.includes("percentageProfit") ? 1 : percentageDecimalDigits)}%
+                      {pct.toFixed(percentageDecimalDigits)}%
                     </td>
                   );
                 }
 
+                // Growth %
+                if (k.includes("growth")) {
+                  const totalLY = tableData.reduce(
+                    (sum, r) => sum + Number(r[`${m}_${LY}`] || 0),
+                    0
+                  );
+
+                  const totalTY = tableData.reduce(
+                    (sum, r) => sum + Number(r[`${m}_${TY}`] || 0),
+                    0
+                  );
+
+                  const pct =
+                    totalLY === 0
+                      ? 0
+                      : ((totalTY - totalLY) / totalLY) * 100;
+
+                  return (
+                    <td
+                      key={`${m}_${k}`}
+                      style={{
+                        padding: 8,
+                        border: "1px solid #ccc",
+                        textAlign: "center",
+                      }}
+                    >
+                      {pct.toFixed(growthDecimalDigits)}%
+                    </td>
+                  );
+                }
+
+                // Normal totals
                 const total = tableData.reduce(
                   (sum, r) => sum + Number(r[`${m}_${k}`] || 0),
                   0
@@ -337,7 +371,7 @@ const CityWiseSummaryTable = ({
                     style={{
                       padding: 8,
                       border: "1px solid #ccc",
-                      textAlign: "center"
+                      textAlign: "center",
                     }}
                   >
                     {total.toFixed(decimalDigits)}
@@ -346,31 +380,74 @@ const CityWiseSummaryTable = ({
               })
             )}
 
+            {/* -------- ALL COLUMN GRAND TOTAL -------- */}
             {keys.map((k) => {
               const LY = keys[0];
               const TY = keys[1];
 
-              const fullLY = tableData.reduce(
-                (sum, r) =>
-                  sum +
-                  chartMonths.reduce(
-                    (ss, m) => ss + Number(r[`${m}_${LY}`] || 0),
-                    0
-                  ),
-                0
-              );
+              // Grand Total Qty%
+              if (isQtyKey(k)) {
+                const baseKey = baseQtyKeyMap[k];
 
-              const fullTY = tableData.reduce(
-                (sum, r) =>
-                  sum +
-                  chartMonths.reduce(
-                    (ss, m) => ss + Number(r[`${m}_${TY}`] || 0),
-                    0
-                  ),
-                0
-              );
+                const sumBase = tableData.reduce(
+                  (sum, r) =>
+                    sum +
+                    chartMonths.reduce(
+                      (ss, m) => ss + Number(r[`${m}_${baseKey}`] || 0),
+                      0
+                    ),
+                  0
+                );
 
+                const sumTotal = tableData.reduce(
+                  (sum, r) =>
+                    sum +
+                    chartMonths.reduce(
+                      (ss, m) => ss + Number(r[`${m}_grandTotal`] || 0),
+                      0
+                    ),
+                  0
+                );
+
+                const pct = computeQtyPercent(sumBase, sumTotal);
+
+                return (
+                  <td
+                    key={`all_gt_${k}`}
+                    style={{
+                      padding: 8,
+                      border: "1px solid #ccc",
+                      background: "#c8e6ff",
+                      textAlign: "center",
+                    }}
+                  >
+                    {pct.toFixed(0)}%
+                  </td>
+                );
+              }
+
+              // All % total
               if (k.includes("percentage")) {
+                const fullLY = tableData.reduce(
+                  (sum, r) =>
+                    sum +
+                    chartMonths.reduce(
+                      (ss, m) => ss + Number(r[`${m}_${LY}`] || 0),
+                      0
+                    ),
+                  0
+                );
+
+                const fullTY = tableData.reduce(
+                  (sum, r) =>
+                    sum +
+                    chartMonths.reduce(
+                      (ss, m) => ss + Number(r[`${m}_${TY}`] || 0),
+                      0
+                    ),
+                  0
+                );
+
                 const pct = fullLY === 0 ? 0 : (fullTY / fullLY) * 100;
 
                 return (
@@ -381,15 +458,35 @@ const CityWiseSummaryTable = ({
                       border: "1px solid #ccc",
                       background: "#c8e6ff",
                       textAlign: "center",
-                      color: "rgba(6,226,24,1)"
                     }}
                   >
-                    {pct.toFixed(k.includes("percentageProfit") ? 1 : percentageDecimalDigits)}%
+                    {pct.toFixed(percentageDecimalDigits)}%
                   </td>
                 );
               }
 
+              // All growth%
               if (k.includes("growth")) {
+                const fullLY = tableData.reduce(
+                  (sum, r) =>
+                    sum +
+                    chartMonths.reduce(
+                      (ss, m) => ss + Number(r[`${m}_${LY}`] || 0),
+                      0
+                    ),
+                  0
+                );
+
+                const fullTY = tableData.reduce(
+                  (sum, r) =>
+                    sum +
+                    chartMonths.reduce(
+                      (ss, m) => ss + Number(r[`${m}_${TY}`] || 0),
+                      0
+                    ),
+                  0
+                );
+
                 const pct =
                   fullLY === 0 ? 0 : ((fullTY - fullLY) / fullLY) * 100;
 
@@ -401,12 +498,6 @@ const CityWiseSummaryTable = ({
                       border: "1px solid #ccc",
                       background: "#c8e6ff",
                       textAlign: "center",
-                      color:
-                        pct > 0
-                          ? "rgba(6,226,24,1)"
-                          : pct < 0
-                          ? "rgba(215,7,7,1)"
-                          : "black"
                     }}
                   >
                     {pct.toFixed(growthDecimalDigits)}%
@@ -414,7 +505,8 @@ const CityWiseSummaryTable = ({
                 );
               }
 
-              const fullSum = tableData.reduce(
+              // Normal summation
+              const total = tableData.reduce(
                 (sum, r) =>
                   sum +
                   chartMonths.reduce(
@@ -431,10 +523,10 @@ const CityWiseSummaryTable = ({
                     padding: 8,
                     border: "1px solid #ccc",
                     background: "#c8e6ff",
-                    textAlign: "center"
+                    textAlign: "center",
                   }}
                 >
-                  {fullSum.toFixed(decimalDigits)}
+                  {total.toFixed(decimalDigits)}
                 </td>
               );
             })}

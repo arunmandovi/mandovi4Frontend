@@ -181,7 +181,12 @@ function MSGPProfitPage() {
             keys={keys}
             beautifyHeader={beautifyHeader}
             tableData={tableData}
-            decimalDigits={1}
+          
+            decimalDigits={0}
+            percentageDecimalDigits={
+              selectedGrowth.includes("%") ? 1 : 0   
+            }
+            growthDecimalDigits={1}
           />
         </>
       )}
