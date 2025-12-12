@@ -19,11 +19,7 @@ import GrowthButtons from "../../components/GrowthButtons";
 import BranchWiseGrowthLineChart from "../../components/BranchWiseGrowthLineChart";
 
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
-
-import {
-  CITY_ORDER,
-  BRANCH_CITY_MAP,
-} from "../../helpers/SortByCityAndBranch";
+import { CITY_ORDER, BRANCH_CITY_MAP } from "../../helpers/SortByCityAndBranch";
 
 const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
   Object.entries(BRANCH_CITY_MAP)
@@ -32,40 +28,47 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
 ).sort((a, b) => a.localeCompare(b));
 
 const growthKeyMap = {
-    "E-B %": "percentageEnquiryBooking",
-    "E-R %": "percentageEnquiryInvoice",
-    "B-R %": "percentageBookingInvoice",
+    "Service": "serviceProductivity",
+    "BodyShop": "bodyShopProductivity",
+    "Free Service": "freeServiceProductivity",
+    "PMS": "pmsProductivity",
+    "RR": "rrProductivity",
+    "Others": "othersProductivity",
   };
 
-
-function ReferenceeBranchWisePage() {
+function ProductivityBranchWisePage() {
   const navigate = useNavigate();
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [channels, setChannels] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState("E-B %");
+  const [years, setYears] = useState(["2025"]);
+  const [selectedGrowth, setSelectedGrowthState] = useState("Service");
 
-  const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden", "Balmatta", "KRS Road"]);
+  const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden", "Balmatta", "KRS Road",]);
 
-  const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
-  const channelOptions = ["Arena", "Nexa"];
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar",];
+  const yearOptions = ["2024", "2025"];
   const growthOptions = Object.keys(growthKeyMap);
 
-  const readBranchName = (row) => {
-    return row?.branch || row?.Branch || row?.branchName || row?.BranchName || "";
-  };
+  const readBranchName = (row) =>
+    row?.branch || row?.Branch || row?.branchName || row?.BranchName || "";
 
   const readGrowthValue = (row, key) => {
+    if (!row) return null;
     const raw = row?.[key];
     if (raw === undefined || raw === null) return null;
+
+    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+
     const clean = String(raw).replace("%", "").trim();
+    if (clean === "" || /^nan$/i.test(clean)) return null;
+
     const parsed = parseFloat(clean);
-    return isNaN(parsed) ? null : parsed;
+    return Number.isFinite(parsed) ? parsed : null;
   };
 
   useEffect(() => {
-    const saved = getSelectedGrowth("referencee");
+    const saved = getSelectedGrowth("productivity");
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
@@ -73,41 +76,61 @@ function ReferenceeBranchWisePage() {
     const fetchCitySummary = async () => {
       try {
         const activeMonths = months.length ? months : monthOptions;
+        const activeYears = years.length ? years : yearOptions;
+
         const combined = [];
 
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
-          if (channels.length === 1) query += `&channels=${channels[0]}`;
+          let query = `?months=${encodeURIComponent(m)}`;
+          if (activeYears.length) {
+            query += `&years=${encodeURIComponent(activeYears.join(","))}`;
+          }
 
-          const data = await fetchData(`/api/referencee/referencee_branch_summary${query}`);
-          const safeData = Array.isArray(data) ? data : data?.result || [];
+          const data = await fetchData(
+            `/api/productivity/productivity_branch_summary${query}`
+          );
+
+          const safeData = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.result)
+            ? data.result
+            : Array.isArray(data?.data)
+            ? data.data
+            : [];
 
           combined.push({ month: m, data: safeData });
         }
 
         setSummary(combined);
-      } catch (e) {
-        console.error(e);
+      } catch (error) {
+        console.error("fetchCitySummary error:", error);
       }
     };
 
     fetchCitySummary();
-  }, [months, channels]);
+  }, [months, years]);
 
   const buildChartData = () => {
-    if (!selectedGrowth || selectedBranches.length === 0)
+    if (!selectedGrowth || selectedBranches.length === 0) {
       return { formatted: [], sortedBranches: [] };
+    }
 
     const apiKey = growthKeyMap[selectedGrowth];
 
-    const formatted = summary.map(({ month, data }) => {
-      const entry = { month };
+    const sourceMonths =
+      summary.length > 0 ? summary.map((s) => s.month) : monthOptions;
+
+    const formatted = sourceMonths.map((monthName) => {
+      const summaryEntry = summary.find((s) => s.month === monthName);
+      const rows = summaryEntry?.data || [];
+
+      const entry = { month: monthName };
 
       selectedBranches.forEach((br) => {
         entry[br] = 0;
       });
 
-      (data || []).forEach((row) => {
+      rows.forEach((row) => {
         const apiBranch = readBranchName(row);
         if (!selectedBranches.includes(apiBranch)) return;
 
@@ -126,41 +149,36 @@ function ReferenceeBranchWisePage() {
   const handleBranchChange = (e) => {
     const value = e.target.value;
 
-    if (value.includes("ALL")) {
-      setSelectedBranches(ALL_BRANCHES);
-    } else {
-      setSelectedBranches(value.filter((x) => x !== "ALL"));
-    }
+    setSelectedBranches(value);
   };
 
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">REFERENCE GRAPH (BranchWise)</Typography>
+        <Typography variant="h4">PRODUCTIVITY GRAPH (BranchWise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee_table")}>Referencee Table</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee")}>Graph-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee_branches")}>Graph-BranchWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_table")}>Productivity Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
-           <Select
+
+          <Select
             multiple
             label="Select Branches"
             value={selectedBranches}
             onChange={handleBranchChange}
             displayEmpty
-            renderValue={() => "Select Branches"}  
+            renderValue={() => "Select Branches"}
             MenuProps={{
-              PaperProps: {
-                style: { maxHeight: 300 },
-              },
+              PaperProps: { style: { maxHeight: 300 } },
             }}
           >
             <ListItemText primary="Bangalore" sx={{ pl: 2, fontWeight: "bold" }} />
@@ -172,7 +190,8 @@ function ReferenceeBranchWisePage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+
+            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mysore")
               .map(([br]) => (
@@ -181,7 +200,8 @@ function ReferenceeBranchWisePage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+
+            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mangalore")
               .map(([br]) => (
@@ -193,13 +213,14 @@ function ReferenceeBranchWisePage() {
           </Select>
         </FormControl>
       </Box>
-      <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
+
+      <SlicerFilters 
+      monthOptions={monthOptions} 
+      months={months} 
+      setMonths={setMonths}
+      yearOptions={yearOptions}
+      years={years}
+      setYears={setYears}
       />
 
       <GrowthButtons
@@ -207,12 +228,14 @@ function ReferenceeBranchWisePage() {
         selectedGrowth={selectedGrowth}
         setSelectedGrowth={(value) => {
           setSelectedGrowthState(value);
-          setSelectedGrowth(value, "referencee");
+          setSelectedGrowth(value, "productivity");
         }}
       />
 
       {selectedBranches.length === 0 ? (
-        <Typography sx={{ mt: 2, color: "red" }}>Please select at least one branch.</Typography>
+        <Typography sx={{ mt: 2, color: "red" }}>
+          Please select at least one branch.
+        </Typography>
       ) : !selectedGrowth ? (
         <Typography>Select a growth type to view the chart</Typography>
       ) : chartData.length === 0 ? (
@@ -235,8 +258,8 @@ function ReferenceeBranchWisePage() {
           <BranchWiseGrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
-            decimalDigits={0}
-            showPercent={true}
+            decimalDigits={2}
+            showPercent={false}
           />
         </Box>
       )}
@@ -244,4 +267,4 @@ function ReferenceeBranchWisePage() {
   );
 }
 
-export default ReferenceeBranchWisePage;
+export default ProductivityBranchWisePage;

@@ -32,28 +32,29 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
 ).sort((a, b) => a.localeCompare(b));
 
 const growthKeyMap = {
-    "Full Synthetic QTY %": "qtyFullSynthetic",
-    "Semi Synthetic QTY %": "qtySemiSynthetic",
-    "Full & Semi Synthetic QTY %": "qtyFullSemiSynthetic",
+    "Service": "serviceProductivity",
+    "BodyShop": "bodyShopProductivity",
+    "Free Service": "freeServiceProductivity",
+    "PMS": "pmsProductivity",
+    "RR": "rrProductivity",
+    "Others": "othersProductivity",
   };
 
-function OilBranchesBarChartPage() {
+function ProductivityBranchesBarChartPage() {
   const navigate = useNavigate();
 
   const [summary, setSummary] = useState([]);
-  const [months, setMonths] = useState([]);
+  const [months, setMonths] = useState(["Dec"]);
+  const [years, setYears] = useState(["2025"]);
   const [cities, setCities] = useState([]);
-  const [qtrWise, setQtrWise] = useState([]);
-  const [halfYear, setHalfYear] = useState([]);
 
-  const [selectedGrowth, setSelectedGrowthState] = useState("Full & Semi Synthetic QTY %");
+  const [selectedGrowth, setSelectedGrowthState] = useState("Service");
 
   const [selectedBranches, setSelectedBranches] = useState(ALL_BRANCHES);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const yearOptions = ["2024", "2025"];
   const cityOptions = ["Bangalore","Mysore","Mangalore"];
-  const qtrWiseOptions = ["Qtr1","Qtr2","Qtr3","Qtr4"];
-  const halfYearOptions = ["H1","H2"];
   const growthOptions = Object.keys(growthKeyMap);
 
   const readBranchName = (row) =>
@@ -77,7 +78,7 @@ function OilBranchesBarChartPage() {
   };
 
   useEffect(() => {
-    const saved = getSelectedGrowth("oil");
+    const saved = getSelectedGrowth("productivity");
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
@@ -86,11 +87,10 @@ function OilBranchesBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
+        if (years.length) params.append("years", years.join(","));
         if (cities.length) params.append("cities", cities.join(","));
-        if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
-        if (halfYear.length) params.append("halfYear", halfYear.join(","));
 
-        const endpoint = `/api/oil/oil_branch_summary${
+        const endpoint = `/api/productivity/productivity_branch_summary${
           params.toString() ? `?${params.toString()}` : ""
         }`;
 
@@ -104,7 +104,7 @@ function OilBranchesBarChartPage() {
     };
 
     fetchSummary();
-  }, [months, cities, qtrWise, halfYear]);
+  }, [months, years, cities]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return [];
@@ -145,13 +145,14 @@ function OilBranchesBarChartPage() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">OIL REPORT (Branch-wise)</Typography>
+        <Typography variant="h4">PRODUCTIVITY REPORT (Branch-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/oil")}>Graph-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/oil_branches")}>Graph-BranchWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/oil-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/oil_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_table")}>Productivity Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -209,15 +210,12 @@ function OilBranchesBarChartPage() {
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
+        yearOptions={yearOptions}
+        years={years}
+        setYears={setYears}
         cityOptions={cityOptions}
         cities={cities}
         setCities={setCities}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
       />
 
       <GrowthButtons
@@ -225,7 +223,7 @@ function OilBranchesBarChartPage() {
         selectedGrowth={selectedGrowth}
         setSelectedGrowth={(v) => {
           setSelectedGrowthState(v);
-          setSelectedGrowth(v, "oil");
+          setSelectedGrowth(v, "productivity");
         }}
       />
 
@@ -246,16 +244,17 @@ function OilBranchesBarChartPage() {
             p: 2,
           }}
         >
-          <BranchBarChart
-            chartData={chartData}
-            selectedGrowth={selectedGrowth}
-            showPercent={true}
-            decimalPlaces={0}
-          />
+          {!selectedGrowth ? <Typography sx={{mt:2}}>👆 Select a growth type to view the chart below</Typography> :
+        <BranchBarChart 
+        chartData={chartData} 
+        selectedGrowth={selectedGrowth}
+        decimalPlaces={2} 
+        chartType="MGABranchesBarChart"/>
+      }
         </Box>
       )}
     </Box>
   );
 }
 
-export default OilBranchesBarChartPage;
+export default ProductivityBranchesBarChartPage;

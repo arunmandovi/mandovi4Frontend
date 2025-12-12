@@ -85,7 +85,6 @@ function LoaddUploadPage() {
     handleFetch();
   }, []);
 
-  // 🔹 Show loader when loading
   if (loading) return <LoadingAnimation />;
 
   return (

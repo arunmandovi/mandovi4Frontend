@@ -22,6 +22,8 @@ import MSGPPage from "./pages/GraphView/MSGPPage";
 import MSGPProfitPage from "./pages/GraphView/MSGPProfitPage";
 import OilPage from "./pages/GraphView/OilPage";
 import PMSPartsPage from "./pages/GraphView/PMSPartsPage";
+import ProductivityPage from "./pages/GraphView/ProductivityPage";
+import ProductivityTablePage from "./pages/GraphView/ProductivityTablePage";
 import ProfitLossPage from "./pages/GraphView/ProfitLossPage";
 import ProfitLossSRBRLoaddPage from "./pages/GraphView/ProfitLossSRBRLoadd";
 import ProfitLossMonthlyGraphPage from "./pages/GraphView/ProfitLossMonthlyGraphPage";
@@ -48,6 +50,7 @@ import MSGPProfitBranchWisePage from "./pages/BranchWiseGraph/MSGPProfitBranchWi
 import OilBranchWisePage from "./pages/BranchWiseGraph/OilBranchWisePage";
 import PerVehicleBranchWisePage from "./pages/BranchWiseGraph/PerVehicleBranchWisePage";
 import PMSPartsBranchWisePage from "./pages/BranchWiseGraph/PMSPartsBranchWisePage";
+import ProductivityBranchWisePage from "./pages/BranchWiseGraph/ProductivityBranchWisePage";
 import ProfitLossMonthlyBranchWisePage from "./pages/BranchWiseGraph/ProfitLossMonthlyBranchWisePage";
 import ProfitLossPerVehicleBranchWisePage from "./pages/BranchWiseGraph/ProfitLossPerVehicleBranchWisePage";
 import ReferenceeBranchWisePage from "./pages/BranchWiseGraph/ReferenceeBranchWisePage";
@@ -71,6 +74,7 @@ import MSGPUploadPage from "./pages/FileUpload/MSGPUploadPage";
 import MSGPProfitUploadPage from "./pages/FileUpload/MSGPProfitUploadPage";
 import OilUploadPage from "./pages/FileUpload/OilUploadPage";
 import PMSPartsUploadPage from "./pages/FileUpload/PMSPartsUploadPage";
+import ProductivityUploadPage from "./pages/FileUpload/ProductivityUploadPage";
 import ProfitLossUploadPage from "./pages/FileUpload/ProfitLossUploadPage";
 import ReferenceeUploadPage from "./pages/FileUpload/ReferenceeUploadPage";
 import RevenueUploadPage from "./pages/FileUpload/RevenueUploadPage";
@@ -93,6 +97,7 @@ import MSGPBarChartPage from "./pages/BarChartView/MSGPBarChartPage";
 import MSGPProfitBarChartPage from "./pages/BarChartView/MSGPProfitBarChartPage";
 import OilBarChartPage from "./pages/BarChartView/OilBarChartPage";
 import PMSPartsBarChartPage from "./pages/BarChartView/PMSPartsBarChartPage";
+import ProductivityBarChartPage from "./pages/BarChartView/ProductivityBarChartPage";
 import ProfitLossBarChartPage from "./pages/BarChartView/ProfitLossBarChartPage";
 import ReferenceeBarChartPage from "./pages/BarChartView/ReferenceeBarChartPage";
 import RevenueBarChartPage from "./pages/BarChartView/RevenueBarChartPage";
@@ -116,6 +121,7 @@ import MSGPBranchesBarChartPage from "./pages/BranchWiseBarChartView/MSGPBranche
 import MSGPProfitBranchesBarChartPage from "./pages/BranchWiseBarChartView/MSGPProfitBranchesBarChartPage";
 import OilBranchesBarChartPage from "./pages/BranchWiseBarChartView/OilBranchesBarChartPage";
 import PMSPartsBranchesBarChartPage from "./pages/BranchWiseBarChartView/PMSPartsBranchesBarChartPage";
+import ProductivityBranchesBarChartPage from "./pages/BranchWiseBarChartView/ProductivityBranchesBarChartPage";
 import ProfitLossBranchesBarChartPage from "./pages/BranchWiseBarChartView/ProfitLossBranchesBarChartPage";
 import ReferenceeeBranchesBarChartPage from "./pages/BranchWiseBarChartView/ReferenceeBranchesBarChartPage";
 import RevenueBranchesBarChartPage from "./pages/BranchWiseBarChartView/RevenueBranchesBarChartPage";
@@ -157,6 +163,7 @@ function App() {
         <Route path="/msgp_profit-upload" element={ <AdminProtectedRoute><MSGPProfitUploadPage /></AdminProtectedRoute> } />
         <Route path="/oil-upload" element={ <AdminProtectedRoute><OilUploadPage /></AdminProtectedRoute> } />
         <Route path="/pms_parts-upload" element={ <AdminProtectedRoute><PMSPartsUploadPage /></AdminProtectedRoute> } />
+        <Route path="/productivity-upload" element={ <AdminProtectedRoute><ProductivityUploadPage /></AdminProtectedRoute> } />
         <Route path="/profit_loss-upload" element={ <AdminProtectedRoute><ProfitLossUploadPage /></AdminProtectedRoute> } />
         <Route path="/referencee-upload" element={ <AdminProtectedRoute><ReferenceeUploadPage /></AdminProtectedRoute> } />
         <Route path="/revenue-upload" element={ <AdminProtectedRoute><RevenueUploadPage /></AdminProtectedRoute> } />
@@ -192,6 +199,8 @@ function App() {
           <Route path="msgp_profit" element={<MSGPProfitPage />} />
           <Route path="oil" element={<OilPage />} />
           <Route path="pms_parts" element={<PMSPartsPage />} />
+          <Route path="productivity" element={<ProductivityPage />} />
+          <Route path="productivity_table" element={<ProductivityTablePage />} />
           <Route path="profit_loss" element={<ProfitLossPage />} />
           <Route path="profit_loss_srbr" element={<ProfitLossSRBRLoaddPage />} />
           <Route path="profit_loss_monthly" element={<ProfitLossMonthlyGraphPage />} />
@@ -217,9 +226,10 @@ function App() {
           <Route path="msgp_profit_branches" element={<MSGPProfitBranchWisePage />} />
           <Route path="oil_branches" element={<OilBranchWisePage />} />
           <Route path="per_vehicle_branches" element={<PerVehicleBranchWisePage />} />
+          <Route path="pms_parts_branches" element={<PMSPartsBranchWisePage />} />
+          <Route path="productivity_branches" element={<ProductivityBranchWisePage />} />
           <Route path="profit_loss_branches" element={<ProfitLossMonthlyBranchWisePage />} />
           <Route path="profit_loss_per_vehicle_branch" element={<ProfitLossPerVehicleBranchWisePage />} />
-          <Route path="pms_parts_branches" element={<PMSPartsBranchWisePage />} />
           <Route path="referencee_branches" element={<ReferenceeBranchWisePage />} />
           <Route path="revenue_branches" element={<RevenueBranchWisePage />} />
           <Route path="spares_branches" element={<SparesBranchWisePage />} />
@@ -242,6 +252,7 @@ function App() {
           <Route path="msgp_profit-bar-chart" element={<MSGPProfitBarChartPage />} />
           <Route path="oil-bar-chart" element={<OilBarChartPage />} />
           <Route path="pms_parts-bar-chart" element={<PMSPartsBarChartPage />} />
+          <Route path="productivity-bar-chart" element={<ProductivityBarChartPage />} />
           <Route path="profit_loss-bar-chart" element={<ProfitLossBarChartPage />} />
           <Route path="referencee-bar-chart" element={<ReferenceeBarChartPage />} />
           <Route path="revenue-bar-chart" element={<RevenueBarChartPage />} />
@@ -264,6 +275,7 @@ function App() {
           <Route path="msgp_profit_branches-bar-chart" element={<MSGPProfitBranchesBarChartPage />} />
           <Route path="oil_branches-bar-chart" element={<OilBranchesBarChartPage />} />
           <Route path="pms_parts_branches-bar-chart" element={<PMSPartsBranchesBarChartPage />} />
+          <Route path="productivity_branches-bar-chart" element={<ProductivityBranchesBarChartPage />} />
           <Route path="profit_loss_branches-bar-chart" element={<ProfitLossBranchesBarChartPage />} />
           <Route path="referencee_branches-bar-chart" element={<ReferenceeeBranchesBarChartPage />} />
           <Route path="revenue_branches-bar-chart" element={<RevenueBranchesBarChartPage />} />

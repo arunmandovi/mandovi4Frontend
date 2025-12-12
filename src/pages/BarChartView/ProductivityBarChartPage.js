@@ -7,53 +7,45 @@ import GrowthButtons from "../../components/GrowthButtons";
 import CityBarChart from "../../components/CityBarChart";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
-function PerVehicleBarChartPage() {
+function ProductivityBarChartPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [summary, setSummary] = useState([]);
-  const [months, setMonths] = useState([]);
+  const [months, setMonths] = useState(["Dec"]);
   const [years, setYears] = useState(["2025"]);
-  const [qtrWise, setQtrWise] = useState([]);
-  const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const yearOptions = ["2024", "2025"];
-  const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
-  const halfYearOptions = ["H1", "H2"];
 
   const growthOptions = [
-    "SR LABOUR / VEH",
-    "SR SPARES / VEH",
-    "SR REVENUE /VEH",
-    "BR LABOUR / VEH",
-    "BR SPARES / VEH",
-    "BR REVENUE /VEH",
+    "Service", "BodyShop","Free Service", "PMS", "RR", "Others",
   ];
 
   const growthKeyMap = {
-    "SR LABOUR / VEH": "srLabourByVEH",
-    "SR SPARES / VEH": "srSparesByVEH",
-    "SR REVENUE /VEH": "srRevenueByVEH",
-    "BR LABOUR / VEH": "brLabourByVeh",
-    "BR SPARES / VEH": "brSparesByVeh",
-    "BR REVENUE /VEH": "brRevenueByVeh",
+    "Service": "serviceProductivity",
+    "BodyShop": "bodyShopProductivity",
+    "Free Service": "freeServiceProductivity",
+    "PMS": "pmsProductivity",
+    "RR": "rrProductivity",
+    "Others": "othersProductivity",
   };
+
   useEffect(() => {
-    const prev = getSelectedGrowth("per_vehicle");
+    const prev = getSelectedGrowth("productivity");
 
     const fromPages = location.state?.fromNavigation === true;
 
     if (!fromPages) {
       if (!prev) {
-        setSelectedGrowthState("SR LABOUR / VEH");
-        setSelectedGrowth("SR LABOUR / VEH", "per_vehicle");
+        setSelectedGrowthState("Service");
+        setSelectedGrowth("Service", "productivity");
       } else {
         setSelectedGrowthState(prev);
       }
     } else {
-      setSelectedGrowthState(prev || "SR LABOUR / VEH");
+      setSelectedGrowthState(prev || "Service");
     }
   }, []);
 
@@ -63,17 +55,15 @@ function PerVehicleBarChartPage() {
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
         if (years.length) params.append("years", years.join(","));
-        if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
-        if (halfYear.length) params.append("halfYear", halfYear.join(","));
         const query = params.toString() ? `?${params.toString()}` : "";
-        const data = await fetchData(`/api/per_vehicle/per_vehicle_summary${query}`);
+        const data = await fetchData(`/api/productivity/productivity_summary${query}`);
         setSummary(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("fetchCitySummary error:", err);
       }
     };
     fetchCitySummary();
-  }, [months, years, qtrWise, halfYear]);
+  }, [months, years]);
 
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
@@ -131,7 +121,7 @@ function PerVehicleBarChartPage() {
 
     return sortedCities.map((city) => ({
       city,
-      value: parseFloat(((totals[city] || 0) / (counts[city] || 1)).toFixed(1)),
+      value: parseFloat(((totals[city] || 0) / (counts[city] || 1)).toFixed(2)),
     }));
   };
 
@@ -141,11 +131,20 @@ function PerVehicleBarChartPage() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">PER VEHICLE REPORT (City-wise)</Typography>
+        <Typography variant="h4">PRODUCTIVITY REPORT (City-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle", {
+            variant="contained" onClick={() => navigate("/DashboardHome/productivity_table", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Productivity Table
+          </Button>
+
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/productivity", {
                 state: { fromNavigation: true },
               })
             }
@@ -154,7 +153,7 @@ function PerVehicleBarChartPage() {
           </Button>
 
           <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches", {
+            variant="contained" onClick={() => navigate("/DashboardHome/productivity_branches", {
                 state: { fromNavigation: true },
               })
             }
@@ -163,7 +162,7 @@ function PerVehicleBarChartPage() {
           </Button>
 
           <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-bar-chart", {
+            variant="contained" onClick={() => navigate("/DashboardHome/productivity-bar-chart", {
                 state: { fromNavigation: true },
               })
             }
@@ -172,7 +171,7 @@ function PerVehicleBarChartPage() {
           </Button>
 
           <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches-bar-chart", {
+            variant="contained" onClick={() => navigate("/DashboardHome/productivity_branches-bar-chart", {
                 state: { fromNavigation: true },
               })
             }
@@ -189,12 +188,6 @@ function PerVehicleBarChartPage() {
         yearOptions={yearOptions}
         years={years}
         setYears={setYears}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
       />
 
       <GrowthButtons
@@ -202,7 +195,7 @@ function PerVehicleBarChartPage() {
         selectedGrowth={selectedGrowth}
         setSelectedGrowth={(value) => {
           setSelectedGrowthState(value);
-          setSelectedGrowth(value, "per_vehicle");
+          setSelectedGrowth(value, "productivity");
         }}
       />
 
@@ -214,7 +207,7 @@ function PerVehicleBarChartPage() {
         <CityBarChart
           chartData={chartData}
           selectedGrowth={selectedGrowth}
-          decimalPlaces={0}
+          decimalPlaces={2}
           showPercent={false}
         />
       )}
@@ -222,4 +215,4 @@ function PerVehicleBarChartPage() {
   );
 }
 
-export default PerVehicleBarChartPage;
+export default ProductivityBarChartPage;

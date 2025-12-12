@@ -79,6 +79,15 @@ export const apiModules = [
     getByMonthYear: '/api/pms_parts/getpms_parts',
   deleteAll: "/api/pms_parts/delete_all",
 },
+{
+  name: "Productivity",
+  upload: "/api/productivity/upload",
+  get: "/api/productivity/getallproductivity",
+  updateServiceUtilizedBay: "/api/productivity/update_service_utilized_bay",
+  updateBodyShopUtilizedBay: "/api/productivity/update_bodyshop_utilized_bay",
+  updateWorkingDays: "/api/productivity/update_working_days"
+}
+,
 
 { name: 'Profit & Loss', 
   upload: '/api/profit_loss/upload', 

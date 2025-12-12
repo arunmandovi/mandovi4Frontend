@@ -41,11 +41,13 @@ function MCPBranchWisePage() {
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [channels, setChannels] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState("MCP NO");
 
   const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden", "Balmatta", "KRS Road"]);
 
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+  const channelOptions = ["Arena", "Nexa"];
   const growthOptions = Object.keys(growthKeyMap);
 
   const readBranchName = (row) => {
@@ -73,6 +75,7 @@ function MCPBranchWisePage() {
 
         for (const m of activeMonths) {
           let query = `?&months=${m}`;
+          if (channels.length === 1) query += `&channels=${channels[0]}`;
 
           const data = await fetchData(`/api/mcp/mcp_branch_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
@@ -87,7 +90,7 @@ function MCPBranchWisePage() {
     };
 
     fetchCitySummary();
-  }, [months]);
+  }, [months, channels]);
 
   const buildChartData = () => {
     if (!selectedGrowth || selectedBranches.length === 0)
@@ -191,6 +194,9 @@ function MCPBranchWisePage() {
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
+        channelOptions={channelOptions}
+        channels={channels}
+        setChannels={setChannels}
       />
 
       <GrowthButtons

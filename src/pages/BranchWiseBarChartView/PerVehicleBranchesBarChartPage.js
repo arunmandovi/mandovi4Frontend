@@ -45,6 +45,7 @@ function PerVehicleBranchesBarChartPage() {
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [years, setYears] = useState(["2025"]);
   const [cities, setCities] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
@@ -54,6 +55,7 @@ function PerVehicleBranchesBarChartPage() {
   const [selectedBranches, setSelectedBranches] = useState(ALL_BRANCHES);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const yearOptions = ["2024", "2025"];
   const cityOptions = ["Bangalore","Mysore","Mangalore"];
   const qtrWiseOptions = ["Qtr1","Qtr2","Qtr3","Qtr4"];
   const halfYearOptions = ["H1","H2"];
@@ -89,6 +91,7 @@ function PerVehicleBranchesBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
+        if (years.length) params.append("years", years.join(","));
         if (cities.length) params.append("cities", cities.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
@@ -107,7 +110,7 @@ function PerVehicleBranchesBarChartPage() {
     };
 
     fetchSummary();
-  }, [months, cities, qtrWise, halfYear]);
+  }, [months, years, cities, qtrWise, halfYear]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return [];
@@ -212,6 +215,9 @@ function PerVehicleBranchesBarChartPage() {
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
+        yearOptions={yearOptions}
+        years={years}
+        setYears={setYears}
         cityOptions={cityOptions}
         cities={cities}
         setCities={setCities}

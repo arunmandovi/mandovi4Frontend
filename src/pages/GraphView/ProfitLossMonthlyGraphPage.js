@@ -14,7 +14,6 @@ import { Box, Typography, Button } from "@mui/material";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-/* ------- TIMELINE ------- */
 const timeline = [
   { label: "Apr 24", key: "apr_24", month: "Apr" },
   { label: "May 24", key: "may_24", month: "May" },
@@ -31,12 +30,13 @@ const timeline = [
   { label: "2025-26", key: "fy_2025_26", month: "Total" },
 ];
 
+const lineColors = ["rgba(101, 189, 7, 1)", "#cb0606ff", "#003399"];
+
 export default function ProfitLossMonthlyGraphPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [cityList, setCityList] = useState([]);
 
-  /* ------- FETCH LIVE DATA ------- */
   useEffect(() => {
     const load = async () => {
       try {
@@ -70,7 +70,6 @@ export default function ProfitLossMonthlyGraphPage() {
     load();
   }, []);
 
-  /* ------- BUILD CHART DATA ------- */
   const chartData = summary.map((block) => {
     const row = { month: block.monthLabel };
 
@@ -84,7 +83,6 @@ export default function ProfitLossMonthlyGraphPage() {
     return row;
   });
 
-  /* ------- 2 DECIMAL FORMATTER ------- */
   const formatTwoDecimals = (value) => {
     if (value == null || isNaN(value)) return value;
     return Number(value).toFixed(2);
@@ -92,7 +90,6 @@ export default function ProfitLossMonthlyGraphPage() {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* ---------- TOP BAR ---------- */}
       <Box
         sx={{
           display: "flex",
@@ -115,7 +112,6 @@ export default function ProfitLossMonthlyGraphPage() {
         </Box>
       </Box>
 
-      {/* ---------- CHART BOX ---------- */}
       <Box
         sx={{
           width: "100%",
@@ -137,7 +133,6 @@ export default function ProfitLossMonthlyGraphPage() {
             <Tooltip formatter={(v) => formatTwoDecimals(v)} />
             <Legend />
 
-            {/* ---------- Neon Gradients ---------- */}
             <defs>
               {cityList.map((city, idx) => {
                 const hue = (idx * 60) % 360;
@@ -158,50 +153,46 @@ export default function ProfitLossMonthlyGraphPage() {
               })}
             </defs>
 
-            {/* ---------- Neon Radium Lines ---------- */}
-            {cityList.map((city, index) => (
-              <Line
-                key={city}
-                dataKey={city}
-                type="monotone"
-                stroke={`url(#glow-${city})`}
-                strokeWidth={4}
-                dot={{
-                  r: 5,
-                  fill: `hsl(${(index * 60) % 360}, 100%, 65%)`,
-                  stroke: "#fff",
-                  strokeWidth: 1.5,
-                }}
-                activeDot={{
-                  r: 7,
-                  fill: `hsl(${(index * 60) % 360}, 100%, 75%)`,
-                  stroke: "#fff",
-                  strokeWidth: 2,
-                  style: { filter: "drop-shadow(0 0 8px rgba(255,255,255,0.8))" },
-                }}
-                animationDuration={700}
-                animationEasing="ease-out"
-                style={{
-                  filter: `
-                    drop-shadow(0 0 6px rgba(255,255,255,0.7))
-                    drop-shadow(0 0 10px rgba(255,255,255,0.5))
-                    drop-shadow(0 3px 4px rgba(0,0,0,0.25))
-                  `,
-                }}
-              >
-                <LabelList
+            {cityList.map((city, index) => {
+              const color = lineColors[index % lineColors.length];
+            
+              return (
+                <Line
+                  key={city}
                   dataKey={city}
-                  position="top"
-                  fontSize={12}
-                  formatter={(v) => formatTwoDecimals(v)}
-                  style={{
-                    paintOrder: "stroke",
-                    stroke: "white",
-                    strokeWidth: 1,
+                  type="monotone"
+                  stroke={color}
+                  strokeWidth={4}
+                  dot={{
+                    r: 5,
+                    fill: color,
+                    stroke: "#fff",
+                    strokeWidth: 1.5,
                   }}
-                />
-              </Line>
-            ))}
+                  activeDot={{
+                    r: 7,
+                    fill: color,
+                    stroke: "#fff",
+                    strokeWidth: 2,
+                    style: { filter: "drop-shadow(0 0 8px rgba(255,255,255,0.8))" },
+                  }}
+                  animationDuration={700}
+                  animationEasing="ease-out"
+                >
+                  <LabelList
+                    dataKey={city}
+                    position="top"
+                    fontSize={12}
+                    formatter={(v) => formatTwoDecimals(v)}
+                    style={{
+                      paintOrder: "stroke",
+                      stroke: "white",
+                      strokeWidth: 1,
+                    }}
+                  />
+                </Line>
+              );
+            })}
           </LineChart>
         </ResponsiveContainer>
       </Box>

@@ -8,48 +8,42 @@ import GrowthLineChart from "../../components/GrowthLineChart";
 import { sortCities } from "../../components/CityOrderHelper";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
-function PerVehiclePage() {
+function ProductivityPage() {
   const navigate = useNavigate();
-
-  const [years, setYears] = useState(["2025"]);
-  const [months, setMonths] = useState([]);
-
   const [summary, setSummary] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState("SR LABOUR / VEH");
+  const [months, setMonths] = useState([]);
+  const [years, setYears] = useState(["2025"]);
+  const [selectedGrowth, setSelectedGrowthState] = useState("Service");
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"
-  ];
-
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const yearOptions = ["2024", "2025"];
 
   const growthOptions = [
-    "SR LABOUR / VEH",
-    "SR SPARES / VEH",
-    "SR REVENUE /VEH",
-    "BR LABOUR / VEH",
-    "BR SPARES / VEH",
-    "BR REVENUE /VEH",
+    "Service", "BodyShop","Free Service", "PMS", "RR", "Others",
   ];
 
   const growthKeyMap = {
-    "SR LABOUR / VEH": "srLabourByVEH",
-    "SR SPARES / VEH": "srSparesByVEH",
-    "SR REVENUE /VEH": "srRevenueByVEH",
-    "BR LABOUR / VEH": "brLabourByVeh",
-    "BR SPARES / VEH": "brSparesByVeh",
-    "BR REVENUE /VEH": "brRevenueByVeh",
+    "Service": "serviceProductivity",
+    "BodyShop": "bodyShopProductivity",
+    "Free Service": "freeServiceProductivity",
+    "PMS": "pmsProductivity",
+    "RR": "rrProductivity",
+    "Others": "othersProductivity",
   };
 
-  // Load previously selected growth
   useEffect(() => {
-    const savedGrowth = getSelectedGrowth("per_vehicle");
+    const savedGrowth = getSelectedGrowth("productivity");
     if (savedGrowth) setSelectedGrowthState(savedGrowth);
   }, []);
 
   const readCityName = (row) =>
-    row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
+    row?.city ||
+    row?.City ||
+    row?.cityName ||
+    row?.CityName ||
+    row?.name ||
+    row?.Name ||
+    "";
 
   const readGrowthValue = (row, apiKey) => {
     const raw = row?.[apiKey];
@@ -74,7 +68,7 @@ function PerVehiclePage() {
             query += `&years=${activeYears.join(",")}`;
           }
 
-          const data = await fetchData(`/api/per_vehicle/per_vehicle_summary${query}`);
+          const data = await fetchData(`/api/productivity/productivity_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
 
           combined.push({ month: m, data: safeData });
@@ -87,9 +81,8 @@ function PerVehiclePage() {
     };
 
     fetchCitySummary();
-  }, [months, years]); 
+  }, [months, years]);
 
-  // Prepare chart data
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
 
@@ -104,11 +97,14 @@ function PerVehiclePage() {
 
     const formatted = summary.map(({ month, data }) => {
       const entry = { month };
+
       sortedCities.forEach((city) => (entry[city] = 0));
+
       (data || []).forEach((row) => {
         const city = readCityName(row);
         entry[city] = readGrowthValue(row, apiKey);
       });
+
       return entry;
     });
 
@@ -120,19 +116,16 @@ function PerVehiclePage() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">PER VEHICLE GRAPH (CityWise)</Typography>
-
+        <Typography variant="h4">PRODUCTIVITY GRAPH (CityWise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle")}>Graph-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches")}>Graph-BranchWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_table")}>Productivity Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
-      {/* ----------------------------------------- */}
-      {/* UPDATED FILTERS — MONTH + YEAR */}
-      {/* ----------------------------------------- */}
       <SlicerFilters
         monthOptions={monthOptions}
         months={months}
@@ -147,7 +140,7 @@ function PerVehiclePage() {
         selectedGrowth={selectedGrowth}
         setSelectedGrowth={(value) => {
           setSelectedGrowthState(value);
-          setSelectedGrowth(value, "per_vehicle");
+          setSelectedGrowth(value, "productivity");
         }}
       />
 
@@ -156,13 +149,23 @@ function PerVehiclePage() {
       ) : chartData.length === 0 ? (
         <Typography>No data available for the selected criteria.</Typography>
       ) : (
-        <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>{selectedGrowth}</Typography>
-
+        <Box
+          sx={{
+            mt: 2,
+            height: 520,
+            background: "#fff",
+            borderRadius: 2,
+            boxShadow: 3,
+            p: 2,
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            {selectedGrowth}
+          </Typography>
           <GrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
-            decimalDigits={0}
+            decimalDigits={2}
             showPercent={false}
           />
         </Box>
@@ -171,4 +174,4 @@ function PerVehiclePage() {
   );
 }
 
-export default PerVehiclePage;
+export default ProductivityPage;

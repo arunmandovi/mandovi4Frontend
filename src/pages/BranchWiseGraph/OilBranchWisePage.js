@@ -32,9 +32,9 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
 ).sort((a, b) => a.localeCompare(b));
 
 const growthKeyMap = {
-    "Full Synthetic QTY %": "percentageFullSyntheticQTY",
-    "Semi Synthetic QTY %": "percentageSemiSyntheticQTY",
-    "Full & Semi Synthetic QTY %": "percentageFullSemiSyntheticQTY",
+    "Full Synthetic QTY %": "qtyFullSynthetic",
+    "Semi Synthetic QTY %": "qtySemiSynthetic",
+    "Full & Semi Synthetic QTY %": "qtyFullSemiSynthetic",
   };
 
 

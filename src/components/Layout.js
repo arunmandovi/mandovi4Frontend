@@ -36,6 +36,7 @@ function Layout() {
   const modules = [
     "loadd",
     "hold_up",
+    "productivity",
     "due_done",
     "per_vehicle",
     "br_conversion",
@@ -106,6 +107,7 @@ function formatLabel(name) {
   const specialCases = {
     loadd: "Load",
     hold_up: "Hold UP",
+    productivity: "Productivity",
     due_done: "Due VS Done",
     per_vehicle: "Per Vehicle",
     br_conversion: "BR Conversion",

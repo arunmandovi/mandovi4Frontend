@@ -9,7 +9,6 @@ import { sortCities } from "../../components/CityOrderHelper";
 import CityWiseSummaryTable from "../../components/common/CityWiseSummaryTable ";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
-// NEW IMPORT
 import { buildPivotTable } from "../../utils/buildPivotTable";
 
 function LoaddPage() {
