@@ -45,6 +45,7 @@ function ProfitLossSRBRLoaddPage() {
             "Jul 2025": formatNumber(row.jul25_per_100k),
             "Aug 2025": formatNumber(row.aug25_per_100k),
             "Sep 2025": formatNumber(row.sep25_per_100k),
+            "Oct 2025": formatNumber(row.oct25_per_100k),
             "2025-26": formatNumber(row.total25_per_100k),
           }));
           formatted.sort(
@@ -90,6 +91,7 @@ function ProfitLossSRBRLoaddPage() {
             "Jul 2025": formatNumber(row.jul25_per_100k),
             "Aug 2025": formatNumber(row.aug25_per_100k),
             "Sep 2025": formatNumber(row.sep25_per_100k),
+            "Oct 2025": formatNumber(row.oct25_per_100k),
             "2025-26": formatNumber(row.total25_per_100k),
           }))
           .sort((a, b) => {
