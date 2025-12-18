@@ -214,7 +214,16 @@ function HoldUpBarChartPage() {
               })
             }
           >
-            Hold Up Summary
+            HoldUp Summary
+          </Button>
+
+          <Button
+            variant="contained"
+            onClick={() =>
+              navigate("/DashboardHome/hold_up_day_table", { state: { fromNavigation: true } })
+            }
+          >
+            HoldUp DayWise Summary
           </Button>
 
           <Button

@@ -22,7 +22,6 @@ export default function DataTable({
     );
   }
 
-  // ⬅️ UPDATED: Format value function
   const formatValue = (value, field) => {
     if (value === null || value === undefined) return "-";
 
@@ -30,12 +29,10 @@ export default function DataTable({
     if (!isNaN(num)) {
       if (num === 0) return "-";
 
-      // Utilized Bay → always integer
       if (field === "Utilized Bay") {
         return Math.round(num);
       }
 
-      // Remove unnecessary .00 but keep decimals if needed
       const fixed = num.toFixed(decimalPlaces);
       return fixed.endsWith(".00")
         ? fixed.replace(".00", "")
@@ -57,11 +54,9 @@ export default function DataTable({
       sortable: false,
       headerAlign: "center",
       align: "left",
-
       renderCell: (params) => {
         let value = params.value;
 
-        // ⬅️ UPDATED: If "0%" then show blank
         if (typeof value === "string" && value.includes("%")) {
           return (
             <Box sx={{ textAlign: "right", width: "100%" }}>
@@ -70,7 +65,6 @@ export default function DataTable({
           );
         }
 
-        // Pass the column name to formatValue
         return formatValue(value, params.field);
       },
     }));
@@ -92,7 +86,6 @@ export default function DataTable({
         backdropFilter: "blur(10px)",
         boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
         animation: "popIn 0.45s ease",
-
         "@keyframes popIn": {
           "0%": { opacity: 0, transform: "scale(0.97)" },
           "100%": { opacity: 1, transform: "scale(1)" },
@@ -123,6 +116,8 @@ export default function DataTable({
         disableColumnMenu
         autoHeight
         hideFooter
+        rowHeight={44}               // ⬅️ REDUCED ROW HEIGHT
+        headerHeight={42}            // ⬅️ REDUCED HEADER HEIGHT
         sx={{
           borderRadius: "14px",
           overflow: "hidden",
@@ -132,24 +127,25 @@ export default function DataTable({
             background: "linear-gradient(135deg, #d1e2ff, #f0f6ff)",
             borderBottom: "3px solid #99b3d8",
             boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            height: "40px",
           },
+
           "& .MuiDataGrid-columnHeaderTitle": {
             fontWeight: "900 !important",
             color: "rgba(0, 0, 0, 1)",
-            fontSize: "17px",
+            fontSize: "16px",
             textTransform: "uppercase",
             letterSpacing: "0.7px",
           },
 
           "& .MuiDataGrid-cell": {
-            padding: "4px 10px",
-            fontSize: "17px",
+            padding: "8px 10px",
+            fontSize: "18px",
             fontWeight: "bold",
             borderRight: "1px solid #c7d4e6",
             borderBottom: "1px solid #c7d4e6",
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
           },
 
           "& .MuiDataGrid-row:nth-of-type(odd)": {

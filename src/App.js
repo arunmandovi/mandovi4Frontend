@@ -12,6 +12,7 @@ import BatteryTyrePage from "./pages/GraphView/BatteryTyrePage";
 import BRConversionPage from "./pages/GraphView/BRConversionPage";
 import HoldUpPage from "./pages/GraphView/HoldUpPage";
 import HoldUpSummaryPage from "./pages/GraphView/HoldUpSummaryPage";
+import HoldUpDayWiseSummaryPage from "./pages/GraphView/HoldUpDayWiseSummaryPage";
 import LabourPage from "./pages/GraphView/LabourPage";
 import PerVehiclePage from "./pages/GraphView/PerVehiclePage";
 import LoaddPage from "./pages/GraphView/LoaddPage";
@@ -188,6 +189,7 @@ function App() {
           <Route path="br_conversion" element={<BRConversionPage />} />
           <Route path="hold_up" element={<HoldUpPage />} />
           <Route path="hold_up_table" element={<HoldUpSummaryPage />} />
+          <Route path="hold_up_day_table" element={<HoldUpDayWiseSummaryPage />} />
           <Route path="due_done" element={<DueDonePage />} />
           <Route path="labour" element={<LabourPage />} />
           <Route path="per_vehicle" element={<PerVehiclePage />} />

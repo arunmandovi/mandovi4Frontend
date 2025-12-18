@@ -4,7 +4,7 @@ import DataTable from "../../components/DataTable";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function HoldUpSummaryPage() {
+function HoldUpDayWiseSummaryPage() {
   const [citySummary, setCitySummary] = useState([]);
   const [branchSummary, setBranchSummary] = useState([]);
   const [selectedCity, setSelectedCity] = useState("ALL");
@@ -25,7 +25,6 @@ function HoldUpSummaryPage() {
 
   const CITY_ORDER = ["BANGALORE", "MYSORE", "MANGALORE"];
 
-  // ---------- GRAND TOTAL UTILITY ----------
   const addGrandTotalRow = (rows) => {
     if (!rows || rows.length === 0) return rows;
 
@@ -48,7 +47,7 @@ function HoldUpSummaryPage() {
 
   const loadCitySummary = async () => {
     try {
-      const data = await fetchData("/api/hold_up/hold_up_table_summary");
+      const data = await fetchData("/api/hold_up/hold_up_day_summary");
       if (!Array.isArray(data)) {
         setCitySummary([]);
         return;
@@ -56,26 +55,16 @@ function HoldUpSummaryPage() {
 
       let formatted = data.map((row) => ({
         City: row.city || "-",
-        PMS: formatNumber(row.countPMS),
-        "Sr 1": formatNumber(row.count1Service),
-        "Sr 1-2": formatNumber(row.count1to2Service),
-        "Sr 3-5": formatNumber(row.count3to5Service),
-        "Sr 6-7": formatNumber(row.count6to7Service),
-        "Sr 8-15": formatNumber(row.count8to15Service),
-        "Sr 16-30": formatNumber(row.count16to30Service),
-        "Sr >30": formatNumber(row.countAbove30Service),
-        Service: formatNumber(row.countService),
-        "Br 1": formatNumber(row.count1BodyShop),
-        "Br 1-2": formatNumber(row.count1to2BodyShop),
-        "Br 3-5": formatNumber(row.count3to5BodyShop),
-        "Br 6-7": formatNumber(row.count6to7BodyShop),
-        "Br 8-15": formatNumber(row.count8to15BodyShop),
-        "Br 16-30": formatNumber(row.count16to30BodyShop),
-        "Br >30": formatNumber(row.countAbove30BodyShop),
-        BodyShop: formatNumber(row.countBodyShop),
-        "Sr Total": formatNumber(row.countService1),
-        "Br Total": formatNumber(row.countBodyShop1),
-        Total: formatNumber(row.countTotal),
+        "Sr Till Y'Day": formatNumber(row.serviceTillYesterday),
+        "Sr Cleared Y'Day": formatNumber(row.serviceClearedYesterday),
+        "Sr Balance": formatNumber(row.serviceBalance),
+        "Sr Added Y'Day": formatNumber(row.serviceAddedYesterday),
+        "Sr Today Opening": formatNumber(row.serviceTodayOpening),
+        "Br Till Y'Day": formatNumber(row.bodyShopTillYesterday),
+        "Br Cleared Y'Day": formatNumber(row.bodyShopClearedYesterday),
+        "Br Balance": formatNumber(row.bodyShopBalance),
+        "Br Added Y'Day": formatNumber(row.bodyShopAddedYesterday),
+        "Br Today Opening": formatNumber(row.bodyShopTodayOpening),
       }));
 
       formatted.sort((a, b) => CITY_ORDER.indexOf(a.City) - CITY_ORDER.indexOf(b.City));
@@ -105,7 +94,7 @@ function HoldUpSummaryPage() {
 
   const loadBranchSummary = async (cityFilter = null) => {
     try {
-      let url = "/api/hold_up/hold_up_table_branch_summary";
+      let url = "/api/hold_up/hold_up_day_branch_summary";
       if (cityFilter && cityFilter !== "ALL") url += `?cities=${cityFilter}`;
 
       const data = await fetchData(url);
@@ -115,26 +104,16 @@ function HoldUpSummaryPage() {
             .filter((row) => !["BANGALORE", "MYSORE", "MANGALORE"].includes(row.branch))
             .map((row) => ({
               Branch: row.branch || "-",
-              PMS: formatNumber(row.countPMS),
-              "Sr 1": formatNumber(row.count1Service),
-              "Sr 1-2": formatNumber(row.count1to2Service),
-              "Sr 3-5": formatNumber(row.count3to5Service),
-              "Sr 6-7": formatNumber(row.count6to7Service),
-              "Sr 8-15": formatNumber(row.count8to15Service),
-              "Sr 16-30": formatNumber(row.count16to30Service),
-              "Sr >30": formatNumber(row.countAbove30Service),
-              Service: formatNumber(row.countService),
-              "Br 1": formatNumber(row.count1BodyShop),
-              "Br 1-2": formatNumber(row.count1to2BodyShop),
-              "Br 3-5": formatNumber(row.count3to5BodyShop),
-              "Br 6-7": formatNumber(row.count6to7BodyShop),
-              "Br 8-15": formatNumber(row.count8to15BodyShop),
-              "Br 16-30": formatNumber(row.count16to30BodyShop),
-              "Br >30": formatNumber(row.countAbove30BodyShop),
-              BodyShop: formatNumber(row.countBodyShop),
-              "Sr Total": formatNumber(row.countService1),
-              "Br Total": formatNumber(row.countBodyShop1),
-              Total: formatNumber(row.countTotal),
+              "Sr Till Y'Day": formatNumber(row.serviceTillYesterday),
+              "Sr Cleared Y'Day": formatNumber(row.serviceClearedYesterday),
+              "Sr Balance": formatNumber(row.serviceBalance),
+              "Sr Added Y'Day": formatNumber(row.serviceAddedYesterday),
+              "Sr Today Opening": formatNumber(row.serviceTodayOpening),
+              "Br Till Y'Day": formatNumber(row.bodyShopTillYesterday),
+              "Br Cleared Y'Day": formatNumber(row.bodyShopClearedYesterday),
+              "Br Balance": formatNumber(row.bodyShopBalance),
+              "Br Added Y'Day": formatNumber(row.bodyShopAddedYesterday),
+              "Br Today Opening": formatNumber(row.bodyShopTodayOpening),
             }))
             .sort((a, b) => BRANCH_ORDER.indexOf(a.Branch) - BRANCH_ORDER.indexOf(b.Branch))
         : [];
@@ -207,4 +186,4 @@ function HoldUpSummaryPage() {
   );
 }
 
-export default HoldUpSummaryPage;
+export default HoldUpDayWiseSummaryPage;
