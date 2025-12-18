@@ -1,21 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  Box,
-  Button,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-} from "@mui/material";
-
-import { fetchData } from "../../api/uploadService";
+import React, { useState, useEffect } from "react";
+import { Box, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+
+import DataTable from "../../components/DataTable";
 import SlicerFilters from "../../components/SlicerFilters";
 import GrowthButtons from "../../components/GrowthButtons";
+import { fetchData } from "../../api/uploadService";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
 function ProductivityTablePage() {
@@ -27,16 +17,39 @@ function ProductivityTablePage() {
   const [years, setYears] = useState(["2025"]);
   const [cities, setCities] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState("Service");
-  const [columnWidths, setColumnWidths] = useState([]);
-
-  const cityTableRef = useRef(null);
 
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const yearOptions = ["2024", "2025"];
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
   const growthOptions = ["Service", "BodyShop", "Free Service", "PMS", "RR", "Others"];
 
-  const growthKeyMap = {
+  /* ================= ORDER CONFIG ================= */
+  const CITY_ORDER = ["Bangalore", "Mysore", "Mangalore"];
+
+  const BRANCH_PRIORITY_ORDER = [
+    "Wilson Garden", "Vijayanagar", "JP Nagar", "Yeshwanthpur WS",
+    "Basaveshwarnagar", "Hennur", "Sarjapura", "Kolar", "Gowribidanur",
+    "Uttarahali Kengeri", "Vidyarannapura", "Yelahanka", "Malur SOW",
+    "Basavangudi", "Basavanagudi-SOW", "Kolar Nexa", "Maluru WS",
+    "KRS Road", "Hunsur Road", "Bannur", "Mandya", "Gonikoppa",
+    "Kushalnagar", "ChamrajNagar", "Krishnarajapet", "Somvarpet",
+    "Maddur", "Nagamangala", "Narasipura", "Mysore Nexa", "Kollegal",
+    "Balmatta", "Bantwal", "Vittla", "Kadaba", "Uppinangady",
+    "Surathkal", "Sullia", "Adyar", "Yeyyadi BR", "Nexa Service",
+    "Sujith Bagh Lane", "Naravi"
+  ];
+
+  const sortByCustomOrder = (rows, key, order) =>
+    [...rows].sort((a, b) => {
+      const aIndex = order.indexOf(a[key]);
+      const bIndex = order.indexOf(b[key]);
+      if (aIndex === -1 && bIndex === -1) return a[key].localeCompare(b[key]);
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+      return aIndex - bIndex;
+    });
+
+  const productivityKeyMap = {
     Service: "serviceProductivity",
     BodyShop: "bodyShopProductivity",
     "Free Service": "freeServiceProductivity",
@@ -63,25 +76,7 @@ function ProductivityTablePage() {
     Others: "othersLoadd",
   };
 
-  const readCity = (r) => r?.city || r?.City || r?.cityName || r?.CityName || r?.name || "";
-  const readBranch = (r) => r?.branch || r?.Branch || r?.branchName || "";
-
-  const readValue = (row, key) => {
-    if (!row || !key) return 0;
-    const val = row[key];
-    if (val == null) return 0;
-    if (typeof val === "string") {
-      const parsed = parseFloat(val.replace("%", "").trim());
-      return isNaN(parsed) ? 0 : parsed;
-    }
-    return Number(val);
-  };
-
-  const readLoad = (row, loadKey) => {
-    if (!row || !loadKey) return 0;
-    const val = row[loadKey];
-    return val == null ? 0 : Number(val);
-  };
+  const n = (v) => (v == null || v === "" ? 0 : Number(v));
 
   useEffect(() => {
     const saved = getSelectedGrowth("productivity");
@@ -89,169 +84,162 @@ function ProductivityTablePage() {
   }, []);
 
   useEffect(() => {
-    let canceled = false;
+    loadCitySummary();
+    loadBranchSummary();
+  }, [months, years, selectedGrowth, cities]);
 
-    const loadData = async () => {
-      const selectedMonths = months.length ? months : monthOptions;
-      const selectedYears = years.length ? years : yearOptions;
+  const loadCitySummary = async () => {
+    const selectedMonths = months.length ? months : monthOptions;
+    const selectedYears = years.length ? years : yearOptions;
 
-      try {
-        const cityResult = [];
-        for (const m of selectedMonths) {
-          const data = await fetchData(
-            `/api/productivity/productivity_summary?months=${m}&years=${selectedYears.join(",")}`
-          );
-          cityResult.push({
-            month: m,
-            data: Array.isArray(data) ? data : data?.result || [],
-          });
+    const map = {};
+    const monthData = {};
+
+    for (const m of selectedMonths) {
+      const data = await fetchData(
+        `/api/productivity/productivity_summary?months=${m}&years=${selectedYears.join(",")}`
+      );
+
+      monthData[m] = Array.isArray(data) ? data : [];
+
+      monthData[m].forEach((row) => {
+        const city = row.city;
+        if (!map[city]) {
+          map[city] = {
+            City: city,
+            "Utilized Bay": n(row[utilizedBayKeyMap[selectedGrowth]]),
+          };
         }
-        if (!canceled) setCitySummary(cityResult);
+        map[city][m] = n(row[productivityKeyMap[selectedGrowth]]).toFixed(2);
+      });
+    }
 
-        const branchResult = [];
-        for (const m of selectedMonths) {
-          const data = await fetchData(
-            `/api/productivity/productivity_branch_summary?months=${m}&years=${selectedYears.join(",")}`
-          );
-          branchResult.push({
-            month: m,
-            data: Array.isArray(data) ? data : data?.result || [],
-          });
-        }
-        if (!canceled) setBranchSummary(branchResult);
-      } catch (err) {
-        if (!canceled) console.error("Fetch Error:", err);
-      }
-    };
-
-    loadData();
-    return () => {
-      canceled = true;
-    };
-  }, [months, years]);
-
-  const filterBranchByCity = (summary) =>
-    summary.map(({ month, data }) => ({
-      month,
-      data: data.filter((r) => {
-        const city = readCity(r);
-        const utilizedBay = readValue(r, utilizedBayKeyMap[selectedGrowth]);
-        if (utilizedBay === 0) return false;
-        if (cities.length && !cities.includes(city)) return false;
-        return true;
-      }),
-    }));
-
-  const buildTable = (summary, readNameFn, isBranchTable = false, isCityTable = false) => {
-    if (!selectedGrowth) return { rows: [], monthKeys: [], totalRow: null };
-
-    const growthKey = growthKeyMap[selectedGrowth];
-    const utilizedKey = utilizedBayKeyMap[selectedGrowth];
-    const loadKey = loadKeyMap[selectedGrowth];
-
-    const names = new Set();
-    summary.forEach(({ data }) =>
-      (data || []).forEach((r) => names.add(readNameFn(r)))
+    setCitySummary(
+      addGrandTotal(
+        sortByCustomOrder(Object.values(map), "City", CITY_ORDER),
+        monthData,
+        "City"
+      )
     );
+  };
 
-    const monthKeys = summary.map((s) => s.month);
+  const loadBranchSummary = async () => {
+    const selectedMonths = months.length ? months : monthOptions;
+    const selectedYears = years.length ? years : yearOptions;
 
-    const rows = Array.from(names).map((name) => {
-      const entry = { name, utilizedBay: 0 };
-      monthKeys.forEach((m) => (entry[m] = 0));
+    const map = {};
+    const monthData = {};
 
-      summary.forEach(({ month, data }) => {
-        const row = (data || []).find((r) => readNameFn(r) === name);
-        if (row) {
-          entry[month] = readValue(row, growthKey);
-          entry.utilizedBay = readValue(row, utilizedKey);
-          entry.city = readCity(row);
+    for (const m of selectedMonths) {
+      let data = await fetchData(
+        `/api/productivity/productivity_branch_summary?months=${m}&years=${selectedYears.join(",")}`
+      );
+
+      data = (Array.isArray(data) ? data : [])
+        .filter((r) => !cities.length || cities.includes(r.city))
+        .filter((r) =>
+          selectedGrowth === "BodyShop"
+            ? n(r.bodyShopUtilizedBay) > 0
+            : true
+        );
+
+      monthData[m] = data;
+
+      data.forEach((row) => {
+        const branch = row.branch;
+        if (!map[branch]) {
+          map[branch] = {
+            Branch: branch,
+            "Utilized Bay": n(row[utilizedBayKeyMap[selectedGrowth]]),
+          };
+        }
+        map[branch][m] = n(row[productivityKeyMap[selectedGrowth]]).toFixed(2);
+      });
+    }
+
+    setBranchSummary(
+      addGrandTotal(
+        sortByCustomOrder(Object.values(map), "Branch", BRANCH_PRIORITY_ORDER),
+        monthData,
+        "Branch"
+      )
+    );
+  };
+
+  const addGrandTotal = (rows, monthData, labelKey) => {
+    if (!rows.length) return rows;
+
+    const total = { [labelKey]: "GRAND TOTAL" };
+    const months = Object.keys(monthData);
+    total["Utilized Bay"] = 0;
+
+    const used = new Set();
+    months.forEach((m) => {
+      (monthData[m] || []).forEach((r) => {
+        const key = r.city || r.branch;
+        if (!used.has(key)) {
+          total["Utilized Bay"] += n(r[utilizedBayKeyMap[selectedGrowth]]);
+          used.add(key);
         }
       });
-
-      return entry;
     });
 
-    if (isCityTable) {
-      const cityOrder = ["Bangalore", "Mysore", "Mangalore"];
-      rows.sort((a, b) => cityOrder.indexOf(a.name) - cityOrder.indexOf(b.name));
-    }
-
-    if (isBranchTable) {
-      const cityOrder = ["Bangalore", "Mysore", "Mangalore"];
-      rows.sort((a, b) => cityOrder.indexOf(a.city) - cityOrder.indexOf(b.city));
-    }
-
-    const totalRow = { name: "GRAND TOTAL" };
-
-    monthKeys.forEach((m) => {
-      const s = summary.find((x) => x.month === m);
-      const rowsForMonth = (s && s.data) ? s.data : [];
-
-      const sumLoad = rowsForMonth.reduce((sum, r) => sum + readLoad(r, loadKey), 0);
-      const sumServiceUtilized = rowsForMonth.reduce((sum, r) => sum + readValue(r, "serviceUtilizedBay"), 0);
-      const sumBodyShopUtilized = rowsForMonth.reduce((sum, r) => sum + readValue(r, "bodyShopUtilizedBay"), 0);
+    months.forEach((m) => {
+      const rowsForMonth = monthData[m] || [];
+      const sumLoad = rowsForMonth.reduce(
+        (s, r) => s + n(r[loadKeyMap[selectedGrowth]]),
+        0
+      );
 
       let grand = 0;
+
       if (selectedGrowth === "BodyShop") {
-        grand = sumBodyShopUtilized === 0 ? 0 : sumLoad / sumBodyShopUtilized;
+        const sumUtilized = rowsForMonth.reduce(
+          (s, r) => s + n(r.bodyShopUtilizedBay),
+          0
+        );
+        grand = sumUtilized === 0 ? 0 : sumLoad / sumUtilized;
       } else {
         const denom = rowsForMonth.reduce(
-          (acc, r) => acc + readValue(r, utilizedKey) * Number(r.workingDays || 0),
+          (s, r) =>
+            s +
+            n(r[utilizedBayKeyMap[selectedGrowth]]) * n(r.workingDays),
           0
         );
         grand = denom === 0 ? 0 : sumLoad / denom;
       }
 
-      totalRow[m] = Number(Number.isFinite(grand) ? grand.toFixed(2) : 0);
+      total[m] = grand.toFixed(2);
     });
 
-    const allCities = new Set();
-    summary.forEach(({ data }) => data.forEach(r => allCities.add(readCity(r))));
-
-    totalRow.utilizedBay = 0;
-    allCities.forEach(city => {
-      for (let { data } of summary) {
-        const row = data.find(r => readCity(r) === city);
-        if (row) {
-          totalRow.utilizedBay += readValue(row, utilizedKey);
-          break; 
-        }
-      }
-    });
-
-    return { rows, monthKeys, totalRow };
-  };
-
-  const cityTable = buildTable(citySummary, readCity, false, true);
-  const branchTable = buildTable(filterBranchByCity(branchSummary), readBranch, true, false);
-
-  useEffect(() => {
-    if (cityTableRef.current) {
-      const ths = cityTableRef.current.querySelectorAll("thead tr:first-child th");
-      const widths = Array.from(ths).map((th) => th.offsetWidth);
-      setColumnWidths(widths);
-    }
-  }, [cityTable.rows, cityTable.monthKeys]);
-
-  const getBranchRowColor = (city) => {
-    if (city === "Bangalore") return "rgba(255, 255, 255, 1)";
-    if (city === "Mysore") return "rgba(255, 255, 255, 1)";
-    if (city === "Mangalore") return "rgba(255, 255, 255, 1)";
-    return "transparent";
+    return [...rows, total];
   };
 
   return (
-      <Box sx={{ p: 3 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-          <Typography variant="h4">PRODUCTIVITY TABLE</Typography>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_table")}>Productivity Table</Button>
-            <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity")}>Graph-CityWise</Button>
-            <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_branches")}>Graph-BranchWise</Button>
-            <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity-bar-chart")}>Bar Chart-CityWise</Button>
-            <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_branches-bar-chart")}>Bar Chart-BranchWise</Button>
-          </Box>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+        <Typography variant="h4">Productivity Table</Typography>
+
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_table")}>
+            Productivity Table
+          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity")}>
+            Graph-CityWise
+          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity_branches")}>
+            Graph-BranchWise
+          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/productivity-bar-chart")}>
+            Bar Chart-CityWise
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => navigate("/DashboardHome/productivity_branches-bar-chart")}
+          >
+            Bar Chart-BranchWise
+          </Button>
+        </Box>
       </Box>
 
       <SlicerFilters
@@ -272,83 +260,25 @@ function ProductivityTablePage() {
         }}
       />
 
-      <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
-        City Wise Productivity Summary
-      </Typography>
+      <DataTable
+        data={citySummary}
+        title="City Wise Productivity Summary"
+        decimalPlaces={2}
+      />
 
-      {cityTable.rows.length === 0 ? (
-        <Typography>No CityWise Data.</Typography>
-      ) : (
-        <TableContainer component={Paper}>
-          <Table ref={cityTableRef}>
-            <TableHead>
-              <TableRow>
-                <TableCell>City</TableCell>
-                <TableCell>Utilized Bay</TableCell>
-                {cityTable.monthKeys.map((m) => (
-                  <TableCell key={m} align="right">{m}</TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {cityTable.rows.map((row) => (
-                <TableRow key={row.name}>
-                  <TableCell>{row.name}</TableCell>
-                  <TableCell>{row.utilizedBay}</TableCell>
-                  {cityTable.monthKeys.map((m) => (
-                    <TableCell key={m} align="right">{row[m]}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-              {cityTable.totalRow && (
-                <TableRow sx={{ backgroundColor: "hsla(58, 100%, 61%, 1.00)" }}>
-                  <TableCell><b>{cityTable.totalRow.name}</b></TableCell>
-                  <TableCell><b>{cityTable.totalRow.utilizedBay}</b></TableCell>
-                  {cityTable.monthKeys.map((m) => (
-                    <TableCell key={m} align="right"><b>{cityTable.totalRow[m]}</b></TableCell>
-                  ))}
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+      <Box sx={{ mt: 4 }}>
+        <SlicerFilters
+          cityOptions={cityOptions}
+          cities={cities}
+          setCities={setCities}
+        />
+      </Box>
 
-      <Typography variant="h5" sx={{ mt: 5, mb: 2 }}>
-        Branch Wise Productivity Summary
-      </Typography>
-
-      <SlicerFilters cityOptions={cityOptions} cities={cities} setCities={setCities} />
-
-      {branchTable.rows.length === 0 ? (
-        <Typography>No BranchWise Data.</Typography>
-      ) : (
-        <TableContainer component={Paper} sx={{ mt: 2 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ width: columnWidths[0] }}>Branch</TableCell>
-                <TableCell sx={{ width: columnWidths[1] }}>Utilized Bay</TableCell>
-                {branchTable.monthKeys.map((m, idx) => (
-                  <TableCell key={m} align="right" sx={{ width: columnWidths[idx + 2] }}>{m}</TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {branchTable.rows.map((row) => (
-                <TableRow key={row.name} sx={{ backgroundColor: getBranchRowColor(row.city) }}>
-                  <TableCell sx={{ width: columnWidths[0] }}>{row.name}</TableCell>
-                  <TableCell sx={{ width: columnWidths[1] }}>{row.utilizedBay}</TableCell>
-                  {branchTable.monthKeys.map((m, idx) => (
-                    <TableCell key={m} align="right" sx={{ width: columnWidths[idx + 2] }}>{row[m]}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+      <DataTable
+        data={branchSummary}
+        title="Branch Wise Productivity Summary"
+        decimalPlaces={2}
+      />
     </Box>
   );
 }
