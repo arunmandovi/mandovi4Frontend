@@ -15,14 +15,15 @@ export async function fetchAllRecords(apiUrl) {
 }
 
 /* ============================================================
-   🔹 Filter by Multiple Months / Years
+   🔹 Filter by Multiple Months / Types / Years
 ============================================================ */
-export async function filterByMonthYear(apiUrl, months, years) {
+export async function filterByMonthYear(apiUrl, months,years, types ) {
   try {
     const params = new URLSearchParams();
 
     if (Array.isArray(months)) months.forEach((m) => params.append("months", m));
     if (Array.isArray(years)) years.forEach((y) => params.append("years", y));
+    if (Array.isArray(types)) types.forEach((t) => params.append("types", t));
 
     const url = `${apiUrl}?${params.toString()}`;
     const data = await fetchData(url);
@@ -33,6 +34,26 @@ export async function filterByMonthYear(apiUrl, months, years) {
     return [];
   }
 }
+
+// uploadPageService.js
+export async function filterByTypes(apiUrl, types) {
+  try {
+    const params = new URLSearchParams();
+
+    if (Array.isArray(types)) {
+      types.forEach((t) => params.append("types", t)); // ✅ plural
+    }
+
+    const url = `${apiUrl}?${params.toString()}`;
+    const data = await fetchData(url);
+
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error("Filter Error:", err);
+    return [];
+  }
+}
+
 
 /* ============================================================
    🔹 Upload File

@@ -18,5 +18,6 @@ export const uploadNavbarButtons = [
   { label: "TAT", path: "/tat-upload" },
   { label: "MCP", path: "/mcp-upload" },
   { label: "Reference", path: "/referencee-upload" },
-  { label: "Profit & Loss", path: "/profit_loss-upload" }, 
+  { label: "Profit & Loss", path: "/profit_loss-upload" },
+  { label: "Outstanding", path: "/outstanding-upload" },
 ];

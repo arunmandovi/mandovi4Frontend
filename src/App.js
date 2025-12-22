@@ -74,6 +74,7 @@ import MCPUploadPage from "./pages/FileUpload/MCPUploadPage";
 import MSGPUploadPage from "./pages/FileUpload/MSGPUploadPage";
 import MSGPProfitUploadPage from "./pages/FileUpload/MSGPProfitUploadPage";
 import OilUploadPage from "./pages/FileUpload/OilUploadPage";
+import OutstandingUploadPage from "./pages/FileUpload/OutstandingUploadPage";
 import PMSPartsUploadPage from "./pages/FileUpload/PMSPartsUploadPage";
 import ProductivityUploadPage from "./pages/FileUpload/ProductivityUploadPage";
 import ProfitLossUploadPage from "./pages/FileUpload/ProfitLossUploadPage";
@@ -163,6 +164,7 @@ function App() {
         <Route path="/msgp-upload" element={ <AdminProtectedRoute><MSGPUploadPage /></AdminProtectedRoute> } />
         <Route path="/msgp_profit-upload" element={ <AdminProtectedRoute><MSGPProfitUploadPage /></AdminProtectedRoute> } />
         <Route path="/oil-upload" element={ <AdminProtectedRoute><OilUploadPage /></AdminProtectedRoute> } />
+        <Route path="/outstanding-upload" element={ <AdminProtectedRoute><OutstandingUploadPage /></AdminProtectedRoute> } />
         <Route path="/pms_parts-upload" element={ <AdminProtectedRoute><PMSPartsUploadPage /></AdminProtectedRoute> } />
         <Route path="/productivity-upload" element={ <AdminProtectedRoute><ProductivityUploadPage /></AdminProtectedRoute> } />
         <Route path="/profit_loss-upload" element={ <AdminProtectedRoute><ProfitLossUploadPage /></AdminProtectedRoute> } />

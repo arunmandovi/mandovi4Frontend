@@ -55,6 +55,7 @@ function Layout() {
     "mcp",
     "referencee",
     "profit_loss",
+    "outstanding",
   ];
 
   const linkMap = {
@@ -115,6 +116,7 @@ function formatLabel(name) {
     msgp_profit: "MSGP Profit",
     mga_profit: "MGA PROFIT",
     profit_loss: "Profit & Loss",
+    outstanding: "OutStanding",
     vas: "VAS",
     msgp: "MSGP",
     pms_parts: "PMS Parts",
