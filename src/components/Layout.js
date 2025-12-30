@@ -1,15 +1,16 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@mui/material";
 import { useState, useEffect } from "react";
 import "../styles/Navbar.css";
 
 function Layout() {
+  const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname.toLowerCase();
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  /* ---------- ACTIVITY TRACK ---------- */
+  // 🔥 Reset activity timestamp when user navigates
   useEffect(() => {
     localStorage.setItem("employeeLastActive", Date.now());
   }, [location.pathname]);
@@ -20,18 +21,19 @@ function Layout() {
     window.location.href = "/EmployeeLogin";
   };
 
-  /* ---------- CURRENT VIEW MODE ---------- */
+  /* ---------- VIEW MODE DETECTION ---------- */
   const modeMap = {
     "branches-bar-chart": "branches-bar-chart",
-    "_branches": "branches",
-    "-bar-chart": "bar-chart",
+    "branches": "branches",
+    "bar-chart": "bar-chart",
   };
 
   const viewMode =
-    Object.entries(modeMap).find(([key]) => currentPath.includes(key))?.[1] ||
-    "default";
+    Object.entries(modeMap).find(([key]) =>
+      currentPath.includes(key)
+    )?.[1] || null;
 
-  /* ---------- MODULE LIST ---------- */
+  /* ---------- MODULES ---------- */
   const modules = [
     "loadd",
     "hold_up",
@@ -58,44 +60,23 @@ function Layout() {
     "cc_conversion",
   ];
 
-  /* ---------- MODULE → SUPPORTED MODES ---------- */
-  const moduleModes = {
-    // full support
-    spares: ["default", "bar-chart", "branches", "branches-bar-chart"],
-    labour: ["default", "bar-chart", "branches", "branches-bar-chart"],
-    vas: ["default", "bar-chart", "branches"],
-    msgp: ["default", "bar-chart"],
-    revenue: ["default", "bar-chart"],
-    outstanding: ["default", "bar-chart"],
-
-    // only base page
-    cc_conversion: ["default"],
-    profit_loss: ["default"],
-    tat: ["default"],
-    mcp: ["default"],
-
-    // fallback: if not listed → default only
-  };
-
   /* ---------- LINK BUILDERS ---------- */
-  const linkBuilders = {
+  const linkMap = {
     "bar-chart": (m) => `/DashboardHome/${m}-bar-chart`,
-    branches: (m) => `/DashboardHome/${m}_branches`,
     "branches-bar-chart": (m) => `/DashboardHome/${m}_branches-bar-chart`,
-    default: (m) => `/DashboardHome/${m}`,
+    "branches": (m) => `/DashboardHome/${m}_branches`,
   };
 
-  /* ---------- SMART LINK RESOLUTION ---------- */
+  /* ---------- SAFE LINK RESOLUTION ---------- */
   const buildLink = (module) => {
-    const supportedModes = moduleModes[module] || ["default"];
-
-    // keep current mode ONLY if module supports it
-    if (supportedModes.includes(viewMode)) {
-      return linkBuilders[viewMode](module);
+    if (!viewMode) {
+      return `/DashboardHome/${module}`;
     }
 
-    // otherwise fallback to base page
-    return linkBuilders.default(module);
+    const candidate = linkMap[viewMode]?.(module);
+
+    // 🔒 If route pattern not applicable, fallback to base module
+    return candidate || `/DashboardHome/${module}`;
   };
 
   return (
@@ -134,7 +115,7 @@ function Layout() {
   );
 }
 
-/* ---------- LABEL FORMAT ---------- */
+/* ---------- LABEL FORMATTER ---------- */
 function formatLabel(name) {
   const specialCases = {
     loadd: "Load",

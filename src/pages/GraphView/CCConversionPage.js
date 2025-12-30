@@ -19,6 +19,7 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  LabelList,
 } from "recharts";
 
 const MONTHS = [
@@ -250,7 +251,13 @@ const CCConversionPage = () => {
                   type="monotone"
                   strokeWidth={3}
                   stroke={`#${Math.floor(Math.random() * 16777215).toString(16)}`}
-                />
+                >
+                  <LabelList
+                   dataKey={s.month}
+                   position="top"
+                   formatter={(v) => `${Number(v).toFixed(0)}%`}
+                  />
+                </Line>
               ))}
             </LineChart>
           </ResponsiveContainer>

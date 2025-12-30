@@ -19,6 +19,7 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  LabelList,
 } from "recharts";
 
 const MONTHS = ["APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR"];
@@ -104,21 +105,31 @@ const CCConversionBarChartPage = () => {
       }
 
       setSummary(allData);
-      setCceKeys([...cceSet].sort());
+      setCceKeys([...cceSet]);
     };
 
     loadData();
   }, [selectedMonths, selectedBranches, selectedCces]);
 
-  /* ---------- CHART DATA ---------- */
-  const chartData = cceKeys.map(cce => {
-    const row = { cce };
-    summary.forEach(({ month, data }) => {
-      const r = data.find(d => normalize(d.cceName) === cce);
-      row[month] = Math.round(Number(r?.percentagePMS ?? 0));
+  /* ---------- CHART DATA (SORTED BY HIGHEST → LOWEST) ---------- */
+  const chartData = useMemo(() => {
+    const rows = cceKeys.map(cce => {
+      let total = 0;
+      const row = { cce };
+
+      summary.forEach(({ month, data }) => {
+        const r = data.find(d => normalize(d.cceName) === cce);
+        const val = Math.round(Number(r?.percentagePMS ?? 0));
+        row[month] = val;
+        total += val;
+      });
+
+      row._total = total; // used only for sorting
+      return row;
     });
-    return row;
-  });
+
+    return rows.sort((a, b) => b._total - a._total);
+  }, [cceKeys, summary]);
 
   /* ---------- SLICER BUTTON STYLE ---------- */
   const selectedGradient =
@@ -224,16 +235,20 @@ const CCConversionBarChartPage = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="cce" angle={-50} textAnchor="end" height={150} />
               <YAxis tickFormatter={(v) => `${v}%`} />
-              <Tooltip formatter={(v) => `${v}%`} 
-               itemSorter={(item) => MONTHS.indexOf(item.dataKey)}  
-              />
+              <Tooltip formatter={(v) => `${v}%`} />
               {summary.map(s => (
                 <Bar
                   key={s.month}
                   dataKey={s.month}
                   barSize={18}
                   fill={`#${Math.floor(Math.random() * 16777215).toString(16)}`}
-                />
+                >
+                  <LabelList
+                   dataKey={s.month}
+                   position="top"
+                   formatter={(v) => `${Number(v).toFixed(0)}%`}
+                  />
+                </Bar>
               ))}
             </BarChart>
           </ResponsiveContainer>

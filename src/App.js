@@ -226,6 +226,7 @@ function App() {
           {/* BranchWise Graph Pages */}
           <Route path="battery_tyre_branches" element={<BatteryTyreBranchWisePage />} />
           <Route path="br_conversion_branches" element={<BRConversionBranchWisePage />} />
+          <Route path="cc_conversion_branches" element={<CCConversionPage />} />
           <Route path="due_done_branches" element={<DueDoneBranchWisePage />} />
           <Route path="hold_up_branches" element={<HoldUpBranchWisePage />} />
           <Route path="labour_branches" element={<LabourBranchWisePage />} />
@@ -275,6 +276,7 @@ function App() {
           {/* 🧭 BranchWise BarChart Pages */}
           <Route path="battery_tyre_branches-bar-chart" element={<BatteryTyreBranchesBarChartPage />} />
           <Route path="br_conversion_branches-bar-chart" element={<BRConversionBranchesBarChartPage />} />
+          <Route path="cc_conversion_branches-bar-chart" element={<CCConversionBarChartPage />} />
           <Route path="due_done_branches-bar-chart" element={<DueDoneBranchesBarChartPage />} />
           <Route path="hold_up_branches-bar-chart" element={<HoldUpBranchesBarChartPage />} />
           <Route path="labour_branches-bar-chart" element={<LabourBranchesBarChartPage />} />
