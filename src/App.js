@@ -10,6 +10,8 @@ import Layout from "./components/Layout"; // ✅ Navbar + Outlet
 // Graph pages
 import BatteryTyrePage from "./pages/GraphView/BatteryTyrePage";
 import BRConversionPage from "./pages/GraphView/BRConversionPage";
+import CCConversionPage from "./pages/GraphView/CCConversionPage";
+import CCConversionTablePage from "./pages/GraphView/CCConversionTablePage";
 import HoldUpPage from "./pages/GraphView/HoldUpPage";
 import HoldUpSummaryPage from "./pages/GraphView/HoldUpSummaryPage";
 import HoldUpDayWiseSummaryPage from "./pages/GraphView/HoldUpDayWiseSummaryPage";
@@ -64,6 +66,7 @@ import VASBranchWisePage from "./pages/BranchWiseGraph/VASBranchWisePage";
 // File upload pages
 import BatteryTyreUploadPage from "./pages/FileUpload/BatteryTyreUploadPage";
 import BRConversionUploadPage from "./pages/FileUpload/BRConversionUploadPage";
+import CCConversionUploadPage from "./pages/FileUpload/CCConversionUploadPage";
 import DueDoneUploadPage from "./pages/FileUpload/DueDoneUploadPage";
 import HoldUpUploadPage from "./pages/FileUpload/HoldUpUploadPage";
 import LabourUploadPage from "./pages/FileUpload/LabourUpload";
@@ -87,6 +90,7 @@ import VASUploadPage from "./pages/FileUpload/VASUploadPage";
 // BarChart Pages
 import BatteryTyreBarChartPage from "./pages/BarChartView/BatteryTyreBarChartPage";
 import BRConversionBarChartPage from "./pages/BarChartView/BRConversionBarChartPage";
+import CCConversionBarChartPage from "./pages/BarChartView/CCConversionBarChartPage";
 import DueDoneBarChartPage from "./pages/BarChartView/DueDoneBarChartPage";
 import HoldUpBarChartPage from "./pages/BarChartView/HoldUpBarChartPage";
 import LabourBarChartPage from "./pages/BarChartView/LabourBarChartPage";
@@ -154,6 +158,7 @@ function App() {
         {/* ✅ Upload Page (accessible from Admin Dashboard) */}
         <Route path="/batterytyre-upload" element={ <AdminProtectedRoute> <BatteryTyreUploadPage /> </AdminProtectedRoute> } />
         <Route path="/brconversion-upload" element={ <AdminProtectedRoute> <BRConversionUploadPage /> </AdminProtectedRoute> } />
+        <Route path="/cc_conversion-upload" element={ <AdminProtectedRoute> <CCConversionUploadPage /> </AdminProtectedRoute> } />
         <Route path="/due_done-upload" element={ <AdminProtectedRoute> <DueDoneUploadPage /> </AdminProtectedRoute>} />
         <Route path="/hold_up-upload" element={ <AdminProtectedRoute> <HoldUpUploadPage /> </AdminProtectedRoute>} />
         <Route path="/labour-upload" element={ <AdminProtectedRoute><LabourUploadPage /></AdminProtectedRoute> } />
@@ -189,6 +194,8 @@ function App() {
           {/* 🧭 CityWise Graph Pages */}
           <Route path="battery_tyre" element={<BatteryTyrePage />} />
           <Route path="br_conversion" element={<BRConversionPage />} />
+          <Route path="cc_conversion" element={<CCConversionPage />} />
+          <Route path="cc_conversion_table" element={<CCConversionTablePage />} />
           <Route path="hold_up" element={<HoldUpPage />} />
           <Route path="hold_up_table" element={<HoldUpSummaryPage />} />
           <Route path="hold_up_day_table" element={<HoldUpDayWiseSummaryPage />} />
@@ -244,6 +251,7 @@ function App() {
           {/* 🧭 CityWise BarChart Pages */}
           <Route path="battery_tyre-bar-chart" element={<BatteryTyreBarChartPage />} />
           <Route path="br_conversion-bar-chart" element={<BRConversionBarChartPage />} />
+          <Route path="cc_conversion-bar-chart" element={<CCConversionBarChartPage />} />
           <Route path="due_done-bar-chart" element={<DueDoneBarChartPage />} />
           <Route path="hold_up-bar-chart" element={<HoldUpBarChartPage />} />
           <Route path="labour-bar-chart" element={<LabourBarChartPage />} />

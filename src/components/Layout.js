@@ -1,16 +1,15 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { Button } from "@mui/material";
 import { useState, useEffect } from "react";
 import "../styles/Navbar.css";
 
 function Layout() {
-  const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname.toLowerCase();
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // 🔥 Reset activity timestamp when user navigates to another page
+  /* ---------- ACTIVITY TRACK ---------- */
   useEffect(() => {
     localStorage.setItem("employeeLastActive", Date.now());
   }, [location.pathname]);
@@ -18,21 +17,21 @@ function Layout() {
   const handleLogout = () => {
     localStorage.removeItem("employeeToken");
     localStorage.removeItem("employeeLastActive");
-
-    // Hard redirect so route protection always runs
     window.location.href = "/EmployeeLogin";
   };
 
+  /* ---------- CURRENT VIEW MODE ---------- */
   const modeMap = {
     "branches-bar-chart": "branches-bar-chart",
-    "branches": "branches",
-    "bar-chart": "bar-chart",
+    "_branches": "branches",
+    "-bar-chart": "bar-chart",
   };
 
   const viewMode =
     Object.entries(modeMap).find(([key]) => currentPath.includes(key))?.[1] ||
     "default";
 
+  /* ---------- MODULE LIST ---------- */
   const modules = [
     "loadd",
     "hold_up",
@@ -56,21 +55,52 @@ function Layout() {
     "referencee",
     "profit_loss",
     "outstanding",
+    "cc_conversion",
   ];
 
-  const linkMap = {
-    "bar-chart": (m) => `/DashboardHome/${m}-bar-chart`,
-    "branches-bar-chart": (m) => `/DashboardHome/${m}_branches-bar-chart`,
-    "branches": (m) => `/DashboardHome/${m}_branches`,
+  /* ---------- MODULE → SUPPORTED MODES ---------- */
+  const moduleModes = {
+    // full support
+    spares: ["default", "bar-chart", "branches", "branches-bar-chart"],
+    labour: ["default", "bar-chart", "branches", "branches-bar-chart"],
+    vas: ["default", "bar-chart", "branches"],
+    msgp: ["default", "bar-chart"],
+    revenue: ["default", "bar-chart"],
+    outstanding: ["default", "bar-chart"],
+
+    // only base page
+    cc_conversion: ["default"],
+    profit_loss: ["default"],
+    tat: ["default"],
+    mcp: ["default"],
+
+    // fallback: if not listed → default only
   };
-  
-  const buildLink = (module) =>
-    (linkMap[viewMode] ? linkMap[viewMode](module) : `/DashboardHome/${module}`);
+
+  /* ---------- LINK BUILDERS ---------- */
+  const linkBuilders = {
+    "bar-chart": (m) => `/DashboardHome/${m}-bar-chart`,
+    branches: (m) => `/DashboardHome/${m}_branches`,
+    "branches-bar-chart": (m) => `/DashboardHome/${m}_branches-bar-chart`,
+    default: (m) => `/DashboardHome/${m}`,
+  };
+
+  /* ---------- SMART LINK RESOLUTION ---------- */
+  const buildLink = (module) => {
+    const supportedModes = moduleModes[module] || ["default"];
+
+    // keep current mode ONLY if module supports it
+    if (supportedModes.includes(viewMode)) {
+      return linkBuilders[viewMode](module);
+    }
+
+    // otherwise fallback to base page
+    return linkBuilders.default(module);
+  };
 
   return (
     <div className="layout-container">
       <nav className="navbar">
-
         <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
           ☰
         </button>
@@ -104,6 +134,7 @@ function Layout() {
   );
 }
 
+/* ---------- LABEL FORMAT ---------- */
 function formatLabel(name) {
   const specialCases = {
     loadd: "Load",
@@ -117,6 +148,7 @@ function formatLabel(name) {
     mga_profit: "MGA PROFIT",
     profit_loss: "Profit & Loss",
     outstanding: "OutStanding",
+    cc_conversion: "CC Conversion",
     vas: "VAS",
     msgp: "MSGP",
     pms_parts: "PMS Parts",

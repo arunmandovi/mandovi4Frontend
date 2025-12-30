@@ -20,4 +20,5 @@ export const uploadNavbarButtons = [
   { label: "Reference", path: "/referencee-upload" },
   { label: "Profit & Loss", path: "/profit_loss-upload" },
   { label: "Outstanding", path: "/outstanding-upload" },
+  { label: "CC Conversion", path: "/cc_conversion-upload" },
 ];

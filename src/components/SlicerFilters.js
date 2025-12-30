@@ -9,13 +9,14 @@ const SlicerFilters = ({
   qtrWiseOptions = [],
   halfYearOptions = [],
   cityOptions = [],
+  branchOptions = [],
 
   months = [],
   setMonths = () => {},
 
   dates = [],
   setDates = () => {},
-  dateSingleSelect = false,   // ✅ NEW PROP
+  dateSingleSelect = false,   
 
   years = [],
   setYears = () => {},
@@ -31,6 +32,9 @@ const SlicerFilters = ({
 
   cities = [],
   setCities = () => {},
+
+  branhces = [],
+  setBranches = () => {},
 }) => {
   const quarterMapping = {
     Qtr1: ["Apr", "May", "Jun"],
@@ -236,6 +240,32 @@ const SlicerFilters = ({
                   }
                 >
                   {c}
+                </Button>
+              );
+            })}
+          </Box>
+        </Box>
+      )}
+
+      {/* ✅ Branches */}
+      {branchOptions.length > 0 && (
+        <Box sx={{ minWidth: 200 }}>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Branch(s)</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+            {branchOptions.map((b) => {
+              const selected = branhces.includes(b);
+              return (
+                <Button
+                  key={b}
+                  sx={commonButtonStyles(selected)}
+                  size="small"
+                  onClick={() =>
+                    selected
+                      ? setBranches(cities.filter((x) => x !== b))
+                      : setBranches([...cities, b])
+                  }
+                >
+                  {b}
                 </Button>
               );
             })}
