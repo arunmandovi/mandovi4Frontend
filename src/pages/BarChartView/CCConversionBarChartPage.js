@@ -235,7 +235,9 @@ const CCConversionBarChartPage = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="cce" angle={-50} textAnchor="end" height={150} />
               <YAxis tickFormatter={(v) => `${v}%`} />
-              <Tooltip formatter={(v) => `${v}%`} />
+              <Tooltip formatter={(v) => `${v}%`}
+               itemSorter={(item) => MONTHS.indexOf(item.dataKey)}
+              />
               {summary.map(s => (
                 <Bar
                   key={s.month}
