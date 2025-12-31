@@ -33,6 +33,11 @@ const BRANCHES = [
   "NEXA","NARAVI"
 ];
 
+const MONTH_COLORS = {
+  APR: "#1f77b4", MAY: "#ff7f0e", JUN: "#2ca02c", JUL: "#d62728", AUG: "#9467bd", SEP: "#8c564b",
+  OCT: "#e377c2", NOV: "#7f7f7f", DEC: "#bcbd22", JAN: "#17becf", FEB: "#4e79a7", MAR: "#f28e2b",
+};
+
 const CCConversionPage = () => {
   const navigate = useNavigate();
 
@@ -250,7 +255,7 @@ const CCConversionPage = () => {
                   dataKey={s.month}
                   type="monotone"
                   strokeWidth={3}
-                  stroke={`#${Math.floor(Math.random() * 16777215).toString(16)}`}
+                  stroke={MONTH_COLORS[s.month]}
                 >
                   <LabelList
                    dataKey={s.month}

@@ -93,8 +93,10 @@ const CCConversionTablePage = () => {
     [rawRows]
   );
 
+  /* ---------- TABLE ROWS WITH TOTAL ---------- */
   const tableRows = useMemo(() => {
     const map = {};
+
     rawRows.forEach(r => {
       const k = `${r.branch}|${r.cceName}`;
       if (!map[k]) {
@@ -103,31 +105,34 @@ const CCConversionTablePage = () => {
           cceName: r.cceName,
           experienceDays: r.experienceDays,
           months: {},
+          totalAppt: 0,
+          totalConv: 0,
         };
       }
+
       map[k].months[r.month] = r;
+      map[k].totalAppt += r.pmsAppointment || 0;
+      map[k].totalConv += r.pmsConversion || 0;
     });
-    return Object.values(map);
+
+    return Object.values(map)
+      .map(r => ({
+        ...r,
+        totalPct:
+          r.totalAppt > 0 ? (r.totalConv / r.totalAppt) * 100 : 0,
+      }))
+      .sort((a, b) => b.totalPct - a.totalPct);
   }, [rawRows]);
 
-  /* ---------- SLICER BUTTON STYLE ---------- */
-  const selectedGradient =
-    "linear-gradient(90deg, rgba(144,238,144,1) 0%, rgba(102,205,170,1) 100%)";
-
-  const slicerButtonStyle = (selected) => ({
-    borderRadius: "20px",
-    px: 2,
-    py: 0.5,
-    textTransform: "none",
+  /* ---------- BUTTON STYLE ---------- */
+  const slicerStyle = (selected) => ({
+    borderRadius: 20,
     fontWeight: 600,
-    transition: "all 0.25s ease",
-    background: selected ? selectedGradient : "#fff",
-    border: selected ? "1.5px solid #388e3c" : "1px solid #bdbdbd",
-    boxShadow: selected ? "0 3px 10px rgba(0,0,0,0.15)" : "none",
-    "&:hover": {
-      transform: "scale(1.05)",
-      background: selected ? selectedGradient : "rgba(0,0,0,0.04)",
-    },
+    textTransform: "none",
+    px: 2,
+    background: selected ? "#c8e6c9" : "#fff",
+    border: "1px solid #9ccc65",
+    "&:hover": { background: "#aed581" },
   });
 
   return (
@@ -136,43 +141,35 @@ const CCConversionTablePage = () => {
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">CC CONVERSION – TABLE</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/cc_conversion")}>Line Chart</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/cc_conversion-bar-chart")}>Bar Chart</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/cc_conversion")}>Line</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/cc_conversion-bar-chart")}>Bar</Button>
           <Button variant="contained">Table</Button>
         </Box>
       </Box>
 
-      {/* MONTH SLICER */}
-      <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
+      {/* MONTH FILTER */}
+      <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
         {MONTHS.map(m => (
-          <Button
-            key={m}
-            size="small"
-            sx={slicerButtonStyle(selectedMonths.includes(m))}
+          <Button key={m} size="small" sx={slicerStyle(selectedMonths.includes(m))}
             onClick={() =>
               setSelectedMonths(p =>
                 p.includes(m) ? p.filter(x => x !== m) : [...p, m]
               )
-            }
-          >
+            }>
             {m}
           </Button>
         ))}
       </Box>
 
-      {/* BRANCH SLICER */}
-      <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
+      {/* BRANCH FILTER */}
+      <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
         {BRANCHES.map(b => (
-          <Button
-            key={b}
-            size="small"
-            sx={slicerButtonStyle(selectedBranches.includes(b))}
+          <Button key={b} size="small" sx={slicerStyle(selectedBranches.includes(b))}
             onClick={() =>
               setSelectedBranches(p =>
                 p.includes(b) ? p.filter(x => x !== b) : [...p, b]
               )
-            }
-          >
+            }>
             {b}
           </Button>
         ))}
@@ -198,41 +195,33 @@ const CCConversionTablePage = () => {
       </Box>
 
       {/* TABLE */}
-      <TableContainer
-        component={Paper}
-        sx={{
-          p: 2,
-          borderRadius: "16px",
-          background: "rgba(255,255,255,0.75)",
-          backdropFilter: "blur(10px)",
-          boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
-        }}
-      >
-        <Table
-          size="small"
-          sx={{
-            border: "5px solid #b9c9df",
-            borderRadius: "14px",
-            overflow: "hidden",
-          }}
-        >
+      <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 4 }}>
+        <Table size="small">
           <TableHead>
-            <TableRow sx={{ background: "linear-gradient(135deg,#d1e2ff,#f0f6ff)" }}>
-              <TableCell rowSpan={2} sx={headerCell}>Branch</TableCell>
-              <TableCell rowSpan={2} sx={headerCell}>CCE</TableCell>
-              <TableCell rowSpan={2} sx={headerCell} align="right">Exp</TableCell>
+            <TableRow sx={{ background: "#e3f2fd" }}>
+              <TableCell rowSpan={2}>Branch</TableCell>
+              <TableCell rowSpan={2}>CCE</TableCell>
+              <TableCell rowSpan={2}><b>Exp</b></TableCell>
+
               {existingMonths.map(m => (
-                <TableCell key={m} colSpan={3} align="center" sx={headerCell}>{m}</TableCell>
+                <TableCell key={m} colSpan={3} align="center">{m}</TableCell>
               ))}
+              <TableCell colSpan={3} align="center" sx={{ background: "rgba(91, 136, 233, 1)", fontWeight: 800 }}>
+                TOTAL
+              </TableCell>
             </TableRow>
-            <TableRow sx={{ background: "#eaf2ff" }}>
+
+            <TableRow sx={{ background: "#f1f8ff" }}>
               {existingMonths.map(m => (
                 <React.Fragment key={m}>
-                  <TableCell sx={subHeader}>Appt</TableCell>
-                  <TableCell sx={subHeader}>Conv</TableCell>
-                  <TableCell sx={subHeader}>%</TableCell>
+                  <TableCell>Appt</TableCell>
+                  <TableCell>Conv</TableCell>
+                  <TableCell>%</TableCell>
                 </React.Fragment>
               ))}
+              <TableCell sx={{ background: "#fff3c0" }}>Appt</TableCell>
+              <TableCell sx={{ background: "#fff3c0" }}>Conv</TableCell>
+              <TableCell sx={{ background: "#fff3c0" }}>%</TableCell>
             </TableRow>
           </TableHead>
 
@@ -241,32 +230,49 @@ const CCConversionTablePage = () => {
               <TableRow
                 key={i}
                 sx={{
-                  backgroundColor: i % 2 ? "#eef4ff" : "#f7faff",
-                  "&:hover": {
-                    backgroundColor: "#dcedff",
-                    transform: "scale(1.003)",
-                    transition: "0.12s",
+                  background: i % 2 ? "#fafafa" : "#fff",
+                  "& td": {
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
                   },
                 }}
               >
-                <TableCell sx={cell}>{r.branch}</TableCell>
-                <TableCell sx={cell}>{r.cceName}</TableCell>
-                <TableCell sx={cell} align="right">
-                  {r.experienceDays?.toFixed(1) ?? "-"}
+                <TableCell sx={{ fontWeight: 800 }}>
+                  {r.branch}
                 </TableCell>
-
+              
+                <TableCell sx={{ fontWeight: 5500 }}>
+                  {r.cceName}
+                </TableCell>
+              
+                <TableCell sx={{ fontWeight: 800 }}>
+                  {r.experienceDays != null ? r.experienceDays.toFixed(1) : "-"}
+                </TableCell>
+              
                 {existingMonths.map(m => {
                   const d = r.months[m];
                   return (
                     <React.Fragment key={m}>
-                      <TableCell sx={cell}>{d?.pmsAppointment ?? "-"}</TableCell>
-                      <TableCell sx={cell}>{d?.pmsConversion ?? "-"}</TableCell>
-                      <TableCell sx={cell}>
-                        {d?.percentagePMS ? `${d.percentagePMS.toFixed(0)}%` : "-"}
+                      <TableCell>{d?.pmsAppointment ?? "-"}</TableCell>
+                      <TableCell>{d?.pmsConversion ?? "-"}</TableCell>
+                      <TableCell>
+                        {d ? `${d.percentagePMS.toFixed(0)}%` : "-"}
                       </TableCell>
                     </React.Fragment>
                   );
                 })}
+              
+                <TableCell sx={{ background: "#fffde7", fontWeight: 800 }}>
+                  {r.totalAppt}
+                </TableCell>
+              
+                <TableCell sx={{ background: "#fffde7", fontWeight: 800 }}>
+                  {r.totalConv}
+                </TableCell>
+              
+                <TableCell sx={{ background: "#fff9c4", fontWeight: 900 }}>
+                  {r.totalPct.toFixed(0)}%
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -274,27 +280,6 @@ const CCConversionTablePage = () => {
       </TableContainer>
     </Box>
   );
-};
-
-const headerCell = {
-  fontWeight: 900,
-  fontSize: 16,
-  textTransform: "uppercase",
-  borderBottom: "3px solid #99b3d8",
-};
-
-const subHeader = {
-  fontWeight: 800,
-  textAlign: "center",
-  borderBottom: "2px solid #c7d4e6",
-};
-
-const cell = {
-  fontSize: 16,
-  fontWeight: "bold",
-  borderRight: "1px solid #c7d4e6",
-  borderBottom: "1px solid #c7d4e6",
-  textAlign: "center",
 };
 
 export default CCConversionTablePage;

@@ -28,6 +28,11 @@ const BRANCHES = [
   "YEYYADI","BANTWAL","KADABA","VITTLA","SUJITH BAGH","NEXA","NARAVI"
 ];
 
+const MONTH_COLORS = {
+  APR: "#1f77b4", MAY: "#ff7f0e", JUN: "#2ca02c", JUL: "#d62728", AUG: "#9467bd", SEP: "#8c564b",
+  OCT: "#e377c2", NOV: "#7f7f7f", DEC: "#bcbd22", JAN: "#17becf", FEB: "#4e79a7", MAR: "#f28e2b",
+};
+
 const CCConversionBarChartPage = () => {
   const navigate = useNavigate();
 
@@ -243,7 +248,7 @@ const CCConversionBarChartPage = () => {
                   key={s.month}
                   dataKey={s.month}
                   barSize={18}
-                  fill={`#${Math.floor(Math.random() * 16777215).toString(16)}`}
+                  fill={MONTH_COLORS[s.month]}
                 >
                   <LabelList
                    dataKey={s.month}
