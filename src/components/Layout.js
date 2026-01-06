@@ -58,6 +58,7 @@ function Layout() {
     "profit_loss",
     "outstanding",
     "cc_conversion",
+    "sales_table",
   ];
 
   /* ---------- LINK BUILDERS ---------- */

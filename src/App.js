@@ -34,6 +34,7 @@ import ProfitLossPerVehicleGraphPage from "./pages/GraphView/ProfitLossPerVehicl
 import ReferenceePage from "./pages/GraphView/ReferenceePage";
 import ReferenceeTablePage from "./pages/GraphView/ReferenceeTablePage";
 import RevenuePage from "./pages/GraphView/RevenuePage";
+import SalesTablePage from "./pages/GraphView/SalesTablePage";
 import SparesPage from "./pages/GraphView/SparesPage";
 import TATPage from "./pages/GraphView/TATPage";
 import VASPage from "./pages/GraphView/VASPage";
@@ -219,6 +220,7 @@ function App() {
           <Route path="referencee" element={<ReferenceePage />} />
           <Route path="referencee_table" element={<ReferenceeTablePage />} />
           <Route path="revenue" element={<RevenuePage />} />
+          <Route path="sales_table" element={<SalesTablePage />} />
           <Route path="spares" element={<SparesPage />} />
           <Route path="tat" element={<TATPage />} />
           <Route path="vas" element={<VASPage />} />

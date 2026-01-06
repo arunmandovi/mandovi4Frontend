@@ -19,7 +19,16 @@ function HoldUpPage() {
     "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"
   ];
 
-  const [months, setMonths] = useState("Dec");
+  const getCurrentFYMonth = () => {
+  const monthMapReverse = {
+      0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun", 6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
+    };
+    const today = new Date();
+    const jsMonth = today.getMonth();
+    return monthMapReverse[jsMonth] || "Apr";
+  };
+
+  const [months, setMonths] = useState(getCurrentFYMonth());
 
   const allDayOptions = Array.from({ length: 31 }, (_, i) =>
     String(i + 1).padStart(2, "0")
