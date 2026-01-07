@@ -58,7 +58,7 @@ function Layout() {
     "profit_loss",
     "cc_conversion",
     "sa_conversion",
-    "sales_table",
+    "sales",
   ];
 
   /* ---------- LINK BUILDERS ---------- */
@@ -138,7 +138,7 @@ function formatLabel(name) {
     mga: "MGA",
     tat: "TAT",
     mcp: "MCP",
-    sales_table: "Sales"
+    sales: "Sales"
   };
 
   if (specialCases[name]) return specialCases[name];

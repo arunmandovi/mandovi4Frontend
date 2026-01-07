@@ -11,18 +11,23 @@ import {
   TableRow,
   Paper,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { fetchData } from "../../api/uploadService";
 
 /* ---------------- CONSTANTS ---------------- */
 const MONTHS = ["APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR"];
-const YEARS = Array.from({ length: 20 }, (_, i) => String(2005 + i)); // 2005–2024
+const YEARS = Array.from({ length: 20 }, (_, i) => String(2005 + i));
 const CHANNELS = ["ARENA","NEXA"];
+const BRANCHES = ["Balmatta","Uppinangady","Surathkal","Sullia","Bantwal","Nexa","Kadaba","Vittla"];
 
 /* ---------------- COMPONENT ---------------- */
 const SalesTablePage = () => {
+  const navigate = useNavigate();
+
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [selectedYears, setSelectedYears] = useState([]);
   const [selectedChannels, setSelectedChannels] = useState([]);
+  const [selectedBranches, setSelectedBranches] = useState([]);
   const [rawRows, setRawRows] = useState([]);
 
   /* ---------------- FETCH DATA ---------------- */
@@ -42,7 +47,10 @@ const SalesTablePage = () => {
         const res = await fetchData(`/api/sales/sales_branch_summary${query}`);
 
         if (Array.isArray(res)) {
-          all.push(...res.map(r => ({ ...r, month: m })));
+          const filtered = res.filter(
+            r => !selectedBranches.length || selectedBranches.includes(r.branch)
+          );
+          all.push(...filtered.map(r => ({ ...r, month: m })));
         }
       }
 
@@ -50,11 +58,11 @@ const SalesTablePage = () => {
     };
 
     load();
-  }, [selectedMonths, selectedYears, selectedChannels]);
+  }, [selectedMonths, selectedYears, selectedChannels, selectedBranches]);
 
   /* ---------------- MONTHS TO SHOW ---------------- */
   const existingMonths = useMemo(
-    () => (selectedMonths.length === 0 ? MONTHS : selectedMonths),
+    () => (selectedMonths.length ? selectedMonths : MONTHS),
     [selectedMonths]
   );
 
@@ -76,7 +84,6 @@ const SalesTablePage = () => {
       }
 
       const value = r.count || 0;
-
       map[key].months[r.month] = (map[key].months[r.month] || 0) + value;
       map[key].total += value;
 
@@ -107,9 +114,18 @@ const SalesTablePage = () => {
   /* ---------------- RENDER ---------------- */
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        SALES – BRANCH SUMMARY
-      </Typography>
+      {/* HEADER + NAVIGATION */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+        <Typography variant="h4">
+          SALES – BRANCH SUMMARY
+        </Typography>
+
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales")}>Line Chart</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales-bar-chart")}>Bar Chart</Button>
+          <Button variant="contained">Table</Button>
+        </Box>
+      </Box>
 
       {/* YEAR FILTER */}
       <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -147,6 +163,24 @@ const SalesTablePage = () => {
         ))}
       </Box>
 
+      {/* BRANCH FILTER */}
+      <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
+        {BRANCHES.map(b => (
+          <Button
+            key={b}
+            size="small"
+            sx={slicerStyle(selectedBranches.includes(b))}
+            onClick={() =>
+              setSelectedBranches(p =>
+                p.includes(b) ? p.filter(x => x !== b) : [...p, b]
+              )
+            }
+          >
+            {b}
+          </Button>
+        ))}
+      </Box>
+
       {/* MONTH FILTER */}
       <Box sx={{ mb: 3, display: "flex", gap: 1, flexWrap: "wrap" }}>
         {MONTHS.map(m => (
@@ -175,19 +209,12 @@ const SalesTablePage = () => {
               </TableCell>
 
               {existingMonths.map(m => (
-                <TableCell
-                  key={m}
-                  align="center"
-                  sx={{ color: "#fff", fontWeight: 800 }}
-                >
+                <TableCell key={m} align="center" sx={{ color: "#fff", fontWeight: 800 }}>
                   {m}
                 </TableCell>
               ))}
 
-              <TableCell
-                align="center"
-                sx={{ color: "#fff", fontWeight: 900 }}
-              >
+              <TableCell align="center" sx={{ color: "#fff", fontWeight: 900 }}>
                 TOTAL
               </TableCell>
             </TableRow>
@@ -212,7 +239,7 @@ const SalesTablePage = () => {
               </TableRow>
             ))}
 
-            {/* GRAND TOTAL ROW */}
+            {/* GRAND TOTAL */}
             <TableRow sx={{ background: "#e3f2fd" }}>
               <TableCell sx={{ fontWeight: 900 }}>
                 GRAND TOTAL
@@ -228,7 +255,6 @@ const SalesTablePage = () => {
                 {grandTotals.total}
               </TableCell>
             </TableRow>
-
           </TableBody>
         </Table>
       </TableContainer>

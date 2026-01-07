@@ -34,6 +34,7 @@ import ProfitLossPerVehicleGraphPage from "./pages/GraphView/ProfitLossPerVehicl
 import ReferenceePage from "./pages/GraphView/ReferenceePage";
 import ReferenceeTablePage from "./pages/GraphView/ReferenceeTablePage";
 import RevenuePage from "./pages/GraphView/RevenuePage";
+import SalesPage from "./pages/GraphView/SalesPage.js";
 import SalesTablePage from "./pages/GraphView/SalesTablePage";
 import SAConversionPage from "./pages/GraphView/SAConversionPage";
 import SAConversionTablePage from "./pages/GraphView/SAConversionTablePage.js";
@@ -111,6 +112,7 @@ import ProductivityBarChartPage from "./pages/BarChartView/ProductivityBarChartP
 import ProfitLossBarChartPage from "./pages/BarChartView/ProfitLossBarChartPage";
 import ReferenceeBarChartPage from "./pages/BarChartView/ReferenceeBarChartPage";
 import RevenueBarChartPage from "./pages/BarChartView/RevenueBarChartPage";
+import SalesBarChartPage from "./pages/BarChartView/SalesBarChartPage.js";
 import SparesBarChartPage from "./pages/BarChartView/SparesBarChartPage";
 import SAConversionBarChartPage from "./pages/BarChartView/SAConversionBarChartPage";
 import TATBarChartPage from "./pages/BarChartView/TATBarChartPage";
@@ -227,6 +229,7 @@ function App() {
           <Route path="referencee" element={<ReferenceePage />} />
           <Route path="referencee_table" element={<ReferenceeTablePage />} />
           <Route path="revenue" element={<RevenuePage />} />
+          <Route path="sales" element={<SalesPage />} />
           <Route path="sales_table" element={<SalesTablePage />} />
           <Route path="spares" element={<SparesPage />} />
           <Route path="tat" element={<TATPage />} />
@@ -279,6 +282,7 @@ function App() {
           <Route path="profit_loss-bar-chart" element={<ProfitLossBarChartPage />} />
           <Route path="referencee-bar-chart" element={<ReferenceeBarChartPage />} />
           <Route path="revenue-bar-chart" element={<RevenueBarChartPage />} />
+          <Route path="sales-bar-chart" element={<SalesBarChartPage />} />
           <Route path="spares-bar-chart" element={<SparesBarChartPage />} />
           <Route path="tat-bar-chart" element={<TATBarChartPage />} />
           <Route path="vas-bar-chart" element={<VASBarChartPage />} />
