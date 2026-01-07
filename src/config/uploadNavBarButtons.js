@@ -21,4 +21,5 @@ export const uploadNavbarButtons = [
   { label: "Profit & Loss", path: "/profit_loss-upload" },
   { label: "Outstanding", path: "/outstanding-upload" },
   { label: "CC Conversion", path: "/cc_conversion-upload" },
+  { label: "SA Conversion", path: "/sa_conversion-upload" },
 ];

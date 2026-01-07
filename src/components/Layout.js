@@ -56,8 +56,8 @@ function Layout() {
     "mcp",
     "referencee",
     "profit_loss",
-    "outstanding",
     "cc_conversion",
+    "sa_conversion",
     "sales_table",
   ];
 
@@ -131,12 +131,14 @@ function formatLabel(name) {
     profit_loss: "Profit & Loss",
     outstanding: "OutStanding",
     cc_conversion: "CC Conversion",
+    sa_conversion: "SA Conversion",
     vas: "VAS",
     msgp: "MSGP",
     pms_parts: "PMS Parts",
     mga: "MGA",
     tat: "TAT",
     mcp: "MCP",
+    sales_table: "Sales"
   };
 
   if (specialCases[name]) return specialCases[name];

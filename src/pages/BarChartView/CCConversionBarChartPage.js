@@ -40,9 +40,11 @@ const MONTH_COLORS = {
   AUG: "#9467bd", SEP: "#8c564b", OCT: "#e377c2", NOV: "#7f7f7f",
   DEC: "#bcbd22", JAN: "#17becf", FEB: "#4e79a7", MAR: "#f28e2b",
   ALL: "#2e7d32",
+  APPT: "#1976d2",
+  CONV: "#d32f2f",
 };
 
-const GROWTH_OPTIONS = ["PMS %", "Appointment", "Conversion"];
+const GROWTH_OPTIONS = ["PMS %", "Appointment", "Conversion", "A&C"];
 
 const growthKeyMap = {
   "PMS %": "percentagePMS",
@@ -67,6 +69,7 @@ const CCConversionBarChartPage = () => {
 
   const normalize = v => v?.trim().toUpperCase() || "";
   const isPercentage = selectedGrowth === "PMS %";
+  const isAC = selectedGrowth === "A&C";
   const growthKey = growthKeyMap[selectedGrowth];
 
   /* ---------- MASTER DATA ---------- */
@@ -136,7 +139,7 @@ const CCConversionBarChartPage = () => {
     loadData();
   }, [selectedMonths, allSelected, selectedBranches, selectedCces]);
 
-  /* ---------- PMS ALL LOGIC ---------- */
+  /* ---------- CHART DATA ---------- */
   const chartData = useMemo(() => {
     const rows = cceKeys.map(cce => {
       const row = { cce };
@@ -153,7 +156,12 @@ const CCConversionBarChartPage = () => {
         const appt = Number(r?.pmsAppointment ?? 0);
         const val = Number(r?.[growthKey] ?? 0);
 
-        row[month] = val;
+        if (isAC) {
+          row[`${month}_APPT`] = appt;
+          row[`${month}_CONV`] = conv;
+        } else {
+          row[month] = val;
+        }
 
         totalConv += conv;
         totalAppt += appt;
@@ -163,7 +171,13 @@ const CCConversionBarChartPage = () => {
 
       let rankValue = 0;
 
-      if (isPercentage && (allSelected || !selectedMonths.length)) {
+      if (isAC) {
+        if (allSelected || !selectedMonths.length) {
+          row.ALL_APPT = totalAppt;
+          row.ALL_CONV = totalConv;
+        }
+        rankValue = totalConv;
+      } else if (isPercentage && (allSelected || !selectedMonths.length)) {
         rankValue = totalAppt ? (totalConv / totalAppt) * 100 : 0;
         row.ALL = rankValue;
       } else {
@@ -181,7 +195,7 @@ const CCConversionBarChartPage = () => {
     });
 
     return rows.sort((a, b) => b.__rankValue - a.__rankValue);
-  }, [cceKeys, summary, allSelected, selectedMonths, growthKey, isPercentage]);
+  }, [cceKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC]);
 
   /* ---------- BUTTON STYLE ---------- */
   const selectedGradient =
@@ -204,7 +218,6 @@ const CCConversionBarChartPage = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-
       {/* HEADER */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">
@@ -284,7 +297,7 @@ const CCConversionBarChartPage = () => {
         ))}
       </Box>
 
-      {/* CCE DROPDOWN (SELECT ALL ADDED) */}
+      {/* CCE DROPDOWN */}
       <Box sx={{ mb: 3, width: 320 }}>
         <Select
           multiple
@@ -330,14 +343,23 @@ const CCConversionBarChartPage = () => {
             <YAxis tickFormatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
             <Tooltip formatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
 
-            {(allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).map(key => (
-              <Bar key={key} dataKey={key} barSize={18} fill={MONTH_COLORS[key]}>
-                <LabelList
-                  position="top"
-                  formatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)}
-                />
-              </Bar>
-            ))}
+            {isAC
+              ? (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).flatMap(k => ([
+                  <Bar key={`${k}-APPT`} dataKey={`${k}_APPT`} barSize={14} fill={MONTH_COLORS.APPT}>
+                    <LabelList position="top" />
+                  </Bar>,
+                  <Bar key={`${k}-CONV`} dataKey={`${k}_CONV`} barSize={14} fill={MONTH_COLORS.CONV}>
+                    <LabelList position="top" />
+                  </Bar>
+                ]))
+              : (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).map(key => (
+                  <Bar key={key} dataKey={key} barSize={18} fill={MONTH_COLORS[key]}>
+                    <LabelList
+                      position="top"
+                      formatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)}
+                    />
+                  </Bar>
+                ))}
           </BarChart>
         </ResponsiveContainer>
       </Box>

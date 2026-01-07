@@ -35,6 +35,8 @@ import ReferenceePage from "./pages/GraphView/ReferenceePage";
 import ReferenceeTablePage from "./pages/GraphView/ReferenceeTablePage";
 import RevenuePage from "./pages/GraphView/RevenuePage";
 import SalesTablePage from "./pages/GraphView/SalesTablePage";
+import SAConversionPage from "./pages/GraphView/SAConversionPage";
+import SAConversionTablePage from "./pages/GraphView/SAConversionTablePage.js";
 import SparesPage from "./pages/GraphView/SparesPage";
 import TATPage from "./pages/GraphView/TATPage";
 import VASPage from "./pages/GraphView/VASPage";
@@ -84,6 +86,7 @@ import ProductivityUploadPage from "./pages/FileUpload/ProductivityUploadPage";
 import ProfitLossUploadPage from "./pages/FileUpload/ProfitLossUploadPage";
 import ReferenceeUploadPage from "./pages/FileUpload/ReferenceeUploadPage";
 import RevenueUploadPage from "./pages/FileUpload/RevenueUploadPage";
+import SAConversionUploadPage from "./pages/FileUpload/SAConversionUploadPage";
 import SparesUploadPage from "./pages/FileUpload/SparesUploadPage";
 import TATUploadPage from "./pages/FileUpload/TATUploadPage";
 import VASUploadPage from "./pages/FileUpload/VASUploadPage";
@@ -109,6 +112,7 @@ import ProfitLossBarChartPage from "./pages/BarChartView/ProfitLossBarChartPage"
 import ReferenceeBarChartPage from "./pages/BarChartView/ReferenceeBarChartPage";
 import RevenueBarChartPage from "./pages/BarChartView/RevenueBarChartPage";
 import SparesBarChartPage from "./pages/BarChartView/SparesBarChartPage";
+import SAConversionBarChartPage from "./pages/BarChartView/SAConversionBarChartPage";
 import TATBarChartPage from "./pages/BarChartView/TATBarChartPage";
 import VASBarChartPage from "./pages/BarChartView/VASBarChartPage";
 
@@ -160,6 +164,7 @@ function App() {
         <Route path="/batterytyre-upload" element={ <AdminProtectedRoute> <BatteryTyreUploadPage /> </AdminProtectedRoute> } />
         <Route path="/brconversion-upload" element={ <AdminProtectedRoute> <BRConversionUploadPage /> </AdminProtectedRoute> } />
         <Route path="/cc_conversion-upload" element={ <AdminProtectedRoute> <CCConversionUploadPage /> </AdminProtectedRoute> } />
+        <Route path="/sa_conversion-upload" element={ <AdminProtectedRoute> <SAConversionUploadPage /> </AdminProtectedRoute> } />
         <Route path="/due_done-upload" element={ <AdminProtectedRoute> <DueDoneUploadPage /> </AdminProtectedRoute>} />
         <Route path="/hold_up-upload" element={ <AdminProtectedRoute> <HoldUpUploadPage /> </AdminProtectedRoute>} />
         <Route path="/labour-upload" element={ <AdminProtectedRoute><LabourUploadPage /></AdminProtectedRoute> } />
@@ -196,7 +201,9 @@ function App() {
           <Route path="battery_tyre" element={<BatteryTyrePage />} />
           <Route path="br_conversion" element={<BRConversionPage />} />
           <Route path="cc_conversion" element={<CCConversionPage />} />
+          <Route path="sa_conversion" element={<SAConversionPage />} />
           <Route path="cc_conversion_table" element={<CCConversionTablePage />} />
+          <Route path="sa_conversion_table" element={<SAConversionTablePage />} />
           <Route path="hold_up" element={<HoldUpPage />} />
           <Route path="hold_up_table" element={<HoldUpSummaryPage />} />
           <Route path="hold_up_day_table" element={<HoldUpDayWiseSummaryPage />} />
@@ -255,6 +262,7 @@ function App() {
           <Route path="battery_tyre-bar-chart" element={<BatteryTyreBarChartPage />} />
           <Route path="br_conversion-bar-chart" element={<BRConversionBarChartPage />} />
           <Route path="cc_conversion-bar-chart" element={<CCConversionBarChartPage />} />
+          <Route path="sa_conversion-bar-chart" element={<SAConversionBarChartPage />} />
           <Route path="due_done-bar-chart" element={<DueDoneBarChartPage />} />
           <Route path="hold_up-bar-chart" element={<HoldUpBarChartPage />} />
           <Route path="labour-bar-chart" element={<LabourBarChartPage />} />
