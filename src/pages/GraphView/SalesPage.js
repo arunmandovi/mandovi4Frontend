@@ -16,7 +16,13 @@ import { fetchData } from "../../api/uploadService";
 
 /* ---------------- CONSTANTS ---------------- */
 const MONTHS = ["APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR"];
-const YEARS = Array.from({ length: 20 }, (_, i) => String(2005 + i));
+const START_YEAR = 2005;
+const CURRENT_YEAR = new Date().getFullYear();
+
+const YEARS = Array.from(
+  { length: CURRENT_YEAR - START_YEAR + 1 },
+  (_, i) => String(START_YEAR + i)
+);
 const CHANNELS = ["ARENA","NEXA"];
 const BRANCHES = ["Balmatta","Uppinangady","Surathkal","Sullia","Bantwal","Nexa","Kadaba","Vittla"];
 
@@ -96,15 +102,18 @@ const SalesPage = () => {
 
   const chart2Data = useMemo(() => {
     const map = {};
+  
     chart2Raw.forEach(r => {
       map[r.month] = (map[r.month] || 0) + (r.count || 0);
     });
-
-    return MONTHS.map(m => ({
+  
+    const monthsToShow = selectedMonths.length ? selectedMonths : MONTHS;
+  
+    return monthsToShow.map(m => ({
       month: m,
       value: map[m] || 0,
     }));
-  }, [chart2Raw]);
+  }, [chart2Raw, selectedMonths]);
 
   /* ---------------- UI STYLE ---------------- */
   const slicerStyle = selected => ({

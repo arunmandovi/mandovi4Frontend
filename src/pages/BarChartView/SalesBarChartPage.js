@@ -16,7 +16,13 @@ import { fetchData } from "../../api/uploadService";
 
 /* ---------------- CONSTANTS ---------------- */
 const MONTHS = ["APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR"];
-const YEARS = Array.from({ length: 20 }, (_, i) => String(2005 + i));
+const START_YEAR = 2005;
+const CURRENT_YEAR = new Date().getFullYear();
+
+const YEARS = Array.from(
+  { length: CURRENT_YEAR - START_YEAR + 1 },
+  (_, i) => String(START_YEAR + i)
+);
 const CHANNELS = ["ARENA","NEXA"];
 const BRANCHES = ["Balmatta","Uppinangady","Surathkal","Sullia","Bantwal","Nexa","Kadaba","Vittla"];
 
