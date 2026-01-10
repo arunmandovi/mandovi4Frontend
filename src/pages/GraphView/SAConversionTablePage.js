@@ -36,6 +36,14 @@ const SAConversionTablePage = () => {
   const [rawRows, setRawRows] = useState([]);
   const [branchSAMap, setBranchSAMap] = useState({});
 
+  /* ✅ METRIC TOGGLE STATE */
+  const [metrics, setMetrics] = useState({ A: false, C: false, P: false });
+
+  const showAll = !metrics.A && !metrics.C && !metrics.P;
+  const showA = showAll || metrics.A;
+  const showC = showAll || metrics.C;
+  const showP = showAll || metrics.P;
+
   const normalize = (v) => v?.trim().toUpperCase() || "";
 
   /* ---------- MASTER DATA ---------- */
@@ -114,7 +122,6 @@ const SAConversionTablePage = () => {
           totalConv: 0,
         };
       }
-
       map[k].months[r.month] = r;
       map[k].totalApt += r.pmsAppointment || 0;
       map[k].totalConv += r.pmsConversion || 0;
@@ -125,10 +132,7 @@ const SAConversionTablePage = () => {
         ...r,
         totalPct: r.totalApt > 0 ? (r.totalConv / r.totalApt) * 100 : 0,
       }))
-      .sort((a, b) => {
-        if (b.totalConv !== a.totalConv) return b.totalConv - a.totalConv;
-        return b.totalPct - a.totalPct;
-      });
+      .sort((a, b) => b.totalConv - a.totalConv || b.totalPct - a.totalPct);
   }, [rawRows]);
 
   const slicerStyle = (selected) => ({
@@ -156,16 +160,8 @@ const SAConversionTablePage = () => {
       {/* MONTH FILTER */}
       <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
         {MONTHS.map(m => (
-          <Button
-            key={m}
-            size="small"
-            sx={slicerStyle(selectedMonths.includes(m))}
-            onClick={() =>
-              setSelectedMonths(p =>
-                p.includes(m) ? p.filter(x => x !== m) : [...p, m]
-              )
-            }
-          >
+          <Button key={m} size="small" sx={slicerStyle(selectedMonths.includes(m))}
+            onClick={() => setSelectedMonths(p => p.includes(m) ? p.filter(x => x !== m) : [...p, m])}>
             {m}
           </Button>
         ))}
@@ -174,22 +170,28 @@ const SAConversionTablePage = () => {
       {/* BRANCH FILTER */}
       <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
         {BRANCHES.map(b => (
-          <Button
-            key={b}
-            size="small"
-            sx={slicerStyle(selectedBranches.includes(b))}
-            onClick={() =>
-              setSelectedBranches(p =>
-                p.includes(b) ? p.filter(x => x !== b) : [...p, b]
-              )
-            }
-          >
+          <Button key={b} size="small" sx={slicerStyle(selectedBranches.includes(b))}
+            onClick={() => setSelectedBranches(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b])}>
             {b}
           </Button>
         ))}
       </Box>
 
-      {/* ✅ SA DROPDOWN WITH SELECT ALL */}
+      {/* METRIC FILTER (ADDED – SAME AS CC) */}
+      <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
+        {[
+          { k: "A", l: "Appointment" },
+          { k: "C", l: "Conversion" },
+          { k: "P", l: "PMS %" },
+        ].map(m => (
+          <Button key={m.k} size="small" sx={slicerStyle(metrics[m.k])}
+            onClick={() => setMetrics(p => ({ ...p, [m.k]: !p[m.k] }))}>
+            {m.l}
+          </Button>
+        ))}
+      </Box>
+
+      {/* SA DROPDOWN */}
       <Box sx={{ mb: 3, width: 320 }}>
         <Select
           multiple
@@ -199,7 +201,6 @@ const SAConversionTablePage = () => {
           renderValue={(s) => s.join(", ")}
           onChange={(e) => {
             const value = e.target.value;
-
             if (value.includes(ALL_SA)) {
               setSelectedSAs(allSASelected ? [] : dropdownSAs);
             } else {
@@ -211,7 +212,6 @@ const SAConversionTablePage = () => {
             <Checkbox checked={allSASelected} />
             <ListItemText primary="Select All" />
           </MenuItem>
-
           {dropdownSAs.map(c => (
             <MenuItem key={c} value={c}>
               <Checkbox checked={selectedSAs.includes(c)} />
@@ -222,82 +222,40 @@ const SAConversionTablePage = () => {
       </Box>
 
       {/* TABLE */}
-      <TableContainer
-        component={Paper}
-        sx={{
-          borderRadius: 3,
-          boxShadow: 4,
-          border: "2px solid #455a64",
-        }}
-      >
-        <Table
-          size="small"
-          sx={{
-            borderCollapse: "collapse",
-            "& th, & td": {
-              border: "1px solid #9e9e9e",
-            },
-          }}
-        >
+      <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 4, border: "2px solid #455a64" }}>
+        <Table size="small" sx={{ borderCollapse: "collapse", "& th, & td": { border: "1px solid #9e9e9e" } }}>
           <TableHead>
-            <TableRow
-              sx={{
-                background: "#718390ff",
-                "& th": {
-                  color: "#fff",
-                  fontWeight: 800,
-                  border: "1.5px solid #455a64",
-                },
-              }}
-            >
+            <TableRow sx={{ background: "#718390ff", "& th": { color: "#fff", fontWeight: 800 } }}>
               <TableCell rowSpan={2}>Branch</TableCell>
               <TableCell rowSpan={2}>SA</TableCell>
 
               {existingMonths.map(m => (
-                <TableCell key={m} colSpan={3} align="center">
+                <TableCell key={m} colSpan={(showA?1:0)+(showC?1:0)+(showP?1:0)} align="center">
                   {m}
                 </TableCell>
               ))}
-              <TableCell colSpan={3} align="center" sx={{ background: "#1551d4ff" }}>
+              <TableCell colSpan={(showA?1:0)+(showC?1:0)+(showP?1:0)} align="center" sx={{ background: "#1551d4ff" }}>
                 TOTAL
               </TableCell>
             </TableRow>
 
-            <TableRow
-              sx={{
-                background: "#aeb37aff",
-                "& th": {
-                  fontWeight: 700,
-                  border: "1.5px solid #90caf9",
-                },
-              }}
-            >
+            <TableRow sx={{ background: "#aeb37aff", "& th": { fontWeight: 700 } }}>
               {existingMonths.map(m => (
                 <React.Fragment key={m}>
-                  <TableCell>A</TableCell>
-                  <TableCell>C</TableCell>
-                  <TableCell>%</TableCell>
+                  {showA && <TableCell align="center">A</TableCell>}
+                  {showC && <TableCell align="center">C</TableCell>}
+                  {showP && <TableCell align="center">%</TableCell>}
                 </React.Fragment>
               ))}
-              <TableCell>A</TableCell>
-              <TableCell>C</TableCell>
-              <TableCell>%</TableCell>
+              {showA && <TableCell align="center">A</TableCell>}
+              {showC && <TableCell align="center">C</TableCell>}
+              {showP && <TableCell align="center">%</TableCell>}
             </TableRow>
           </TableHead>
 
           <TableBody>
             {tableRows.map((r, i) => (
-              <TableRow
-                key={i}
-                sx={{
-                  background: i % 2 ? "#fafafa" : "#fff",
-                  "& td": {
-                    fontWeight: 600,
-                    fontSize: "0.9rem",
-                    border: "1px solid #cfd8dc",
-                  },
-                }}
-              >
+              <TableRow key={i} sx={{ background: i % 2 ? "#fafafa" : "#fff" }}>
                 <TableCell sx={{ fontWeight: 800 }}>{r.branch}</TableCell>
                 <TableCell>{r.saName}</TableCell>
 
@@ -305,20 +263,16 @@ const SAConversionTablePage = () => {
                   const d = r.months[m];
                   return (
                     <React.Fragment key={m}>
-                      <TableCell>{d?.pmsAppointment ?? "-"}</TableCell>
-                      <TableCell>{d?.pmsConversion ?? "-"}</TableCell>
-                      <TableCell>
-                        {d ? `${d.percentagePMS.toFixed(0)}%` : "-"}
-                      </TableCell>
+                      {showA && <TableCell align="center">{d?.pmsAppointment ?? "-"}</TableCell>}
+                      {showC && <TableCell align="center">{d?.pmsConversion ?? "-"}</TableCell>}
+                      {showP && <TableCell align="center">{d ? `${d.percentagePMS.toFixed(0)}%` : "-"}</TableCell>}
                     </React.Fragment>
                   );
                 })}
 
-                <TableCell sx={{ fontWeight: 800 }}>{r.totalApt}</TableCell>
-                <TableCell sx={{ fontWeight: 800 }}>{r.totalConv}</TableCell>
-                <TableCell sx={{ fontWeight: 900 }}>
-                  {r.totalPct.toFixed(0)}%
-                </TableCell>
+                {showA && <TableCell align="center" sx={{ fontWeight: 800 }}>{r.totalApt}</TableCell>}
+                {showC && <TableCell align="center" sx={{ fontWeight: 800 }}>{r.totalConv}</TableCell>}
+                {showP && <TableCell align="center" sx={{ fontWeight: 900 }}>{r.totalPct.toFixed(0)}%</TableCell>}
               </TableRow>
             ))}
           </TableBody>

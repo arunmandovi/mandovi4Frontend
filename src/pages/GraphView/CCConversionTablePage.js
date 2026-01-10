@@ -36,6 +36,13 @@ const CCConversionTablePage = () => {
   const [rawRows, setRawRows] = useState([]);
   const [branchCceMap, setBranchCceMap] = useState({});
 
+  const [metrics, setMetrics] = useState({ A: false, C: false, P: false });
+
+  const showAll = !metrics.A && !metrics.C && !metrics.P;
+  const showA = showAll || metrics.A;
+  const showC = showAll || metrics.C;
+  const showP = showAll || metrics.P;
+
   const normalize = (v) => v?.trim().toUpperCase() || "";
 
   /* ---------- MASTER DATA ---------- */
@@ -102,7 +109,6 @@ const CCConversionTablePage = () => {
   /* ---------- TABLE DATA ---------- */
   const tableRows = useMemo(() => {
     const map = {};
-
     rawRows.forEach(r => {
       const k = `${r.branch}|${r.cceName}`;
       if (!map[k]) {
@@ -115,7 +121,6 @@ const CCConversionTablePage = () => {
           totalConv: 0,
         };
       }
-
       map[k].months[r.month] = r;
       map[k].totalApt += r.pmsAppointment || 0;
       map[k].totalConv += r.pmsConversion || 0;
@@ -126,10 +131,7 @@ const CCConversionTablePage = () => {
         ...r,
         totalPct: r.totalApt > 0 ? (r.totalConv / r.totalApt) * 100 : 0,
       }))
-      .sort((a, b) => {
-        if (b.totalConv !== a.totalConv) return b.totalConv - a.totalConv;
-        return b.totalPct - a.totalPct;
-      });
+      .sort((a, b) => b.totalConv - a.totalConv || b.totalPct - a.totalPct);
   }, [rawRows]);
 
   const slicerStyle = (selected) => ({
@@ -157,16 +159,8 @@ const CCConversionTablePage = () => {
       {/* MONTH FILTER */}
       <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
         {MONTHS.map(m => (
-          <Button
-            key={m}
-            size="small"
-            sx={slicerStyle(selectedMonths.includes(m))}
-            onClick={() =>
-              setSelectedMonths(p =>
-                p.includes(m) ? p.filter(x => x !== m) : [...p, m]
-              )
-            }
-          >
+          <Button key={m} size="small" sx={slicerStyle(selectedMonths.includes(m))}
+            onClick={() => setSelectedMonths(p => p.includes(m) ? p.filter(x => x !== m) : [...p, m])}>
             {m}
           </Button>
         ))}
@@ -175,22 +169,28 @@ const CCConversionTablePage = () => {
       {/* BRANCH FILTER */}
       <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
         {BRANCHES.map(b => (
-          <Button
-            key={b}
-            size="small"
-            sx={slicerStyle(selectedBranches.includes(b))}
-            onClick={() =>
-              setSelectedBranches(p =>
-                p.includes(b) ? p.filter(x => x !== b) : [...p, b]
-              )
-            }
-          >
+          <Button key={b} size="small" sx={slicerStyle(selectedBranches.includes(b))}
+            onClick={() => setSelectedBranches(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b])}>
             {b}
           </Button>
         ))}
       </Box>
 
-      {/* ✅ CCE DROPDOWN WITH SELECT ALL */}
+      {/* METRIC FILTER */}
+      <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
+        {[
+          { k: "A", l: "Appointment" },
+          { k: "C", l: "Conversion" },
+          { k: "P", l: "PMS %" },
+        ].map(m => (
+          <Button key={m.k} size="small" sx={slicerStyle(metrics[m.k])}
+            onClick={() => setMetrics(p => ({ ...p, [m.k]: !p[m.k] }))}>
+            {m.l}
+          </Button>
+        ))}
+      </Box>
+
+      {/* CCE DROPDOWN */}
       <Box sx={{ mb: 3, width: 320 }}>
         <Select
           multiple
@@ -200,7 +200,6 @@ const CCConversionTablePage = () => {
           renderValue={(s) => s.join(", ")}
           onChange={(e) => {
             const value = e.target.value;
-
             if (value.includes(ALL_CCE)) {
               setSelectedCces(allCceSelected ? [] : dropdownCces);
             } else {
@@ -212,7 +211,6 @@ const CCConversionTablePage = () => {
             <Checkbox checked={allCceSelected} />
             <ListItemText primary="Select All" />
           </MenuItem>
-
           {dropdownCces.map(c => (
             <MenuItem key={c} value={c}>
               <Checkbox checked={selectedCces.includes(c)} />
@@ -256,11 +254,19 @@ const CCConversionTablePage = () => {
               <TableCell rowSpan={2}>Exp</TableCell>
 
               {existingMonths.map(m => (
-                <TableCell key={m} colSpan={3} align="center">
+                <TableCell
+                  key={m}
+                  colSpan={(showA?1:0)+(showC?1:0)+(showP?1:0)}
+                  align="center"
+                >
                   {m}
                 </TableCell>
               ))}
-              <TableCell colSpan={3} align="center" sx={{ background: "#1551d4ff" }}>
+              <TableCell
+                colSpan={(showA?1:0)+(showC?1:0)+(showP?1:0)}
+                align="center"
+                sx={{ background: "#1551d4ff" }}
+              >
                 TOTAL
               </TableCell>
             </TableRow>
@@ -276,14 +282,14 @@ const CCConversionTablePage = () => {
             >
               {existingMonths.map(m => (
                 <React.Fragment key={m}>
-                  <TableCell>A</TableCell>
-                  <TableCell>C</TableCell>
-                  <TableCell>%</TableCell>
+                  {showA && <TableCell align="center">A</TableCell>}
+                  {showC && <TableCell align="center">C</TableCell>}
+                  {showP && <TableCell align="center">%</TableCell>}
                 </React.Fragment>
               ))}
-              <TableCell>A</TableCell>
-              <TableCell>C</TableCell>
-              <TableCell>%</TableCell>
+              {showA && <TableCell align="center">A</TableCell>}
+              {showC && <TableCell align="center">C</TableCell>}
+              {showP && <TableCell align="center">%</TableCell>}
             </TableRow>
           </TableHead>
 
@@ -302,28 +308,22 @@ const CCConversionTablePage = () => {
               >
                 <TableCell sx={{ fontWeight: 800 }}>{r.branch}</TableCell>
                 <TableCell>{r.cceName}</TableCell>
-                <TableCell>
-                  {r.experienceDays != null ? r.experienceDays.toFixed(1) : "-"}
-                </TableCell>
+                <TableCell align="center">{r.experienceDays?.toFixed(1) ?? "-"}</TableCell>
 
                 {existingMonths.map(m => {
                   const d = r.months[m];
                   return (
                     <React.Fragment key={m}>
-                      <TableCell>{d?.pmsAppointment ?? "-"}</TableCell>
-                      <TableCell>{d?.pmsConversion ?? "-"}</TableCell>
-                      <TableCell>
-                        {d ? `${d.percentagePMS.toFixed(0)}%` : "-"}
-                      </TableCell>
+                      {showA && <TableCell align="center">{d?.pmsAppointment ?? "-"}</TableCell>}
+                      {showC && <TableCell align="center">{d?.pmsConversion ?? "-"}</TableCell>}
+                      {showP && <TableCell align="center">{d ? `${d.percentagePMS.toFixed(0)}%` : "-"}</TableCell>}
                     </React.Fragment>
                   );
                 })}
 
-                <TableCell sx={{ fontWeight: 800 }}>{r.totalApt}</TableCell>
-                <TableCell sx={{ fontWeight: 800 }}>{r.totalConv}</TableCell>
-                <TableCell sx={{ fontWeight: 900 }}>
-                  {r.totalPct.toFixed(0)}%
-                </TableCell>
+                {showA && <TableCell align="center" sx={{ fontWeight: 800 }}>{r.totalApt}</TableCell>}
+                {showC && <TableCell align="center" sx={{ fontWeight: 800 }}>{r.totalConv}</TableCell>}
+                {showP && <TableCell align="center" sx={{ fontWeight: 900 }}>{r.totalPct.toFixed(0)}%</TableCell>}
               </TableRow>
             ))}
           </TableBody>
