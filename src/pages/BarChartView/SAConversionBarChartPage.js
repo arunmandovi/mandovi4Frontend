@@ -22,8 +22,6 @@ import {
   LabelList,
 } from "recharts";
 
-/* ---------------- CONSTANTS ---------------- */
-
 const MONTHS = [
   "APR","MAY","JUN","JUL","AUG","SEP",
   "OCT","NOV","DEC","JAN","FEB","MAR"
@@ -39,9 +37,7 @@ const MONTH_COLORS = {
   APR: "#1f77b4", MAY: "#ff7f0e", JUN: "#2ca02c", JUL: "#d62728",
   AUG: "#9467bd", SEP: "#8c564b", OCT: "#e377c2", NOV: "#7f7f7f",
   DEC: "#bcbd22", JAN: "#17becf", FEB: "#4e79a7", MAR: "#f28e2b",
-  ALL: "#2e7d32",
-  APPT: "#1976d2",
-  CONV: "#d32f2f",
+  ALL: "#2e7d32", APPT: "#1976d2", CONV: "#d32f2f",
 };
 
 const GROWTH_OPTIONS = ["PMS %", "Appointment", "Conversion", "A&C"];
@@ -52,7 +48,6 @@ const growthKeyMap = {
   "Conversion": "pmsConversion",
 };
 
-/* ---------------- COMPONENT ---------------- */
 
 const SAConversionBarChartPage = () => {
   const navigate = useNavigate();
@@ -72,7 +67,6 @@ const SAConversionBarChartPage = () => {
   const isAC = selectedGrowth === "A&C";
   const growthKey = growthKeyMap[selectedGrowth];
 
-  /* ---------- MASTER DATA ---------- */
   useEffect(() => {
     const loadMasterData = async () => {
       const res = await fetchData(`/api/sa/sa_conversion_summary`);
@@ -94,7 +88,6 @@ const SAConversionBarChartPage = () => {
     loadMasterData();
   }, []);
 
-  /* ---------- SA OPTIONS ---------- */
   const dropdownSAs = useMemo(() => {
     if (!selectedBranches.length) {
       return [...new Set(Object.values(branchSAMap).flat())];
@@ -110,7 +103,6 @@ const SAConversionBarChartPage = () => {
     setSelectedSAs(prev => prev.filter(c => dropdownSAs.includes(c)));
   }, [dropdownSAs]);
 
-  /* ---------- DATA FETCH ---------- */
   useEffect(() => {
     const loadData = async () => {
       const monthsToFetch =
@@ -139,7 +131,6 @@ const SAConversionBarChartPage = () => {
     loadData();
   }, [selectedMonths, allSelected, selectedBranches, selectedSAs]);
 
-  /* ---------- CHART DATA ---------- */
   const chartData = useMemo(() => {
     const rows = saKeys.map(sa => {
       const row = { sa };
@@ -197,7 +188,6 @@ const SAConversionBarChartPage = () => {
     return rows.sort((a, b) => b.__rankValue - a.__rankValue);
   }, [saKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC]);
 
-  /* ---------- BUTTON STYLE ---------- */
   const selectedGradient =
     "linear-gradient(90deg, rgba(144,238,144,1) 0%, rgba(102,205,170,1) 100%)";
 
@@ -213,8 +203,6 @@ const SAConversionBarChartPage = () => {
   const allSASelected =
     dropdownSAs.length > 0 &&
     selectedSAs.length === dropdownSAs.length;
-
-  /* ---------------- RENDER ---------------- */
 
   return (
     <Box sx={{ p: 3 }}>
@@ -235,7 +223,6 @@ const SAConversionBarChartPage = () => {
         </Box>
       </Box>
 
-      {/* MONTH FILTERS */}
       <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
         <Button
           size="small"
@@ -265,7 +252,6 @@ const SAConversionBarChartPage = () => {
         ))}
       </Box>
 
-      {/* BRANCH FILTERS */}
       <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
         {BRANCHES.map(b => (
           <Button
@@ -283,7 +269,6 @@ const SAConversionBarChartPage = () => {
         ))}
       </Box>
 
-      {/* GROWTH FILTER */}
       <Box sx={{ mb: 3, display: "flex", gap: 1.2 }}>
         {GROWTH_OPTIONS.map(g => (
           <Button
@@ -297,7 +282,6 @@ const SAConversionBarChartPage = () => {
         ))}
       </Box>
 
-      {/* SA DROPDOWN */}
       <Box sx={{ mb: 3, width: 320 }}>
         <Select
           multiple
@@ -334,7 +318,6 @@ const SAConversionBarChartPage = () => {
         </Select>
       </Box>
 
-      {/* BAR CHART */}
       <Box sx={{ height: 700, background: "#fff", borderRadius: 3, p: 3 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData}>

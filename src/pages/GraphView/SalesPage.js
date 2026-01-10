@@ -23,13 +23,32 @@ const YEARS = Array.from(
   { length: CURRENT_YEAR - START_YEAR + 1 },
   (_, i) => String(START_YEAR + i)
 );
+
 const CHANNELS = ["ARENA","NEXA"];
-const BRANCHES = ["Balmatta","Uppinangady","Surathkal","Sullia","Bantwal","Nexa","Kadaba","Vittla"];
+const BRANCHES = [
+  "Balmatta","Uppinangady","Surathkal","Sullia",
+  "Bantwal","Nexa","Kadaba","Vittla"
+];
+
+const ALL_BRANCH = "ALL";
+
+const BRANCH_COLORS = {
+  ALL: "#000000",
+  Balmatta: "#1f77b4",
+  Uppinangady: "#ff7f0e",
+  Surathkal: "#2ca02c",
+  Sullia: "#d62728",
+  Bantwal: "#9467bd",
+  Nexa: "#8c564b",
+  Kadaba: "#e377c2",
+  Vittla: "#7f7f7f",
+};
 
 /* ---------------- COMPONENT ---------------- */
 const SalesPage = () => {
   const navigate = useNavigate();
 
+  /* -------- FILTER STATES (UNCHANGED) -------- */
   const [yearFilter1, setYearFilter1] = useState([]);
   const [channelFilter1, setChannelFilter1] = useState([]);
   const [branchFilter1, setBranchFilter1] = useState([]);
@@ -39,14 +58,15 @@ const SalesPage = () => {
   const [selectedChannels, setSelectedChannels] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
 
-  const [chart1Data, setChart1Data] = useState([]);
+  /* -------- RAW DATA -------- */
+  const [chart1Raw, setChart1Raw] = useState([]);
   const [chart2Raw, setChart2Raw] = useState([]);
 
   /* ================= CHART 1 – YEAR WISE ================= */
   useEffect(() => {
     const load = async () => {
       const years = yearFilter1.length ? yearFilter1 : YEARS;
-      const result = [];
+      let all = [];
 
       for (const y of years) {
         const query =
@@ -54,22 +74,35 @@ const SalesPage = () => {
           (channelFilter1.length ? `&channels=${channelFilter1.join(",")}` : "");
 
         const res = await fetchData(`/api/sales/sales_branch_summary${query}`);
-
-        const filtered = Array.isArray(res)
-          ? res.filter(r =>
-              !branchFilter1.length || branchFilter1.includes(r.branch)
-            )
-          : [];
-
-        const total = filtered.reduce((sum, r) => sum + (r.count || 0), 0);
-        result.push({ year: y, value: total });
+        if (Array.isArray(res)) {
+          all.push(...res.map(r => ({ ...r, year: y })));
+        }
       }
-
-      setChart1Data(result);
+      setChart1Raw(all);
     };
-
     load();
-  }, [yearFilter1, channelFilter1, branchFilter1]);
+  }, [yearFilter1, channelFilter1]);
+
+  /* ================= TOOLTIP ================= */
+  const SortedTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null;
+
+    const sorted = [...payload]
+      .filter(p => p.value != null)
+      .sort((a, b) => b.value - a.value);
+
+    return (
+      <Paper sx={{ p: 1.5 }}>
+        <Typography variant="subtitle2">{label}</Typography>
+        {sorted.map(p => (
+          <Box key={p.dataKey} sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Typography variant="body2">{p.dataKey}</Typography>
+            <Typography variant="body2" fontWeight={600}>{p.value}</Typography>
+          </Box>
+        ))}
+      </Paper>
+    );
+  };
 
   /* ================= CHART 2 – MONTH WISE ================= */
   useEffect(() => {
@@ -80,40 +113,63 @@ const SalesPage = () => {
 
       for (const m of months) {
         const query =
-          `?months=${m}` +
-          `&years=${years.join(",")}` +
+          `?months=${m}&years=${years.join(",")}` +
           (selectedChannels.length ? `&channels=${selectedChannels.join(",")}` : "");
 
         const res = await fetchData(`/api/sales/sales_branch_summary${query}`);
-
         if (Array.isArray(res)) {
-          const filtered = res.filter(r =>
-            !selectedBranches.length || selectedBranches.includes(r.branch)
-          );
-          all.push(...filtered.map(r => ({ ...r, month: m })));
+          all.push(...res.map(r => ({ ...r, month: m })));
         }
       }
-
       setChart2Raw(all);
     };
-
     load();
-  }, [selectedMonths, selectedYears, selectedChannels, selectedBranches]);
+  }, [selectedMonths, selectedYears, selectedChannels]);
 
-  const chart2Data = useMemo(() => {
+  /* ================= YEARLY TRANSFORM ================= */
+  const chart1Data = useMemo(() => {
+    const showAll = branchFilter1.includes(ALL_BRANCH);
+    const branches = branchFilter1.filter(b => b !== ALL_BRANCH);
+    const activeBranches = branches.length ? branches : BRANCHES;
+
     const map = {};
-  
-    chart2Raw.forEach(r => {
-      map[r.month] = (map[r.month] || 0) + (r.count || 0);
+
+    chart1Raw.forEach(r => {
+      if (!map[r.year]) map[r.year] = { year: r.year };
+
+      if (activeBranches.includes(r.branch)) {
+        map[r.year][r.branch] = (map[r.year][r.branch] || 0) + r.count;
+        if (showAll) {
+          map[r.year][ALL_BRANCH] = (map[r.year][ALL_BRANCH] || 0) + r.count;
+        }
+      }
     });
-  
-    const monthsToShow = selectedMonths.length ? selectedMonths : MONTHS;
-  
-    return monthsToShow.map(m => ({
-      month: m,
-      value: map[m] || 0,
-    }));
-  }, [chart2Raw, selectedMonths]);
+
+    return Object.values(map);
+  }, [chart1Raw, branchFilter1]);
+
+  /* ================= MONTHLY TRANSFORM ================= */
+  const chart2Data = useMemo(() => {
+    const showAll = selectedBranches.includes(ALL_BRANCH);
+    const branches = selectedBranches.filter(b => b !== ALL_BRANCH);
+    const activeBranches = branches.length ? branches : BRANCHES;
+
+    const map = {};
+
+    chart2Raw.forEach(r => {
+      if (!map[r.month]) map[r.month] = { month: r.month };
+
+      if (activeBranches.includes(r.branch)) {
+        map[r.month][r.branch] = (map[r.month][r.branch] || 0) + r.count;
+        if (showAll) {
+          map[r.month][ALL_BRANCH] = (map[r.month][ALL_BRANCH] || 0) + r.count;
+        }
+      }
+    });
+
+    const months = selectedMonths.length ? selectedMonths : MONTHS;
+    return months.map(m => map[m] || { month: m });
+  }, [chart2Raw, selectedBranches, selectedMonths]);
 
   /* ---------------- UI STYLE ---------------- */
   const slicerStyle = selected => ({
@@ -133,106 +189,139 @@ const SalesPage = () => {
         <Typography variant="h4">SALES</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained">Line Chart</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales-bar-chart")}>Bar Chart</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales_table")}>Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales-bar-chart")}>
+            Bar Chart
+          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales_table")}>
+            Table
+          </Button>
         </Box>
       </Box>
 
-      {/* ================== CHART 1 ================== */}
+      {/* ================== YEARLY ================== */}
       <Paper sx={{ p: 3, mb: 4, borderRadius: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>Yearly Sales</Typography>
+        <Typography variant="h6">Yearly Sales</Typography>
 
-        <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
+        {/* YEAR */}
+        <Box sx={{ my: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
           {YEARS.map(y => (
             <Button key={y} size="small" sx={slicerStyle(yearFilter1.includes(y))}
-              onClick={() => setYearFilter1(p => p.includes(y) ? p.filter(x => x !== y) : [...p, y])}>
+              onClick={() =>
+                setYearFilter1(p => p.includes(y) ? p.filter(x => x !== y) : [...p, y])
+              }>
               {y}
             </Button>
           ))}
         </Box>
 
-        <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
+        {/* CHANNEL */}
+        <Box sx={{ my: 2, display: "flex", gap: 1 }}>
           {CHANNELS.map(c => (
             <Button key={c} size="small" sx={slicerStyle(channelFilter1.includes(c))}
-              onClick={() => setChannelFilter1(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c])}>
+              onClick={() =>
+                setChannelFilter1(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c])
+              }>
               {c}
             </Button>
           ))}
         </Box>
 
-        <Box sx={{ mb: 3, display: "flex", gap: 1, flexWrap: "wrap" }}>
-          {BRANCHES.map(b => (
+        {/* BRANCH */}
+        <Box sx={{ my: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
+          {[ALL_BRANCH, ...BRANCHES].map(b => (
             <Button key={b} size="small" sx={slicerStyle(branchFilter1.includes(b))}
-              onClick={() => setBranchFilter1(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b])}>
+              onClick={() =>
+                setBranchFilter1(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b])
+              }>
               {b}
             </Button>
           ))}
         </Box>
 
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={320}>
           <LineChart data={chart1Data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="year" />
             <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line dataKey="value" strokeWidth={4}>
-              <LabelList dataKey="value" position="top" />
-            </Line>
+            <Tooltip content={<SortedTooltip />} />
+            {(branchFilter1.includes(ALL_BRANCH)
+              ? [ALL_BRANCH, ...BRANCHES]
+              : branchFilter1.length ? branchFilter1 : BRANCHES
+            ).map(b => (
+              <Line key={b} dataKey={b} stroke={BRANCH_COLORS[b]} strokeWidth={b === ALL_BRANCH ? 4 : 3}>
+                <LabelList dataKey={b} position="top" />
+              </Line>
+            ))}
           </LineChart>
         </ResponsiveContainer>
       </Paper>
 
-      {/* ================== CHART 2 ================== */}
+      {/* ================== MONTHLY ================== */}
       <Paper sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>Monthly Sales</Typography>
+        <Typography variant="h6">Monthly Sales</Typography>
 
-        <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
+        {/* YEAR */}
+        <Box sx={{ my: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
           {YEARS.map(y => (
             <Button key={y} size="small" sx={slicerStyle(selectedYears.includes(y))}
-              onClick={() => setSelectedYears(p => p.includes(y) ? p.filter(x => x !== y) : [...p, y])}>
+              onClick={() =>
+                setSelectedYears(p => p.includes(y) ? p.filter(x => x !== y) : [...p, y])
+              }>
               {y}
             </Button>
           ))}
         </Box>
 
-        <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
+        {/* CHANNEL */}
+        <Box sx={{ my: 2, display: "flex", gap: 1 }}>
           {CHANNELS.map(c => (
             <Button key={c} size="small" sx={slicerStyle(selectedChannels.includes(c))}
-              onClick={() => setSelectedChannels(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c])}>
+              onClick={() =>
+                setSelectedChannels(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c])
+              }>
               {c}
             </Button>
           ))}
         </Box>
 
-        <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-          {BRANCHES.map(b => (
+        {/* BRANCH */}
+        <Box sx={{ my: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
+          {[ALL_BRANCH, ...BRANCHES].map(b => (
             <Button key={b} size="small" sx={slicerStyle(selectedBranches.includes(b))}
-              onClick={() => setSelectedBranches(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b])}>
+              onClick={() =>
+                setSelectedBranches(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b])
+              }>
               {b}
             </Button>
           ))}
         </Box>
 
-        <Box sx={{ mb: 3, display: "flex", gap: 1, flexWrap: "wrap" }}>
+        {/* MONTH */}
+        <Box sx={{ my: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
           {MONTHS.map(m => (
             <Button key={m} size="small" sx={slicerStyle(selectedMonths.includes(m))}
-              onClick={() => setSelectedMonths(p => p.includes(m) ? p.filter(x => x !== m) : [...p, m])}>
+              onClick={() =>
+                setSelectedMonths(p => p.includes(m) ? p.filter(x => x !== m) : [...p, m])
+              }>
               {m}
             </Button>
           ))}
         </Box>
 
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={320}>
           <LineChart data={chart2Data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
             <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line dataKey="value" strokeWidth={4}>
-              <LabelList dataKey="value" position="top" />
-            </Line>
+            <Tooltip content={<SortedTooltip />} />
+            {(selectedBranches.includes(ALL_BRANCH)
+              ? [ALL_BRANCH, ...BRANCHES]
+              : selectedBranches.length ? selectedBranches : BRANCHES
+            ).map(b => (
+              <Line key={b} dataKey={b} stroke={BRANCH_COLORS[b]} strokeWidth={b === ALL_BRANCH ? 4 : 3}>
+                <LabelList dataKey={b} position="top" />
+              </Line>
+            ))}
           </LineChart>
         </ResponsiveContainer>
       </Paper>

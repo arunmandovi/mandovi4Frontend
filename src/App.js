@@ -87,6 +87,7 @@ import ProductivityUploadPage from "./pages/FileUpload/ProductivityUploadPage";
 import ProfitLossUploadPage from "./pages/FileUpload/ProfitLossUploadPage";
 import ReferenceeUploadPage from "./pages/FileUpload/ReferenceeUploadPage";
 import RevenueUploadPage from "./pages/FileUpload/RevenueUploadPage";
+import SalesUploadPage from "./pages/FileUpload/SalesUploadPage.js";
 import SAConversionUploadPage from "./pages/FileUpload/SAConversionUploadPage";
 import SparesUploadPage from "./pages/FileUpload/SparesUploadPage";
 import TATUploadPage from "./pages/FileUpload/TATUploadPage";
@@ -183,6 +184,7 @@ function App() {
         <Route path="/profit_loss-upload" element={ <AdminProtectedRoute><ProfitLossUploadPage /></AdminProtectedRoute> } />
         <Route path="/referencee-upload" element={ <AdminProtectedRoute><ReferenceeUploadPage /></AdminProtectedRoute> } />
         <Route path="/revenue-upload" element={ <AdminProtectedRoute><RevenueUploadPage /></AdminProtectedRoute> } />
+        <Route path="/sales-upload" element={ <AdminProtectedRoute><SalesUploadPage /></AdminProtectedRoute> } />
         <Route path="/spares-upload" element={ <AdminProtectedRoute><SparesUploadPage /></AdminProtectedRoute> } />
         <Route path="/tat-upload" element={ <AdminProtectedRoute><TATUploadPage /></AdminProtectedRoute> } />
         <Route path="/vas-upload" element={ <AdminProtectedRoute><VASUploadPage /></AdminProtectedRoute> } />

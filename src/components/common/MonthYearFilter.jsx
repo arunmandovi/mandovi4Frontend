@@ -6,7 +6,7 @@ const MONTHS = [
   "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"
 ];
 
-const YEARS = ["2024", "2025"];
+const YEARS = ["2024", "2025", "2026"];
 
 const MonthYearFilter = ({
   months = [],
