@@ -1,16 +1,15 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { Button } from "@mui/material";
 import { useState, useEffect } from "react";
 import "../styles/Navbar.css";
 
 function Layout() {
-  const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname.toLowerCase();
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // 🔥 Reset activity timestamp when user navigates
+  /* ---------- ACTIVITY TRACKING ---------- */
   useEffect(() => {
     localStorage.setItem("employeeLastActive", Date.now());
   }, [location.pathname]);
@@ -21,19 +20,19 @@ function Layout() {
     window.location.href = "/EmployeeLogin";
   };
 
-  /* ---------- VIEW MODE DETECTION ---------- */
-  const modeMap = {
+  /* ---------- CURRENT VIEW MODE ---------- */
+  const VIEW_MODES = {
     "branches-bar-chart": "branches-bar-chart",
     "branches": "branches",
     "bar-chart": "bar-chart",
   };
 
   const viewMode =
-    Object.entries(modeMap).find(([key]) =>
+    Object.entries(VIEW_MODES).find(([key]) =>
       currentPath.includes(key)
     )?.[1] || null;
 
-  /* ---------- MODULES ---------- */
+  /* ---------- ALL MODULES ---------- */
   const modules = [
     "loadd",
     "hold_up",
@@ -61,11 +60,41 @@ function Layout() {
     "sales",
   ];
 
+  /* ---------- MODULE → SUPPORTED VIEW MODES ---------- */
+  /* THIS MUST MATCH YOUR App.js ROUTES */
+  const MODULE_VIEW_SUPPORT = {
+    loadd: ["bar-chart", "branches", "branches-bar-chart"],
+    hold_up: ["bar-chart", "branches", "branches-bar-chart"],
+    productivity: ["bar-chart", "branches"],
+    due_done: ["bar-chart"],
+    per_vehicle: ["bar-chart"],
+    br_conversion: ["bar-chart", "branches"],
+    labour: ["bar-chart"],
+    spares: ["bar-chart"],
+    vas: ["bar-chart"],
+    msgp: ["bar-chart"],
+    msgp_profit: ["bar-chart"],
+    revenue: ["bar-chart"],
+    oil: ["bar-chart"],
+    battery_tyre: ["bar-chart"],
+    pms_parts: ["bar-chart"],
+    mga: ["bar-chart"],
+    mga_profit: ["bar-chart"],
+    tat: ["bar-chart"],
+    mcp: ["bar-chart"],
+    referencee: ["bar-chart"],
+    profit_loss: ["bar-chart"],
+    cc_conversion: ["bar-chart"],
+    sa_conversion: ["bar-chart"],
+    sales: ["bar-chart"], // ❗ NO branches-bar-chart
+  };
+
   /* ---------- LINK BUILDERS ---------- */
   const linkMap = {
     "bar-chart": (m) => `/DashboardHome/${m}-bar-chart`,
-    "branches-bar-chart": (m) => `/DashboardHome/${m}_branches-bar-chart`,
     "branches": (m) => `/DashboardHome/${m}_branches`,
+    "branches-bar-chart": (m) =>
+      `/DashboardHome/${m}_branches-bar-chart`,
   };
 
   /* ---------- SAFE LINK RESOLUTION ---------- */
@@ -74,16 +103,24 @@ function Layout() {
       return `/DashboardHome/${module}`;
     }
 
-    const candidate = linkMap[viewMode]?.(module);
+    const supportedModes = MODULE_VIEW_SUPPORT[module] || [];
 
-    // 🔒 If route pattern not applicable, fallback to base module
-    return candidate || `/DashboardHome/${module}`;
+    // ❌ If module does NOT support current view → fallback
+    if (!supportedModes.includes(viewMode)) {
+      return `/DashboardHome/${module}`;
+    }
+
+    // ✅ Supported view
+    return linkMap[viewMode]?.(module) || `/DashboardHome/${module}`;
   };
 
   return (
     <div className="layout-container">
       <nav className="navbar">
-        <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
+        <button
+          className="hamburger"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
           ☰
         </button>
 
@@ -127,9 +164,8 @@ function formatLabel(name) {
     br_conversion: "BR Conversion",
     battery_tyre: "Battery & Tyre",
     msgp_profit: "MSGP Profit",
-    mga_profit: "MGA PROFIT",
+    mga_profit: "MGA Profit",
     profit_loss: "Profit & Loss",
-    outstanding: "OutStanding",
     cc_conversion: "CC Conversion",
     sa_conversion: "SA Conversion",
     vas: "VAS",
@@ -138,7 +174,7 @@ function formatLabel(name) {
     mga: "MGA",
     tat: "TAT",
     mcp: "MCP",
-    sales: "Sales"
+    sales: "Sales",
   };
 
   if (specialCases[name]) return specialCases[name];

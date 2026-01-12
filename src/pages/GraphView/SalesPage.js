@@ -189,12 +189,9 @@ const SalesPage = () => {
         <Typography variant="h4">SALES</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained">Line Chart</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales-bar-chart")}>
-            Bar Chart
-          </Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales_table")}>
-            Table
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales-bar-chart")}>Bar Chart</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales_table")}>Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales_growth")}>Growth</Button>
         </Box>
       </Box>
 

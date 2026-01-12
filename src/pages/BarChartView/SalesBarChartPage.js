@@ -125,13 +125,10 @@ const SalesBarChartPage = () => {
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">SALES</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales")}>
-            Line Chart
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales")}>Line Chart</Button>
           <Button variant="contained">Bar Chart</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales_table")}>
-            Table
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales_table")}>Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales_growth")}>Growth</Button>
         </Box>
       </Box>
 

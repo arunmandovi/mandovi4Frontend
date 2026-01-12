@@ -36,6 +36,7 @@ import ReferenceeTablePage from "./pages/GraphView/ReferenceeTablePage";
 import RevenuePage from "./pages/GraphView/RevenuePage";
 import SalesPage from "./pages/GraphView/SalesPage.js";
 import SalesTablePage from "./pages/GraphView/SalesTablePage";
+import SalesGrowthPage from "./pages/GraphView/SalesGrowthPage.js";
 import SAConversionPage from "./pages/GraphView/SAConversionPage";
 import SAConversionTablePage from "./pages/GraphView/SAConversionTablePage.js";
 import SparesPage from "./pages/GraphView/SparesPage";
@@ -233,6 +234,7 @@ function App() {
           <Route path="revenue" element={<RevenuePage />} />
           <Route path="sales" element={<SalesPage />} />
           <Route path="sales_table" element={<SalesTablePage />} />
+          <Route path="sales_growth" element={<SalesGrowthPage />} />
           <Route path="spares" element={<SparesPage />} />
           <Route path="tat" element={<TATPage />} />
           <Route path="vas" element={<VASPage />} />
