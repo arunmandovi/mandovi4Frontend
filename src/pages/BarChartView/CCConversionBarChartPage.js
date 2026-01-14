@@ -20,6 +20,7 @@ import {
   Tooltip,
   CartesianGrid,
   LabelList,
+  Cell,
 } from "recharts";
 
 /* ---------------- CONSTANTS ---------------- */
@@ -34,6 +35,25 @@ const BRANCHES = [
   "YEYYADI","BANTWAL","KADABA","VITTLA","SUJITH BAGH",
   "NEXA","NARAVI"
 ];
+
+// Branch-wise colors
+const BRANCH_COLORS = {
+  BALMATTA: "#1f77b4",
+  SURATHKAL: "#ff7f0e", 
+  ADYAR: "#2ca02c",
+  SULLIA: "#d62728",
+  UPPINANGADY: "#9467bd",
+  YEYYADI: "#8c564b",
+  BANTWAL: "#e377c2",
+  KADABA: "#7f7f7f",
+  VITTLA: "#bcbd22",
+  "SUJITH BAGH": "#17becf",
+  NEXA: "#4e79a7",
+  NARAVI: "#f28e2b",
+  ALL: "#2e7d32",
+  APPT: "#1976d2",
+  CONV: "#d32f2f",
+};
 
 const MONTH_COLORS = {
   APR: "#1f77b4", MAY: "#ff7f0e", JUN: "#2ca02c", JUL: "#d62728",
@@ -71,6 +91,17 @@ const CCConversionBarChartPage = () => {
   const isPercentage = selectedGrowth === "PMS %";
   const isAC = selectedGrowth === "A&C";
   const growthKey = growthKeyMap[selectedGrowth];
+
+  /* ---------- CCE BRANCH MAPPING ---------- */
+  const cceBranchMap = useMemo(() => {
+    const map = {};
+    Object.entries(branchCceMap).forEach(([branch, cces]) => {
+      cces.forEach(cce => {
+        map[normalize(cce)] = normalize(branch);
+      });
+    });
+    return map;
+  }, [branchCceMap]);
 
   /* ---------- MASTER DATA ---------- */
   useEffect(() => {
@@ -142,7 +173,10 @@ const CCConversionBarChartPage = () => {
   /* ---------- CHART DATA ---------- */
   const chartData = useMemo(() => {
     const rows = cceKeys.map(cce => {
-      const row = { cce };
+      const row = { 
+        cce,
+        branch: cceBranchMap[cce] || 'UNKNOWN'
+      };
 
       let totalConv = 0;
       let totalAppt = 0;
@@ -191,11 +225,39 @@ const CCConversionBarChartPage = () => {
       }
 
       row.__rankValue = rankValue;
+      row.__branchColor = BRANCH_COLORS[row.branch] || '#999';
       return row;
     });
 
     return rows.sort((a, b) => b.__rankValue - a.__rankValue);
-  }, [cceKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC]);
+  }, [cceKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC, cceBranchMap]);
+
+  /* ---------- Custom Label Component for Vertical Branch Names INSIDE Bars ---------- */
+  const VerticalBranchLabel = ({ x, y, width, height, value, index }) => {
+    const entry = chartData[index];
+    const branchName = entry?.branch || '';
+    
+    if (!branchName || branchName === 'UNKNOWN') return null;
+
+    // Truncate long branch names
+    const displayName = branchName.length > 8 ? branchName.substring(0, 8) + '...' : branchName;
+
+    return (
+      <text
+        x={x + width / 2}
+        y={y + height / 2}
+        fill="#000000"
+        fontSize="12"
+        fontWeight="bold"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        transform={`rotate(-90 ${x + width / 2} ${y + height / 2})`}
+        fontFamily="Arial, sans-serif"
+      >
+        {displayName}
+      </text>
+    );
+  };
 
   /* ---------- BUTTON STYLE ---------- */
   const selectedGradient =
@@ -213,6 +275,13 @@ const CCConversionBarChartPage = () => {
   const allCceSelected =
     dropdownCces.length > 0 &&
     selectedCces.length === dropdownCces.length;
+
+  const getBarColor = (entry) => {
+    if (isAC) {
+      return MONTH_COLORS.APPT || MONTH_COLORS.CONV;
+    }
+    return entry.__branchColor;
+  };
 
   /* ---------------- RENDER ---------------- */
 
@@ -339,25 +408,52 @@ const CCConversionBarChartPage = () => {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="cce" angle={-50} textAnchor="end" height={140} />
+            <XAxis 
+              dataKey="cce" 
+              angle={-50} 
+              textAnchor="end" 
+              height={140}
+              tick={{ fontSize: 11 }}
+            />
             <YAxis tickFormatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
-            <Tooltip formatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
+            <Tooltip 
+              formatter={v => isPercentage ? [`${v.toFixed(0)}%`, 'Value'] : [v.toFixed(0), 'Value']}
+              labelFormatter={label => `CCE: ${label} (${chartData.find(d => d.cce === label)?.branch || 'N/A'})`}
+            />
 
             {isAC
               ? (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).flatMap(k => ([
-                  <Bar key={`${k}-APPT`} dataKey={`${k}_APPT`} barSize={14} fill={MONTH_COLORS.APPT}>
+                  <Bar 
+                    key={`${k}-APPT`} 
+                    dataKey={`${k}_APPT`} 
+                    barSize={14} 
+                    fill={MONTH_COLORS.APPT}
+                  >
                     <LabelList position="top" />
                   </Bar>,
-                  <Bar key={`${k}-CONV`} dataKey={`${k}_CONV`} barSize={14} fill={MONTH_COLORS.CONV}>
+                  <Bar 
+                    key={`${k}-CONV`} 
+                    dataKey={`${k}_CONV`} 
+                    barSize={14} 
+                    fill={MONTH_COLORS.CONV}
+                  >
                     <LabelList position="top" />
                   </Bar>
                 ]))
               : (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).map(key => (
-                  <Bar key={key} dataKey={key} barSize={18} fill={MONTH_COLORS[key]}>
+                  <Bar 
+                    key={key} 
+                    dataKey={key} 
+                    barSize={28}
+                    label={<VerticalBranchLabel />}
+                  >
                     <LabelList
                       position="top"
                       formatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)}
                     />
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
+                    ))}
                   </Bar>
                 ))}
           </BarChart>
