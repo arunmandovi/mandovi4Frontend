@@ -128,11 +128,15 @@ const SAConversionBarChartPage = () => {
     return [...set];
   }, [selectedBranches, branchSAMap]);
 
+  const allSASelected =
+    dropdownSAs.length > 0 &&
+    selectedSAs.length === dropdownSAs.length;
+
   useEffect(() => {
     setSelectedSAs(prev => prev.filter(c => dropdownSAs.includes(c)));
   }, [dropdownSAs]);
 
-  /* ---------- DATA FETCH - FIXED WITH ACTUAL DATA BRANCH INFO ---------- */
+  /* ---------- DATA FETCH ---------- */
   useEffect(() => {
     const loadData = async () => {
       const monthsToFetch =
@@ -150,14 +154,7 @@ const SAConversionBarChartPage = () => {
         const res = await fetchData(`/api/sa/sa_conversion_summary${query}`);
         const rows = Array.isArray(res) ? res : [];
 
-        // Use actual data from API response to get correct branch info
-        rows.forEach(r => {
-          const saName = normalize(r.saName);
-          const actualBranch = normalize(r.branch);
-          
-          saSet.add(saName);
-        });
-        
+        rows.forEach(r => saSet.add(normalize(r.saName)));
         allData.push({ month, data: rows });
       }
 
@@ -168,7 +165,55 @@ const SAConversionBarChartPage = () => {
     loadData();
   }, [selectedMonths, allSelected, selectedBranches, selectedSAs]);
 
-  /* ---------- CHART DATA - FIXED WITH ACTUAL DATA BRANCH INFO ---------- */
+  /* ---------- CUSTOM TOOLTIP FOR SA BAR CHART ---------- */
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      // Get months in chronological order (selected or all)
+      const monthsForChart = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
+      
+      // Find the chart entry for this SA
+      const chartEntry = chartData.find(entry => normalize(entry.sa) === normalize(label));
+      const branchName = chartEntry?.branch || 'N/A';
+      
+      return (
+        <Box sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.95)', borderRadius: 2, border: '1px solid #ccc', minWidth: 200 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1.5, color: '#1976d2' }}>
+            SA: {label}
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 1.5, color: '#666', fontSize: '0.8rem' }}>
+            Branch: {branchName}
+          </Typography>
+          
+          {/* Show data in chronological month order */}
+          {monthsForChart.map(month => {
+            const dataPoint = payload.find(p => 
+              p.dataKey === month || 
+              p.dataKey === `${month}_APPT` || 
+              p.dataKey === `${month}_CONV`
+            );
+            
+            if (dataPoint && dataPoint.value !== 0) {
+              const displayValue = isPercentage ? `${Math.round(dataPoint.value)}%` : Math.round(dataPoint.value);
+              return (
+                <Box key={month} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.3 }}>
+                  <Typography variant="body2" sx={{ color: MONTH_COLORS[month], fontWeight: 500, fontSize: '0.85rem' }}>
+                    {month}:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem' }}>
+                    {displayValue}
+                  </Typography>
+                </Box>
+              );
+            }
+            return null;
+          })}
+        </Box>
+      );
+    }
+    return null;
+  };
+
+  /* ---------- CHART DATA ---------- */
   const chartData = useMemo(() => {
     const rows = saKeys.map(sa => {
       // Find the FIRST occurrence in summary data to get correct branch
@@ -178,7 +223,7 @@ const SAConversionBarChartPage = () => {
         const matchingRow = data.find(d => normalize(d.saName) === sa);
         if (matchingRow) {
           actualBranch = normalize(matchingRow.branch);
-          break; // Use first match
+          break;
         }
       }
 
@@ -251,14 +296,13 @@ const SAConversionBarChartPage = () => {
       .sort((a, b) => b.__rankValue - a.__rankValue);
   }, [saKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC, selectedBranches]);
 
-  /* ---------- Custom Label Component for Vertical Branch Names INSIDE Bars ---------- */
+  /* ---------- Custom Label Component ---------- */
   const VerticalBranchLabel = ({ x, y, width, height, value, index }) => {
     const entry = chartData[index];
     const branchName = entry?.branch || '';
     
     if (!branchName || branchName === 'UNKNOWN') return null;
 
-    // Truncate long branch names
     const displayName = branchName.length > 8 ? branchName.substring(0, 8) + '...' : branchName;
 
     return (
@@ -289,10 +333,6 @@ const SAConversionBarChartPage = () => {
     background: sel ? selectedGradient : "#fff",
     border: sel ? "1.5px solid #388e3c" : "1px solid #bdbdbd",
   });
-
-  const allSASelected =
-    dropdownSAs.length > 0 &&
-    selectedSAs.length === dropdownSAs.length;
 
   const getBarColor = (entry) => {
     if (isAC) {
@@ -421,11 +461,8 @@ const SAConversionBarChartPage = () => {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="sa" angle={-50} textAnchor="end" height={140} tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
-            <Tooltip 
-              formatter={v => isPercentage ? [`${v.toFixed(0)}%`, 'Value'] : [v.toFixed(0), 'Value']}
-              labelFormatter={label => `SA: ${label} (${chartData.find(d => d.sa === label)?.branch || 'N/A'})`}
-            />
-
+            <Tooltip content={<CustomTooltip />} />
+            
             {isAC
               ? (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).flatMap(k => ([
                   <Bar key={`${k}-APPT`} dataKey={`${k}_APPT`} barSize={14} fill={MONTH_COLORS.APPT}>

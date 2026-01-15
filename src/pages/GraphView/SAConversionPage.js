@@ -143,6 +143,43 @@ const SAConversionPage = () => {
     loadData();
   }, [selectedMonths, allSelected, selectedBranches, selectedSAs]);
 
+  /* ---------- CUSTOM TOOLTIP ---------- */
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      // Get months in chronological order (selected or all)
+      const monthsForChart = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
+      
+      return (
+        <Box sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.9)', borderRadius: 2, border: '1px solid #ccc' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+            SA: {label}
+          </Typography>
+          
+          {/* Show data in chronological month order */}
+          {monthsForChart.map(month => {
+            const dataPoint = payload.find(p => p.dataKey === month || p.dataKey === `${month}_APPT` || p.dataKey === `${month}_CONV`);
+            
+            if (dataPoint) {
+              const displayValue = isPercentage ? `${Math.round(dataPoint.value)}%` : Math.round(dataPoint.value);
+              return (
+                <Box key={month} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                  <Typography variant="body2" sx={{ color: MONTH_COLORS[month], fontWeight: 500 }}>
+                    {month}:
+                  </Typography>
+                  <Typography variant="body2">
+                    {displayValue}
+                  </Typography>
+                </Box>
+              );
+            }
+            return null;
+          })}
+        </Box>
+      );
+    }
+    return null;
+  };
+
   /* ---------- CHART DATA ---------- */
   const chartData = useMemo(() => {
     const rows = saKeys.map(sa => {
@@ -301,7 +338,7 @@ const SAConversionPage = () => {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="sa" angle={-50} textAnchor="end" interval={0} />
             <YAxis tickFormatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
-            <Tooltip formatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
+            <Tooltip content={<CustomTooltip />} />
 
             {isAC
               ? (allSelected || !selectedMonths.length
