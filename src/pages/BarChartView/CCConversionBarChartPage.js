@@ -137,6 +137,10 @@ const CCConversionBarChartPage = () => {
     return [...set];
   }, [selectedBranches, branchCceMap]);
 
+  const allCceSelected =
+    dropdownCces.length > 0 &&
+    selectedCces.length === dropdownCces.length;
+
   useEffect(() => {
     setSelectedCces(prev => prev.filter(c => dropdownCces.includes(c)));
   }, [dropdownCces]);
@@ -170,12 +174,79 @@ const CCConversionBarChartPage = () => {
     loadData();
   }, [selectedMonths, allSelected, selectedBranches, selectedCces]);
 
+  /* ---------- CUSTOM TOOLTIP FOR BAR CHART ---------- */
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      // Get months in chronological order (selected or all)
+      const monthsForChart = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
+      
+      // Find the chart entry for this CCE
+      const chartEntry = chartData.find(entry => normalize(entry.cce) === normalize(label));
+      const branchName = chartEntry?.branch || 'N/A';
+      
+      return (
+        <Box sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.95)', borderRadius: 2, border: '1px solid #ccc', minWidth: 200 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1.5, color: '#1976d2' }}>
+            CCE: {label}
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 1.5, color: '#666', fontSize: '0.8rem' }}>
+            Branch: {branchName}
+          </Typography>
+          
+          {/* Show data in chronological month order */}
+          {monthsForChart.map(month => {
+            const dataPoint = payload.find(p => 
+              p.dataKey === month || 
+              p.dataKey === `${month}_APPT` || 
+              p.dataKey === `${month}_CONV`
+            );
+            
+            if (dataPoint && dataPoint.value !== 0) {
+              const displayValue = isPercentage ? `${Math.round(dataPoint.value)}%` : Math.round(dataPoint.value);
+              return (
+                <Box key={month} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.3 }}>
+                  <Typography variant="body2" sx={{ color: MONTH_COLORS[month], fontWeight: 500, fontSize: '0.85rem' }}>
+                    {month}:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem' }}>
+                    {displayValue}
+                  </Typography>
+                </Box>
+              );
+            }
+            return null;
+          })}
+        </Box>
+      );
+    }
+    return null;
+  };
+
   /* ---------- CHART DATA ---------- */
   const chartData = useMemo(() => {
     const rows = cceKeys.map(cce => {
+      // Find the FIRST occurrence in summary data to get correct branch
+      let actualBranch = 'UNKNOWN';
+      
+      for (const { data } of summary) {
+        const matchingRow = data.find(d => normalize(d.cceName) === cce);
+        if (matchingRow) {
+          actualBranch = normalize(matchingRow.branch);
+          break;
+        }
+      }
+
+      // Filter: Only show CCEs from selected branches
+      if (selectedBranches.length > 0) {
+        const normalizedSelected = selectedBranches.map(normalize);
+        if (!normalizedSelected.includes(actualBranch)) {
+          return null;
+        }
+      }
+
       const row = { 
         cce,
-        branch: cceBranchMap[cce] || 'UNKNOWN'
+        branch: actualBranch
       };
 
       let totalConv = 0;
@@ -229,17 +300,18 @@ const CCConversionBarChartPage = () => {
       return row;
     });
 
-    return rows.sort((a, b) => b.__rankValue - a.__rankValue);
-  }, [cceKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC, cceBranchMap]);
+    return rows
+      .filter(row => row !== null)
+      .sort((a, b) => b.__rankValue - a.__rankValue);
+  }, [cceKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC, selectedBranches]);
 
-  /* ---------- Custom Label Component for Vertical Branch Names INSIDE Bars ---------- */
+  /* ---------- Custom Label Component ---------- */
   const VerticalBranchLabel = ({ x, y, width, height, value, index }) => {
     const entry = chartData[index];
     const branchName = entry?.branch || '';
     
     if (!branchName || branchName === 'UNKNOWN') return null;
 
-    // Truncate long branch names
     const displayName = branchName.length > 8 ? branchName.substring(0, 8) + '...' : branchName;
 
     return (
@@ -271,10 +343,6 @@ const CCConversionBarChartPage = () => {
     background: sel ? selectedGradient : "#fff",
     border: sel ? "1.5px solid #388e3c" : "1px solid #bdbdbd",
   });
-
-  const allCceSelected =
-    dropdownCces.length > 0 &&
-    selectedCces.length === dropdownCces.length;
 
   const getBarColor = (entry) => {
     if (isAC) {
@@ -416,11 +484,8 @@ const CCConversionBarChartPage = () => {
               tick={{ fontSize: 11 }}
             />
             <YAxis tickFormatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
-            <Tooltip 
-              formatter={v => isPercentage ? [`${v.toFixed(0)}%`, 'Value'] : [v.toFixed(0), 'Value']}
-              labelFormatter={label => `CCE: ${label} (${chartData.find(d => d.cce === label)?.branch || 'N/A'})`}
-            />
-
+            <Tooltip content={<CustomTooltip />} />
+            
             {isAC
               ? (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).flatMap(k => ([
                   <Bar 

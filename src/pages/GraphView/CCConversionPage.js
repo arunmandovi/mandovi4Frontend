@@ -143,6 +143,43 @@ const CCConversionPage = () => {
     loadData();
   }, [selectedMonths, allSelected, selectedBranches, selectedCces]);
 
+  /* ---------- CUSTOM TOOLTIP ---------- */
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      // Get months in chronological order (selected or all)
+      const monthsForChart = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
+      
+      return (
+        <Box sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.9)', borderRadius: 2, border: '1px solid #ccc' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+            CCE: {label}
+          </Typography>
+          
+          {/* Show data in chronological month order */}
+          {monthsForChart.map(month => {
+            const dataPoint = payload.find(p => p.dataKey === month || p.dataKey === `${month}_APPT` || p.dataKey === `${month}_CONV`);
+            
+            if (dataPoint) {
+              const displayValue = isPercentage ? `${dataPoint.value}%` : dataPoint.value;
+              return (
+                <Box key={month} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                  <Typography variant="body2" sx={{ color: MONTH_COLORS[month], fontWeight: 500 }}>
+                    {month}:
+                  </Typography>
+                  <Typography variant="body2">
+                    {displayValue}
+                  </Typography>
+                </Box>
+              );
+            }
+            return null;
+          })}
+        </Box>
+      );
+    }
+    return null;
+  };
+
   /* ---------- CHART DATA ---------- */
   const chartData = useMemo(() => {
     const rows = cceKeys.map(cce => {
@@ -156,9 +193,9 @@ const CCConversionPage = () => {
       summary.forEach(({ month, data }) => {
         const r = data.find(d => normalize(d.cceName) === cce);
 
-        const conv = Number(r?.pmsConversion ?? 0);
-        const appt = Number(r?.pmsAppointment ?? 0);
-        const val = Number(r?.[growthKey] ?? 0);
+        const conv = Math.round(Number(r?.pmsConversion ?? 0));
+        const appt = Math.round(Number(r?.pmsAppointment ?? 0));
+        const val = Math.round(Number(r?.[growthKey] ?? 0));
 
         if (isAC) {
           row[`${month}_APPT`] = appt;
@@ -183,11 +220,11 @@ const CCConversionPage = () => {
           row.ALL_CONV = totalConv;
         }
       } else if (isPercentage && (allSelected || !selectedMonths.length)) {
-        rankValue = totalAppt ? (totalConv / totalAppt) * 100 : 0;
+        rankValue = totalAppt ? Math.round((totalConv / totalAppt) * 100) : 0;
         row.ALL = rankValue;
       } else {
         rankValue = isPercentage
-          ? count ? totalVal / count : 0
+          ? count ? Math.round(totalVal / count) : 0
           : totalVal;
 
         if (allSelected || !selectedMonths.length) {
@@ -313,20 +350,29 @@ const CCConversionPage = () => {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="cce" angle={-50} textAnchor="end" interval={0} />
             <YAxis />
-            <Tooltip />
-
+            <Tooltip content={<CustomTooltip />} />
+            
             {isAC
               ? (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).flatMap(m => [
                   <Line key={`${m}-A`} dataKey={`${m}_APPT`} stroke="#1976d2" strokeWidth={3}>
-                    <LabelList position="top" />
+                    <LabelList 
+                      position="top" 
+                      formatter={(value) => `${value}`} 
+                    />
                   </Line>,
                   <Line key={`${m}-C`} dataKey={`${m}_CONV`} stroke="#d32f2f" strokeWidth={3}>
-                    <LabelList position="top" />
+                    <LabelList 
+                      position="top" 
+                      formatter={(value) => `${value}`} 
+                    />
                   </Line>
                 ])
               : (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).map(key => (
                   <Line key={key} dataKey={key} stroke={MONTH_COLORS[key]} strokeWidth={3}>
-                    <LabelList position="top" />
+                    <LabelList 
+                      position="top" 
+                      formatter={(value) => isPercentage ? `${value}%` : `${value}`}
+                    />
                   </Line>
                 ))}
           </LineChart>

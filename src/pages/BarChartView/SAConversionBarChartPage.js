@@ -132,6 +132,7 @@ const SAConversionBarChartPage = () => {
     setSelectedSAs(prev => prev.filter(c => dropdownSAs.includes(c)));
   }, [dropdownSAs]);
 
+  /* ---------- DATA FETCH - FIXED WITH ACTUAL DATA BRANCH INFO ---------- */
   useEffect(() => {
     const loadData = async () => {
       const monthsToFetch =
@@ -149,7 +150,14 @@ const SAConversionBarChartPage = () => {
         const res = await fetchData(`/api/sa/sa_conversion_summary${query}`);
         const rows = Array.isArray(res) ? res : [];
 
-        rows.forEach(r => saSet.add(normalize(r.saName)));
+        // Use actual data from API response to get correct branch info
+        rows.forEach(r => {
+          const saName = normalize(r.saName);
+          const actualBranch = normalize(r.branch);
+          
+          saSet.add(saName);
+        });
+        
         allData.push({ month, data: rows });
       }
 
@@ -160,12 +168,31 @@ const SAConversionBarChartPage = () => {
     loadData();
   }, [selectedMonths, allSelected, selectedBranches, selectedSAs]);
 
-  /* ---------- CHART DATA ---------- */
+  /* ---------- CHART DATA - FIXED WITH ACTUAL DATA BRANCH INFO ---------- */
   const chartData = useMemo(() => {
     const rows = saKeys.map(sa => {
+      // Find the FIRST occurrence in summary data to get correct branch
+      let actualBranch = 'UNKNOWN';
+      
+      for (const { data } of summary) {
+        const matchingRow = data.find(d => normalize(d.saName) === sa);
+        if (matchingRow) {
+          actualBranch = normalize(matchingRow.branch);
+          break; // Use first match
+        }
+      }
+
+      // Filter: Only show SAs from selected branches
+      if (selectedBranches.length > 0) {
+        const normalizedSelected = selectedBranches.map(normalize);
+        if (!normalizedSelected.includes(actualBranch)) {
+          return null;
+        }
+      }
+
       const row = { 
         sa,
-        branch: saBranchMap[sa] || 'UNKNOWN'
+        branch: actualBranch
       };
 
       let totalConv = 0;
@@ -219,8 +246,10 @@ const SAConversionBarChartPage = () => {
       return row;
     });
 
-    return rows.sort((a, b) => b.__rankValue - a.__rankValue);
-  }, [saKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC, saBranchMap]);
+    return rows
+      .filter(row => row !== null)
+      .sort((a, b) => b.__rankValue - a.__rankValue);
+  }, [saKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC, selectedBranches]);
 
   /* ---------- Custom Label Component for Vertical Branch Names INSIDE Bars ---------- */
   const VerticalBranchLabel = ({ x, y, width, height, value, index }) => {
