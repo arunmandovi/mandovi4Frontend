@@ -35,8 +35,12 @@ import ReferenceePage from "./pages/GraphView/ReferenceePage";
 import ReferenceeTablePage from "./pages/GraphView/ReferenceeTablePage";
 import RevenuePage from "./pages/GraphView/RevenuePage";
 import SalesPage from "./pages/GraphView/SalesPage.js";
+import ServiceePage from "./pages/GraphView/ServicveePage.js";
 import SalesTablePage from "./pages/GraphView/SalesTablePage";
+import ServiceeTablePage from "./pages/GraphView/ServiceeTablePage.js";
 import SalesGrowthPage from "./pages/GraphView/SalesGrowthPage.js";
+import ServiceeGrowthPage from "./pages/GraphView/ServiceeGrowthPage.js";
+import SalesServiceeGrowthPage from "./pages/GraphView/SalesServiceeGrowthPage.js";
 import SAConversionPage from "./pages/GraphView/SAConversionPage";
 import SAConversionTablePage from "./pages/GraphView/SAConversionTablePage.js";
 import SparesPage from "./pages/GraphView/SparesPage";
@@ -89,6 +93,7 @@ import ProfitLossUploadPage from "./pages/FileUpload/ProfitLossUploadPage";
 import ReferenceeUploadPage from "./pages/FileUpload/ReferenceeUploadPage";
 import RevenueUploadPage from "./pages/FileUpload/RevenueUploadPage";
 import SalesUploadPage from "./pages/FileUpload/SalesUploadPage.js";
+import ServiceeUploadPage from "./pages/FileUpload/ServiceeUploadPage.js";
 import SAConversionUploadPage from "./pages/FileUpload/SAConversionUploadPage";
 import SparesUploadPage from "./pages/FileUpload/SparesUploadPage";
 import TATUploadPage from "./pages/FileUpload/TATUploadPage";
@@ -115,6 +120,7 @@ import ProfitLossBarChartPage from "./pages/BarChartView/ProfitLossBarChartPage"
 import ReferenceeBarChartPage from "./pages/BarChartView/ReferenceeBarChartPage";
 import RevenueBarChartPage from "./pages/BarChartView/RevenueBarChartPage";
 import SalesBarChartPage from "./pages/BarChartView/SalesBarChartPage.js";
+import ServiceeBarChartPage from "./pages/BarChartView/ServiceeBarChartPage.js";
 import SparesBarChartPage from "./pages/BarChartView/SparesBarChartPage";
 import SAConversionBarChartPage from "./pages/BarChartView/SAConversionBarChartPage";
 import TATBarChartPage from "./pages/BarChartView/TATBarChartPage";
@@ -186,6 +192,7 @@ function App() {
         <Route path="/referencee-upload" element={ <AdminProtectedRoute><ReferenceeUploadPage /></AdminProtectedRoute> } />
         <Route path="/revenue-upload" element={ <AdminProtectedRoute><RevenueUploadPage /></AdminProtectedRoute> } />
         <Route path="/sales-upload" element={ <AdminProtectedRoute><SalesUploadPage /></AdminProtectedRoute> } />
+        <Route path="/servicee-upload" element={ <AdminProtectedRoute><ServiceeUploadPage /></AdminProtectedRoute> } />
         <Route path="/spares-upload" element={ <AdminProtectedRoute><SparesUploadPage /></AdminProtectedRoute> } />
         <Route path="/tat-upload" element={ <AdminProtectedRoute><TATUploadPage /></AdminProtectedRoute> } />
         <Route path="/vas-upload" element={ <AdminProtectedRoute><VASUploadPage /></AdminProtectedRoute> } />
@@ -233,8 +240,12 @@ function App() {
           <Route path="referencee_table" element={<ReferenceeTablePage />} />
           <Route path="revenue" element={<RevenuePage />} />
           <Route path="sales" element={<SalesPage />} />
+          <Route path="servicee" element={<ServiceePage />} />
           <Route path="sales_table" element={<SalesTablePage />} />
+          <Route path="servicee_table" element={<ServiceeTablePage />} />
           <Route path="sales_growth" element={<SalesGrowthPage />} />
+          <Route path="servicee_growth" element={<ServiceeGrowthPage />} />
+          <Route path="sales_servicee_growth" element={<SalesServiceeGrowthPage />} />
           <Route path="spares" element={<SparesPage />} />
           <Route path="tat" element={<TATPage />} />
           <Route path="vas" element={<VASPage />} />
@@ -287,6 +298,7 @@ function App() {
           <Route path="referencee-bar-chart" element={<ReferenceeBarChartPage />} />
           <Route path="revenue-bar-chart" element={<RevenueBarChartPage />} />
           <Route path="sales-bar-chart" element={<SalesBarChartPage />} />
+          <Route path="servicee-bar-chart" element={<ServiceeBarChartPage />} />
           <Route path="spares-bar-chart" element={<SparesBarChartPage />} />
           <Route path="tat-bar-chart" element={<TATBarChartPage />} />
           <Route path="vas-bar-chart" element={<VASBarChartPage />} />

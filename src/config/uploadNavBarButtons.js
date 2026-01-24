@@ -23,4 +23,5 @@ export const uploadNavbarButtons = [
   { label: "CC Conversion", path: "/cc_conversion-upload" },
   { label: "SA Conversion", path: "/sa_conversion-upload" },
   { label: "Sales", path: "/sales-upload" },
+  { label: "Service", path: "/servicee-upload" },
 ];

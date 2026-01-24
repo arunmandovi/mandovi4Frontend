@@ -58,6 +58,8 @@ function Layout() {
     "cc_conversion",
     "sa_conversion",
     "sales",
+    "servicee",
+    "sales_servicee_growth",
   ];
 
   /* ---------- MODULE → SUPPORTED VIEW MODES ---------- */
@@ -86,7 +88,9 @@ function Layout() {
     profit_loss: ["bar-chart"],
     cc_conversion: ["bar-chart"],
     sa_conversion: ["bar-chart"],
-    sales: ["bar-chart"], // ❗ NO branches-bar-chart
+    sales: ["bar-chart"],
+    servicee: ["bar-chart"],
+    sales_servicee_growth: ["bar-chart"], // ❗ NO branches-bar-chart
   };
 
   /* ---------- LINK BUILDERS ---------- */
@@ -175,6 +179,8 @@ function formatLabel(name) {
     tat: "TAT",
     mcp: "MCP",
     sales: "Sales",
+    servicee: "Service",
+    sales_servicee_growth: "Sales & Service",
   };
 
   if (specialCases[name]) return specialCases[name];
