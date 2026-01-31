@@ -94,13 +94,12 @@ const SalesServiceeGrowthPage = () => {
     return salesYears.map(year => String(Number(year) + delay));
   };
 
-  /* ================= DATA LOAD ================= */
+  /* ================= DATA LOAD (ONLY MODIFIED FOR MORE THAN PMS50) ================= */
   useEffect(() => {
     let isMounted = true;
     const load = async () => {
       const salesYearsToLoad = yearFilter.length ? yearFilter : YEARS;
       const serviceDelay = getServiceDelay();
-      const serviceYearsToLoad = getServiceYearsFromSalesYears(salesYearsToLoad);
       
       // Load Sales Data (user-selected years)
       let salesMerged = [];
@@ -127,10 +126,20 @@ const SalesServiceeGrowthPage = () => {
         }
       }
 
-      // Load Service Data (auto-calculated delayed years)
+      // Load Service Data (delayed years based on service code)
       let serviceMerged = [];
       for (const year of salesYearsToLoad) {
-        const serviceYear = String(Number(year) + serviceDelay);
+        let serviceYearsToFetch = [String(Number(year) + serviceDelay)];
+        
+        // ONLY for MORE THAN PMS50 - fetch 6+ years (6,7,8,... up to current year)
+        if (serviceCodesFilter[0] === "MORE THAN PMS50") {
+          const baseServiceYear = Number(year) + 6;
+          serviceYearsToFetch = [];
+          for (let i = baseServiceYear; i <= CURRENT_YEAR; i++) {
+            serviceYearsToFetch.push(String(i));
+          }
+        }
+
         const channelParams = channelFilter.length
           ? "&" + channelFilter.map((c) => `channels=${c}`).join("&")
           : "";
@@ -138,23 +147,26 @@ const SalesServiceeGrowthPage = () => {
           ? "&" + serviceCodesFilter.map((s) => `serviceCodes=${s}`).join("&")
           : "";
         
-        try {
-          const res = await fetchData(
-            `/api/servicee/servicee_branch_summary?years=${serviceYear}${channelParams}${serviceCodesParams}`
-          );
-          if (Array.isArray(res)) {
-            res.forEach((r) => {
-              serviceMerged.push({
-                baseYear: year,        // Original sales year
-                serviceYear: serviceYear,
-                branch: r.branch,
-                serviceLoadd: r.serviceLoadd,
-                type: 'service'
+        // Fetch service data for relevant service year(s)
+        for (const serviceYear of serviceYearsToFetch) {
+          try {
+            const res = await fetchData(
+              `/api/servicee/servicee_branch_summary?years=${serviceYear}${channelParams}${serviceCodesParams}`
+            );
+            if (Array.isArray(res)) {
+              res.forEach((r) => {
+                serviceMerged.push({
+                  baseYear: year,        // Original sales year
+                  serviceYear: serviceYear,
+                  branch: r.branch,
+                  serviceLoadd: r.serviceLoadd,
+                  type: 'service'
+                });
               });
-            });
+            }
+          } catch (error) {
+            console.error('Service fetch error:', error);
           }
-        } catch (error) {
-          console.error('Service fetch error:', error);
         }
       }
 
@@ -197,7 +209,7 @@ const SalesServiceeGrowthPage = () => {
           ? Number(((salesForBaseYear - prevSalesForYear) / prevSalesForYear) * 100).toFixed(2)
           : 0;
 
-        // Service data for corresponding delayed year
+        // Service data - aggregate all service years for this base year (handles MORE THAN PMS50 automatically)
         const serviceForYear = serviceRawData
           .filter(d => d.baseYear === baseYear)
           .reduce((sum, d) => sum + (d.serviceLoadd || 0), 0);
@@ -221,13 +233,16 @@ const SalesServiceeGrowthPage = () => {
           : 0;
         yearData[`${selectedBranch}_sales`] = salesGrowth;
 
-        // Service data for corresponding delayed year
-        const serviceItem = serviceRawData.find(d => d.baseYear === baseYear && d.branch === selectedBranch);
-        const prevServiceBaseYear = sortedBaseYears[sortedBaseYears.indexOf(baseYear) - 1];
-        const prevServiceItem = prevServiceBaseYear ? serviceRawData.find(d => d.baseYear === prevServiceBaseYear && d.branch === selectedBranch) : null;
+        // Service data - aggregate all service years for this base year (handles MORE THAN PMS50 automatically)
+        const serviceItems = serviceRawData.filter(d => d.baseYear === baseYear && d.branch === selectedBranch);
+        const serviceForYear = serviceItems.reduce((sum, d) => sum + (d.serviceLoadd || 0), 0);
         
-        const serviceGrowth = prevServiceItem && prevServiceItem.serviceLoadd > 0
-          ? Number(((serviceItem?.serviceLoadd || 0 - prevServiceItem.serviceLoadd) / prevServiceItem.serviceLoadd) * 100).toFixed(2)
+        const prevServiceBaseYear = sortedBaseYears[sortedBaseYears.indexOf(baseYear) - 1];
+        const prevServiceItems = prevServiceBaseYear ? serviceRawData.filter(d => d.baseYear === prevServiceBaseYear && d.branch === selectedBranch) : [];
+        const prevServiceForYear = prevServiceItems.reduce((sum, d) => sum + (d.serviceLoadd || 0), 0);
+        
+        const serviceGrowth = prevServiceForYear > 0
+          ? Number(((serviceForYear - prevServiceForYear) / prevServiceForYear) * 100).toFixed(2)
           : 0;
         yearData[`${selectedBranch}_service`] = serviceGrowth;
       }
@@ -238,19 +253,20 @@ const SalesServiceeGrowthPage = () => {
     return chartData;
   }, [salesRawData, serviceRawData, selectedBranch, yearFilter, serviceCodesFilter]);
 
-  /* ================= TOOLTIP ================= */
-  const CustomTooltip = ({ active, payload, label, payloadRaw }) => {
+  /* ================= TOOLTIP (ONLY UPDATED FOR MORE THAN PMS50) ================= */
+  const CustomTooltip = ({ active, payload, payloadRaw }) => {
     if (!active || !payload?.length) return null;
 
     const serviceDelay = getServiceDelay();
-    const baseYear = label;
+    const baseYear = payloadRaw?.[0]?.baseYear || payload[0].payload.baseYear;
     const serviceYear = payloadRaw?.[0]?.serviceYear || String(Number(baseYear) + serviceDelay);
+    const gapDisplay = serviceCodesFilter[0] === "MORE THAN PMS50" ? `${serviceDelay}+ years` : `${serviceDelay} years`;
 
     return (
       <Paper sx={{ p: 1.5 }}>
         <Typography variant="subtitle2">Sales Year: {baseYear}</Typography>
         <Typography variant="caption" color="text.secondary">
-          Service Year: {serviceYear} ({serviceCodesFilter[0] || 'No Filter'})
+          Service Year: {serviceYear} ({serviceCodesFilter[0] || 'No Filter'}) | Gap: {gapDisplay}
         </Typography>
         {payload.map((p) => (
           <Box key={p.dataKey} sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}>
@@ -280,7 +296,7 @@ const SalesServiceeGrowthPage = () => {
     "&:hover": { background: "#aed581" },
   });
 
-  /* ---------------- RENDER ---------------- */
+  /* ---------------- RENDER (ONLY UPDATED FOR MORE THAN PMS50 DISPLAY) ---------------- */
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
@@ -294,17 +310,17 @@ const SalesServiceeGrowthPage = () => {
         {/* CURRENT FILTER INFO */}
         <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            Service Delay: {getServiceDelay()} years | 
-            Sales Years: {yearFilter.length > 0 ? yearFilter.join(', ') : 'ALL'} | 
-            Service Years: {getServiceYearsFromSalesYears(yearFilter.length > 0 ? yearFilter : [CURRENT_YEAR]).join(', ')} | 
-            Active Filter: {serviceCodesFilter[0] || 'None'}
+            Service Delay: <strong>{getServiceDelay()}{serviceCodesFilter[0] === "MORE THAN PMS50" ? '+' : ''} years</strong> | 
+            Sales Years: <strong>{yearFilter.length > 0 ? yearFilter.join(', ') : 'ALL'}</strong> | 
+            Service Years: <strong>{getServiceYearsFromSalesYears(yearFilter.length > 0 ? yearFilter : [CURRENT_YEAR.toString()]).join(', ')}</strong> | 
+            Active Filter: <strong>{serviceCodesFilter[0] || 'None'}</strong>
           </Typography>
         </Box>
 
         {/* YEAR FILTER (Controls Sales Years) */}
         <Box sx={{ my: 2 }}>
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-            Sales Years (Service years auto-calculated):
+            Sales Years (Service years auto-calculated with {getServiceDelay()}{serviceCodesFilter[0] === "MORE THAN PMS50" ? '+' : ''} year gap):
           </Typography>
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             {YEARS.map((y) => (
@@ -342,10 +358,10 @@ const SalesServiceeGrowthPage = () => {
           ))}
         </Box>
 
-        {/* SERVICE CODES FILTER (Single Selection) */}
+        {/* SERVICE CODES FILTER (Single Selection) - ONLY MORE THAN PMS50 shows + */}
         <Box sx={{ my: 2 }}>
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-            Service Delay:
+            Service Delay (Year Gap):
           </Typography>
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             {SERVICECODES.map((s) => (
@@ -359,7 +375,7 @@ const SalesServiceeGrowthPage = () => {
                   )
                 }
               >
-                {s} ({SERVICE_CODE_DELAYS[s]}yr)
+                {s} ({SERVICE_CODE_DELAYS[s]}{s === "MORE THAN PMS50" ? '+' : ''}yr gap)
               </Button>
             ))}
           </Box>
@@ -399,7 +415,7 @@ const SalesServiceeGrowthPage = () => {
         {/* COMBINED LINE CHART */}
         <Box sx={{ my: 3 }}>
           <Typography variant="h6" sx={{ mb: 3, textAlign: 'center' }}>
-            LINE CHART - {selectedBranch} | {combinedChartData.length} years
+            LINE CHART - {selectedBranch} | {combinedChartData.length} years | Service Gap: {getServiceDelay()}{serviceCodesFilter[0] === "MORE THAN PMS50" ? '+' : ''} years
           </Typography>
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={combinedChartData}>
@@ -439,7 +455,7 @@ const SalesServiceeGrowthPage = () => {
         {/* COMBINED BAR CHART */}
         <Box sx={{ my: 3 }}>
           <Typography variant="h6" sx={{ mb: 3, textAlign: 'center' }}>
-            BAR CHART - {selectedBranch} | {combinedChartData.length} years
+            BAR CHART - {selectedBranch} | {combinedChartData.length} years | Service Gap: {getServiceDelay()}{serviceCodesFilter[0] === "MORE THAN PMS50" ? '+' : ''} years
           </Typography>
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={combinedChartData}>
