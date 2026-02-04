@@ -203,7 +203,7 @@ const BranchBarChart = ({
 
   const MysoreBranches = [
     "bannur", "chamrajnagar","hunsur road", "maddur", "gonikoppa", "mandya", "krs road", "kushalnagar",
-     "krishnarajapet", "mysore nexa","nagamangala", "somvarpet", "narasipura", "kollegal",
+     "krishnarajapet", "mysore nexa","nagamangala", "somvarpet", "narasipura", "kollegal", "Mandya Nexa",
   ];
 
   const MangaloreBranches = [

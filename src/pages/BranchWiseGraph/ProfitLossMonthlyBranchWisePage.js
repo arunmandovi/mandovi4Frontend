@@ -48,7 +48,7 @@ const BRANCH_ORDER = [
   "uttarahali kengeri","vidyarannapura","vijayanagar","wilson garden","yelahanka",
   "yeshwanthpur ws","bannur","chamrajnagar","hunsur road","maddur","gonikoppa",
   "mandya","krs road","kushalnagar","krishnarajapet","mysore nexa","nagamangala",
-  "somvarpet","narasipura","kollegal","balmatta","bantwal","vittla","kadaba",
+  "somvarpet","narasipura","kollegal","mandya nexa","balmatta","bantwal","vittla","kadaba",
   "uppinangady","surathkal","sullia","adyar","yeyyadi br","nexa service",
   "sujith bagh lane","naravi",
 ];
@@ -61,7 +61,7 @@ const BangaloreBranches = [
 
 const MysoreBranches = [
   "bannur", "chamrajnagar","hunsur road", "maddur", "gonikoppa", "mandya", "krs road", "kushalnagar",
-  "krishnarajapet", "mysore nexa","nagamangala", "somvarpet", "narasipura", "kollegal",
+  "krishnarajapet", "mysore nexa","nagamangala", "somvarpet", "narasipura", "kollegal", "mandya nexa",
 ];
 
 const MangaloreBranches = [

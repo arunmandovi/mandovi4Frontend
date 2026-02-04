@@ -245,7 +245,7 @@ const [months, setMonths] = useState([getCurrentFYMonth()]);
           ) {
             return !(
               item.name === "Vittla" || item.name === "Naravi" || item.name === "Gowribidanur" || item.name === "Malur SOW" ||
-              item.name === "Maluru WS" || item.name === "Kollegal" || item.name === "Narasipura" || item.name === "Nagamangala" ||
+              item.name === "Maluru WS" || item.name === "Kollegal" || item.name === "Mandya Nexa" || item.name === "Narasipura" || item.name === "Nagamangala" ||
               item.name === "Maddur" || item.name === "Somvarpet" || item.name === "Krishnarajapet" || item.name === "ChamrajNagar" ||
               item.name === "KRS Road" || item.name === "Balmatta" || item.name === "Bantwal" ||
               item.name === "Nexa Service" || item.name === "Kadaba" || item.name === "Sujith Bagh Lane"

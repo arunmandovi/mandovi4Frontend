@@ -96,7 +96,7 @@ function HoldUpSummaryPage() {
 
     "KRS Road", "Hunsur Road", "Bannur", "Mandya", "Gonikoppa", "Kushalnagar",
     "ChamrajNagar", "Krishnarajapet", "Somvarpet", "Maddur", "Nagamangala",
-    "Narasipura", "Mysore Nexa", "Kollegal", "MYSORE",
+    "Narasipura", "Mysore Nexa", "Kollegal","Mandya Nexa", "MYSORE",
 
     "Balmatta", "Sujith Bagh Lane", "Nexa Service", "Yeyyadi BR", "Adyar",
     "Surathkal", "Bantwal", "Uppinangady", "Sullia", "Kadaba", "Vittla",

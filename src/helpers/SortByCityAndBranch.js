@@ -33,6 +33,7 @@ export const BRANCH_CITY_MAP = {
   "Somvarpet": "Mysore",
   "Narasipura": "Mysore",
   "Kollegal": "Mysore",
+  "Mandya Nexa": "Mysore",
 
   "Balmatta": "Mangalore",
   "Bantwal": "Mangalore",
