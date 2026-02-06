@@ -46,6 +46,8 @@ function ProfitLossSRBRLoaddPage() {
             "Aug 2025": formatNumber(row.aug25_per_100k),
             "Sep 2025": formatNumber(row.sep25_per_100k),
             "Oct 2025": formatNumber(row.oct25_per_100k),
+            "Nov 2025": formatNumber(row.nov25_per_100k),
+            "Dec 2025": formatNumber(row.dec25_per_100k),
             "2025-26": formatNumber(row.total25_per_100k),
           }));
           formatted.sort(
@@ -92,6 +94,8 @@ function ProfitLossSRBRLoaddPage() {
             "Aug 2025": formatNumber(row.aug25_per_100k),
             "Sep 2025": formatNumber(row.sep25_per_100k),
             "Oct 2025": formatNumber(row.oct25_per_100k),
+            "Nov 2025": formatNumber(row.nov25_per_100k),
+            "Dec 2025": formatNumber(row.dec25_per_100k),
             "2025-26": formatNumber(row.total25_per_100k),
           }))
           .sort((a, b) => {

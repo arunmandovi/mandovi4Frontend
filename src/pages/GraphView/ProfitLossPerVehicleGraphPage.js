@@ -22,6 +22,8 @@ const timeline = [
   { label: "SR&BR Aug 25", key: "aug25_per_100k", month: "Aug" },
   { label: "SR&BR Sep 25", key: "sep25_per_100k", month: "Sep" },
   { label: "SR&BR Oct 25", key: "oct25_per_100k", month: "Oct" },
+  { label: "SR&BR Nov 25", key: "nov25_per_100k", month: "Nov" },
+  { label: "SR&BR Dec 25", key: "dec25_per_100k", month: "Dec" },
   { label: "SR&BR Apr 25", key: "total25_per_100k", month: "Total" },
 ];
 
