@@ -101,6 +101,7 @@ export const apiModules = [
   upload: '/api/outstanding/upload',
   get: '/api/outstanding/getalloutstanding',
   getByType: '/api/outstanding/getoutstanding',
+  getInsuranceDifference: '/api/outstanding/getallinsurancedifference',
   deleteAll: "/api/outstanding/delete_all",
 },
 { name: 'PMS Parts',

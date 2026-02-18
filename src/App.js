@@ -86,7 +86,6 @@ import MCPUploadPage from "./pages/FileUpload/MCPUploadPage";
 import MSGPUploadPage from "./pages/FileUpload/MSGPUploadPage";
 import MSGPProfitUploadPage from "./pages/FileUpload/MSGPProfitUploadPage";
 import OilUploadPage from "./pages/FileUpload/OilUploadPage";
-import OutstandingUploadPage from "./pages/FileUpload/OutstandingUploadPage";
 import PMSPartsUploadPage from "./pages/FileUpload/PMSPartsUploadPage";
 import ProductivityUploadPage from "./pages/FileUpload/ProductivityUploadPage";
 import ProfitLossUploadPage from "./pages/FileUpload/ProfitLossUploadPage";
@@ -150,6 +149,30 @@ import SparesBranchesBarChartPage from "./pages/BranchWiseBarChartView/SparesBra
 import TATBranchesBarChartPage from "./pages/BranchWiseBarChartView/TATBranchesBarChartPage";
 import VASBranchesBarChartPage from "./pages/BranchWiseBarChartView/VASBranchesBarChartPage";
 
+//Outstanding Page
+import TotalBranchOutstandingPage from "./pages/Outstanding/BranchWiseOutstanding/TotalBranchOutstandingPage.js";
+import TotalSAOutstandingPage from "./pages/Outstanding/SAWiseOutstanding/TotalSAOutstandingPage.js";
+import TotalPartyOutstandingPage from "./pages/Outstanding/PartyWiseOutstanding/TotalPartyOutstandingPage.js";
+
+import CashBranchOutstandingPage from "./pages/Outstanding/BranchWiseOutstanding/CashBranchOutstandingPage.js";
+import CashSAOutstandingPage from "./pages/Outstanding/SAWiseOutstanding/CashSAOutstandingPage.js";
+import CashPartyOutstandingPage from "./pages/Outstanding/PartyWiseOutstanding/CashPartyOutstandingPage.js";
+
+import InvoiceBranchOutstandingPage from "./pages/Outstanding/BranchWiseOutstanding/InvoiceBranchOutstandingPage.js";
+import InvoiceSAOutstandingPage from "./pages/Outstanding/SAWiseOutstanding/InvoiceSAOutstandingPage.js";
+import InvoicePartyOutstandingPage from "./pages/Outstanding/PartyWiseOutstanding/InvoicePartyOutstandingPage.js";
+
+import InsuranceBranchOutstandingPage from "./pages/Outstanding/BranchWiseOutstanding/InsuranceBranchOutstandingPage.js";
+import InsuranceSAOutstandingPage from "./pages/Outstanding/SAWiseOutstanding/InsuranceSAOutstandingPage.js";
+import InsurancePartyOutstandingPage from "./pages/Outstanding/PartyWiseOutstanding/InsurancePartyOutstandingPage.js";
+
+import OthersBranchOutstandingPage from "./pages/Outstanding/BranchWiseOutstanding/OthersBranchOutstandingPage.js";
+import OthersSAOutstandingPage from "./pages/Outstanding/SAWiseOutstanding/OthersSAOutstandingPage.js";
+import OthersPartyOutstandingPage from "./pages/Outstanding/PartyWiseOutstanding/OthersPartyOutstandingPage.js";
+
+import OutstandingUploadPage from "./pages/FileUpload/OutstandingUploadPage";
+
+
 import "./App.css";
 import DueDonePage from "./pages/GraphView/DueDonePage";
 
@@ -210,6 +233,26 @@ function App() {
           <Route index element={<Navigate to="battery_tyre" replace />} />
 
           {/* 🧭 CityWise Graph Pages */}
+          <Route path="total_branch_outstanding" element={<TotalBranchOutstandingPage />} />
+          <Route path="total_sa_outstanding" element={<TotalSAOutstandingPage />} />
+          <Route path="total_party_outstanding" element={<TotalPartyOutstandingPage />} />
+
+          <Route path="cash_branch_outstanding" element={<CashBranchOutstandingPage />} />
+          <Route path="cash_sa_outstanding" element={<CashSAOutstandingPage />} />
+          <Route path="cash_party_outstanding" element={<CashPartyOutstandingPage />} />
+
+          <Route path="invoice_branch_outstanding" element={<InvoiceBranchOutstandingPage />} />
+          <Route path="invoice_sa_outstanding" element={<InvoiceSAOutstandingPage />} />
+          <Route path="invoice_party_outstanding" element={<InvoicePartyOutstandingPage />} />
+
+          <Route path="insurance_branch_outstanding" element={<InsuranceBranchOutstandingPage />} />
+          <Route path="insurance_sa_outstanding" element={<InsuranceSAOutstandingPage />} />
+          <Route path="insurance_party_outstanding" element={<InsurancePartyOutstandingPage />} />
+
+          <Route path="others_branch_outstanding" element={<OthersBranchOutstandingPage />} />
+          <Route path="others_sa_outstanding" element={<OthersSAOutstandingPage />} />
+          <Route path="others_party_outstanding" element={<OthersPartyOutstandingPage />} />
+
           <Route path="battery_tyre" element={<BatteryTyrePage />} />
           <Route path="br_conversion" element={<BRConversionPage />} />
           <Route path="cc_conversion" element={<CCConversionPage />} />

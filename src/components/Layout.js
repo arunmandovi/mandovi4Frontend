@@ -60,6 +60,7 @@ function Layout() {
     "sales",
     "servicee",
     "sales_servicee_growth",
+    "total_branch_outstanding",
   ];
 
   /* ---------- MODULE → SUPPORTED VIEW MODES ---------- */
@@ -181,6 +182,7 @@ function formatLabel(name) {
     sales: "Sales",
     servicee: "Service",
     sales_servicee_growth: "Sales & Service",
+    total_branch_outstanding: "Outstanding",
   };
 
   if (specialCases[name]) return specialCases[name];

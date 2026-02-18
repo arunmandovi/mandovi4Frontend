@@ -27,10 +27,11 @@ function OutstandingUploadPage() {
   const [types, setTypes] = useState([]);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [idData, setIdData] = useState([]);
 
   const navigate = useNavigate();
 
-  // 🔹 Fetch ALL data
+  // 🔹 Fetch ALL data (Outstanding table)
   const handleFetch = async () => {
     setLoading(true);
     const data = await fetchAllRecords(config.get);
@@ -39,16 +40,45 @@ function OutstandingUploadPage() {
     setLoading(false);
   };
 
-  // 🔹 UI filter only
+  // 🔹 Fetch ID data separately (Insurance Difference table)
+  const fetchIdData = async () => {
+    try {
+      const data = await fetchAllRecords(config.getInsuranceDifference);
+      setIdData(data);
+    } catch (error) {
+      console.error("Failed to fetch ID data:", error);
+      setIdData([]);
+    }
+  };
+
+  // 🔹 Updated Filter Handler - Handles ID + other types
   const handleFilter = async () => {
     if (!types.length) {
       alert("⚠ Please select Type");
       return;
     }
+
     setLoading(true);
-    const data = await filterByTypes(config.getByType, types);
-    setTableData(data);
+    
+    // 🔹 Check if ID is selected
+    const hasIdType = types.includes("ID");
+    
+    if (hasIdType) {
+      // ✅ When ID is clicked, show ID data from getInsuranceDifference API
+      setTableData(idData);
+    } else {
+      // 🔹 Filter Outstanding data for other types (CASH, INVOICE, etc.)
+      const data = await filterByTypes(config.getByType, types);
+      setTableData(data);
+    }
+    
     setLoading(false);
+  };
+
+  // 🔹 View All - Reset to Outstanding data
+  const handleViewAll = () => {
+    setTypes([]);
+    handleFetch();
   };
 
   // 🔹 Upload
@@ -66,23 +96,26 @@ function OutstandingUploadPage() {
     setLoading(false);
   };
 
-  // 🔹 DOWNLOAD — EXCLUDE outstandingSINo COLUMN
+  // 🔹 DOWNLOAD — Separate handling for ID data
   const handleDownload = () => {
-    if (!allData.length) {
+    if (!allData.length && !idData.length) {
       alert("⚠ No data available");
       return;
     }
 
     const getBillNo = (row) => (row.bill_no || row.billNo || "");
 
-    // ❗ REMOVE outstandingSINo ONLY FOR EXCEL
-    const sanitize = (rows) =>
+    // ❗ REMOVE outstandingSINo ONLY FOR EXCEL (Outstanding data)
+    const sanitizeOutstanding = (rows) =>
       rows.map(({ outstandingSINo, ...rest }) => rest);
 
-    const cash = sanitize(allData.filter(r => getBillNo(r).includes("BC")));
-    const invoice = sanitize(allData.filter(r => getBillNo(r).includes("BR")));
-    const insurance = sanitize(allData.filter(r => getBillNo(r).includes("BI")));
-    const others = sanitize(
+    // ✅ ID data uses different sanitize (no outstandingSINo column)
+    const sanitizeIdData = (rows) => rows;
+
+    const cash = sanitizeOutstanding(allData.filter(r => getBillNo(r).includes("BC")));
+    const invoice = sanitizeOutstanding(allData.filter(r => getBillNo(r).includes("BR")));
+    const insurance = sanitizeOutstanding(allData.filter(r => getBillNo(r).includes("BI")));
+    const others = sanitizeOutstanding(
       allData.filter(r => {
         const bill = getBillNo(r);
         return (
@@ -92,8 +125,10 @@ function OutstandingUploadPage() {
         );
       })
     );
-
-    const total = sanitize(allData);
+    
+    // 🔹 ID DATA - From separate table/API
+    const idRecords = sanitizeIdData(idData);
+    const total = sanitizeOutstanding(allData);
 
     const workbook = XLSX.utils.book_new();
 
@@ -122,11 +157,17 @@ function OutstandingUploadPage() {
       XLSX.utils.json_to_sheet(others),
       "OTHERS"
     );
+    // 🔹 ID SHEET
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.json_to_sheet(idRecords),
+      "ID"
+    );
 
     XLSX.writeFile(workbook, "Outstanding_Report.xlsx");
   };
 
-  // 🔹 Delete all
+  // 🔹 Delete all (Outstanding table only)
   const handleDeleteAll = async () => {
     if (!window.confirm("⚠ Delete ALL Outstanding data?")) return;
     setLoading(true);
@@ -143,6 +184,7 @@ function OutstandingUploadPage() {
 
   useEffect(() => {
     handleFetch();
+    fetchIdData(); // Load ID data on mount
   }, []);
 
   if (loading) return <LoadingAnimation />;
@@ -175,7 +217,7 @@ function OutstandingUploadPage() {
             types={types}
             setTypes={setTypes}
             onFilter={handleFilter}
-            onViewAll={handleFetch}
+            onViewAll={handleViewAll} // ✅ Pass updated handler
           />
           <DataTable tableData={tableData} />
         </Box>

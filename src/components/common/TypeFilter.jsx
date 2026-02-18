@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Button, Typography } from "@mui/material";
 
-const TYPES = ["CASH", "INVOICE", "INSURANCE", "OTHERS"];
+const TYPES = ["CASH", "INVOICE", "INSURANCE", "OTHERS", "ID"]; // ✅ Added ID here
 
 const TypeFilter = ({
   types = [],
