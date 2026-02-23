@@ -5,11 +5,13 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { fetchData } from "../../../api/uploadService";
+import * as XLSX from 'xlsx';
 import OutstandingTable from "./OutstandingTable";
 
 const NAVIGATION_MAP = {
   total: {
     title: "Total Outstanding – Branch Summary",
+    filename: "Total_Outstanding_Branch_Summary",
     branchApi: "/api/outstanding/total_branch_outstanding",
     saApi: "/api/outstanding/total_sa_outstanding",
     partyApi: "/api/outstanding/total_party_outstanding",
@@ -21,6 +23,7 @@ const NAVIGATION_MAP = {
   },
   cash: {
     title: "Cash Outstanding – Branch Summary",
+    filename: "Cash_Outstanding_Branch_Summary",
     branchApi: "/api/outstanding/cash_branch_outstanding",
     saApi: "/api/outstanding/cash_sa_outstanding", 
     partyApi: "/api/outstanding/cash_party_outstanding",
@@ -32,6 +35,7 @@ const NAVIGATION_MAP = {
   },
   insurance: {
     title: "Insurance Outstanding – Branch Summary",
+    filename: "Insurance_Outstanding_Branch_Summary",
     branchApi: "/api/outstanding/insurance_branch_outstanding",
     saApi: "/api/outstanding/insurance_sa_outstanding",
     partyApi: "/api/outstanding/insurance_party_outstanding",
@@ -43,6 +47,7 @@ const NAVIGATION_MAP = {
   },
   invoice: {
     title: "Invoice Outstanding – Branch Summary",
+    filename: "Invoice_Outstanding_Branch_Summary",
     branchApi: "/api/outstanding/invoice_branch_outstanding",
     saApi: "/api/outstanding/invoice_sa_outstanding",
     partyApi: "/api/outstanding/invoice_party_outstanding",
@@ -54,6 +59,7 @@ const NAVIGATION_MAP = {
   },
   others: {
     title: "Others Outstanding – Branch Summary", 
+    filename: "Others_Outstanding_Branch_Summary",
     branchApi: "/api/outstanding/others_branch_outstanding",
     saApi: "/api/outstanding/others_sa_outstanding",
     partyApi: "/api/outstanding/others_party_outstanding",
@@ -62,13 +68,25 @@ const NAVIGATION_MAP = {
       sa: "/DashboardHome/others_sa_outstanding",
       party: "/DashboardHome/others_party_outstanding"
     }
+  },
+  id: {
+    title: "ID Outstanding – Branch Summary",
+    filename: "ID_Outstanding_Branch_Summary",
+    branchApi: "/api/outstanding/id_branch_outstanding",
+    insuranceApi: "/api/outstanding/id_sa_outstanding",
+    partyApi: "/api/outstanding/id_party_outstanding",
+    paths: {
+      branch: "/DashboardHome/id_branch_outstanding",
+      insurance: "/DashboardHome/id_sa_outstanding",
+      party: "/DashboardHome/id_party_outstanding"
+    }
   }
 };
 
 const OutstandingPage = ({ type = "cash" }) => {
-  // ✅ ALL HOOKS AT TOP LEVEL - NO EARLY RETURNS BEFORE HOOKS
   const navigate = useNavigate();
   
+  // ✅ ALL STATE
   const [config, setConfig] = useState(null);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,31 +94,192 @@ const OutstandingPage = ({ type = "cash" }) => {
   const [workshopFilter, setWorkshopFilter] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [showDetailView, setShowDetailView] = useState(false);
-  const [selectedAdvisor, setSelectedAdvisor] = useState(null);
+  const [selectedInsuranceParty, setSelectedInsuranceParty] = useState(null);  // For ID type
+  const [selectedAdvisor, setSelectedAdvisor] = useState(null);  // For other types
   const [showPartyView, setShowPartyView] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: 'balanceAmt', direction: 'asc' });
-
-  const [saData, setSaData] = useState([]);
-  const [saLoading, setSaLoading] = useState(false);
-  const [saFilteredData, setSaFilteredData] = useState([]);
-  const [saAdvisorFilter, setSaAdvisorFilter] = useState([]);
-  const [saSortConfig, setSaSortConfig] = useState({ key: 'balanceAmt', direction: 'asc' });
-  const [saAdvisorOptions, setSaAdvisorOptions] = useState([]);
-
+  
+  // Common second layer states
+  const [detailData, setDetailData] = useState([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailFilteredData, setDetailFilteredData] = useState([]);
+  const [detailSortConfig, setDetailSortConfig] = useState({ key: 'balanceAmt', direction: 'asc' });
+  const [detailFilter, setDetailFilter] = useState([]);
+  const [detailFilterOptions, setDetailFilterOptions] = useState([]);
+  
   const [partyData, setPartyData] = useState([]);
   const [partyLoading, setPartyLoading] = useState(false);
   const [partyFilteredData, setPartyFilteredData] = useState([]);
   const [partySortConfig, setPartySortConfig] = useState({ key: 'balanceAmt', direction: 'asc' });
-
   const [showContactColumn, setShowContactColumn] = useState(false);
   const [workshopOptions, setWorkshopOptions] = useState([]);
 
-  // Set config on mount
+  // ✅ ALL TOTALS
+  const totals = useMemo(() => {
+    const initialTotals = { 
+      balanceAmt: 0, billAmt: 0, upToSeven: 0, eightToThirty: 0, 
+      thirtyOneToNinty: 0, grtNinty: 0, insuranceAmt: 0, differenceAmt: 0
+    };
+    return filteredData.reduce((acc, row) => {
+      Object.keys(initialTotals).forEach(key => {
+        acc[key] += row[key] || 0;
+      });
+      return acc;
+    }, initialTotals);
+  }, [filteredData]);
+
+  const detailTotals = useMemo(() => {
+    const initialTotals = { 
+      balanceAmt: 0, billAmt: 0, upToSeven: 0, eightToThirty: 0, 
+      thirtyOneToNinty: 0, grtNinty: 0, insuranceAmt: 0, differenceAmt: 0
+    };
+    return detailFilteredData.reduce((acc, row) => {
+      Object.keys(initialTotals).forEach(key => {
+        acc[key] += row[key] || 0;
+      });
+      return acc;
+    }, initialTotals);
+  }, [detailFilteredData]);
+
+  const partyTotals = useMemo(() => {
+    const initialTotals = { 
+      balanceAmt: 0, billAmt: 0, upToSeven: 0, eightToThirty: 0, 
+      thirtyOneToNinty: 0, grtNinty: 0, insuranceAmt: 0, differenceAmt: 0
+    };
+    return partyFilteredData.reduce((acc, row) => {
+      Object.keys(initialTotals).forEach(key => {
+        acc[key] += row[key] || 0;
+      });
+      return acc;
+    }, initialTotals);
+  }, [partyFilteredData]);
+
+  // ✅ HELPER: Get second layer column header
+  const getSecondLayerHeader = () => type === 'id' ? 'Insurance Party' : 'Service Advisor';
+
+  // ✅ DOWNLOAD FUNCTIONS
+  const downloadBranchExcel = useCallback(() => {
+    try {
+      const columns = ['billAmt', 'balanceAmt', 'upToSeven', 'eightToThirty', 'thirtyOneToNinty', 'grtNinty'];
+      if (type === 'id') columns.push('insuranceAmt', 'differenceAmt');
+      
+      const excelData = filteredData.map((row, index) => {
+        const rowData = { 'S.No': index + 1, 'Branch/Workshop': row.segment || row.branchName || '' };
+        columns.forEach(col => {
+          rowData[col.charAt(0).toUpperCase() + col.slice(1).replace(/([A-Z])/g, ' $1')] = row[col] || 0;
+        });
+        return rowData;
+      });
+
+      excelData.push({
+        'S.No': '', 'Branch/Workshop': 'GRAND TOTAL',
+        ...columns.reduce((acc, col) => {
+          acc[col.charAt(0).toUpperCase() + col.slice(1).replace(/([A-Z])/g, ' $1')] = totals[col] || 0;
+          return acc;
+        }, {})
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Branch Summary');
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      XLSX.writeFile(wb, `${config?.filename || 'Branch_Summary'}_${timestamp}.xlsx`);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Download failed');
+    }
+  }, [filteredData, totals, config?.filename, type]);
+
+  const downloadDetailExcel = useCallback(() => {
+    try {
+      const columns = ['billAmt', 'balanceAmt', 'upToSeven', 'eightToThirty', 'thirtyOneToNinty', 'grtNinty'];
+      if (type === 'id') columns.push('insuranceAmt', 'differenceAmt');
+      
+      const excelData = detailFilteredData.map((row, index) => ({
+        'S.No': index + 1,
+        [getSecondLayerHeader()]: type === 'id' ? (row.insuranceParty || '') : (row.salesMan || ''),
+        'Branch': selectedBranch || '',
+        ...columns.reduce((acc, col) => {
+          acc[col.charAt(0).toUpperCase() + col.slice(1).replace(/([A-Z])/g, ' $1')] = row[col] || 0;
+          return acc;
+        }, {})
+      }));
+
+      excelData.push({
+        'S.No': '', 
+        [getSecondLayerHeader()]: 'GRAND TOTAL',
+        'Branch': selectedBranch || '',
+        ...columns.reduce((acc, col) => {
+          acc[col.charAt(0).toUpperCase() + col.slice(1).replace(/([A-Z])/g, ' $1')] = detailTotals[col] || 0;
+          return acc;
+        }, {})
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      XLSX.utils.book_append_sheet(wb, ws, `${selectedBranch}_${type === 'id' ? 'Insurance' : 'SA'}`);
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      XLSX.writeFile(wb, `${config?.filename || 'Detail_Summary'}_${selectedBranch}_${timestamp}.xlsx`);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Download failed');
+    }
+  }, [detailFilteredData, detailTotals, config?.filename, selectedBranch, type, getSecondLayerHeader]);
+
+  const downloadPartyExcel = useCallback(() => {
+    try {
+      const columns = ['billAmt', 'balanceAmt', 'upToSeven', 'eightToThirty', 'thirtyOneToNinty', 'grtNinty'];
+      if (type === 'id') columns.push('insuranceAmt', 'differenceAmt');
+      
+      const excelData = partyFilteredData.map((row, index) => ({
+        'S.No': index + 1,
+        'Party Name': row.partyName || row.customerName || '',
+        'Workshop': row.segment || '',
+        ...(type === 'id' ? { 
+          'Insurance Party': row.insuranceParty || '', 
+          'Service Advisor': row.salesMan || '',
+          'Bill No': row.billNo || ''
+        } : { 
+          'Service Advisor': row.salesMan || '',
+          'Bill No': row.billNo || ''
+        }),
+        ...columns.reduce((acc, col) => {
+          acc[col.charAt(0).toUpperCase() + col.slice(1).replace(/([A-Z])/g, ' $1')] = row[col] || 0;
+          return acc;
+        }, {})
+      }));
+
+      excelData.push({
+        'S.No': '', 'Party Name': 'GRAND TOTAL', 'Workshop': '',
+        ...(type === 'id' ? { 
+          'Insurance Party': selectedInsuranceParty || '', 
+          'Service Advisor': '', 
+          'Bill No': ''
+        } : { 
+          'Service Advisor': selectedAdvisor || '',
+          'Bill No': ''
+        }),
+        ...columns.reduce((acc, col) => {
+          acc[col.charAt(0).toUpperCase() + col.slice(1).replace(/([A-Z])/g, ' $1')] = partyTotals[col] || 0;
+          return acc;
+        }, {})
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      XLSX.utils.book_append_sheet(wb, ws, `${selectedBranch}_${selectedInsuranceParty || selectedAdvisor || 'All_Parties'}`);
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      XLSX.writeFile(wb, `${config?.filename || 'Party_Summary'}_${selectedBranch}_${selectedInsuranceParty || selectedAdvisor || 'All_Parties'}_${timestamp}.xlsx`);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Download failed');
+    }
+  }, [partyFilteredData, partyTotals, config?.filename, selectedBranch, selectedInsuranceParty, selectedAdvisor, type]);
+
+  // ✅ CORE FUNCTIONS
   useEffect(() => {
     const navConfig = NAVIGATION_MAP[type];
-    if (navConfig) {
-      setConfig(navConfig);
-    }
+    if (navConfig) setConfig(navConfig);
   }, [type]);
 
   const loadData = useCallback(async (apiEndpoint) => {
@@ -113,23 +292,17 @@ const OutstandingPage = ({ type = "cash" }) => {
     }
   }, []);
 
-  // Fetch initial branch data
   useEffect(() => {
     if (!config?.branchApi) return;
-    
     const initData = async () => {
       setLoading(true);
       const branchData = await loadData(config.branchApi);
       setData(branchData);
       
       const workshops = branchData.reduce((acc, row) => {
-        const workshop = row.segment || null;
-        const workshopValue = workshop || "null";
+        const workshopValue = row.segment || "null";
         if (workshopValue && !acc.find(w => w.value === workshopValue)) {
-          acc.push({ 
-            label: workshopValue === "null" ? "No Workshop" : workshopValue, 
-            value: workshopValue 
-          });
+          acc.push({ label: workshopValue === "null" ? "No Workshop" : workshopValue, value: workshopValue });
         }
         return acc;
       }, []).sort((a, b) => a.label.localeCompare(b.label));
@@ -141,140 +314,136 @@ const OutstandingPage = ({ type = "cash" }) => {
     initData();
   }, [config?.branchApi, loadData]);
 
-  // ✅ FIXED: Load SA data - Handle empty SA case properly
+  // ✅ SECOND LAYER: Detail data loading (SA for others, Insurance for ID)
   useEffect(() => {
-    if (selectedBranch && !showPartyView && config?.saApi) {
-      const loadSaData = async () => {
-        setSaLoading(true);
-        const res = await loadData(config.saApi);
-        const branchData = res.filter(row => 
-          row.branchName === selectedBranch || row.segment === selectedBranch
-        );
+    if (selectedBranch && !showPartyView) {
+      const loadDetailData = async () => {
+        setDetailLoading(true);
         
-        let finalSaData;
-        let advisorOptions = [];
-        
-        // ✅ Check if branch has any advisors
-        if (branchData.length === 0) {
-          // ✅ NO ADVISORS - Create single EMPTY row
-          finalSaData = [{
-            salesMan: null, // ✅ Explicitly null for empty
-            branchName: selectedBranch,
-            segment: selectedBranch,
-            balanceAmt: 0,
-            billAmt: 0,
-            upToSeven: 0,
-            eightToThirty: 0,
-            thirtyOneToNinty: 0,
-            grtNinty: 0
-          }];
-        } else {
-          // ✅ HAS ADVISORS - Use actual data
-          finalSaData = branchData;
-          // Build advisor options from actual data
-          advisorOptions = branchData.reduce((acc, row) => {
-            const advisorValue = row.salesMan || "null";
-            if (advisorValue && !acc.find(a => a.value === advisorValue)) {
-              acc.push({
-                label: advisorValue === "null" ? "No Advisor" : advisorValue,
-                value: advisorValue
+        if (type === 'id' && config?.insuranceApi) {
+          // ID: Load insurance summary from id_sa_outstanding
+          const res = await loadData(config.insuranceApi);
+          const branchData = res.filter(row => 
+            row.segment === selectedBranch || row.branchName === selectedBranch
+          );
+          
+          const finalData = branchData.length === 0 ? [{
+            segment: selectedBranch, insuranceParty: null, partyName: null, salesMan: null, billNo: null,
+            balanceAmt: 0, billAmt: 0, upToSeven: 0, eightToThirty: 0,
+            thirtyOneToNinty: 0, grtNinty: 0, insuranceAmt: 0, differenceAmt: 0
+          }] : branchData;
+
+          const insuranceOptions = finalData.reduce((acc, row) => {
+            const insuranceValue = row.insuranceParty || "null";
+            if (insuranceValue && !acc.find(i => i.value === insuranceValue)) {
+              acc.push({ 
+                label: insuranceValue === "null" ? "No Insurance Party" : insuranceValue, 
+                value: insuranceValue 
               });
             }
             return acc;
           }, []).sort((a, b) => a.label.localeCompare(b.label));
+
+          setDetailData(finalData);
+          setDetailFilterOptions(insuranceOptions);
+          setDetailFilteredData(finalData);
+        } else if (config?.saApi) {
+          // Other types: Load SA data (original logic)
+          const res = await loadData(config.saApi);
+          const branchData = res.filter(row => 
+            row.branchName === selectedBranch || row.segment === selectedBranch
+          );
+          
+          const finalData = branchData.length === 0 ? [{
+            salesMan: null, branchName: selectedBranch, segment: selectedBranch,
+            balanceAmt: 0, billAmt: 0, upToSeven: 0, eightToThirty: 0,
+            thirtyOneToNinty: 0, grtNinty: 0, insuranceAmt: 0, differenceAmt: 0
+          }] : branchData;
+
+          const advisorOptions = finalData.reduce((acc, row) => {
+            const advisorValue = row.salesMan || "null";
+            if (advisorValue && !acc.find(a => a.value === advisorValue)) {
+              acc.push({ label: advisorValue === "null" ? "No Advisor" : advisorValue, value: advisorValue });
+            }
+            return acc;
+          }, []).sort((a, b) => a.label.localeCompare(b.label));
+
+          setDetailData(finalData);
+          setDetailFilterOptions(advisorOptions);
+          setDetailFilteredData(finalData);
         }
-
-        setSaData(finalSaData);
-        setSaAdvisorOptions(advisorOptions);
-        setSaFilteredData(finalSaData);
-        setSaLoading(false);
+        
+        setDetailLoading(false);
       };
-      loadSaData();
+      loadDetailData();
     }
-  }, [selectedBranch, showPartyView, config?.saApi, loadData]);
+  }, [selectedBranch, showPartyView, config?.saApi, config?.insuranceApi, loadData, type]);
 
-  // ✅ FIXED: Load Party data - Handle empty SA clicks properly
+  // ✅ THIRD LAYER: Party data loading
   useEffect(() => {
-    if (selectedAdvisor !== null && showPartyView && config?.partyApi && selectedBranch) {
+    if ((type === 'id' ? selectedInsuranceParty : selectedAdvisor) !== null && showPartyView && config?.partyApi && selectedBranch) {
       const loadPartyData = async () => {
         setPartyLoading(true);
         const res = await loadData(config.partyApi);
         
-        let advisorData;
-        if (selectedAdvisor === null || selectedAdvisor === "null") {
-          // ✅ EMPTY SA CLICK - Show ALL parties for this branch ONLY
-          advisorData = res.filter(row => 
-            (row.branchName === selectedBranch || row.segment === selectedBranch)
-          );
+        let filteredData;
+        if (type === 'id') {
+          // ID: Filter by insuranceParty
+          filteredData = selectedInsuranceParty === null || selectedInsuranceParty === "null"
+            ? res.filter(row => row.segment === selectedBranch || row.branchName === selectedBranch)
+            : res.filter(row => row.insuranceParty === selectedInsuranceParty && (row.segment === selectedBranch || row.branchName === selectedBranch));
         } else {
-          // ✅ NORMAL ADVISOR - Filter by both advisor AND branch
-          advisorData = res.filter(row => 
-            row.salesMan === selectedAdvisor &&
-            (row.branchName === selectedBranch || row.segment === selectedBranch)
-          );
+          // Others: Filter by salesMan
+          filteredData = selectedAdvisor === null || selectedAdvisor === "null"
+            ? res.filter(row => row.branchName === selectedBranch || row.segment === selectedBranch)
+            : res.filter(row => row.salesMan === selectedAdvisor && (row.branchName === selectedBranch || row.segment === selectedBranch));
         }
         
-        setPartyData(advisorData);
-        setPartyFilteredData(advisorData);
+        setPartyData(filteredData);
+        setPartyFilteredData(filteredData);
         setPartyLoading(false);
       };
       loadPartyData();
     }
-  }, [selectedAdvisor, selectedBranch, showPartyView, config?.partyApi, loadData]);
+  }, [selectedInsuranceParty, selectedAdvisor, selectedBranch, showPartyView, config?.partyApi, loadData, type]);
 
+  // ✅ HANDLERS
   const handleBranchClick = useCallback((branchName) => {
     setSelectedBranch(branchName);
-    setSelectedAdvisor(null);
+    if (type === 'id') setSelectedInsuranceParty(null);
+    else setSelectedAdvisor(null);
     setShowDetailView(true);
     setShowPartyView(false);
-  }, []);
+  }, [type]);
 
-  // ✅ FIXED: Handle empty advisor clicks
-  const handleAdvisorClick = useCallback((advisorName) => {
-    setSelectedAdvisor(advisorName); // Pass actual value (null or string)
+  const handleDetailClick = useCallback((detailName) => {
+    if (type === 'id') {
+      setSelectedInsuranceParty(detailName);
+    } else {
+      setSelectedAdvisor(detailName);
+    }
     setShowPartyView(true);
-  }, []);
+  }, [type]);
 
   const backToBranchView = useCallback(() => {
     setShowPartyView(false);
-    setSelectedAdvisor(null);
-  }, []);
+    if (type === 'id') setSelectedInsuranceParty(null);
+    else setSelectedAdvisor(null);
+  }, [type]);
 
   const backToSummary = useCallback(() => {
     setShowDetailView(false);
     setShowPartyView(false);
     setSelectedBranch(null);
-    setSelectedAdvisor(null);
-  }, []);
+    if (type === 'id') setSelectedInsuranceParty(null);
+    else setSelectedAdvisor(null);
+  }, [type]);
 
-  const handleSummarySort = useCallback((config) => setSortConfig(config), []);
-  const handleSaSort = useCallback((config) => setSaSortConfig(config), []);
-  const handlePartySort = useCallback((config) => setPartySortConfig(config), []);
-
-  const toggleContactColumn = useCallback(() => {
-    setShowContactColumn(prev => !prev);
-  }, []);
-
-  const handleWorkshopChange = useCallback((event) => {
-    const value = event.target.value;
-    if (typeof value === 'string') value = [value];
-    setWorkshopFilter(value || []);
-  }, []);
-
-  const handleSaAdvisorChange = useCallback((event) => {
-    const value = event.target.value;
-    if (typeof value === 'string') value = [value];
-    setSaAdvisorFilter(value || []);
-  }, []);
-
-  // Filter/sort logic for branch view
+  // ✅ FILTERING & SORTING
   useEffect(() => {
-    let filtered = data;
+    let filtered = [...data];
     if (workshopFilter.length > 0) {
-      filtered = filtered.filter(row => {
-        const workshopValue = row.segment || "null";
-        return workshopFilter.includes(workshopValue);
-      });
+      filtered = filtered.filter(row => workshopFilter.includes(row.segment || "null"));
     }
     if (sortConfig.key) {
       filtered.sort((a, b) => {
@@ -288,30 +457,26 @@ const OutstandingPage = ({ type = "cash" }) => {
     setFilteredData(filtered);
   }, [workshopFilter, data, sortConfig]);
 
-  // Filter/sort logic for SA view
   useEffect(() => {
-    let filtered = saData;
-    if (saAdvisorFilter.length > 0) {
-      filtered = filtered.filter(row => {
-        const advisorValue = row.salesMan || null;
-        return saAdvisorFilter.includes(advisorValue);
-      });
+    let filtered = [...detailData];
+    if (detailFilter.length > 0) {
+      const filterField = type === 'id' ? 'insuranceParty' : 'salesMan';
+      filtered = filtered.filter(row => detailFilter.includes(row[filterField] || "null"));
     }
-    if (saSortConfig.key) {
+    if (detailSortConfig.key) {
       filtered.sort((a, b) => {
-        const aValue = a[saSortConfig.key] || 0;
-        const bValue = b[saSortConfig.key] || 0;
-        if (aValue < bValue) return saSortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return saSortConfig.direction === 'asc' ? 1 : -1;
+        const aValue = a[detailSortConfig.key] || 0;
+        const bValue = b[detailSortConfig.key] || 0;
+        if (aValue < bValue) return detailSortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return detailSortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
     }
-    setSaFilteredData(filtered);
-  }, [saAdvisorFilter, saData, saSortConfig]);
+    setDetailFilteredData(filtered);
+  }, [detailFilter, detailData, detailSortConfig, type]);
 
-  // Filter/sort logic for party view
   useEffect(() => {
-    let filtered = partyData;
+    let filtered = [...partyData];
     if (partySortConfig.key) {
       filtered.sort((a, b) => {
         const aValue = a[partySortConfig.key] || 0;
@@ -324,164 +489,111 @@ const OutstandingPage = ({ type = "cash" }) => {
     setPartyFilteredData(filtered);
   }, [partyData, partySortConfig]);
 
-  const totals = useMemo(() => filteredData.reduce((acc, row) => {
-    acc.balanceAmt += row.balanceAmt || 0;
-    acc.billAmt += row.billAmt || 0;
-    acc.upToSeven += row.upToSeven || 0;
-    acc.eightToThirty += row.eightToThirty || 0;
-    acc.thirtyOneToNinty += row.thirtyOneToNinty || 0;
-    acc.grtNinty += row.grtNinty || 0;
-    return acc;
-  }, { balanceAmt: 0, billAmt: 0, upToSeven: 0, eightToThirty: 0, thirtyOneToNinty: 0, grtNinty: 0 }), [filteredData]);
-
-  const saTotals = useMemo(() => saFilteredData.reduce((acc, row) => {
-    acc.balanceAmt += row.balanceAmt || 0;
-    acc.billAmt += row.billAmt || 0;
-    acc.upToSeven += row.upToSeven || 0;
-    acc.eightToThirty += row.eightToThirty || 0;
-    acc.thirtyOneToNinty += row.thirtyOneToNinty || 0;
-    acc.grtNinty += row.grtNinty || 0;
-    return acc;
-  }, { balanceAmt: 0, billAmt: 0, upToSeven: 0, eightToThirty: 0, thirtyOneToNinty: 0, grtNinty: 0 }), [saFilteredData]);
-
-  const partyTotals = useMemo(() => partyFilteredData.reduce((acc, row) => {
-    acc.balanceAmt += row.balanceAmt || 0;
-    acc.billAmt += row.billAmt || 0;
-    acc.upToSeven += row.upToSeven || 0;
-    acc.eightToThirty += row.eightToThirty || 0;
-    acc.thirtyOneToNinty += row.thirtyOneToNinty || 0;
-    acc.grtNinty += row.grtNinty || 0;
-    return acc;
-  }, { balanceAmt: 0, billAmt: 0, upToSeven: 0, eightToThirty: 0, thirtyOneToNinty: 0, grtNinty: 0 }), [partyFilteredData]);
-
   const formatCurrency = (value) => new Intl.NumberFormat('en-IN', {
     style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 0
   }).format(value || 0);
 
-  // ✅ FIXED: Level-aware display functions - Properly handle empty SA display
+  // ✅ TABLE PROPS - FIXED HEADER
   const getTableProps = useCallback((level) => {
     const baseProps = {
-      formatCurrency,
-      selectedBranch,
-      selectedAdvisor,
-      showContactColumn,
-      onToggleContactColumn: toggleContactColumn,
-      getRowKey: (row, index) => row.partyName || row.salesMan || row.segment || index,
-      // ✅ FIXED: Display name logic - show EMPTY for no SA
+      formatCurrency, 
+      type, 
+      selectedBranch, 
+      selectedAdvisor: type === 'id' ? selectedInsuranceParty : selectedAdvisor,
+      secondLayerHeader: getSecondLayerHeader(), // ✅ PASSED TO TABLE
+      showContactColumn, 
+      onToggleContactColumn: () => setShowContactColumn(prev => !prev),
+      getRowKey: (row, index) => row.partyName || row.billNo || (type === 'id' ? row.insuranceParty : row.salesMan) || row.segment || index,
       getDisplayName: (row, tableLevel) => {
         switch (tableLevel) {
-          case 'sa':
-            return row.salesMan || ''; // ✅ Empty string for no SA rows
-          case 'party':
+          case 'detail':
+          case 'sa': 
+            return type === 'id' ? (row.insuranceParty || '') : (row.salesMan || '');
+          case 'party': 
             return row.partyName || row.customerName || '';
           case 'branch':
-          default:
+          default: 
             return row.segment || row.branchName || '';
         }
       },
       getSegmentName: (row) => row.segment || row.branchName || '',
-      getAdvisorName: (row) => row.salesMan || ''
+      getAdvisorName: (row) => type === 'id' ? (row.insuranceParty || '') : (row.salesMan || '')
     };
 
     switch (level) {
       case 'party':
-        return {
-          ...baseProps,
-          level: "party",
-          data: partyData,
+        return { 
+          ...baseProps, 
+          level: "party", 
+          data: partyData, 
           filteredData: partyFilteredData,
-          totals: partyTotals,
-          onRowClick: () => {}, // No further drill down
+          totals: partyTotals, 
+          onRowClick: () => {}, 
           onBack: backToBranchView,
-          filters: [],
-          filterOptions: [],
-          onFilterChange: () => {},
-          sortConfig: partySortConfig,
-          onSort: handlePartySort,
-          loading: partyLoading,
-          title: "",
+          filters: [], 
+          filterOptions: [], 
+          onFilterChange: () => {}, 
+          sortConfig: partySortConfig, 
+          onSort: (config) => setPartySortConfig(config),
+          loading: partyLoading, 
+          title: "", 
           navigatePath: config?.paths?.party,
-          apiEndpoints: []
+          apiEndpoints: [], 
+          showAllColumns: type === 'id'
         };
+      case 'detail':
       case 'sa':
-        return {
-          ...baseProps,
-          level: "sa",
-          data: saData,
-          filteredData: saFilteredData,
-          totals: saTotals,
-          onRowClick: handleAdvisorClick, // ✅ Click works for both null and actual advisors
+        return { 
+          ...baseProps, 
+          level: "sa", 
+          data: detailData, 
+          filteredData: detailFilteredData,
+          totals: detailTotals, 
+          onRowClick: handleDetailClick, 
           onBack: backToSummary,
-          filters: saAdvisorFilter,
-          filterOptions: saAdvisorOptions,
-          onFilterChange: handleSaAdvisorChange,
-          sortConfig: saSortConfig,
-          onSort: handleSaSort,
-          loading: saLoading,
+          filters: detailFilter, 
+          filterOptions: detailFilterOptions, 
+          onFilterChange: (e) => {
+            const value = e.target.value || [];
+            if (typeof value === 'string') value = [value];
+            setDetailFilter(value);
+          },
+          sortConfig: detailSortConfig, 
+          onSort: (config) => setDetailSortConfig(config),
+          loading: detailLoading, 
           title: selectedBranch,
-          navigatePath: config?.paths?.sa,
-          apiEndpoints: []
+          navigatePath: type === 'id' ? config?.paths?.insurance : config?.paths?.sa
         };
       case 'branch':
       default:
-        return {
-          ...baseProps,
-          level: "branch",
-          data,
-          filteredData,
+        return { 
+          ...baseProps, 
+          level: "branch", 
+          data, 
+          filteredData, 
           totals,
-          onRowClick: handleBranchClick,
+          onRowClick: handleBranchClick, 
           onBack: backToSummary,
-          filters: workshopFilter,
-          filterOptions: workshopOptions,
-          onFilterChange: handleWorkshopChange,
-          sortConfig,
-          onSort: handleSummarySort,
-          loading,
+          filters: workshopFilter, 
+          filterOptions: workshopOptions, 
+          onFilterChange: (e) => {
+            const value = e.target.value || [];
+            if (typeof value === 'string') value = [value];
+            setWorkshopFilter(value);
+          },
+          sortConfig, 
+          onSort: (config) => setSortConfig(config), 
+          loading, 
           title: `${type.charAt(0).toUpperCase() + type.slice(1)} Branch Outstanding`,
-          navigatePath: config?.paths?.branch,
-          apiEndpoints: []
+          navigatePath: config?.paths?.branch
         };
     }
-  }, [
-    formatCurrency, selectedBranch, selectedAdvisor, showContactColumn, toggleContactColumn,
-    partyData, partyFilteredData, partyTotals, backToBranchView, partySortConfig, 
-    handlePartySort, partyLoading, config?.paths?.party,
-    saData, saFilteredData, saTotals, handleAdvisorClick, backToSummary, saAdvisorFilter, 
-    saAdvisorOptions, handleSaAdvisorChange, saSortConfig, handleSaSort, saLoading, 
-    config?.paths?.sa, data, filteredData, totals, handleBranchClick, workshopFilter, 
-    workshopOptions, handleWorkshopChange, sortConfig, handleSummarySort, loading, 
-    config?.paths?.branch, type, partySortConfig
-  ]);
-
-  // ✅ EARLY RETURNS ONLY AFTER ALL HOOKS
-  if (!config) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="error">
-          Invalid outstanding type: {type}. Expected one of: cash, insurance, invoice, others
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (loading && !showDetailView && !showPartyView) {
-    return (
-      <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Typography>Loading...</Typography>
-      </Box>
-    );
-  }
-
-  const renderNavigationButtons = () => (
-    <Box sx={{ display: "flex", gap: 1 }}>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/total_branch_outstanding")}>Total</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/cash_branch_outstanding")}>Cash</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/invoice_branch_outstanding")}>Invoice</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/insurance_branch_outstanding")}>Insurance</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/others_branch_outstanding")}>Others</Button>
-    </Box>
-  );
+  }, [formatCurrency, type, selectedBranch, selectedInsuranceParty, selectedAdvisor, showContactColumn, 
+      partyData, partyFilteredData, partyTotals, backToBranchView, partySortConfig, partyLoading, 
+      detailData, detailFilteredData, detailTotals, handleDetailClick, backToSummary, 
+      detailFilter, detailFilterOptions, detailSortConfig, detailLoading,
+      data, filteredData, totals, handleBranchClick, workshopFilter, workshopOptions, sortConfig, loading,
+      config?.paths?.party, config?.paths?.insurance, config?.paths?.sa, config?.paths?.branch, getSecondLayerHeader]);
 
   const renderFilters = (level) => {
     if (level === 'branch') {
@@ -489,10 +601,7 @@ const OutstandingPage = ({ type = "cash" }) => {
         <Box sx={{ mb: 3, display: "flex", gap: 2, alignItems: "end", flexWrap: "wrap" }}>
           <FormControl size="small" sx={{ minWidth: 220 }}>
             <InputLabel>Workshops</InputLabel>
-            <Select 
-              multiple 
-              value={workshopFilter} 
-              onChange={handleWorkshopChange}
+            <Select multiple value={workshopFilter} 
               input={<OutlinedInput label="Workshops" />}
               renderValue={(selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -511,45 +620,8 @@ const OutstandingPage = ({ type = "cash" }) => {
             </Select>
           </FormControl>
           {workshopFilter.length > 0 && (
-            <Chip 
-              label="Clear Filters" 
-              onClick={() => setWorkshopFilter([])} 
-              color="error" 
-              variant="outlined" 
-              sx={{ height: 40 }} 
-            />
-          )}
-        </Box>
-      );
-    }
-    
-    if (level === 'sa') {
-      return (
-        <Box sx={{ mb: 3, display: "flex", gap: 2, alignItems: "end", flexWrap: "wrap" }}>
-          <FormControl size="small" sx={{ minWidth: 220 }}>
-            <InputLabel>Service Advisors</InputLabel>
-            <Select 
-              multiple 
-              value={saAdvisorFilter} 
-              onChange={handleSaAdvisorChange}
-              input={<OutlinedInput label="Service Advisors" />}
-            >
-              {saAdvisorOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  <Checkbox checked={saAdvisorFilter.indexOf(option.value) > -1} />
-                  <ListItemText primary={option.label} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          {saAdvisorFilter.length > 0 && (
-            <Chip 
-              label="Clear Filters" 
-              onClick={() => setSaAdvisorFilter([])} 
-              color="error" 
-              variant="outlined" 
-              sx={{ height: 40 }} 
-            />
+            <Chip label="Clear Filters" onClick={() => setWorkshopFilter([])} 
+              color="error" variant="outlined" sx={{ height: 40 }} />
           )}
         </Box>
       );
@@ -557,21 +629,51 @@ const OutstandingPage = ({ type = "cash" }) => {
     return null;
   };
 
+  // ✅ RENDER LOGIC
+  if (!config) {
+    return <Box sx={{ p: 3 }}><Typography color="error">Invalid outstanding type: {type}</Typography></Box>;
+  }
+
+  if (loading && !showDetailView && !showPartyView) {
+    return <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <Typography>Loading...</Typography>
+    </Box>;
+  }
+
+  const renderNavigationButtons = () => (
+    <Box sx={{ display: "flex", gap: 1, flexWrap: 'wrap' }}>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/total_branch_outstanding")} size="small">Total</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/cash_branch_outstanding")} size="small">Cash</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/invoice_branch_outstanding")} size="small">Invoice</Button>
+      {/* <Button variant="contained" onClick={() => navigate("/DashboardHome/insurance_branch_outstanding")} size="small">Insurance</Button> */}
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/others_branch_outstanding")} size="small">Others</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/id_branch_outstanding")} size="small">Insurance</Button>
+      <Button variant="contained" onClick={downloadBranchExcel} size="small"
+        sx={{ backgroundColor: '#4caf50', '&:hover': { backgroundColor: '#45a049' } }}>
+        📥 Download
+      </Button>
+    </Box>
+  );
+
   if (showPartyView) {
     return (
       <Box sx={{ p: 3 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Button variant="outlined" onClick={backToBranchView}>
-              ← Back to Service Advisors ({selectedBranch})
+              ← Back to {type === 'id' ? 'Insurance Summary' : 'Service Advisors'} ({selectedBranch})
             </Button>
             <Typography variant="h4" sx={{ fontWeight: 600 }}>
-              {selectedAdvisor ? selectedAdvisor : 'All Parties'} - Party Details ({selectedBranch})
+              {type === 'id' ? (selectedInsuranceParty || 'All Parties') : (selectedAdvisor || 'All Parties')} - Party Details ({selectedBranch})
             </Typography>
           </Box>
-          <Button variant="contained" onClick={() => navigate(config.paths.party)}>
-            All Parties
-          </Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="contained" onClick={() => navigate(config.paths.party)} size="small">All Parties</Button>
+            <Button variant="contained" onClick={downloadPartyExcel} size="small"
+              sx={{ backgroundColor: '#4caf50', '&:hover': { backgroundColor: '#45a049' } }}>
+              📥 Download
+            </Button>
+          </Box>
         </Box>
         <OutstandingTable {...getTableProps('party')} />
       </Box>
@@ -585,12 +687,21 @@ const OutstandingPage = ({ type = "cash" }) => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Button variant="outlined" onClick={backToSummary}>← Back to Branches</Button>
             <Typography variant="h4" sx={{ fontWeight: 600 }}>
-              {selectedBranch} - Service Advisors
+              {selectedBranch} - {type === 'id' ? 'Insurance Summary' : 'Service Advisors'}
             </Typography>
           </Box>
-          <Button variant="contained" onClick={() => navigate(config.paths.sa)}>All SA</Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="contained" 
+              onClick={() => navigate(type === 'id' ? config.paths.insurance : config.paths.sa)} 
+              size="small">
+              {type === 'id' ? 'All Insurance' : 'All SA'}
+            </Button>
+            <Button variant="contained" onClick={downloadDetailExcel} size="small"
+              sx={{ backgroundColor: '#4caf50', '&:hover': { backgroundColor: '#45a049' } }}>
+              📥 Download
+            </Button>
+          </Box>
         </Box>
-        {renderFilters('sa')}
         <OutstandingTable {...getTableProps('sa')} />
       </Box>
     );

@@ -121,7 +121,9 @@ function OutstandingUploadPage() {
         return (
           !bill.includes("BC") &&
           !bill.includes("BR") &&
-          !bill.includes("BI")
+          !bill.includes("BI") &&
+          !bill.includes("RS") &&
+          !bill.includes("CSI")
         );
       })
     );

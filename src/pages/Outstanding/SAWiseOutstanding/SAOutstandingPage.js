@@ -7,54 +7,78 @@ import {
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { fetchData } from "../../../api/uploadService";
+import * as XLSX from 'xlsx';
 
 const NAVIGATION_MAP = {
   cash: {
     title: "Cash Outstanding – Workshop Summary",
     api: "/api/outstanding/cash_sa_outstanding",
-    branchPath: "/DashboardHome/cash_branch_outstanding"
+    branchPath: "/DashboardHome/cash_branch_outstanding",
+    filename: "Cash_Outstanding_Workshop_Summary"
   },
   total: {
     title: "Total Outstanding – Workshop Summary",
     api: "/api/outstanding/total_sa_outstanding",
-    branchPath: "/DashboardHome/total_branch_outstanding"
+    branchPath: "/DashboardHome/total_branch_outstanding",
+    filename: "Total_Outstanding_Workshop_Summary"
   },
   invoice: {
     title: "Invoice Outstanding – Workshop Summary",
     api: "/api/outstanding/invoice_sa_outstanding",
-    branchPath: "/DashboardHome/invoice_branch_outstanding"
+    branchPath: "/DashboardHome/invoice_branch_outstanding",
+    filename: "Invoice_Outstanding_Workshop_Summary"
   },
   insurance: {
     title: "Insurance Outstanding – Workshop Summary",
     api: "/api/outstanding/insurance_sa_outstanding",
-    branchPath: "/DashboardHome/insurance_branch_outstanding"
+    branchPath: "/DashboardHome/insurance_branch_outstanding",
+    filename: "Insurance_Outstanding_Workshop_Summary"
   },
   others: {
     title: "Others Outstanding – Workshop Summary",
     api: "/api/outstanding/others_sa_outstanding",
-    branchPath: "/DashboardHome/others_branch_outstanding"
+    branchPath: "/DashboardHome/others_branch_outstanding",
+    filename: "Others_Outstanding_Workshop_Summary"
+  },
+  id: {
+    title: "ID Outstanding – Workshop Summary",
+    api: "/api/outstanding/id_sa_outstanding",
+    branchPath: "/DashboardHome/id_branch_outstanding",
+    filename: "ID_Outstanding_Workshop_Summary"
   }
 };
 
-const COLUMNS = [
-  { key: 'billAmt', label: 'Bill Amt' },        // ✅ NEW: Added billAmt column
-  { key: 'balanceAmt', label: 'Balance Amt' },
-  { key: 'upToSeven', label: 'Upto 7 Days' },
-  { key: 'eightToThirty', label: '8-30 Days' },
-  { key: 'thirtyOneToNinty', label: '31-90 Days' },
-  { key: 'grtNinty', label: '>90 Days' }
-  // ✅ Removed 'newColumn' - replaced with actual billAmt
-];
+const getColumns = (type = 'cash') => {
+  const baseColumns = [
+    { key: 'billAmt', label: 'Bill Amt' },
+    { key: 'balanceAmt', label: 'Balance Amt' },
+    { key: 'upToSeven', label: 'Upto 7 Days' },
+    { key: 'eightToThirty', label: '8-30 Days' },
+    { key: 'thirtyOneToNinty', label: '31-90 Days' },
+    { key: 'grtNinty', label: '>90 Days' }
+  ];
+  
+  if (type === 'id') {
+    return [
+      baseColumns[0],
+      baseColumns[1],
+      { key: 'insuranceAmt', label: 'Insurance' },
+      { key: 'differenceAmt', label: 'Difference' },
+      ...baseColumns.slice(2)
+    ];
+  }
+  
+  return baseColumns;
+};
 
 const SAOutstandingPage = ({ type }) => {
   const config = NAVIGATION_MAP[type];
   const navigate = useNavigate();
   const location = useLocation();
+  const COLUMNS = getColumns(type);
 
-  // ✅ KEY FIX: Reset state when page changes
+  // ✅ ALL STATE FIRST - CRITICAL ORDER
   const pageKey = useMemo(() => `${type}-${location.pathname}`, [type, location.pathname]);
-
-  // State - will reset when pageKey changes
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filteredData, setFilteredData] = useState([]);
@@ -65,7 +89,16 @@ const SAOutstandingPage = ({ type }) => {
   const [advisorOptions, setAdvisorOptions] = useState([]);
   const [allAdvisorOptions, setAllAdvisorOptions] = useState([]);
 
-  // Sort styles (shared)
+  // ✅ totals AFTER all state declarations
+  const totals = useMemo(() => {
+    return filteredData.reduce((acc, row) => {
+      COLUMNS.forEach(col => {
+        acc[col.key] = (acc[col.key] || 0) + (row[col.key] || 0);
+      });
+      return acc;
+    }, COLUMNS.reduce((acc, col) => ({ ...acc, [col.key]: 0 }), {}));
+  }, [filteredData, COLUMNS]);
+
   const sortLabelSx = {
     color: 'white !important', 
     fontWeight: 'bold',
@@ -80,7 +113,68 @@ const SAOutstandingPage = ({ type }) => {
     '& .MuiTableSortLabel-iconDirectionAsc': { color: 'white !important', fontWeight: 'bold', fontSize: '1.2em' }
   };
 
-  // ✅ FIXED: Fetch data when type OR location changes
+  // ✅ FIXED: Dynamic first columns count based on type
+  const getFirstColumnsCount = () => {
+    if (type === 'id') return 3; // S.No + Workshop + InsuranceParty
+    return 3; // S.No + Workshop + Service Advisor
+  };
+
+  const totalRowColSpan = getFirstColumnsCount();
+
+  // ✅ downloadExcel AFTER totals - Updated for ID type
+  const downloadExcel = useCallback(() => {
+    try {
+      console.log('Starting download...', { filteredDataLength: filteredData.length });
+      
+      const excelData = filteredData.map((row, index) => ({
+        'S.No': index + 1,
+        'Workshop': row.segment || '',
+        ...(type === 'id' ? { 'Insurance Party': row.insuranceParty || '' } : { 'Service Advisor': row.salesMan || '' }),
+        ...COLUMNS.reduce((acc, col) => {
+          acc[col.label] = row[col.key] || 0;
+          return acc;
+        }, {})
+      }));
+
+      const totalsRow = {
+        'S.No': '',
+        'Workshop': '',
+        ...(type === 'id' ? { 'Insurance Party': 'GRAND TOTAL' } : { 'Service Advisor': 'GRAND TOTAL' }),
+        ...COLUMNS.reduce((acc, col) => {
+          acc[col.label] = totals[col.key] || 0;
+          return acc;
+        }, {})
+      };
+      excelData.push(totalsRow);
+
+      console.log('Excel data prepared:', excelData.length, 'rows');
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      ws['!cols'] = [
+        { wch: 8 },  // S.No
+        { wch: 25 }, // Workshop
+        ...(type === 'id' ? [{ wch: 25 }] : [{ wch: 25 }]), // Insurance Party or Service Advisor
+        ...COLUMNS.map(() => ({ wch: 15 })) // Data columns
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Summary');
+      
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const filename = `${config.filename}_${timestamp}.xlsx`;
+      
+      console.log('Writing file:', filename);
+      XLSX.writeFile(wb, filename);
+      
+      console.log('✅ Download completed successfully!');
+      
+    } catch (error) {
+      console.error('❌ Excel download ERROR:', error);
+      alert(`Download failed: ${error.message}`);
+    }
+  }, [filteredData, COLUMNS, config.filename, totals, type]);
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -88,7 +182,6 @@ const SAOutstandingPage = ({ type }) => {
       if (Array.isArray(res)) {
         setData(res);
         
-        // Extract workshops
         const workshops = res.reduce((acc, row) => {
           const workshopValue = row.segment || "null";
           if (workshopValue && !acc.find(w => w.value === workshopValue)) {
@@ -98,7 +191,6 @@ const SAOutstandingPage = ({ type }) => {
         }, []).sort((a, b) => a.label.localeCompare(b.label));
         setWorkshopOptions(workshops);
         
-        // Extract all advisors
         const allAdvisors = res.reduce((acc, row) => {
           const advisorValue = row.salesMan || "null";
           if (advisorValue && !acc.find(a => a.value === advisorValue)) {
@@ -118,9 +210,7 @@ const SAOutstandingPage = ({ type }) => {
     }
   }, [config.api]);
 
-  // ✅ CRITICAL FIX: Reset ALL state + fetch data when switching pages
   useEffect(() => {
-    // Reset all state when page changes
     setData([]);
     setFilteredData([]);
     setWorkshopFilter([]);
@@ -130,12 +220,9 @@ const SAOutstandingPage = ({ type }) => {
     setAdvisorOptions([]);
     setAllAdvisorOptions([]);
     setLoading(true);
-    
-    // Fetch fresh data
     loadData();
   }, [type, location.pathname, loadData]);
 
-  // Update advisor options based on workshop selection
   const updateAdvisorOptions = useCallback((selectedWorkshops) => {
     let advisorsData = data;
     if (selectedWorkshops?.length > 0) {
@@ -159,7 +246,6 @@ const SAOutstandingPage = ({ type }) => {
     }
   }, [data, advisorFilter, allAdvisorOptions]);
 
-  // Filter handlers
   const handleWorkshopChange = useCallback((event) => {
     const value = event.target.value || [];
     if (typeof value === 'string') value = [value];
@@ -173,7 +259,6 @@ const SAOutstandingPage = ({ type }) => {
     setAdvisorFilter(value);
   }, []);
 
-  // Sorting
   const sortData = useCallback((a, b) => {
     const aValue = a[sortConfig.key] || 0;
     const bValue = b[sortConfig.key] || 0;
@@ -188,30 +273,19 @@ const SAOutstandingPage = ({ type }) => {
     setSortConfig({ key, direction });
   }, [sortConfig]);
 
-  // Client-side filtering & sorting
   useEffect(() => {
     let filtered = [...data];
-
     if (workshopFilter.length > 0) {
       filtered = filtered.filter(row => workshopFilter.includes(row.segment || "null"));
     }
-
     if (advisorFilter.length > 0) {
       filtered = filtered.filter(row => advisorFilter.includes(row.salesMan || "null"));
     }
-
     if (sortConfig.key) {
       filtered.sort(sortData);
     }
-
     setFilteredData(filtered);
   }, [workshopFilter, advisorFilter, data, sortConfig, sortData]);
-
-  // Totals
-  const totals = useMemo(() => filteredData.reduce((acc, row) => {
-    COLUMNS.forEach(col => acc[col.key] += row[col.key] || 0);
-    return acc;
-  }, COLUMNS.reduce((acc, col) => ({ ...acc, [col.key]: 0 }), {})), [filteredData]);
 
   const formatCurrency = useCallback((value) => 
     new Intl.NumberFormat('en-IN', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -232,12 +306,24 @@ const SAOutstandingPage = ({ type }) => {
 
   const renderNavigationButtons = () => (
     <Box sx={{ display: "flex", gap: 1, flexWrap: 'wrap' }}>
-      <Button variant="contained" onClick={() => navigate(config.branchPath)}>Back</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/total_sa_outstanding")}>Total</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/cash_sa_outstanding")}>Cash</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/invoice_sa_outstanding")}>Invoice</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/insurance_sa_outstanding")}>Insurance</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/others_sa_outstanding")}>Others</Button>
+      <Button variant="contained" onClick={() => navigate(config.branchPath)} size="small">Back</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/total_sa_outstanding")} size="small">Total</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/cash_sa_outstanding")} size="small">Cash</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/invoice_sa_outstanding")} size="small">Invoice</Button>
+      {/* <Button variant="contained" onClick={() => navigate("/DashboardHome/insurance_sa_outstanding")} size="small">Insurance</Button> */}
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/others_sa_outstanding")} size="small">Others</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/id_sa_outstanding")} size="small">Insurance</Button>
+      <Button 
+        variant="contained" 
+        onClick={downloadExcel} 
+        size="small"
+        sx={{ 
+          backgroundColor: '#4caf50', 
+          '&:hover': { backgroundColor: '#45a049' }
+        }}
+      >
+        📥 Download
+      </Button>
     </Box>
   );
 
@@ -310,7 +396,14 @@ const SAOutstandingPage = ({ type }) => {
             <TableRow sx={{ background: "#455a64" }}>
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 60, width: 60 }}>S.No</TableCell>
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 250 }}>Workshop</TableCell>
-              <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 250 }}>Service Advisor</TableCell>
+              
+              {/* ✅ ID TYPE: Show InsuranceParty instead of Service Advisor */}
+              {type === 'id' ? (
+                <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 250 }}>Insurance Party</TableCell>
+              ) : (
+                <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 250 }}>Service Advisor</TableCell>
+              )}
+              
               {COLUMNS.map((column) => (
                 <TableCell key={column.key} align="right" sx={{ color: "#fff", fontWeight: 800 }}>
                   <TableSortLabel active={sortConfig.key === column.key} direction={sortConfig.direction}
@@ -321,6 +414,7 @@ const SAOutstandingPage = ({ type }) => {
               ))}
             </TableRow>
           </TableHead>
+          
           <TableBody>
             {filteredData.map((row, index) => {
               const workshopForFilter = row.segment || "null";
@@ -329,7 +423,14 @@ const SAOutstandingPage = ({ type }) => {
                 <TableRow key={`${workshopForFilter}-${advisorForFilter}-${index}`} sx={{ background: index % 2 ? "#fafafa" : "#fff" }}>
                   <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>{index + 1}</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>{row.segment || ''}</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>{row.salesMan || ''}</TableCell>
+                  
+                  {/* ✅ ID TYPE: Show InsuranceParty instead of Service Advisor */}
+                  {type === 'id' ? (
+                    <TableCell sx={{ fontWeight: 700 }}>{row.insuranceParty || ''}</TableCell>
+                  ) : (
+                    <TableCell sx={{ fontWeight: 700 }}>{row.salesMan || ''}</TableCell>
+                  )}
+                  
                   {COLUMNS.map((column) => (
                     <TableCell key={column.key} align="right" sx={{ fontWeight: 600 }}>
                       {formatCurrency(row[column.key])}
@@ -338,8 +439,11 @@ const SAOutstandingPage = ({ type }) => {
                 </TableRow>
               );
             })}
+            
             <TableRow sx={{ background: "#e3f2fd" }}>
-              <TableCell sx={{ fontWeight: 900, fontSize: '1.1em' }} colSpan={3}>GRAND TOTAL</TableCell>
+              <TableCell sx={{ fontWeight: 900, fontSize: '1.1em' }} colSpan={totalRowColSpan}>
+                GRAND TOTAL
+              </TableCell>
               {COLUMNS.map((column) => (
                 <TableCell key={column.key} align="right" sx={{ fontWeight: 900, fontSize: '1.1em', color: '#1976d2' }}>
                   {formatCurrency(totals[column.key])}

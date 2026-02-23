@@ -170,6 +170,10 @@ import OthersBranchOutstandingPage from "./pages/Outstanding/BranchWiseOutstandi
 import OthersSAOutstandingPage from "./pages/Outstanding/SAWiseOutstanding/OthersSAOutstandingPage.js";
 import OthersPartyOutstandingPage from "./pages/Outstanding/PartyWiseOutstanding/OthersPartyOutstandingPage.js";
 
+import IDBranchOutstandingPage from "./pages/Outstanding/BranchWiseOutstanding/IDBranchOutstandingPage.js";
+import IDSAOutstandingPage from "./pages/Outstanding/SAWiseOutstanding/IDSAOutstandingPage.js";
+import IDPartyOutstandingPage from "./pages/Outstanding/PartyWiseOutstanding/IDPartyOutstandingPage.js";
+
 import OutstandingUploadPage from "./pages/FileUpload/OutstandingUploadPage";
 
 
@@ -252,6 +256,11 @@ function App() {
           <Route path="others_branch_outstanding" element={<OthersBranchOutstandingPage />} />
           <Route path="others_sa_outstanding" element={<OthersSAOutstandingPage />} />
           <Route path="others_party_outstanding" element={<OthersPartyOutstandingPage />} />
+
+          <Route path="id_branch_outstanding" element={<IDBranchOutstandingPage />} />
+          <Route path="id_sa_outstanding" element={<IDSAOutstandingPage />} />
+          <Route path="id_party_outstanding" element={<IDPartyOutstandingPage />} />
+          
 
           <Route path="battery_tyre" element={<BatteryTyrePage />} />
           <Route path="br_conversion" element={<BRConversionPage />} />

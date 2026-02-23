@@ -7,48 +7,74 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { fetchData } from "../../../api/uploadService";
+import * as XLSX from 'xlsx';
 
 const NAVIGATION_MAP = {
   cash: {
     title: "Cash Outstanding – Party Summary",
     api: "/api/outstanding/cash_party_outstanding",
-    branchPath: "/DashboardHome/cash_branch_outstanding"
+    branchPath: "/DashboardHome/cash_branch_outstanding",
+    filename: "Cash_Outstanding_Party_Summary"
   },
   total: {
     title: "Total Outstanding – Party Summary", 
     api: "/api/outstanding/total_party_outstanding",
-    branchPath: "/DashboardHome/total_branch_outstanding"
+    branchPath: "/DashboardHome/total_branch_outstanding",
+    filename: "Total_Outstanding_Party_Summary"
   },
   invoice: {
     title: "Invoice Outstanding – Party Summary",
     api: "/api/outstanding/invoice_party_outstanding",
-    branchPath: "/DashboardHome/invoice_branch_outstanding"
+    branchPath: "/DashboardHome/invoice_branch_outstanding",
+    filename: "Invoice_Outstanding_Party_Summary"
   },
   insurance: {
     title: "Insurance Outstanding – Party Summary",
     api: "/api/outstanding/insurance_party_outstanding", 
-    branchPath: "/DashboardHome/insurance_branch_outstanding"
+    branchPath: "/DashboardHome/insurance_branch_outstanding",
+    filename: "Insurance_Outstanding_Party_Summary"
   },
   others: {
     title: "Others Outstanding – Party Summary",
     api: "/api/outstanding/others_party_outstanding",
-    branchPath: "/DashboardHome/others_branch_outstanding"
+    branchPath: "/DashboardHome/others_branch_outstanding",
+    filename: "Others_Outstanding_Party_Summary"
+  },
+  id: {
+    title: "ID Outstanding – Party Summary",
+    api: "/api/outstanding/id_party_outstanding",
+    branchPath: "/DashboardHome/id_branch_outstanding",
+    filename: "ID_Outstanding_Party_Summary"
   }
 };
 
-// ✅ NEW: Added COLUMNS array for consistency
-const COLUMNS = [
-  { key: 'billAmt', label: 'Bill Amt' },
-  { key: 'balanceAmt', label: 'Balance Amt' },
-  { key: 'upToSeven', label: 'Upto 7 Days' },
-  { key: 'eightToThirty', label: '8-30 Days' },
-  { key: 'thirtyOneToNinty', label: '31-90 Days' },
-  { key: 'grtNinty', label: '>90 Days' }
-];
+const getColumns = (type = 'cash') => {
+  const baseColumns = [
+    { key: 'billAmt', label: 'Bill Amt' },
+    { key: 'balanceAmt', label: 'Balance Amt' },
+    { key: 'upToSeven', label: 'Upto 7 Days' },
+    { key: 'eightToThirty', label: '8-30 Days' },
+    { key: 'thirtyOneToNinty', label: '31-90 Days' },
+    { key: 'grtNinty', label: '>90 Days' }
+  ];
+  
+  if (type === 'id') {
+    return [
+      baseColumns[0],
+      baseColumns[1],
+      { key: 'insuranceAmt', label: 'Insurance' },
+      { key: 'differenceAmt', label: 'Difference' },
+      ...baseColumns.slice(2)
+    ];
+  }
+  
+  return baseColumns;
+};
 
 const PartyOutstandingPage = ({ type }) => {
   const config = NAVIGATION_MAP[type];
   const navigate = useNavigate();
+  const COLUMNS = getColumns(type);
 
   // State
   const [data, setData] = useState([]);
@@ -59,12 +85,20 @@ const PartyOutstandingPage = ({ type }) => {
   const [partyFilter, setPartyFilter] = useState("");
   const [searchParty, setSearchParty] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: 'balanceAmt', direction: 'asc' });
-
   const [workshopOptions, setWorkshopOptions] = useState([]);
   const [advisorOptions, setAdvisorOptions] = useState([]);
   const [allAdvisorOptions, setAllAdvisorOptions] = useState([]);
 
-  // Sort styles
+  // ✅ SIMPLIFIED totals - MOVED FIRST
+  const totals = useMemo(() => {
+    return filteredData.reduce((acc, row) => {
+      COLUMNS.forEach(col => {
+        acc[col.key] = (acc[col.key] || 0) + (row[col.key] || 0);
+      });
+      return acc;
+    }, COLUMNS.reduce((acc, col) => ({ ...acc, [col.key]: 0 }), {}));
+  }, [filteredData, COLUMNS]);
+
   const sortLabelSx = {
     color: 'white !important', 
     fontWeight: 'bold',
@@ -79,7 +113,78 @@ const PartyOutstandingPage = ({ type }) => {
     '& .MuiTableSortLabel-iconDirectionAsc': { color: 'white !important', fontWeight: 'bold', fontSize: '1.2em' }
   };
 
-  // Fetch data
+  // ✅ FIXED: Dynamic first columns count based on type
+  const getFirstColumnsCount = () => {
+    if (type === 'id') return 6; // S.No + Workshop + InsuranceParty + PartyName + BillNo + Service Advisor
+    return 4; // S.No + Workshop + Service Advisor + Party Name
+  };
+
+  const totalRowColSpan = getFirstColumnsCount();
+
+  // ✅ ULTRA-SIMPLE & BULLETPROOF DOWNLOAD FUNCTION
+  const downloadExcel = useCallback(() => {
+    try {
+      console.log('Starting download...', { filteredDataLength: filteredData.length });
+      
+      const excelData = filteredData.map((row, index) => ({
+        'S.No': index + 1,
+        'Workshop': row.segment || '',
+        ...(type === 'id' && { 'Insurance Party': row.insuranceParty || '' }),
+        'Party Name': row.partyName || '',
+        ...(type === 'id' && { 'Bill No': row.billNo || '' }),
+        'Service Advisor': row.salesMan || '',
+        ...COLUMNS.reduce((acc, col) => {
+          acc[col.label] = row[col.key] || 0;
+          return acc;
+        }, {})
+      }));
+
+      // Add totals row
+      const totalsRow = {
+        'S.No': '',
+        'Workshop': '',
+        ...(type === 'id' && { 'Insurance Party': '' }),
+        'Party Name': 'GRAND TOTAL',
+        ...(type === 'id' && { 'Bill No': '' }),
+        'Service Advisor': '',
+        ...COLUMNS.reduce((acc, col) => {
+          acc[col.label] = totals[col.key] || 0;
+          return acc;
+        }, {})
+      };
+      excelData.push(totalsRow);
+
+      console.log('Excel data prepared:', excelData.length, 'rows');
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      ws['!cols'] = [
+        { wch: 8 },  // S.No
+        { wch: 20 }, // Workshop
+        ...(type === 'id' ? [{ wch: 20 }] : []), // Insurance Party for ID only
+        { wch: 25 }, // Party Name
+        ...(type === 'id' ? [{ wch: 15 }] : []), // Bill No for ID only
+        { wch: 20 }, // Service Advisor
+        ...COLUMNS.map(() => ({ wch: 15 })) // Data columns
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Data');
+      
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const filename = `${config.filename}_${timestamp}.xlsx`;
+      
+      console.log('Writing file:', filename);
+      XLSX.writeFile(wb, filename);
+      
+      console.log('✅ Download completed successfully!');
+      
+    } catch (error) {
+      console.error('❌ Excel download ERROR:', error);
+      alert(`Download failed: ${error.message}`);
+    }
+  }, [filteredData, COLUMNS, config.filename, totals, type]);
+
   const fetchDataWithFilters = async () => {
     try {
       setLoading(true);
@@ -92,8 +197,6 @@ const PartyOutstandingPage = ({ type }) => {
       
       if (Array.isArray(res)) {
         setData(res);
-        
-        // Workshops
         const workshops = res.reduce((acc, row) => {
           const workshopValue = row.segment || "null";
           if (workshopValue && !acc.find(w => w.value === workshopValue)) {
@@ -103,7 +206,6 @@ const PartyOutstandingPage = ({ type }) => {
         }, []).sort((a, b) => a.label.localeCompare(b.label));
         setWorkshopOptions(workshops);
         
-        // Advisors
         const allAdvisors = res.reduce((acc, row) => {
           const advisorValue = row.salesMan || "null";
           if (advisorValue && !acc.find(a => a.value === advisorValue)) {
@@ -123,11 +225,9 @@ const PartyOutstandingPage = ({ type }) => {
     }
   };
 
-  // Effects
   useEffect(() => { fetchDataWithFilters(); }, []);
   useEffect(() => { fetchDataWithFilters(); }, [workshopFilter, advisorFilter, searchParty]);
 
-  // Update advisor options based on workshop filter
   const updateAdvisorOptions = useCallback((selectedWorkshops) => {
     let advisorsData = data;
     if (selectedWorkshops?.length > 0) {
@@ -151,7 +251,6 @@ const PartyOutstandingPage = ({ type }) => {
     }
   }, [data, advisorFilter, allAdvisorOptions]);
 
-  // Handlers
   const handleWorkshopChange = useCallback((event) => {
     const value = event.target.value || [];
     if (typeof value === 'string') value = [value];
@@ -168,7 +267,6 @@ const PartyOutstandingPage = ({ type }) => {
   const handlePartyChange = useCallback((event) => setPartyFilter(event.target.value), []);
   const handleFindParty = useCallback(() => setSearchParty(partyFilter.trim()), [partyFilter]);
 
-  // Sorting
   const sortData = useCallback((a, b) => {
     const aValue = a[sortConfig.key] || 0;
     const bValue = b[sortConfig.key] || 0;
@@ -188,12 +286,6 @@ const PartyOutstandingPage = ({ type }) => {
     if (sortConfig.key) filtered.sort(sortData);
     setFilteredData(filtered);
   }, [sortConfig, data, sortData]);
-
-  // ✅ UPDATED: Totals now includes billAmt
-  const totals = useMemo(() => filteredData.reduce((acc, row) => {
-    COLUMNS.forEach(col => acc[col.key] += row[col.key] || 0);
-    return acc;
-  }, COLUMNS.reduce((acc, col) => ({ ...acc, [col.key]: 0 }), {})), [filteredData]);
 
   const formatCurrency = useCallback((value) => 
     new Intl.NumberFormat('en-IN', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -215,13 +307,25 @@ const PartyOutstandingPage = ({ type }) => {
   }
 
   const renderNavigationButtons = () => (
-    <Box sx={{ display: "flex", gap: 1 }}>
-      <Button variant="contained" onClick={() => navigate(config.branchPath)}>Back</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/total_party_outstanding")}>Total</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/cash_party_outstanding")}>Cash</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/invoice_party_outstanding")}>Invoice</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/insurance_party_outstanding")}>Insurance</Button>
-      <Button variant="contained" onClick={() => navigate("/DashboardHome/others_party_outstanding")}>Others</Button>
+    <Box sx={{ display: "flex", gap: 1, flexWrap: 'wrap' }}>
+      <Button variant="contained" onClick={() => navigate(config.branchPath)} size="small">Back</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/total_party_outstanding")} size="small">Total</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/cash_party_outstanding")} size="small">Cash</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/invoice_party_outstanding")} size="small">Invoice</Button>
+      {/* <Button variant="contained" onClick={() => navigate("/DashboardHome/insurance_party_outstanding")} size="small">Insurance</Button> */}
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/others_party_outstanding")} size="small">Others</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/id_party_outstanding")} size="small">Insurance</Button>
+      <Button 
+        variant="contained" 
+        onClick={downloadExcel} 
+        size="small"
+        sx={{ 
+          backgroundColor: '#4caf50', 
+          '&:hover': { backgroundColor: '#45a049' }
+        }}
+      >
+        📥 Download
+      </Button>
     </Box>
   );
 
@@ -236,13 +340,11 @@ const PartyOutstandingPage = ({ type }) => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 600 }}>{config.title}</Typography>
         {renderNavigationButtons()}
       </Box>
 
-      {/* Filters */}
       <Box sx={{ mb: 3, display: "flex", gap: 2, alignItems: "end", flexWrap: "wrap" }}>
         <FormControl size="small" sx={{ minWidth: 220 }}>
           <InputLabel>Workshops</InputLabel>
@@ -294,21 +396,30 @@ const PartyOutstandingPage = ({ type }) => {
         )}
       </Box>
 
-      {/* Results */}
       <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
         Showing {filteredData.length} of {data.length} records{getFilterDisplayText().length > 0 && ` | ${getFilterDisplayText().join(' | ')}`}
       </Typography>
 
-      {/* Table */}
       <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 4 }}>
         <Table size="small">
           <TableHead>
             <TableRow sx={{ background: "#455a64" }}>
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 60, width: 60 }}>S.No</TableCell>
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 200 }}>Workshop</TableCell>
-              <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 200 }}>Service Advisor</TableCell>
+              
+              {/* ✅ NEW ID ORDER: InsuranceParty → PartyName → BillNo → Service Advisor */}
+              {type === 'id' && (
+                <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 200 }}>Insurance Party</TableCell>
+              )}
+              
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 250 }}>Party Name</TableCell>
-              {/* ✅ UPDATED: Now uses COLUMNS array with billAmt */}
+              
+              {type === 'id' && (
+                <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 120 }}>Bill No</TableCell>
+              )}
+              
+              <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 200 }}>Service Advisor</TableCell>
+              
               {COLUMNS.map((column) => (
                 <TableCell key={column.key} align="right" sx={{ color: "#fff", fontWeight: 800 }}>
                   <TableSortLabel active={sortConfig.key === column.key} direction={sortConfig.direction}
@@ -319,15 +430,27 @@ const PartyOutstandingPage = ({ type }) => {
               ))}
             </TableRow>
           </TableHead>
+          
           <TableBody>
             {filteredData.map((row, index) => (
-              <TableRow key={`${(row.segment || "null")}-${(row.salesMan || "null")}-${row.partyName || 'unknown'}-${index}`}
+              <TableRow key={`${(row.segment || "null")}-${(row.insuranceParty || "null")}-${(row.partyName || 'unknown')}-${(row.billNo || 'no-bill')}-${(row.salesMan || "null")}-${index}`}
                 sx={{ background: index % 2 ? "#fafafa" : "#fff" }}>
                 <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>{index + 1}</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>{row.segment || ''}</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>{row.salesMan || ''}</TableCell>
+                
+                {/* ✅ NEW ID ORDER: InsuranceParty → PartyName → BillNo → Service Advisor */}
+                {type === 'id' && (
+                  <TableCell sx={{ fontWeight: 600 }}>{row.insuranceParty || ''}</TableCell>
+                )}
+                
                 <TableCell sx={{ fontWeight: 600 }}>{row.partyName || ''}</TableCell>
-                {/* ✅ UPDATED: Dynamic rendering with billAmt support */}
+                
+                {type === 'id' && (
+                  <TableCell sx={{ fontWeight: 600 }}>{row.billNo || ''}</TableCell>
+                )}
+                
+                <TableCell sx={{ fontWeight: 600 }}>{row.salesMan || ''}</TableCell>
+                
                 {COLUMNS.map((column) => (
                   <TableCell key={column.key} align="right" sx={{ fontWeight: 600 }}>
                     {formatCurrency(row[column.key])}
@@ -335,9 +458,12 @@ const PartyOutstandingPage = ({ type }) => {
                 ))}
               </TableRow>
             ))}
+            
+            {/* ✅ FIXED GRAND TOTAL - Line 510: Now spans ALL first columns correctly */}
             <TableRow sx={{ background: "#e3f2fd" }}>
-              <TableCell sx={{ fontWeight: 900, fontSize: '1.1em' }} colSpan={4}>GRAND TOTAL</TableCell>
-              {/* ✅ UPDATED: Dynamic totals rendering */}
+              <TableCell sx={{ fontWeight: 900, fontSize: '1.1em' }} colSpan={totalRowColSpan}>
+                GRAND TOTAL
+              </TableCell>
               {COLUMNS.map((column) => (
                 <TableCell key={column.key} align="right" sx={{ fontWeight: 900, fontSize: '1.1em', color: '#1976d2' }}>
                   {formatCurrency(totals[column.key])}

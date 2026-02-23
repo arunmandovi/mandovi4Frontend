@@ -16,20 +16,21 @@ const OutstandingTable = (props) => {
   // ✅ ALL HOOKS AT TOP LEVEL
   const [localSortConfig, setLocalSortConfig] = useState({ key: 'balanceAmt', direction: 'asc' });
 
-  // ✅ FIXED: Extract ALL props including level-aware functions
+  // ✅ FIXED: Extract ALL props including secondLayerHeader
   const {
     data = [],
     filteredData = [],
     totals,
     loading = false,
     level = "branch",
+    type = "cash",
+    secondLayerHeader, 
     onRowClick,
     onSort,
     sortConfig = { key: 'balanceAmt', direction: 'asc' },
     formatCurrency,
     showContactColumn = false,
     getRowKey = (row, index) => index,
-    // ✅ FIXED: Now properly receives level-aware functions from parent
     getDisplayName = (row) => row.branchName || row.salesMan || row.partyName || 'N/A',
     getSegmentName = (row) => row.segment || row.branchName || '',
     getAdvisorName = (row) => row.salesMan || ''
@@ -50,7 +51,35 @@ const OutstandingTable = (props) => {
     onSort?.(newConfig);
   }, [localSortConfig, onSort]);
 
+  // ✅ NEW: Branch name sorting - alphabetical ASC but Spares last
+  const sortedBranchNames = useMemo(() => {
+    if (level !== 'branch') return [];
+    
+    const names = filteredData.map(row => ({
+      row,
+      name: getDisplayName(row).toLowerCase(),
+      isSpares: getDisplayName(row).toLowerCase().includes('spares')
+    }));
+
+    const spares = names.filter(item => item.isSpares);
+    const nonSpares = names.filter(item => !item.isSpares);
+
+    nonSpares.sort((a, b) => a.name.localeCompare(b.name));
+
+    spares.sort((a, b) => {
+      const aIndex = filteredData.findIndex(row => getDisplayName(row) === a.row.branchName);
+      const bIndex = filteredData.findIndex(row => getDisplayName(row) === b.row.branchName);
+      return aIndex - bIndex;
+    });
+
+    return [...nonSpares.map(item => item.row), ...spares.map(item => item.row)];
+  }, [filteredData, level, getDisplayName]);
+
   const sortedData = useMemo(() => {
+    if (level === 'branch') {
+      return sortedBranchNames;
+    }
+
     let result = [...filteredData];
     if (localSortConfig.key) {
       result.sort((a, b) => {
@@ -62,7 +91,7 @@ const OutstandingTable = (props) => {
       });
     }
     return result;
-  }, [filteredData, localSortConfig]);
+  }, [filteredData, localSortConfig, level, sortedBranchNames]);
 
   const defaultFormatCurrency = (value) => new Intl.NumberFormat('en-IN').format(value || 0);
 
@@ -73,6 +102,8 @@ const OutstandingTable = (props) => {
       </Box>
     );
   }
+
+  const isIDType = type === 'id';
 
   return (
     <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 4 }}>
@@ -88,15 +119,27 @@ const OutstandingTable = (props) => {
               S.No
             </TableCell>
             
-            {/* Dynamic first column based on level */}
+            {/* ✅ Dynamic first column */}
             <TableCell sx={{ 
               color: "#fff", 
               fontWeight: 800, 
-              minWidth: level === 'branch' ? 250 : 250 
+              minWidth: level === 'branch' ? 250 : 200
             }}>
               {level === 'branch' ? 'Branch/Workshop' : 
-               level === 'sa' ? 'Service Advisor' : 'Party'}
+               level === 'sa' ? (secondLayerHeader || 'Service Advisor') : 'Party Name'}
             </TableCell>
+
+            {/* ✅ NEW: Additional columns ONLY for ID type at party level */}
+            {isIDType && level === 'party' && (
+              <>
+                <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 180 }}>
+                  Service Advisor
+                </TableCell>
+                <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 120 }}>
+                  Bill No
+                </TableCell>
+              </>
+            )}
 
             {level === 'sa' && (
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 250 }}>
@@ -126,6 +169,31 @@ const OutstandingTable = (props) => {
                 Balance Amt
               </TableSortLabel>
             </TableCell>
+
+            {isIDType && (
+              <>
+                <TableCell align="right" sx={{ color: "#fff", fontWeight: 800 }}>
+                  <TableSortLabel
+                    active={localSortConfig.key === 'insuranceAmt'}
+                    direction={localSortConfig.direction}
+                    onClick={() => handleSort('insuranceAmt')}
+                    sx={sortLabelSx}
+                  >
+                    Insurance
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell align="right" sx={{ color: "#fff", fontWeight: 800 }}>
+                  <TableSortLabel
+                    active={localSortConfig.key === 'differenceAmt'}
+                    direction={localSortConfig.direction}
+                    onClick={() => handleSort('differenceAmt')}
+                    sx={sortLabelSx}
+                  >
+                    Difference
+                  </TableSortLabel>
+                </TableCell>
+              </>
+            )}
             
             <TableCell align="right" sx={{ color: "#fff", fontWeight: 800 }}>
               <TableSortLabel
@@ -184,17 +252,27 @@ const OutstandingTable = (props) => {
                   backgroundColor: level === 'party' ? 'transparent' : '#e3f2fd !important' 
                 }
               }}
-              // ✅ FIXED: Pass both row AND level to getDisplayName
               onClick={level === 'party' ? undefined : () => onRowClick?.(getDisplayName(row, level))}
             >
               <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
                 {index + 1}
               </TableCell>
               
-              {/* ✅ FIXED: Pass level to getDisplayName for proper empty SA handling */}
               <TableCell sx={{ fontWeight: 700 }}>
                 {getDisplayName(row, level)}
               </TableCell>
+
+              {/* ✅ NEW: Additional data columns ONLY for ID type at party level */}
+              {isIDType && level === 'party' && (
+                <>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {row.salesMan || ''}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {row.billNo || ''}
+                  </TableCell>
+                </>
+              )}
 
               {level === 'sa' && (
                 <TableCell sx={{ fontWeight: 600 }}>
@@ -208,6 +286,18 @@ const OutstandingTable = (props) => {
               <TableCell align="right" sx={{ fontWeight: 600 }}>
                 {formatCurrency ? formatCurrency(row.balanceAmt) : defaultFormatCurrency(row.balanceAmt)}
               </TableCell>
+
+              {isIDType && (
+                <>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    {formatCurrency ? formatCurrency(row.insuranceAmt) : defaultFormatCurrency(row.insuranceAmt)}
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    {formatCurrency ? formatCurrency(row.differenceAmt) : defaultFormatCurrency(row.differenceAmt)}
+                  </TableCell>
+                </>
+              )}
+
               <TableCell align="right" sx={{ fontWeight: 600 }}>
                 {formatCurrency ? formatCurrency(row.upToSeven) : defaultFormatCurrency(row.upToSeven)}
               </TableCell>
@@ -223,12 +313,14 @@ const OutstandingTable = (props) => {
             </TableRow>
           ))}
 
-          {/* TOTAL ROW */}
+          {/* ✅ FIXED: TOTAL ROW - Correct colspan logic */}
           {totals && (
             <TableRow sx={{ background: "#e3f2fd" }}>
               <TableCell 
                 sx={{ fontWeight: 900, fontSize: '1.1em' }} 
-                colSpan={level === 'sa' ? 3 : 2}
+                colSpan={isIDType && level === 'party' ? 4 :  // ✅ S.No + Party + SA + BillNo
+                        level === 'sa' ? 3 :                    // S.No + Header + Workshop
+                        2}                                      // S.No + Header
               >
                 {level === 'branch' ? 'GRAND TOTAL' : 'TOTAL'}
               </TableCell>
@@ -238,6 +330,18 @@ const OutstandingTable = (props) => {
               <TableCell align="right" sx={{ fontWeight: 900, fontSize: '1.1em', color: '#1976d2' }}>
                 {formatCurrency ? formatCurrency(totals.balanceAmt) : defaultFormatCurrency(totals.balanceAmt)}
               </TableCell>
+              
+              {isIDType && (
+                <>
+                  <TableCell align="right" sx={{ fontWeight: 900, fontSize: '1.1em', color: '#1976d2' }}>
+                    {formatCurrency ? formatCurrency(totals.insuranceAmt) : defaultFormatCurrency(totals.insuranceAmt)}
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 900, fontSize: '1.1em', color: '#1976d2' }}>
+                    {formatCurrency ? formatCurrency(totals.differenceAmt) : defaultFormatCurrency(totals.differenceAmt)}
+                  </TableCell>
+                </>
+              )}
+              
               <TableCell align="right" sx={{ fontWeight: 900, fontSize: '1.1em', color: '#1976d2' }}>
                 {formatCurrency ? formatCurrency(totals.upToSeven) : defaultFormatCurrency(totals.upToSeven)}
               </TableCell>
@@ -253,9 +357,16 @@ const OutstandingTable = (props) => {
             </TableRow>
           )}
 
+          {/* ✅ FIXED: NO DATA ROW - Correct colspan logic */}
           {sortedData.length === 0 && (
             <TableRow>
-              <TableCell colSpan={level === 'sa' ? 9 : 8} align="center" sx={{ py: 4 }}>
+              <TableCell 
+                colSpan={isIDType && level === 'party' ? 12 :  // ✅ 4 headers + 8 amounts
+                        level === 'sa' ? (isIDType ? 11 : 9) : 
+                        (isIDType ? 10 : 8)} 
+                align="center" 
+                sx={{ py: 4 }}
+              >
                 <Typography color="textSecondary">No data available</Typography>
               </TableCell>
             </TableRow>
