@@ -41,10 +41,17 @@ const NAVIGATION_MAP = {
     filename: "Others_Outstanding_Party_Summary"
   },
   id: {
-    title: "ID Outstanding – Party Summary",
+    title: "Insurance Outstanding – Party Summary",
     api: "/api/outstanding/id_party_outstanding",
     branchPath: "/DashboardHome/id_branch_outstanding",
     filename: "ID_Outstanding_Party_Summary"
+  },
+  // ✅ NEW: CustomerCollect configuration
+  customercollect: {
+    title: "Customer Collect Outstanding – Party Summary",
+    api: "/api/outstanding/cc_party_outstanding",
+    branchPath: "/DashboardHome/customercollect_branch_outstanding",
+    filename: "CustomerCollect_Outstanding_Party_Summary"
   }
 };
 
@@ -113,15 +120,15 @@ const PartyOutstandingPage = ({ type }) => {
     '& .MuiTableSortLabel-iconDirectionAsc': { color: 'white !important', fontWeight: 'bold', fontSize: '1.2em' }
   };
 
-  // ✅ FIXED: Dynamic first columns count based on type
+  // ✅ UPDATED: Dynamic first columns count - NOW includes billNo for ALL types
   const getFirstColumnsCount = () => {
     if (type === 'id') return 6; // S.No + Workshop + InsuranceParty + PartyName + BillNo + Service Advisor
-    return 4; // S.No + Workshop + Service Advisor + Party Name
+    return 5; // S.No + Workshop + PartyName + BillNo + Service Advisor
   };
 
   const totalRowColSpan = getFirstColumnsCount();
 
-  // ✅ ULTRA-SIMPLE & BULLETPROOF DOWNLOAD FUNCTION
+  // ✅ ULTRA-SIMPLE & BULLETPROOF DOWNLOAD FUNCTION - UPDATED with billNo
   const downloadExcel = useCallback(() => {
     try {
       console.log('Starting download...', { filteredDataLength: filteredData.length });
@@ -131,7 +138,7 @@ const PartyOutstandingPage = ({ type }) => {
         'Workshop': row.segment || '',
         ...(type === 'id' && { 'Insurance Party': row.insuranceParty || '' }),
         'Party Name': row.partyName || '',
-        ...(type === 'id' && { 'Bill No': row.billNo || '' }),
+        'Bill No': row.billNo || '', // ✅ ADDED billNo for ALL types
         'Service Advisor': row.salesMan || '',
         ...COLUMNS.reduce((acc, col) => {
           acc[col.label] = row[col.key] || 0;
@@ -145,7 +152,7 @@ const PartyOutstandingPage = ({ type }) => {
         'Workshop': '',
         ...(type === 'id' && { 'Insurance Party': '' }),
         'Party Name': 'GRAND TOTAL',
-        ...(type === 'id' && { 'Bill No': '' }),
+        'Bill No': '', // ✅ ADDED billNo for ALL types
         'Service Advisor': '',
         ...COLUMNS.reduce((acc, col) => {
           acc[col.label] = totals[col.key] || 0;
@@ -164,7 +171,7 @@ const PartyOutstandingPage = ({ type }) => {
         { wch: 20 }, // Workshop
         ...(type === 'id' ? [{ wch: 20 }] : []), // Insurance Party for ID only
         { wch: 25 }, // Party Name
-        ...(type === 'id' ? [{ wch: 15 }] : []), // Bill No for ID only
+        { wch: 15 }, // Bill No - NOW FOR ALL TYPES ✅
         { wch: 20 }, // Service Advisor
         ...COLUMNS.map(() => ({ wch: 15 })) // Data columns
       ];
@@ -312,9 +319,9 @@ const PartyOutstandingPage = ({ type }) => {
       <Button variant="contained" onClick={() => navigate("/DashboardHome/total_party_outstanding")} size="small">Total</Button>
       <Button variant="contained" onClick={() => navigate("/DashboardHome/cash_party_outstanding")} size="small">Cash</Button>
       <Button variant="contained" onClick={() => navigate("/DashboardHome/invoice_party_outstanding")} size="small">Invoice</Button>
-      {/* <Button variant="contained" onClick={() => navigate("/DashboardHome/insurance_party_outstanding")} size="small">Insurance</Button> */}
       <Button variant="contained" onClick={() => navigate("/DashboardHome/others_party_outstanding")} size="small">Others</Button>
       <Button variant="contained" onClick={() => navigate("/DashboardHome/id_party_outstanding")} size="small">Insurance</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/customercollect_party_outstanding")} size="small">Customer Collect</Button>
       <Button 
         variant="contained" 
         onClick={downloadExcel} 
@@ -407,16 +414,15 @@ const PartyOutstandingPage = ({ type }) => {
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 60, width: 60 }}>S.No</TableCell>
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 200 }}>Workshop</TableCell>
               
-              {/* ✅ NEW ID ORDER: InsuranceParty → PartyName → BillNo → Service Advisor */}
+              {/* ✅ ID TYPE: InsuranceParty column */}
               {type === 'id' && (
                 <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 200 }}>Insurance Party</TableCell>
               )}
               
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 250 }}>Party Name</TableCell>
               
-              {type === 'id' && (
-                <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 120 }}>Bill No</TableCell>
-              )}
+              {/* ✅ NEW: Bill No column for ALL TYPES */}
+              <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 120 }}>Bill No</TableCell>
               
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 200 }}>Service Advisor</TableCell>
               
@@ -438,16 +444,15 @@ const PartyOutstandingPage = ({ type }) => {
                 <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>{index + 1}</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>{row.segment || ''}</TableCell>
                 
-                {/* ✅ NEW ID ORDER: InsuranceParty → PartyName → BillNo → Service Advisor */}
+                {/* ✅ ID TYPE: InsuranceParty column */}
                 {type === 'id' && (
                   <TableCell sx={{ fontWeight: 600 }}>{row.insuranceParty || ''}</TableCell>
                 )}
                 
                 <TableCell sx={{ fontWeight: 600 }}>{row.partyName || ''}</TableCell>
                 
-                {type === 'id' && (
-                  <TableCell sx={{ fontWeight: 600 }}>{row.billNo || ''}</TableCell>
-                )}
+                {/* ✅ NEW: Bill No column for ALL TYPES */}
+                <TableCell sx={{ fontWeight: 600 }}>{row.billNo || ''}</TableCell>
                 
                 <TableCell sx={{ fontWeight: 600 }}>{row.salesMan || ''}</TableCell>
                 
@@ -459,7 +464,7 @@ const PartyOutstandingPage = ({ type }) => {
               </TableRow>
             ))}
             
-            {/* ✅ FIXED GRAND TOTAL - Line 510: Now spans ALL first columns correctly */}
+            {/* ✅ FIXED GRAND TOTAL - Updated colspan for billNo */}
             <TableRow sx={{ background: "#e3f2fd" }}>
               <TableCell sx={{ fontWeight: 900, fontSize: '1.1em' }} colSpan={totalRowColSpan}>
                 GRAND TOTAL

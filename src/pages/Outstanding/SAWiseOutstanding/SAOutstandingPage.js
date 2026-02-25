@@ -41,10 +41,17 @@ const NAVIGATION_MAP = {
     filename: "Others_Outstanding_Workshop_Summary"
   },
   id: {
-    title: "ID Outstanding – Workshop Summary",
+    title: "Insurance Outstanding – Workshop Summary",
     api: "/api/outstanding/id_sa_outstanding",
     branchPath: "/DashboardHome/id_branch_outstanding",
     filename: "ID_Outstanding_Workshop_Summary"
+  },
+  // ✅ NEW: CustomerCollect configuration
+  customercollect: {
+    title: "Customer Collect Outstanding – Workshop Summary",
+    api: "/api/outstanding/cc_sa_outstanding",
+    branchPath: "/DashboardHome/customercollect_branch_outstanding",
+    filename: "CustomerCollect_Outstanding_Workshop_Summary"
   }
 };
 
@@ -310,9 +317,9 @@ const SAOutstandingPage = ({ type }) => {
       <Button variant="contained" onClick={() => navigate("/DashboardHome/total_sa_outstanding")} size="small">Total</Button>
       <Button variant="contained" onClick={() => navigate("/DashboardHome/cash_sa_outstanding")} size="small">Cash</Button>
       <Button variant="contained" onClick={() => navigate("/DashboardHome/invoice_sa_outstanding")} size="small">Invoice</Button>
-      {/* <Button variant="contained" onClick={() => navigate("/DashboardHome/insurance_sa_outstanding")} size="small">Insurance</Button> */}
       <Button variant="contained" onClick={() => navigate("/DashboardHome/others_sa_outstanding")} size="small">Others</Button>
       <Button variant="contained" onClick={() => navigate("/DashboardHome/id_sa_outstanding")} size="small">Insurance</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/customercollect_sa_outstanding")} size="small">Customer Collect</Button>
       <Button 
         variant="contained" 
         onClick={downloadExcel} 

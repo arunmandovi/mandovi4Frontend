@@ -33,18 +33,6 @@ const NAVIGATION_MAP = {
       party: "/DashboardHome/cash_party_outstanding"
     }
   },
-  insurance: {
-    title: "Insurance Outstanding – Branch Summary",
-    filename: "Insurance_Outstanding_Branch_Summary",
-    branchApi: "/api/outstanding/insurance_branch_outstanding",
-    saApi: "/api/outstanding/insurance_sa_outstanding",
-    partyApi: "/api/outstanding/insurance_party_outstanding",
-    paths: {
-      branch: "/DashboardHome/insurance_branch_outstanding",
-      sa: "/DashboardHome/insurance_sa_outstanding",
-      party: "/DashboardHome/insurance_party_outstanding"
-    }
-  },
   invoice: {
     title: "Invoice Outstanding – Branch Summary",
     filename: "Invoice_Outstanding_Branch_Summary",
@@ -70,7 +58,7 @@ const NAVIGATION_MAP = {
     }
   },
   id: {
-    title: "ID Outstanding – Branch Summary",
+    title: "Insurance Outstanding – Branch Summary",
     filename: "ID_Outstanding_Branch_Summary",
     branchApi: "/api/outstanding/id_branch_outstanding",
     insuranceApi: "/api/outstanding/id_sa_outstanding",
@@ -79,6 +67,18 @@ const NAVIGATION_MAP = {
       branch: "/DashboardHome/id_branch_outstanding",
       insurance: "/DashboardHome/id_sa_outstanding",
       party: "/DashboardHome/id_party_outstanding"
+    }
+  },
+  customercollect: {
+    title: "Customer Collect Outstanding – Branch Summary",
+    filename: "CustomerCollect_Outstanding_Branch_Summary",
+    branchApi: "/api/outstanding/cc_branch_outstanding",
+    saApi: "/api/outstanding/cc_sa_outstanding",
+    partyApi: "/api/outstanding/cc_party_outstanding",
+    paths: {
+      branch: "/DashboardHome/customercollect_branch_outstanding",
+      sa: "/DashboardHome/customercollect_sa_outstanding",
+      party: "/DashboardHome/customercollect_party_outstanding"
     }
   }
 };
@@ -156,6 +156,10 @@ const OutstandingPage = ({ type = "cash" }) => {
 
   // ✅ HELPER: Get second layer column header
   const getSecondLayerHeader = () => type === 'id' ? 'Insurance Party' : 'Service Advisor';
+
+  // ✅ HELPER: Format workshop value for display and filtering
+  const getWorkshopValue = (workshop) => workshop || "null";
+  const getWorkshopLabel = (value) => value === "null" ? "No Workshop" : value;
 
   // ✅ DOWNLOAD FUNCTIONS
   const downloadBranchExcel = useCallback(() => {
@@ -299,10 +303,14 @@ const OutstandingPage = ({ type = "cash" }) => {
       const branchData = await loadData(config.branchApi);
       setData(branchData);
       
+      // ✅ FIXED: Proper workshop options generation
       const workshops = branchData.reduce((acc, row) => {
-        const workshopValue = row.segment || "null";
+        const workshopValue = getWorkshopValue(row.segment);
         if (workshopValue && !acc.find(w => w.value === workshopValue)) {
-          acc.push({ label: workshopValue === "null" ? "No Workshop" : workshopValue, value: workshopValue });
+          acc.push({ 
+            label: getWorkshopLabel(workshopValue), 
+            value: workshopValue 
+          });
         }
         return acc;
       }, []).sort((a, b) => a.label.localeCompare(b.label));
@@ -348,7 +356,7 @@ const OutstandingPage = ({ type = "cash" }) => {
           setDetailFilterOptions(insuranceOptions);
           setDetailFilteredData(finalData);
         } else if (config?.saApi) {
-          // Other types: Load SA data (original logic)
+          // Other types: Load SA data
           const res = await loadData(config.saApi);
           const branchData = res.filter(row => 
             row.branchName === selectedBranch || row.segment === selectedBranch
@@ -363,7 +371,10 @@ const OutstandingPage = ({ type = "cash" }) => {
           const advisorOptions = finalData.reduce((acc, row) => {
             const advisorValue = row.salesMan || "null";
             if (advisorValue && !acc.find(a => a.value === advisorValue)) {
-              acc.push({ label: advisorValue === "null" ? "No Advisor" : advisorValue, value: advisorValue });
+              acc.push({ 
+                label: advisorValue === "null" ? "No Advisor" : advisorValue, 
+                value: advisorValue 
+              });
             }
             return acc;
           }, []).sort((a, b) => a.label.localeCompare(b.label));
@@ -439,12 +450,18 @@ const OutstandingPage = ({ type = "cash" }) => {
     else setSelectedAdvisor(null);
   }, [type]);
 
-  // ✅ FILTERING & SORTING
+  // ✅ FIXED FILTERING & SORTING
   useEffect(() => {
     let filtered = [...data];
+    
+    // ✅ FIXED: Proper workshop filtering logic
     if (workshopFilter.length > 0) {
-      filtered = filtered.filter(row => workshopFilter.includes(row.segment || "null"));
+      filtered = filtered.filter(row => {
+        const rowWorkshop = getWorkshopValue(row.segment);
+        return workshopFilter.includes(rowWorkshop);
+      });
     }
+    
     if (sortConfig.key) {
       filtered.sort((a, b) => {
         const aValue = a[sortConfig.key] || 0;
@@ -500,7 +517,7 @@ const OutstandingPage = ({ type = "cash" }) => {
       type, 
       selectedBranch, 
       selectedAdvisor: type === 'id' ? selectedInsuranceParty : selectedAdvisor,
-      secondLayerHeader: getSecondLayerHeader(), // ✅ PASSED TO TABLE
+      secondLayerHeader: getSecondLayerHeader(),
       showContactColumn, 
       onToggleContactColumn: () => setShowContactColumn(prev => !prev),
       getRowKey: (row, index) => row.partyName || row.billNo || (type === 'id' ? row.insuranceParty : row.salesMan) || row.segment || index,
@@ -589,39 +606,59 @@ const OutstandingPage = ({ type = "cash" }) => {
         };
     }
   }, [formatCurrency, type, selectedBranch, selectedInsuranceParty, selectedAdvisor, showContactColumn, 
-      partyData, partyFilteredData, partyTotals, backToBranchView, partySortConfig, partyLoading, 
-      detailData, detailFilteredData, detailTotals, handleDetailClick, backToSummary, 
-      detailFilter, detailFilterOptions, detailSortConfig, detailLoading,
-      data, filteredData, totals, handleBranchClick, workshopFilter, workshopOptions, sortConfig, loading,
-      config?.paths?.party, config?.paths?.insurance, config?.paths?.sa, config?.paths?.branch, getSecondLayerHeader]);
+    partyData, partyFilteredData, partyTotals, backToBranchView, partySortConfig, partyLoading, 
+    detailData, detailFilteredData, detailTotals, handleDetailClick, backToSummary, 
+    detailFilter, detailFilterOptions, detailSortConfig, detailLoading,
+    data, filteredData, totals, handleBranchClick, workshopFilter, workshopOptions, sortConfig, loading,
+    config?.paths?.party, config?.paths?.insurance, config?.paths?.sa, config?.paths?.branch, getSecondLayerHeader]);
 
+  // ✅ FIXED: renderFilters with proper display logic
   const renderFilters = (level) => {
     if (level === 'branch') {
       return (
         <Box sx={{ mb: 3, display: "flex", gap: 2, alignItems: "end", flexWrap: "wrap" }}>
           <FormControl size="small" sx={{ minWidth: 220 }}>
             <InputLabel>Workshops</InputLabel>
-            <Select multiple value={workshopFilter} 
+            <Select 
+              multiple 
+              value={workshopFilter} 
               input={<OutlinedInput label="Workshops" />}
               renderValue={(selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {selected.map((value) => (
-                    <Chip key={value} label={value === "null" ? "No Workshop" : value} size="small" />
+                    <Chip 
+                      key={value} 
+                      label={getWorkshopLabel(value)} 
+                      size="small" 
+                    />
                   ))}
                 </Box>
               )}
+              onChange={(e) => {
+                const value = e.target.value || [];
+                if (typeof value === 'string') {
+                  setWorkshopFilter([value]);
+                } else {
+                  setWorkshopFilter(value);
+                }
+              }}
             >
               {workshopOptions.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
-                  <Checkbox checked={workshopFilter.indexOf(option.value) > -1} />
+                  <Checkbox checked={workshopFilter.includes(option.value)} />
                   <ListItemText primary={option.label} />
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
           {workshopFilter.length > 0 && (
-            <Chip label="Clear Filters" onClick={() => setWorkshopFilter([])} 
-              color="error" variant="outlined" sx={{ height: 40 }} />
+            <Chip 
+              label={`Clear Filters (${workshopFilter.length})`} 
+              onClick={() => setWorkshopFilter([])} 
+              color="error" 
+              variant="outlined" 
+              sx={{ height: 40 }} 
+            />
           )}
         </Box>
       );
@@ -645,9 +682,9 @@ const OutstandingPage = ({ type = "cash" }) => {
       <Button variant="contained" onClick={() => navigate("/DashboardHome/total_branch_outstanding")} size="small">Total</Button>
       <Button variant="contained" onClick={() => navigate("/DashboardHome/cash_branch_outstanding")} size="small">Cash</Button>
       <Button variant="contained" onClick={() => navigate("/DashboardHome/invoice_branch_outstanding")} size="small">Invoice</Button>
-      {/* <Button variant="contained" onClick={() => navigate("/DashboardHome/insurance_branch_outstanding")} size="small">Insurance</Button> */}
       <Button variant="contained" onClick={() => navigate("/DashboardHome/others_branch_outstanding")} size="small">Others</Button>
       <Button variant="contained" onClick={() => navigate("/DashboardHome/id_branch_outstanding")} size="small">Insurance</Button>
+      <Button variant="contained" onClick={() => navigate("/DashboardHome/customercollect_branch_outstanding")} size="small">Customer Collect</Button>
       <Button variant="contained" onClick={downloadBranchExcel} size="small"
         sx={{ backgroundColor: '#4caf50', '&:hover': { backgroundColor: '#45a049' } }}>
         📥 Download
@@ -715,7 +752,8 @@ const OutstandingPage = ({ type = "cash" }) => {
       </Box>
       {renderFilters('branch')}
       <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
-        Showing {filteredData.length} records | Sorted by: {sortConfig.key} ({sortConfig.direction.toUpperCase()})
+        Showing {filteredData.length} of {data.length} records |{' '}
+        {workshopFilter.length > 0 && `Filtered by: ${workshopFilter.map(getWorkshopLabel).join(', ')} | `}Sorted by: {sortConfig.key} ({sortConfig.direction.toUpperCase()})
       </Typography>
       <OutstandingTable {...getTableProps('branch')} />
     </Box>

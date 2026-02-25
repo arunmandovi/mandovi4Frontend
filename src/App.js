@@ -170,6 +170,10 @@ import OthersBranchOutstandingPage from "./pages/Outstanding/BranchWiseOutstandi
 import OthersSAOutstandingPage from "./pages/Outstanding/SAWiseOutstanding/OthersSAOutstandingPage.js";
 import OthersPartyOutstandingPage from "./pages/Outstanding/PartyWiseOutstanding/OthersPartyOutstandingPage.js";
 
+import CCBranchOutstandingPage from "./pages/Outstanding/BranchWiseOutstanding/CCBranchWiseOutstandingPage.js";
+import CCSAOutstandingPage from "./pages/Outstanding/SAWiseOutstanding/CCSAOutstandingPage.js";
+import CCPartyOutstandingPage from "./pages/Outstanding/PartyWiseOutstanding/CCPartyOutstandingPage.js";
+
 import IDBranchOutstandingPage from "./pages/Outstanding/BranchWiseOutstanding/IDBranchOutstandingPage.js";
 import IDSAOutstandingPage from "./pages/Outstanding/SAWiseOutstanding/IDSAOutstandingPage.js";
 import IDPartyOutstandingPage from "./pages/Outstanding/PartyWiseOutstanding/IDPartyOutstandingPage.js";
@@ -256,6 +260,10 @@ function App() {
           <Route path="others_branch_outstanding" element={<OthersBranchOutstandingPage />} />
           <Route path="others_sa_outstanding" element={<OthersSAOutstandingPage />} />
           <Route path="others_party_outstanding" element={<OthersPartyOutstandingPage />} />
+
+          <Route path="customercollect_branch_outstanding" element={<CCBranchOutstandingPage />} />
+          <Route path="customercollect_sa_outstanding" element={<CCSAOutstandingPage />} />
+          <Route path="customercollect_party_outstanding" element={<CCPartyOutstandingPage />} />
 
           <Route path="id_branch_outstanding" element={<IDBranchOutstandingPage />} />
           <Route path="id_sa_outstanding" element={<IDSAOutstandingPage />} />
