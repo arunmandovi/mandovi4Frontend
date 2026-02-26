@@ -120,15 +120,15 @@ const PartyOutstandingPage = ({ type }) => {
     '& .MuiTableSortLabel-iconDirectionAsc': { color: 'white !important', fontWeight: 'bold', fontSize: '1.2em' }
   };
 
-  // ✅ UPDATED: Dynamic first columns count - NOW includes billNo for ALL types
+  // ✅ UPDATED: Dynamic first columns count - NOW includes billNo + dueSince for ALL types
   const getFirstColumnsCount = () => {
-    if (type === 'id') return 6; // S.No + Workshop + InsuranceParty + PartyName + BillNo + Service Advisor
-    return 5; // S.No + Workshop + PartyName + BillNo + Service Advisor
+    if (type === 'id') return 7; // S.No + Workshop + InsuranceParty + PartyName + BillNo + dueSince + Service Advisor
+    return 6; // S.No + Workshop + PartyName + BillNo + dueSince + Service Advisor
   };
 
   const totalRowColSpan = getFirstColumnsCount();
 
-  // ✅ ULTRA-SIMPLE & BULLETPROOF DOWNLOAD FUNCTION - UPDATED with billNo
+  // ✅ ULTRA-SIMPLE & BULLETPROOF DOWNLOAD FUNCTION - UPDATED with billNo + dueSince
   const downloadExcel = useCallback(() => {
     try {
       console.log('Starting download...', { filteredDataLength: filteredData.length });
@@ -138,7 +138,8 @@ const PartyOutstandingPage = ({ type }) => {
         'Workshop': row.segment || '',
         ...(type === 'id' && { 'Insurance Party': row.insuranceParty || '' }),
         'Party Name': row.partyName || '',
-        'Bill No': row.billNo || '', // ✅ ADDED billNo for ALL types
+        'Bill No': row.billNo || '',
+        'Due Since (Days)': row.dueSince || '', // ✅ ADDED dueSince for ALL types
         'Service Advisor': row.salesMan || '',
         ...COLUMNS.reduce((acc, col) => {
           acc[col.label] = row[col.key] || 0;
@@ -152,7 +153,8 @@ const PartyOutstandingPage = ({ type }) => {
         'Workshop': '',
         ...(type === 'id' && { 'Insurance Party': '' }),
         'Party Name': 'GRAND TOTAL',
-        'Bill No': '', // ✅ ADDED billNo for ALL types
+        'Bill No': '',
+        'Due Since (Days)': '', // ✅ ADDED dueSince for ALL types
         'Service Advisor': '',
         ...COLUMNS.reduce((acc, col) => {
           acc[col.label] = totals[col.key] || 0;
@@ -171,7 +173,8 @@ const PartyOutstandingPage = ({ type }) => {
         { wch: 20 }, // Workshop
         ...(type === 'id' ? [{ wch: 20 }] : []), // Insurance Party for ID only
         { wch: 25 }, // Party Name
-        { wch: 15 }, // Bill No - NOW FOR ALL TYPES ✅
+        { wch: 15 }, // Bill No
+        { wch: 12 }, // Due Since - NEW ✅
         { wch: 20 }, // Service Advisor
         ...COLUMNS.map(() => ({ wch: 15 })) // Data columns
       ];
@@ -421,8 +424,11 @@ const PartyOutstandingPage = ({ type }) => {
               
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 250 }}>Party Name</TableCell>
               
-              {/* ✅ NEW: Bill No column for ALL TYPES */}
+              {/* ✅ Bill No column for ALL TYPES */}
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 120 }}>Bill No</TableCell>
+              
+              {/* ✅ NEW: dueSince column for ALL TYPES */}
+              <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 100 }}>Due Since (Days)</TableCell>
               
               <TableCell sx={{ color: "#fff", fontWeight: 800, minWidth: 200 }}>Service Advisor</TableCell>
               
@@ -439,7 +445,7 @@ const PartyOutstandingPage = ({ type }) => {
           
           <TableBody>
             {filteredData.map((row, index) => (
-              <TableRow key={`${(row.segment || "null")}-${(row.insuranceParty || "null")}-${(row.partyName || 'unknown')}-${(row.billNo || 'no-bill')}-${(row.salesMan || "null")}-${index}`}
+              <TableRow key={`${(row.segment || "null")}-${(row.insuranceParty || "null")}-${(row.partyName || 'unknown')}-${(row.billNo || 'no-bill')}-${(row.dueSince || 'no-due')}-${(row.salesMan || "null")}-${index}`}
                 sx={{ background: index % 2 ? "#fafafa" : "#fff" }}>
                 <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>{index + 1}</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>{row.segment || ''}</TableCell>
@@ -451,8 +457,13 @@ const PartyOutstandingPage = ({ type }) => {
                 
                 <TableCell sx={{ fontWeight: 600 }}>{row.partyName || ''}</TableCell>
                 
-                {/* ✅ NEW: Bill No column for ALL TYPES */}
+                {/* ✅ Bill No column for ALL TYPES */}
                 <TableCell sx={{ fontWeight: 600 }}>{row.billNo || ''}</TableCell>
+                
+                {/* ✅ NEW: dueSince column for ALL TYPES */}
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {row.dueSince || ''}
+                </TableCell>
                 
                 <TableCell sx={{ fontWeight: 600 }}>{row.salesMan || ''}</TableCell>
                 
@@ -464,7 +475,7 @@ const PartyOutstandingPage = ({ type }) => {
               </TableRow>
             ))}
             
-            {/* ✅ FIXED GRAND TOTAL - Updated colspan for billNo */}
+            {/* ✅ FIXED GRAND TOTAL - Updated colspan for billNo + dueSince */}
             <TableRow sx={{ background: "#e3f2fd" }}>
               <TableCell sx={{ fontWeight: 900, fontSize: '1.1em' }} colSpan={totalRowColSpan}>
                 GRAND TOTAL
