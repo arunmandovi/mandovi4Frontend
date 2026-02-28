@@ -25,6 +25,8 @@ function Layout() {
     "branches-bar-chart": "branches-bar-chart",
     "branches": "branches",
     "bar-chart": "bar-chart",
+    "growth": "growth",
+    "table": "table",
   };
 
   const viewMode =
@@ -87,11 +89,10 @@ function Layout() {
     mcp: ["bar-chart"],
     referencee: ["bar-chart"],
     profit_loss: ["bar-chart"],
-    cc_conversion: ["bar-chart"],
-    sa_conversion: ["bar-chart"],
-    sales: ["bar-chart"],
-    servicee: ["bar-chart"],
-    sales_servicee_growth: ["bar-chart"], // ❗ NO branches-bar-chart
+    cc_conversion: ["bar-chart", "table"],
+    sa_conversion: ["bar-chart", "table"],
+    sales: ["bar-chart", "growth", "table"],
+    servicee: ["bar-chart", "growth", "table"],
   };
 
   /* ---------- LINK BUILDERS ---------- */
@@ -100,6 +101,8 @@ function Layout() {
     "branches": (m) => `/DashboardHome/${m}_branches`,
     "branches-bar-chart": (m) =>
       `/DashboardHome/${m}_branches-bar-chart`,
+    "growth": (m) => `/DashboardHome/${m}_growth`,
+    "table": (m) => `/DashboardHome/${m}_table`,
   };
 
   /* ---------- SAFE LINK RESOLUTION ---------- */

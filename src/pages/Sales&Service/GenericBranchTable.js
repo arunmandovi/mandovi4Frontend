@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   Box,
   Button,
@@ -13,56 +13,69 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { fetchData } from "../../api/uploadService";
+import { utils, writeFileXLSX } from "xlsx";
 
-/* ---------------- CONSTANTS ---------------- */
-const MONTHS = ["APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR"];
-const START_YEAR = 2019;
-const CURRENT_YEAR = new Date().getFullYear();
-
-const YEARS = Array.from(
-  { length: CURRENT_YEAR - START_YEAR + 1 },
-  (_, i) => String(START_YEAR + i)
-);
-const CHANNELS = ["ARENA","NEXA"];
-const SERVICECODES = ["PMS20", "PMS30", "PMS40", "PMS50", "MORE THAN PMS50"];
-const BRANCHES = ["Balmatta","Uppinangady","Surathkal","Sullia","Adyar","Sujith Bagh Lane", 
-  "Naravi","Bantwal","Nexa Service","Kadaba","Vittla", "Yeyyadi BR"
-];
-
-/* ---------------- COMPONENT ---------------- */
-const ServiceeTablePage = () => {
+const GenericBranchTable = ({
+  title,
+  apiEndpoint,
+  config,
+  navigationRoutes,
+  valueField = "count"
+}) => {
   const navigate = useNavigate();
+  const tableRef = useRef(null);
 
+  const {
+    months = ["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR"],
+    startYear,
+    channels = ["ARENA", "NEXA"],
+    branches,
+    extraFilters // can be null or undefined
+  } = config;
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from(
+    { length: currentYear - startYear + 1 },
+    (_, i) => String(startYear + i)
+  );
+
+  // States
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [selectedYears, setSelectedYears] = useState([]);
   const [selectedChannels, setSelectedChannels] = useState([]);
-  const [selectedServiceCodes, setSelectedServiceCodes] = useState([]); // ✅ ADDED
+  const [selectedExtraFilters, setSelectedExtraFilters] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
   const [rawRows, setRawRows] = useState([]);
 
-  /* ---------------- FETCH DATA ---------------- */
+  // Fetch data - FIXED: Safe extraFilters handling
   useEffect(() => {
     const load = async () => {
-      const months = selectedMonths.length ? selectedMonths : MONTHS;
-      const years = selectedYears.length ? selectedYears : YEARS;
-
+      const monthsToFetch = selectedMonths.length ? selectedMonths : months;
+      const yearsToFetch = selectedYears.length ? selectedYears : years;
       let all = [];
 
-      for (const m of months) {
-        const query =
-          `?months=${m}` +
-          `&years=${years.join(",")}` +
-          (selectedChannels.length ? `&channels=${selectedChannels.join(",")}` : "") +
-          (selectedServiceCodes.length ? `&serviceCodes=${selectedServiceCodes.join(",")}` : ""); // ✅ ADDED
+      for (const m of monthsToFetch) {
+        const queryParams = new URLSearchParams({
+          months: m,
+          years: yearsToFetch.join(",")
+        });
+
+        if (selectedChannels.length) {
+          queryParams.append("channels", selectedChannels.join(","));
+        }
+
+        // ✅ FIXED: Only add extraFilters if they exist and are selected
+        if (extraFilters && selectedExtraFilters.length) {
+          queryParams.append(extraFilters.name, selectedExtraFilters.join(","));
+        }
 
         try {
-          const res = await fetchData(`/api/servicee/servicee_branch_summary${query}`);
-
+          const res = await fetchData(`${apiEndpoint}?${queryParams}`);
           if (Array.isArray(res)) {
             const filtered = res.filter(
-              r => !selectedBranches.length || selectedBranches.includes(r.branch)
+              (r) => !selectedBranches.length || selectedBranches.includes(r.branch)
             );
-            all.push(...filtered.map(r => ({ ...r, month: m })));
+            all.push(...filtered.map((r) => ({ ...r, month: m })));
           }
         } catch (error) {
           console.error('Fetch error:', error);
@@ -73,21 +86,21 @@ const ServiceeTablePage = () => {
     };
 
     load();
-  }, [selectedMonths, selectedYears, selectedChannels, selectedServiceCodes, selectedBranches]); // ✅ ADDED
+  }, [selectedMonths, selectedYears, selectedChannels, selectedExtraFilters, selectedBranches, months, years, apiEndpoint, extraFilters]);
 
-  /* ---------------- MONTHS TO SHOW ---------------- */
+  // Existing months for table headers
   const existingMonths = useMemo(
-    () => (selectedMonths.length ? selectedMonths : MONTHS),
-    [selectedMonths]
+    () => (selectedMonths.length ? selectedMonths : months),
+    [selectedMonths, months]
   );
 
-  /* ---------------- TRANSFORM TABLE DATA ---------------- */
+  // Transform table data
   const { tableRows, grandTotals } = useMemo(() => {
     const map = {};
     const monthTotals = {};
     let overallTotal = 0;
 
-    rawRows.forEach(r => {
+    rawRows.forEach((r) => {
       const key = r.branch;
 
       if (!map[key]) {
@@ -98,7 +111,7 @@ const ServiceeTablePage = () => {
         };
       }
 
-      const value = r.serviceLoadd || 0;
+      const value = r[valueField] || 0;
       map[key].months[r.month] = (map[key].months[r.month] || 0) + value;
       map[key].total += value;
 
@@ -113,10 +126,18 @@ const ServiceeTablePage = () => {
         total: overallTotal,
       },
     };
-  }, [rawRows]);
+  }, [rawRows, valueField]);
 
-  /* ---------------- UI HELPERS ---------------- */
-  const slicerStyle = selected => ({
+  // Download XLSX
+  const handleDownloadXlsx = () => {
+    if (!tableRef.current) return;
+    const table = tableRef.current;
+    const wb = utils.table_to_book(table);
+    writeFileXLSX(wb, `${title.replace(/\s+/g, '_').toUpperCase()}.xlsx`);
+  };
+
+  // UI Helpers
+  const slicerStyle = (selected) => ({
     borderRadius: 20,
     fontWeight: 600,
     textTransform: "none",
@@ -126,35 +147,42 @@ const ServiceeTablePage = () => {
     "&:hover": { background: "#aed581" },
   });
 
-  /* ---------------- RENDER ---------------- */
+  const toggleSelection = (setter, currentSelection, item) => {
+    setter((prev) =>
+      prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]
+    );
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       {/* HEADER + NAVIGATION */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">
-          SERVICE – BRANCH SUMMARY
-        </Typography>
-
+        <Typography variant="h4">{title}</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/servicee")}>Line Chart</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/servicee-bar-chart")}>Bar Chart</Button>
-          <Button variant="contained">Table</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/servicee_growth")}>Growth</Button>
+          {navigationRoutes.map(({ label, path }, i) => (
+            <Button
+              key={label}
+              variant="contained"
+              onClick={() => navigate(path)}
+              disabled={!path} // Disable if no path (current page)
+            >
+              {label}
+            </Button>
+          ))}
+          <Button variant="contained" color="primary" onClick={handleDownloadXlsx}>
+            Download
+          </Button>
         </Box>
       </Box>
 
       {/* YEAR FILTER */}
       <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-        {YEARS.map(y => (
+        {years.map((y) => (
           <Button
             key={y}
             size="small"
             sx={slicerStyle(selectedYears.includes(y))}
-            onClick={() =>
-              setSelectedYears(p =>
-                p.includes(y) ? p.filter(x => x !== y) : [...p, y]
-              )
-            }
+            onClick={() => toggleSelection(setSelectedYears, selectedYears, y)}
           >
             {y}
           </Button>
@@ -163,52 +191,42 @@ const ServiceeTablePage = () => {
 
       {/* CHANNEL FILTER */}
       <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
-        {CHANNELS.map(c => (
+        {channels.map((c) => (
           <Button
             key={c}
             size="small"
             sx={slicerStyle(selectedChannels.includes(c))}
-            onClick={() =>
-              setSelectedChannels(p =>
-                p.includes(c) ? p.filter(x => x !== c) : [...p, c]
-              )
-            }
+            onClick={() => toggleSelection(setSelectedChannels, selectedChannels, c)}
           >
             {c}
           </Button>
         ))}
       </Box>
 
-      {/* SERVICE CODES FILTER - ✅ ADDED */}
-      <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-        {SERVICECODES.map(s => (
-          <Button
-            key={s}
-            size="small"
-            sx={slicerStyle(selectedServiceCodes.includes(s))}
-            onClick={() =>
-              setSelectedServiceCodes(p =>
-                p.includes(s) ? p.filter(x => x !== s) : [...p, s]
-              )
-            }
-          >
-            {s}
-          </Button>
-        ))}
-      </Box>
+      {/* EXTRA FILTERS (Service Codes, etc.) - FIXED: Safe rendering */}
+      {extraFilters?.items && (
+        <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
+          {extraFilters.items.map((item) => (
+            <Button
+              key={item}
+              size="small"
+              sx={slicerStyle(selectedExtraFilters.includes(item))}
+              onClick={() => toggleSelection(setSelectedExtraFilters, selectedExtraFilters, item)}
+            >
+              {item}
+            </Button>
+          ))}
+        </Box>
+      )}
 
       {/* BRANCH FILTER */}
       <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-        {BRANCHES.map(b => (
+        {branches.map((b) => (
           <Button
             key={b}
             size="small"
             sx={slicerStyle(selectedBranches.includes(b))}
-            onClick={() =>
-              setSelectedBranches(p =>
-                p.includes(b) ? p.filter(x => x !== b) : [...p, b]
-              )
-            }
+            onClick={() => toggleSelection(setSelectedBranches, selectedBranches, b)}
           >
             {b}
           </Button>
@@ -217,16 +235,12 @@ const ServiceeTablePage = () => {
 
       {/* MONTH FILTER */}
       <Box sx={{ mb: 3, display: "flex", gap: 1, flexWrap: "wrap" }}>
-        {MONTHS.map(m => (
+        {months.map((m) => (
           <Button
             key={m}
             size="small"
             sx={slicerStyle(selectedMonths.includes(m))}
-            onClick={() =>
-              setSelectedMonths(p =>
-                p.includes(m) ? p.filter(x => x !== m) : [...p, m]
-              )
-            }
+            onClick={() => toggleSelection(setSelectedMonths, selectedMonths, m)}
           >
             {m}
           </Button>
@@ -235,56 +249,42 @@ const ServiceeTablePage = () => {
 
       {/* TABLE */}
       <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 4 }}>
-        <Table size="small">
+        <Table size="small" ref={tableRef}>
           <TableHead>
             <TableRow sx={{ background: "#455a64" }}>
-              <TableCell sx={{ color: "#fff", fontWeight: 800 }}>
-                Branch
-              </TableCell>
-
-              {existingMonths.map(m => (
+              <TableCell sx={{ color: "#fff", fontWeight: 800 }}>Branch</TableCell>
+              {existingMonths.map((m) => (
                 <TableCell key={m} align="center" sx={{ color: "#fff", fontWeight: 800 }}>
                   {m}
                 </TableCell>
               ))}
-
               <TableCell align="center" sx={{ color: "#fff", fontWeight: 900 }}>
                 TOTAL
               </TableCell>
             </TableRow>
           </TableHead>
-
           <TableBody>
             {tableRows.map((r, i) => (
               <TableRow key={i} sx={{ background: i % 2 ? "#fafafa" : "#fff" }}>
-                <TableCell sx={{ fontWeight: 700 }}>
-                  {r.branch}
-                </TableCell>
-
-                {existingMonths.map(m => (
+                <TableCell sx={{ fontWeight: 700 }}>{r.branch}</TableCell>
+                {existingMonths.map((m) => (
                   <TableCell key={m} align="center">
                     {r.months[m] ?? "-"}
                   </TableCell>
                 ))}
-
                 <TableCell align="center" sx={{ fontWeight: 900 }}>
                   {r.total}
                 </TableCell>
               </TableRow>
             ))}
-
             {/* GRAND TOTAL */}
             <TableRow sx={{ background: "#e3f2fd" }}>
-              <TableCell sx={{ fontWeight: 900 }}>
-                GRAND TOTAL
-              </TableCell>
-
-              {existingMonths.map(m => (
+              <TableCell sx={{ fontWeight: 900 }}>GRAND TOTAL</TableCell>
+              {existingMonths.map((m) => (
                 <TableCell key={m} align="center" sx={{ fontWeight: 900 }}>
                   {grandTotals.months[m] ?? "-"}
                 </TableCell>
               ))}
-
               <TableCell align="center" sx={{ fontWeight: 900 }}>
                 {grandTotals.total}
               </TableCell>
@@ -296,4 +296,4 @@ const ServiceeTablePage = () => {
   );
 };
 
-export default ServiceeTablePage;
+export default GenericBranchTable;

@@ -1,3 +1,4 @@
+// GenericConversionLineChart.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
@@ -21,8 +22,6 @@ import {
   CartesianGrid,
   LabelList,
 } from "recharts";
-
-/* ---------------- CONSTANTS ---------------- */
 
 const MONTHS = [
   "APR","MAY","JUN","JUL","AUG","SEP",
@@ -50,117 +49,117 @@ const growthKeyMap = {
   "Conversion": "pmsConversion",
 };
 
-const ALL_CCE = "ALL";
-
-/* ---------------- COMPONENT ---------------- */
-
-const CCConversionPage = () => {
+const GenericConversionLineChart = ({
+  type, // "sa" or "cc"
+  title,
+  xAxisDataKey,
+  nameField,
+  apiPrefix,
+  tableRoute,
+  barChartRoute,
+}) => {
   const navigate = useNavigate();
 
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [allSelected, setAllSelected] = useState(true);
   const [selectedBranches, setSelectedBranches] = useState([]);
-  const [selectedCces, setSelectedCces] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState("PMS %");
 
   const [summary, setSummary] = useState([]);
-  const [cceKeys, setCceKeys] = useState([]);
-  const [branchCceMap, setBranchCceMap] = useState({});
+  const [itemKeys, setItemKeys] = useState([]);
+  const [branchItemMap, setBranchItemMap] = useState({});
 
   const normalize = v => v?.trim().toUpperCase() || "";
   const isPercentage = selectedGrowth === "PMS %";
   const isAC = selectedGrowth === "A&C";
   const growthKey = growthKeyMap[selectedGrowth];
+  const allItemSelected = itemKeys.length > 0 && selectedItems.length === itemKeys.length;
+  const ALL_ITEM = `ALL_${type.toUpperCase()}`;
 
   /* ---------- MASTER DATA ---------- */
   useEffect(() => {
     const loadMasterData = async () => {
-      const res = await fetchData(`/api/cc/cc_conversion_summary`);
+      const res = await fetchData(`/${apiPrefix}/${type}_conversion_summary`);
       const rows = Array.isArray(res) ? res : [];
 
       const map = {};
       rows.forEach(r => {
         const b = normalize(r.branch);
-        const c = normalize(r.cceName);
+        const c = normalize(r[`${nameField}Name`]);
         if (!map[b]) map[b] = new Set();
         map[b].add(c);
       });
 
       const normalized = {};
       Object.keys(map).forEach(b => (normalized[b] = [...map[b]]));
-      setBranchCceMap(normalized);
+      setBranchItemMap(normalized);
     };
 
     loadMasterData();
-  }, []);
+  }, [type, apiPrefix, nameField]);
 
-  /* ---------- CCE OPTIONS ---------- */
-  const dropdownCces = useMemo(() => {
+  /* ---------- ITEM OPTIONS ---------- */
+  const dropdownItems = useMemo(() => {
     if (!selectedBranches.length) {
-      return [...new Set(Object.values(branchCceMap).flat())];
+      return [...new Set(Object.values(branchItemMap).flat())];
     }
     const set = new Set();
     selectedBranches.forEach(b =>
-      branchCceMap[normalize(b)]?.forEach(c => set.add(c))
+      branchItemMap[normalize(b)]?.forEach(c => set.add(c))
     );
     return [...set];
-  }, [selectedBranches, branchCceMap]);
-
-  const allCceSelected =
-    dropdownCces.length > 0 &&
-    selectedCces.length === dropdownCces.length;
+  }, [selectedBranches, branchItemMap]);
 
   useEffect(() => {
-    setSelectedCces(prev => prev.filter(c => dropdownCces.includes(c)));
-  }, [dropdownCces]);
+    setSelectedItems(prev => prev.filter(c => dropdownItems.includes(c)));
+  }, [dropdownItems]);
 
   /* ---------- DATA FETCH ---------- */
   useEffect(() => {
     const loadData = async () => {
-      const monthsToFetch =
-        allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
-
+      const monthsToFetch = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
       const allData = [];
-      const cceSet = new Set();
+      const itemSet = new Set();
 
       for (const month of monthsToFetch) {
         const query =
           `?months=${month}` +
           (selectedBranches.length ? `&branches=${selectedBranches.join(",")}` : "") +
-          (selectedCces.length ? `&cceNames=${selectedCces.join(",")}` : "");
+          (selectedItems.length ? `&${nameField}Names=${selectedItems.join(",")}` : "");
 
-        const res = await fetchData(`/api/cc/cc_conversion_summary${query}`);
+        const res = await fetchData(`/${apiPrefix}/${type}_conversion_summary${query}`);
         const rows = Array.isArray(res) ? res : [];
 
-        rows.forEach(r => cceSet.add(normalize(r.cceName)));
+        rows.forEach(r => itemSet.add(normalize(r[`${nameField}Name`])));
         allData.push({ month, data: rows });
       }
 
       setSummary(allData);
-      setCceKeys([...cceSet]);
+      setItemKeys([...itemSet]);
     };
 
     loadData();
-  }, [selectedMonths, allSelected, selectedBranches, selectedCces]);
+  }, [selectedMonths, allSelected, selectedBranches, selectedItems, type, apiPrefix, nameField]);
 
   /* ---------- CUSTOM TOOLTIP ---------- */
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      // Get months in chronological order (selected or all)
       const monthsForChart = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
       
       return (
         <Box sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.9)', borderRadius: 2, border: '1px solid #ccc' }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-            CCE: {label}
+            {type.toUpperCase()}: {label}
           </Typography>
           
-          {/* Show data in chronological month order */}
           {monthsForChart.map(month => {
             const dataPoint = payload.find(p => p.dataKey === month || p.dataKey === `${month}_APPT` || p.dataKey === `${month}_CONV`);
             
             if (dataPoint) {
-              const displayValue = isPercentage ? `${dataPoint.value}%` : dataPoint.value;
+              const displayValue = isPercentage 
+                ? `${Math.round(dataPoint.value)}%` 
+                : Math.round(dataPoint.value);
               return (
                 <Box key={month} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
                   <Typography variant="body2" sx={{ color: MONTH_COLORS[month], fontWeight: 500 }}>
@@ -182,8 +181,8 @@ const CCConversionPage = () => {
 
   /* ---------- CHART DATA ---------- */
   const chartData = useMemo(() => {
-    const rows = cceKeys.map(cce => {
-      const row = { cce };
+    const rows = itemKeys.map(item => {
+      const row = { [xAxisDataKey]: item };
 
       let totalConv = 0;
       let totalAppt = 0;
@@ -191,7 +190,7 @@ const CCConversionPage = () => {
       let count = 0;
 
       summary.forEach(({ month, data }) => {
-        const r = data.find(d => normalize(d.cceName) === cce);
+        const r = data.find(d => normalize(d[`${nameField}Name`]) === item);
 
         const conv = Math.round(Number(r?.pmsConversion ?? 0));
         const appt = Math.round(Number(r?.pmsAppointment ?? 0));
@@ -214,11 +213,6 @@ const CCConversionPage = () => {
 
       if (isAC) {
         rankValue = totalConv;
-
-        if (allSelected || !selectedMonths.length) {
-          row.ALL_APPT = totalAppt;
-          row.ALL_CONV = totalConv;
-        }
       } else if (isPercentage && (allSelected || !selectedMonths.length)) {
         rankValue = totalAppt ? Math.round((totalConv / totalAppt) * 100) : 0;
         row.ALL = rankValue;
@@ -232,16 +226,20 @@ const CCConversionPage = () => {
         }
       }
 
+      if (isAC && (allSelected || !selectedMonths.length)) {
+        row.ALL_APPT = totalAppt;
+        row.ALL_CONV = totalConv;
+      }
+
       row.__rankValue = rankValue;
       return row;
     });
 
     return rows.sort((a, b) => b.__rankValue - a.__rankValue);
-  }, [cceKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC]);
+  }, [itemKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC, xAxisDataKey, nameField]);
 
   /* ---------- BUTTON STYLE ---------- */
-  const selectedGradient =
-    "linear-gradient(90deg, rgba(144,238,144,1) 0%, rgba(102,205,170,1) 100%)";
+  const selectedGradient = "linear-gradient(90deg, rgba(144,238,144,1) 0%, rgba(102,205,170,1) 100%)";
 
   const btnStyle = sel => ({
     borderRadius: 20,
@@ -252,37 +250,63 @@ const CCConversionPage = () => {
     border: sel ? "1.5px solid #388e3c" : "1px solid #bdbdbd",
   });
 
-  /* ---------------- RENDER ---------------- */
+  /* ---------- NAVIGATION HANDLERS ---------- */
+  const handleLineChartClick = () => {
+    navigate(`/DashboardHome/${type}_conversion`);
+  };
 
+  const handleBarChartClick = () => {
+    navigate(`/DashboardHome/${type}_conversion-bar-chart`);
+  };
+
+  const handleTableClick = () => {
+    navigate(`/DashboardHome/${type}_conversion_table`);
+  };
+
+  /* ---------------- RENDER ---------------- */
   return (
     <Box sx={{ p: 3 }}>
       {/* HEADER */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">
-          CC CONVERSION – {selectedGrowth}
+          {title} – {selectedGrowth}
         </Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/cc_conversion")}>Line Chart</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/cc_conversion-bar-chart")}>Bar Chart</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/cc_conversion_table")}>Table</Button>
+          <Button variant="contained" onClick={handleLineChartClick}>
+            Line Chart
+          </Button>
+          <Button variant="contained" onClick={handleBarChartClick}>
+            Bar Chart
+          </Button>
+          <Button variant="contained" onClick={handleTableClick}>
+            Table
+          </Button>
         </Box>
       </Box>
 
       {/* MONTH FILTERS */}
       <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
-        <Button size="small" sx={btnStyle(allSelected)} onClick={() => {
-          setAllSelected(true); setSelectedMonths([]);
-        }}>
+        <Button 
+          size="small" 
+          sx={btnStyle(allSelected)} 
+          onClick={() => { 
+            setAllSelected(true); 
+            setSelectedMonths([]); 
+          }}
+        >
           ALL
         </Button>
-
         {MONTHS.map(m => (
-          <Button key={m} size="small" sx={btnStyle(selectedMonths.includes(m))}
-            onClick={() => {
-              setAllSelected(false);
-              setSelectedMonths(p => p.includes(m) ? p.filter(x => x !== m) : [...p, m]);
-            }}>
+          <Button 
+            key={m} 
+            size="small" 
+            sx={btnStyle(selectedMonths.includes(m))}
+            onClick={() => { 
+              setAllSelected(false); 
+              setSelectedMonths(p => p.includes(m) ? p.filter(x => x !== m) : [...p, m]); 
+            }}
+          >
             {m}
           </Button>
         ))}
@@ -291,12 +315,14 @@ const CCConversionPage = () => {
       {/* BRANCH FILTERS */}
       <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
         {BRANCHES.map(b => (
-          <Button key={b} size="small" sx={btnStyle(selectedBranches.includes(b))}
-            onClick={() =>
-              setSelectedBranches(p =>
-                p.includes(b) ? p.filter(x => x !== b) : [...p, b]
-              )
-            }>
+          <Button 
+            key={b} 
+            size="small" 
+            sx={btnStyle(selectedBranches.includes(b))}
+            onClick={() => 
+              setSelectedBranches(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b])
+            }
+          >
             {b}
           </Button>
         ))}
@@ -305,39 +331,42 @@ const CCConversionPage = () => {
       {/* GROWTH */}
       <Box sx={{ mb: 3, display: "flex", gap: 1.2 }}>
         {GROWTH_OPTIONS.map(g => (
-          <Button key={g} size="small" sx={btnStyle(selectedGrowth === g)}
-            onClick={() => setSelectedGrowth(g)}>
+          <Button 
+            key={g} 
+            size="small" 
+            sx={btnStyle(selectedGrowth === g)} 
+            onClick={() => setSelectedGrowth(g)}
+          >
             {g}
           </Button>
         ))}
       </Box>
 
-      {/* CCE DROPDOWN */}
+      {/* ITEM DROPDOWN */}
       <Box sx={{ mb: 3, width: 320 }}>
         <Select
           multiple
           fullWidth
-          value={selectedCces}
+          value={selectedItems}
           input={<OutlinedInput />}
           renderValue={s => s.join(", ")}
           onChange={e => {
             const value = e.target.value;
-            if (value.includes(ALL_CCE)) {
-              setSelectedCces(allCceSelected ? [] : dropdownCces);
+            if (value.includes(ALL_ITEM)) {
+              setSelectedItems(allItemSelected ? [] : dropdownItems);
             } else {
-              setSelectedCces(value);
+              setSelectedItems(value);
             }
           }}
         >
-          <MenuItem value={ALL_CCE}>
-            <Checkbox checked={allCceSelected} />
+          <MenuItem value={ALL_ITEM}>
+            <Checkbox checked={allItemSelected} />
             <ListItemText primary="Select All" />
           </MenuItem>
-
-          {dropdownCces.map(cce => (
-            <MenuItem key={cce} value={cce}>
-              <Checkbox checked={selectedCces.includes(cce)} />
-              <ListItemText primary={cce} />
+          {dropdownItems.map(item => (
+            <MenuItem key={item} value={item}>
+              <Checkbox checked={selectedItems.includes(item)} />
+              <ListItemText primary={item} />
             </MenuItem>
           ))}
         </Select>
@@ -348,30 +377,38 @@ const CCConversionPage = () => {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ bottom: 140 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="cce" angle={-50} textAnchor="end" interval={0} />
-            <YAxis />
+            <XAxis dataKey={xAxisDataKey} angle={-50} textAnchor="end" interval={0} />
+            <YAxis tickFormatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
             <Tooltip content={<CustomTooltip />} />
-            
+
             {isAC
-              ? (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).flatMap(m => [
-                  <Line key={`${m}-A`} dataKey={`${m}_APPT`} stroke="#1976d2" strokeWidth={3}>
-                    <LabelList 
-                      position="top" 
-                      formatter={(value) => `${value}`} 
-                    />
-                  </Line>,
-                  <Line key={`${m}-C`} dataKey={`${m}_CONV`} stroke="#d32f2f" strokeWidth={3}>
-                    <LabelList 
-                      position="top" 
-                      formatter={(value) => `${value}`} 
-                    />
-                  </Line>
-                ])
+              ? (allSelected || !selectedMonths.length
+                  ? [
+                      <Line key="ALL_APPT" dataKey="ALL_APPT" stroke="#1976d2" strokeWidth={3}>
+                        <LabelList position="top" />
+                      </Line>,
+                      <Line key="ALL_CONV" dataKey="ALL_CONV" stroke="#d32f2f" strokeWidth={3}>
+                        <LabelList position="top" />
+                      </Line>,
+                    ]
+                  : selectedMonths.flatMap(m => [
+                      <Line key={`${m}-APPT`} dataKey={`${m}_APPT`} stroke="#1976d2" strokeWidth={3}>
+                        <LabelList position="top" />
+                      </Line>,
+                      <Line key={`${m}-CONV`} dataKey={`${m}_CONV`} stroke="#d32f2f" strokeWidth={3}>
+                        <LabelList position="top" />
+                      </Line>,
+                    ]))
               : (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).map(key => (
-                  <Line key={key} dataKey={key} stroke={MONTH_COLORS[key]} strokeWidth={3}>
+                  <Line 
+                    key={key} 
+                    dataKey={key} 
+                    strokeWidth={3} 
+                    stroke={MONTH_COLORS[key]}
+                  >
                     <LabelList 
-                      position="top" 
-                      formatter={(value) => isPercentage ? `${value}%` : `${value}`}
+                      position="top"
+                      formatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} 
                     />
                   </Line>
                 ))}
@@ -382,4 +419,4 @@ const CCConversionPage = () => {
   );
 };
 
-export default CCConversionPage;
+export default GenericConversionLineChart;

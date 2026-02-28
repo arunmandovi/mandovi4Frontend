@@ -33,7 +33,6 @@ const BRANCHES = [
   "NEXA","NARAVI"
 ];
 
-// Branch-wise colors
 const BRANCH_COLORS = {
   BALMATTA: "#1f77b4",
   SURATHKAL: "#ff7f0e", 
@@ -67,124 +66,128 @@ const growthKeyMap = {
   "Conversion": "pmsConversion",
 };
 
-const SAConversionBarChartPage = () => {
+const ConversionBarChartPage = ({ type = "sa" }) => {
   const navigate = useNavigate();
+  
+  const isSA = type === "sa";
+  const titlePrefix = isSA ? "SA" : "CC";
+  const personKey = isSA ? "saName" : "cceName";
+  const personPlural = isSA ? "SAs" : "CCes";
+  const personParam = isSA ? "saNames" : "cceNames";
+  const apiPrefix = isSA ? "/api/sa" : "/api/cc";
+  const lineRoute = isSA ? "/DashboardHome/sa_conversion" : "/DashboardHome/cc_conversion";
+  const tableRoute = isSA ? "/DashboardHome/sa_conversion_table" : "/DashboardHome/cc_conversion_table";
 
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [allSelected, setAllSelected] = useState(true);
   const [selectedBranches, setSelectedBranches] = useState([]);
-  const [selectedSAs, setSelectedSAs] = useState([]);
+  const [selectedPersons, setSelectedPersons] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState("PMS %");
 
   const [summary, setSummary] = useState([]);
-  const [saKeys, setSAKeys] = useState([]);
-  const [branchSAMap, setBranchSAMap] = useState({});
+  const [personKeys, setPersonKeys] = useState([]);
+  const [branchPersonMap, setBranchPersonMap] = useState({});
 
   const normalize = v => v?.trim().toUpperCase() || "";
   const isPercentage = selectedGrowth === "PMS %";
   const isAC = selectedGrowth === "A&C";
   const growthKey = growthKeyMap[selectedGrowth];
 
-  /* ---------- SA BRANCH MAPPING ---------- */
-  const saBranchMap = useMemo(() => {
+  /* ---------- PERSON BRANCH MAPPING ---------- */
+  const personBranchMap = useMemo(() => {
     const map = {};
-    Object.entries(branchSAMap).forEach(([branch, sas]) => {
-      sas.forEach(sa => {
-        map[normalize(sa)] = normalize(branch);
+    Object.entries(branchPersonMap).forEach(([branch, persons]) => {
+      persons.forEach(person => {
+        map[normalize(person)] = normalize(branch);
       });
     });
     return map;
-  }, [branchSAMap]);
+  }, [branchPersonMap]);
 
+  /* ---------- MASTER DATA ---------- */
   useEffect(() => {
     const loadMasterData = async () => {
-      const res = await fetchData(`/api/sa/sa_conversion_summary`);
+      const res = await fetchData(`${apiPrefix}/${type}_conversion_summary`);
       const rows = Array.isArray(res) ? res : [];
 
       const map = {};
       rows.forEach(r => {
         const b = normalize(r.branch);
-        const c = normalize(r.saName);
+        const p = normalize(r[personKey]);
         if (!map[b]) map[b] = new Set();
-        map[b].add(c);
+        map[b].add(p);
       });
 
       const normalized = {};
       Object.keys(map).forEach(b => normalized[b] = [...map[b]]);
-      setBranchSAMap(normalized);
+      setBranchPersonMap(normalized);
     };
 
     loadMasterData();
-  }, []);
+  }, [apiPrefix, type, personKey]);
 
-  const dropdownSAs = useMemo(() => {
+  /* ---------- PERSON OPTIONS ---------- */
+  const dropdownPersons = useMemo(() => {
     if (!selectedBranches.length) {
-      return [...new Set(Object.values(branchSAMap).flat())];
+      return [...new Set(Object.values(branchPersonMap).flat())];
     }
     const set = new Set();
     selectedBranches.forEach(b =>
-      branchSAMap[normalize(b)]?.forEach(c => set.add(c))
+      branchPersonMap[normalize(b)]?.forEach(p => set.add(p))
     );
     return [...set];
-  }, [selectedBranches, branchSAMap]);
+  }, [selectedBranches, branchPersonMap]);
 
-  const allSASelected =
-    dropdownSAs.length > 0 &&
-    selectedSAs.length === dropdownSAs.length;
+  const allPersonSelected =
+    dropdownPersons.length > 0 &&
+    selectedPersons.length === dropdownPersons.length;
 
   useEffect(() => {
-    setSelectedSAs(prev => prev.filter(c => dropdownSAs.includes(c)));
-  }, [dropdownSAs]);
+    setSelectedPersons(prev => prev.filter(p => dropdownPersons.includes(p)));
+  }, [dropdownPersons]);
 
   /* ---------- DATA FETCH ---------- */
   useEffect(() => {
     const loadData = async () => {
-      const monthsToFetch =
-        allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
-
+      const monthsToFetch = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
       const allData = [];
-      const saSet = new Set();
+      const personSet = new Set();
 
       for (const month of monthsToFetch) {
-        const query =
-          `?months=${month}` +
+        const query = `?months=${month}` +
           (selectedBranches.length ? `&branches=${selectedBranches.join(",")}` : "") +
-          (selectedSAs.length ? `&saNames=${selectedSAs.join(",")}` : "");
+          (selectedPersons.length ? `&${personParam}=${selectedPersons.join(",")}` : "");
 
-        const res = await fetchData(`/api/sa/sa_conversion_summary${query}`);
+        const res = await fetchData(`${apiPrefix}/${type}_conversion_summary${query}`);
         const rows = Array.isArray(res) ? res : [];
 
-        rows.forEach(r => saSet.add(normalize(r.saName)));
+        rows.forEach(r => personSet.add(normalize(r[personKey])));
         allData.push({ month, data: rows });
       }
 
       setSummary(allData);
-      setSAKeys([...saSet]);
+      setPersonKeys([...personSet]);
     };
 
     loadData();
-  }, [selectedMonths, allSelected, selectedBranches, selectedSAs]);
+  }, [selectedMonths, allSelected, selectedBranches, selectedPersons, apiPrefix, type, personKey, personParam]);
 
-  /* ---------- CUSTOM TOOLTIP FOR SA BAR CHART ---------- */
+  /* ---------- CUSTOM TOOLTIP ---------- */
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      // Get months in chronological order (selected or all)
       const monthsForChart = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
-      
-      // Find the chart entry for this SA
-      const chartEntry = chartData.find(entry => normalize(entry.sa) === normalize(label));
+      const chartEntry = chartData.find(entry => normalize(entry.person) === normalize(label));
       const branchName = chartEntry?.branch || 'N/A';
       
       return (
         <Box sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.95)', borderRadius: 2, border: '1px solid #ccc', minWidth: 200 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1.5, color: '#1976d2' }}>
-            SA: {label}
+            {titlePrefix}: {label}
           </Typography>
           <Typography variant="body2" sx={{ mb: 1.5, color: '#666', fontSize: '0.8rem' }}>
             Branch: {branchName}
           </Typography>
           
-          {/* Show data in chronological month order */}
           {monthsForChart.map(month => {
             const dataPoint = payload.find(p => 
               p.dataKey === month || 
@@ -215,19 +218,17 @@ const SAConversionBarChartPage = () => {
 
   /* ---------- CHART DATA ---------- */
   const chartData = useMemo(() => {
-    const rows = saKeys.map(sa => {
-      // Find the FIRST occurrence in summary data to get correct branch
+    const rows = personKeys.map(person => {
       let actualBranch = 'UNKNOWN';
       
       for (const { data } of summary) {
-        const matchingRow = data.find(d => normalize(d.saName) === sa);
+        const matchingRow = data.find(d => normalize(d[personKey]) === person);
         if (matchingRow) {
           actualBranch = normalize(matchingRow.branch);
           break;
         }
       }
 
-      // Filter: Only show SAs from selected branches
       if (selectedBranches.length > 0) {
         const normalizedSelected = selectedBranches.map(normalize);
         if (!normalizedSelected.includes(actualBranch)) {
@@ -235,19 +236,11 @@ const SAConversionBarChartPage = () => {
         }
       }
 
-      const row = { 
-        sa,
-        branch: actualBranch
-      };
-
-      let totalConv = 0;
-      let totalAppt = 0;
-      let totalVal = 0;
-      let count = 0;
+      const row = { person, branch: actualBranch };
+      let totalConv = 0, totalAppt = 0, totalVal = 0, count = 0;
 
       summary.forEach(({ month, data }) => {
-        const r = data.find(d => normalize(d.saName) === sa);
-
+        const r = data.find(d => normalize(d[personKey]) === person);
         const conv = Number(r?.pmsConversion ?? 0);
         const appt = Number(r?.pmsAppointment ?? 0);
         const val = Number(r?.[growthKey] ?? 0);
@@ -266,7 +259,6 @@ const SAConversionBarChartPage = () => {
       });
 
       let rankValue = 0;
-
       if (isAC) {
         if (allSelected || !selectedMonths.length) {
           row.ALL_APPT = totalAppt;
@@ -277,13 +269,8 @@ const SAConversionBarChartPage = () => {
         rankValue = totalAppt ? (totalConv / totalAppt) * 100 : 0;
         row.ALL = rankValue;
       } else {
-        rankValue = isPercentage
-          ? count ? totalVal / count : 0
-          : totalVal;
-
-        if (allSelected || !selectedMonths.length) {
-          row.ALL = rankValue;
-        }
+        rankValue = isPercentage ? (count ? totalVal / count : 0) : totalVal;
+        if (allSelected || !selectedMonths.length) row.ALL = rankValue;
       }
 
       row.__rankValue = rankValue;
@@ -291,12 +278,10 @@ const SAConversionBarChartPage = () => {
       return row;
     });
 
-    return rows
-      .filter(row => row !== null)
-      .sort((a, b) => b.__rankValue - a.__rankValue);
-  }, [saKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC, selectedBranches]);
+    return rows.filter(row => row !== null).sort((a, b) => b.__rankValue - a.__rankValue);
+  }, [personKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC, selectedBranches, personKey]);
 
-  /* ---------- Custom Label Component ---------- */
+  /* ---------- Custom Label ---------- */
   const VerticalBranchLabel = ({ x, y, width, height, value, index }) => {
     const entry = chartData[index];
     const branchName = entry?.branch || '';
@@ -322,9 +307,7 @@ const SAConversionBarChartPage = () => {
     );
   };
 
-  const selectedGradient =
-    "linear-gradient(90deg, rgba(144,238,144,1) 0%, rgba(102,205,170,1) 100%)";
-
+  const selectedGradient = "linear-gradient(90deg, rgba(144,238,144,1) 0%, rgba(102,205,170,1) 100%)";
   const btnStyle = sel => ({
     borderRadius: 20,
     px: 2,
@@ -334,44 +317,23 @@ const SAConversionBarChartPage = () => {
     border: sel ? "1.5px solid #388e3c" : "1px solid #bdbdbd",
   });
 
-  const getBarColor = (entry) => {
-    if (isAC) {
-      return MONTH_COLORS.APPT || MONTH_COLORS.CONV;
-    }
-    return entry.__branchColor;
-  };
+  const getBarColor = (entry) => isAC ? MONTH_COLORS.APPT || MONTH_COLORS.CONV : entry.__branchColor;
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* HEADER */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">
-          SA CONVERSION – {selectedGrowth} (Bar)
-        </Typography>
-
+        <Typography variant="h4">{titlePrefix} CONVERSION – {selectedGrowth} (Bar)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/sa_conversion")}>
-            Line Chart
-          </Button>
+          <Button variant="contained" onClick={() => navigate(lineRoute)}>Line Chart</Button>
           <Button variant="contained">Bar Chart</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/sa_conversion_table")}>
-            Table
-          </Button>
+          <Button variant="contained" onClick={() => navigate(tableRoute)}>Table</Button>
         </Box>
       </Box>
 
       <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
-        <Button
-          size="small"
-          sx={btnStyle(allSelected)}
-          onClick={() => {
-            setAllSelected(true);
-            setSelectedMonths([]);
-          }}
-        >
+        <Button size="small" sx={btnStyle(allSelected)} onClick={() => { setAllSelected(true); setSelectedMonths([]); }}>
           ALL
         </Button>
-
         {MONTHS.map(m => (
           <Button
             key={m}
@@ -379,9 +341,7 @@ const SAConversionBarChartPage = () => {
             sx={btnStyle(selectedMonths.includes(m))}
             onClick={() => {
               setAllSelected(false);
-              setSelectedMonths(p =>
-                p.includes(m) ? p.filter(x => x !== m) : [...p, m]
-              );
+              setSelectedMonths(p => p.includes(m) ? p.filter(x => x !== m) : [...p, m]);
             }}
           >
             {m}
@@ -395,11 +355,7 @@ const SAConversionBarChartPage = () => {
             key={b}
             size="small"
             sx={btnStyle(selectedBranches.includes(b))}
-            onClick={() =>
-              setSelectedBranches(p =>
-                p.includes(b) ? p.filter(x => x !== b) : [...p, b]
-              )
-            }
+            onClick={() => setSelectedBranches(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b])}
           >
             {b}
           </Button>
@@ -423,13 +379,13 @@ const SAConversionBarChartPage = () => {
         <Select
           multiple
           fullWidth
-          value={selectedSAs}
+          value={selectedPersons}
           onChange={e => {
             const value = e.target.value;
             if (value.includes("ALL")) {
-              setSelectedSAs(allSASelected ? [] : dropdownSAs);
+              setSelectedPersons(allPersonSelected ? [] : dropdownPersons);
             } else {
-              setSelectedSAs(value);
+              setSelectedPersons(value);
             }
           }}
           input={<OutlinedInput />}
@@ -437,19 +393,15 @@ const SAConversionBarChartPage = () => {
         >
           <MenuItem value="ALL">
             <Checkbox
-              checked={allSASelected}
-              indeterminate={
-                selectedSAs.length > 0 &&
-                selectedSAs.length < dropdownSAs.length
-              }
+              checked={allPersonSelected}
+              indeterminate={selectedPersons.length > 0 && selectedPersons.length < dropdownPersons.length}
             />
             <ListItemText primary="Select All" />
           </MenuItem>
-
-          {dropdownSAs.map(sa => (
-            <MenuItem key={sa} value={sa}>
-              <Checkbox checked={selectedSAs.includes(sa)} />
-              <ListItemText primary={sa} />
+          {dropdownPersons.map(person => (
+            <MenuItem key={person} value={person}>
+              <Checkbox checked={selectedPersons.includes(person)} />
+              <ListItemText primary={person} />
             </MenuItem>
           ))}
         </Select>
@@ -459,7 +411,7 @@ const SAConversionBarChartPage = () => {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="sa" angle={-50} textAnchor="end" height={140} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="person" angle={-50} textAnchor="end" height={140} tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
             <Tooltip content={<CustomTooltip />} />
             
@@ -473,16 +425,8 @@ const SAConversionBarChartPage = () => {
                   </Bar>
                 ]))
               : (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).map(key => (
-                  <Bar 
-                    key={key} 
-                    dataKey={key} 
-                    barSize={28}
-                    label={<VerticalBranchLabel />}
-                  >
-                    <LabelList
-                      position="top"
-                      formatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)}
-                    />
+                  <Bar key={key} dataKey={key} barSize={28} label={<VerticalBranchLabel />}>
+                    <LabelList position="top" formatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
                     {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
                     ))}
@@ -495,4 +439,4 @@ const SAConversionBarChartPage = () => {
   );
 };
 
-export default SAConversionBarChartPage;
+export default ConversionBarChartPage;

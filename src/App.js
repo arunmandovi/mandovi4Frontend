@@ -10,8 +10,6 @@ import Layout from "./components/Layout"; // ✅ Navbar + Outlet
 // Graph pages
 import BatteryTyrePage from "./pages/GraphView/BatteryTyrePage";
 import BRConversionPage from "./pages/GraphView/BRConversionPage";
-import CCConversionPage from "./pages/GraphView/CCConversionPage";
-import CCConversionTablePage from "./pages/GraphView/CCConversionTablePage";
 import HoldUpPage from "./pages/GraphView/HoldUpPage";
 import HoldUpSummaryPage from "./pages/GraphView/HoldUpSummaryPage";
 import HoldUpDayWiseSummaryPage from "./pages/GraphView/HoldUpDayWiseSummaryPage";
@@ -34,15 +32,6 @@ import ProfitLossPerVehicleGraphPage from "./pages/GraphView/ProfitLossPerVehicl
 import ReferenceePage from "./pages/GraphView/ReferenceePage";
 import ReferenceeTablePage from "./pages/GraphView/ReferenceeTablePage";
 import RevenuePage from "./pages/GraphView/RevenuePage";
-import SalesPage from "./pages/GraphView/SalesPage.js";
-import ServiceePage from "./pages/GraphView/ServicveePage.js";
-import SalesTablePage from "./pages/GraphView/SalesTablePage";
-import ServiceeTablePage from "./pages/GraphView/ServiceeTablePage.js";
-import SalesGrowthPage from "./pages/GraphView/SalesGrowthPage.js";
-import ServiceeGrowthPage from "./pages/GraphView/ServiceeGrowthPage.js";
-import SalesServiceeGrowthPage from "./pages/GraphView/SalesServiceeGrowthPage.js";
-import SAConversionPage from "./pages/GraphView/SAConversionPage";
-import SAConversionTablePage from "./pages/GraphView/SAConversionTablePage.js";
 import SparesPage from "./pages/GraphView/SparesPage";
 import TATPage from "./pages/GraphView/TATPage";
 import VASPage from "./pages/GraphView/VASPage";
@@ -101,7 +90,6 @@ import VASUploadPage from "./pages/FileUpload/VASUploadPage";
 // BarChart Pages
 import BatteryTyreBarChartPage from "./pages/BarChartView/BatteryTyreBarChartPage";
 import BRConversionBarChartPage from "./pages/BarChartView/BRConversionBarChartPage";
-import CCConversionBarChartPage from "./pages/BarChartView/CCConversionBarChartPage";
 import DueDoneBarChartPage from "./pages/BarChartView/DueDoneBarChartPage";
 import HoldUpBarChartPage from "./pages/BarChartView/HoldUpBarChartPage";
 import LabourBarChartPage from "./pages/BarChartView/LabourBarChartPage";
@@ -118,10 +106,7 @@ import ProductivityBarChartPage from "./pages/BarChartView/ProductivityBarChartP
 import ProfitLossBarChartPage from "./pages/BarChartView/ProfitLossBarChartPage";
 import ReferenceeBarChartPage from "./pages/BarChartView/ReferenceeBarChartPage";
 import RevenueBarChartPage from "./pages/BarChartView/RevenueBarChartPage";
-import SalesBarChartPage from "./pages/BarChartView/SalesBarChartPage.js";
-import ServiceeBarChartPage from "./pages/BarChartView/ServiceeBarChartPage.js";
 import SparesBarChartPage from "./pages/BarChartView/SparesBarChartPage";
-import SAConversionBarChartPage from "./pages/BarChartView/SAConversionBarChartPage";
 import TATBarChartPage from "./pages/BarChartView/TATBarChartPage";
 import VASBarChartPage from "./pages/BarChartView/VASBarChartPage";
 
@@ -149,7 +134,26 @@ import SparesBranchesBarChartPage from "./pages/BranchWiseBarChartView/SparesBra
 import TATBranchesBarChartPage from "./pages/BranchWiseBarChartView/TATBranchesBarChartPage";
 import VASBranchesBarChartPage from "./pages/BranchWiseBarChartView/VASBranchesBarChartPage";
 
-//Outstanding Page
+//CC&SA Conversion Pages
+import CCConversionTablePage from "./pages/CC&SAConversion/CCConversionTablePage.js";
+import SAConversionTablePage from "./pages/CC&SAConversion/SAConversionTablePage.js";
+import CCConversionPage from "./pages/CC&SAConversion/CCConversionPage.js";
+import SAConversionPage from "./pages/CC&SAConversion/SAConversionPage.js";
+import CCConversionBarChartPage from "./pages/CC&SAConversion/CCConversionBarChartPage.js";
+import SAConversionBarChartPage from "./pages/CC&SAConversion/SAConversionBarChartPage.js";
+
+//Sales&Service Pages
+import SalesTablePage from "./pages/Sales&Service/SalesTablePage.js";
+import ServiceeTablePage from "./pages/Sales&Service/ServiceeTablePage.js";
+import SalesPage from "./pages/Sales&Service/SalesPage.js";
+import ServiceePage from "./pages/Sales&Service/ServicveePage.js";
+import SalesGrowthPage from "./pages/Sales&Service/SalesGrowthPage.js";
+import ServiceeGrowthPage from "./pages/Sales&Service/ServiceeGrowthPage.js";
+import SalesBarChartPage from "./pages/Sales&Service/SalesBarChartPage.js";
+import ServiceeBarChartPage from "./pages/Sales&Service/ServiceeBarChartPage.js";
+import SalesServiceeGrowthPage from "./pages/Sales&Service/SalesServiceeGrowthPage.js";
+
+//Outstanding Pages
 import TotalBranchOutstandingPage from "./pages/Outstanding/BranchWiseOutstanding/TotalBranchOutstandingPage.js";
 import TotalSAOutstandingPage from "./pages/Outstanding/SAWiseOutstanding/TotalSAOutstandingPage.js";
 import TotalPartyOutstandingPage from "./pages/Outstanding/PartyWiseOutstanding/TotalPartyOutstandingPage.js";
@@ -240,7 +244,28 @@ function App() {
           {/* Default route → Battery & Tyre */}
           <Route index element={<Navigate to="battery_tyre" replace />} />
 
-          {/* 🧭 CityWise Graph Pages */}
+          {/* 🧭 CC&SA Conversion Pages */}
+          <Route path="cc_conversion" element={<CCConversionPage />} />
+          <Route path="sa_conversion" element={<SAConversionPage />} />
+          <Route path="cc_conversion_table" element={<CCConversionTablePage />} />
+          <Route path="sa_conversion_table" element={<SAConversionTablePage />} />
+          <Route path="cc_conversion-bar-chart" element={<CCConversionBarChartPage />} />
+          <Route path="sa_conversion-bar-chart" element={<SAConversionBarChartPage />} />
+
+
+          {/* 🧭 Sales&Service Pages */}
+          <Route path="sales" element={<SalesPage />} />
+          <Route path="servicee" element={<ServiceePage />} />
+          <Route path="sales_table" element={<SalesTablePage />} />
+          <Route path="servicee_table" element={<ServiceeTablePage />} />
+          <Route path="sales_growth" element={<SalesGrowthPage />} />
+          <Route path="servicee_growth" element={<ServiceeGrowthPage />} />
+          <Route path="sales-bar-chart" element={<SalesBarChartPage />} />
+          <Route path="servicee-bar-chart" element={<ServiceeBarChartPage />} />
+          <Route path="sales_servicee_growth" element={<SalesServiceeGrowthPage />} />
+          
+
+          {/* 🧭 Outstanding Pages */}
           <Route path="total_branch_outstanding" element={<TotalBranchOutstandingPage />} />
           <Route path="total_sa_outstanding" element={<TotalSAOutstandingPage />} />
           <Route path="total_party_outstanding" element={<TotalPartyOutstandingPage />} />
@@ -269,13 +294,9 @@ function App() {
           <Route path="id_sa_outstanding" element={<IDSAOutstandingPage />} />
           <Route path="id_party_outstanding" element={<IDPartyOutstandingPage />} />
           
-
+          {/* 🧭 CityWise Graph Pages */}
           <Route path="battery_tyre" element={<BatteryTyrePage />} />
           <Route path="br_conversion" element={<BRConversionPage />} />
-          <Route path="cc_conversion" element={<CCConversionPage />} />
-          <Route path="sa_conversion" element={<SAConversionPage />} />
-          <Route path="cc_conversion_table" element={<CCConversionTablePage />} />
-          <Route path="sa_conversion_table" element={<SAConversionTablePage />} />
           <Route path="hold_up" element={<HoldUpPage />} />
           <Route path="hold_up_table" element={<HoldUpSummaryPage />} />
           <Route path="hold_up_day_table" element={<HoldUpDayWiseSummaryPage />} />
@@ -299,13 +320,6 @@ function App() {
           <Route path="referencee" element={<ReferenceePage />} />
           <Route path="referencee_table" element={<ReferenceeTablePage />} />
           <Route path="revenue" element={<RevenuePage />} />
-          <Route path="sales" element={<SalesPage />} />
-          <Route path="servicee" element={<ServiceePage />} />
-          <Route path="sales_table" element={<SalesTablePage />} />
-          <Route path="servicee_table" element={<ServiceeTablePage />} />
-          <Route path="sales_growth" element={<SalesGrowthPage />} />
-          <Route path="servicee_growth" element={<ServiceeGrowthPage />} />
-          <Route path="sales_servicee_growth" element={<SalesServiceeGrowthPage />} />
           <Route path="spares" element={<SparesPage />} />
           <Route path="tat" element={<TATPage />} />
           <Route path="vas" element={<VASPage />} />
@@ -339,8 +353,6 @@ function App() {
           {/* 🧭 CityWise BarChart Pages */}
           <Route path="battery_tyre-bar-chart" element={<BatteryTyreBarChartPage />} />
           <Route path="br_conversion-bar-chart" element={<BRConversionBarChartPage />} />
-          <Route path="cc_conversion-bar-chart" element={<CCConversionBarChartPage />} />
-          <Route path="sa_conversion-bar-chart" element={<SAConversionBarChartPage />} />
           <Route path="due_done-bar-chart" element={<DueDoneBarChartPage />} />
           <Route path="hold_up-bar-chart" element={<HoldUpBarChartPage />} />
           <Route path="labour-bar-chart" element={<LabourBarChartPage />} />
@@ -357,8 +369,6 @@ function App() {
           <Route path="profit_loss-bar-chart" element={<ProfitLossBarChartPage />} />
           <Route path="referencee-bar-chart" element={<ReferenceeBarChartPage />} />
           <Route path="revenue-bar-chart" element={<RevenueBarChartPage />} />
-          <Route path="sales-bar-chart" element={<SalesBarChartPage />} />
-          <Route path="servicee-bar-chart" element={<ServiceeBarChartPage />} />
           <Route path="spares-bar-chart" element={<SparesBarChartPage />} />
           <Route path="tat-bar-chart" element={<TATBarChartPage />} />
           <Route path="vas-bar-chart" element={<VASBarChartPage />} />

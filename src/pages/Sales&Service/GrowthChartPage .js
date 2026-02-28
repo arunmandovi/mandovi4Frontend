@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Box, Button, Typography, Paper } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { fetchData } from "../../api/uploadService";
 import {
   ResponsiveContainer,
   LineChart,
@@ -13,51 +14,34 @@ import {
   CartesianGrid,
   LabelList,
 } from "recharts";
-import { fetchData } from "../../api/uploadService";
 
-/* ---------------- CONSTANTS ---------------- */
-const START_YEAR = 2019;
-const CURRENT_YEAR = new Date().getFullYear();
-
-const YEARS = Array.from(
-  { length: CURRENT_YEAR - START_YEAR + 1 },
-  (_, i) => String(START_YEAR + i)
-);
-
-const CHANNELS = ["ARENA", "NEXA"];
-const SERVICECODES = ["PMS20", "PMS30", "PMS40", "PMS50", "MORE THAN PMS50"]; // ✅ ADDED
-const BRANCHES = [
-  "Balmatta","Uppinangady","Surathkal","Sullia","Adyar","Sujith Bagh Lane", 
-  "Naravi","Bantwal","Nexa Service","Kadaba","Vittla", "Yeyyadi BR"
-];
-
-const ALL_BRANCH = "ALL";
-
-const BRANCH_COLORS = {
-  ALL: "#000000",
-  Balmatta: "#1f77b4",
-  Uppinangady: "#ff7f0e",
-  Surathkal: "#2ca02c",
-  Sullia: "#d62728",
-  Adyar: "#17becf",
-  "Sujith Bagh Lane": "#bcbd22",
-  Naravi: "#ff9896",
-  Bantwal: "#9467bd",
-  "Nexa Service": "#8c564b",
-  Kadaba: "#e377c2",
-  Vittla: "#7f7f7f",
-  "Yeyyadi BR": "#98df8a",
-};
-
-/* ---------------- COMPONENT ---------------- */
-const ServiceeGrowthPage = () => {
+const GrowthChartPage = ({ 
+  title, 
+  apiEndpoint, 
+  metricKey, 
+  yearsStart, 
+  branches, 
+  branchColors,
+  navigateUrls,
+  serviceCodes = null 
+}) => {
   const navigate = useNavigate();
 
   const [yearFilter, setYearFilter] = useState([]);
   const [channelFilter, setChannelFilter] = useState([]);
-  const [serviceCodesFilter, setServiceCodesFilter] = useState([]); // ✅ ADDED
+  const [serviceCodesFilter, setServiceCodesFilter] = useState([]);
   const [branchFilter, setBranchFilter] = useState([]);
   const [rawData, setRawData] = useState([]);
+
+  const CURRENT_YEAR = new Date().getFullYear();
+  const YEARS = Array.from(
+    { length: CURRENT_YEAR - yearsStart + 1 },
+    (_, i) => String(yearsStart + i)
+  );
+  const CHANNELS = ["ARENA", "NEXA"];
+  const SERVICECODES = serviceCodes || [];
+  const ALL_BRANCH = "ALL";
+  const BRANCH_COLORS = { ALL: "#000000", ...branchColors };
 
   /* ================= DATA LOAD ================= */
   useEffect(() => {
@@ -72,11 +56,11 @@ const ServiceeGrowthPage = () => {
           : "";
         const serviceCodesParams = serviceCodesFilter.length
           ? "&" + serviceCodesFilter.map((s) => `serviceCodes=${s}`).join("&")
-          : ""; // ✅ ADDED
+          : "";
 
         try {
           const res = await fetchData(
-            `/api/servicee/servicee_branch_summary?years=${year}${channelParams}${serviceCodesParams}`
+            `${apiEndpoint}?years=${year}${channelParams}${serviceCodesParams}`
           );
 
           if (Array.isArray(res)) {
@@ -84,7 +68,7 @@ const ServiceeGrowthPage = () => {
               merged.push({
                 year,
                 branch: r.branch,
-                serviceLoadd: r.serviceLoadd,
+                [metricKey]: r[metricKey],
               });
             });
           }
@@ -100,21 +84,18 @@ const ServiceeGrowthPage = () => {
 
     load();
     return () => { isMounted = false; };
-  }, [yearFilter, channelFilter, serviceCodesFilter]); // ✅ ADDED
+  }, [yearFilter, channelFilter, serviceCodesFilter, apiEndpoint, metricKey]);
 
   /* ================= TRANSFORM DATA (YEAR-OVER-YEAR GROWTH %) ================= */
   const chartData = useMemo(() => {
     const showAll = branchFilter.includes(ALL_BRANCH);
-    const selectedBranches =
-      branchFilter.length === 0
-        ? BRANCHES
-        : branchFilter.filter((b) => b !== ALL_BRANCH);
-
-    const branchesToProcess = showAll ? BRANCHES : selectedBranches;
+    const selectedBranches = branchFilter.length === 0
+      ? branches
+      : branchFilter.filter((b) => b !== ALL_BRANCH);
+    const branchesToProcess = showAll ? branches : selectedBranches;
 
     const prevYearMap = {};
     const yearMap = {};
-
     const sortedData = [...rawData].sort((a, b) => Number(a.year) - Number(b.year));
 
     sortedData.forEach((r) => {
@@ -122,11 +103,11 @@ const ServiceeGrowthPage = () => {
 
       if (!yearMap[r.year]) yearMap[r.year] = { year: r.year };
 
-      const prevServiceLoadd = prevYearMap[r.branch];
-      yearMap[r.year][r.branch] =
-        prevServiceLoadd !== undefined ? Number(((r.serviceLoadd - prevServiceLoadd) / prevServiceLoadd) * 100).toFixed(2) : 0;
-
-      prevYearMap[r.branch] = r.serviceLoadd;
+      const prevMetric = prevYearMap[r.branch];
+      yearMap[r.year][r.branch] = prevMetric !== undefined 
+        ? Number(((r[metricKey] - prevMetric) / prevMetric) * 100).toFixed(2) 
+        : 0;
+      prevYearMap[r.branch] = r[metricKey];
     });
 
     if (showAll) {
@@ -134,18 +115,19 @@ const ServiceeGrowthPage = () => {
       Object.keys(yearMap)
         .sort((a, b) => Number(a) - Number(b))
         .forEach((yr) => {
-          const combined = BRANCHES.reduce((sum, br) => {
-            const val = sortedData.find((d) => d.year === yr && d.branch === br)?.serviceLoadd || 0;
+          const combined = branches.reduce((sum, br) => {
+            const val = sortedData.find((d) => d.year === yr && d.branch === br)?.[metricKey] || 0;
             return sum + val;
           }, 0);
-          yearMap[yr]["ALL"] =
-            prevCombined !== null ? Number(((combined - prevCombined) / prevCombined) * 100).toFixed(2) : 0;
+          yearMap[yr]["ALL"] = prevCombined !== null 
+            ? Number(((combined - prevCombined) / prevCombined) * 100).toFixed(2) 
+            : 0;
           prevCombined = combined;
         });
     }
 
     return Object.values(yearMap).sort((a, b) => Number(a.year) - Number(b.year));
-  }, [rawData, branchFilter]);
+  }, [rawData, branchFilter, branches, metricKey]);
 
   /* ================= TOOLTIP ================= */
   const CustomTooltip = ({ active, payload, label }) => {
@@ -180,21 +162,25 @@ const ServiceeGrowthPage = () => {
     "&:hover": { background: "#aed581" },
   });
 
+  const branchesToRender = (branchFilter.includes(ALL_BRANCH) ? ["ALL"] : []).concat(
+    branchFilter.length === 0 ? branches : branchFilter.filter((b) => b !== ALL_BRANCH)
+  );
+
   /* ---------------- RENDER ---------------- */
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">SERVICE GROWTH % (YEAR VS BRANCH)</Typography>
+        <Typography variant="h4">{title}</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/servicee")}>
-            Line Chart
-          </Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/servicee-bar-chart")}>
-            Bar Chart
-          </Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/servicee_table")}>
-            Table
-          </Button>
+          {navigateUrls.map(({ path, label }, i) => (
+            <Button 
+              key={i} 
+              variant="contained" 
+              onClick={() => navigate(path)}
+            >
+              {label}
+            </Button>
+          ))}
           <Button variant="contained">Growth</Button>
         </Box>
       </Box>
@@ -207,11 +193,9 @@ const ServiceeGrowthPage = () => {
               key={y}
               size="small"
               sx={slicerStyle(yearFilter.includes(y))}
-              onClick={() =>
-                setYearFilter((p) =>
-                  p.includes(y) ? p.filter((x) => x !== y) : [...p, y]
-                )
-              }
+              onClick={() => setYearFilter((p) => 
+                p.includes(y) ? p.filter((x) => x !== y) : [...p, y]
+              )}
             >
               {y}
             </Button>
@@ -225,53 +209,47 @@ const ServiceeGrowthPage = () => {
               key={c}
               size="small"
               sx={slicerStyle(channelFilter.includes(c))}
-              onClick={() =>
-                setChannelFilter((p) =>
-                  p.includes(c) ? p.filter((x) => x !== c) : [...p, c]
-                )
-              }
+              onClick={() => setChannelFilter((p) => 
+                p.includes(c) ? p.filter((x) => x !== c) : [...p, c]
+              )}
             >
               {c}
             </Button>
           ))}
         </Box>
 
-        {/* SERVICE CODES FILTER - ✅ ADDED */}
-        <Box sx={{ my: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-          {SERVICECODES.map((s) => (
-            <Button
-              key={s}
-              size="small"
-              sx={slicerStyle(serviceCodesFilter.includes(s))}
-              onClick={() =>
-                setServiceCodesFilter((p) =>
+        {/* SERVICE CODES FILTER (conditional) */}
+        {SERVICECODES.length > 0 && (
+          <Box sx={{ my: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
+            {SERVICECODES.map((s) => (
+              <Button
+                key={s}
+                size="small"
+                sx={slicerStyle(serviceCodesFilter.includes(s))}
+                onClick={() => setServiceCodesFilter((p) => 
                   p.includes(s) ? p.filter((x) => x !== s) : [...p, s]
-                )
-              }
-            >
-              {s}
-            </Button>
-          ))}
-        </Box>
+                )}
+              >
+                {s}
+              </Button>
+            ))}
+          </Box>
+        )}
 
         {/* BRANCH FILTER */}
         <Box sx={{ my: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-          {[ALL_BRANCH, ...BRANCHES].map((b) => (
+          {[ALL_BRANCH, ...branches].map((b) => (
             <Button
               key={b}
               size="small"
               sx={slicerStyle(branchFilter.includes(b))}
-              onClick={() =>
-                setBranchFilter((p) => {
-                  if (b === ALL_BRANCH) {
-                    if (p.includes(ALL_BRANCH)) return p.filter((x) => x !== ALL_BRANCH);
-                    return [...p, ALL_BRANCH];
-                  } else {
-                    const filtered = p.filter((x) => x !== b);
-                    return p.includes(b) ? filtered : [...filtered, b];
-                  }
-                })
-              }
+              onClick={() => setBranchFilter((p) => {
+                if (b === ALL_BRANCH) {
+                  return p.includes(ALL_BRANCH) ? p.filter((x) => x !== ALL_BRANCH) : [...p, ALL_BRANCH];
+                }
+                const filtered = p.filter((x) => x !== b);
+                return p.includes(b) ? filtered : [...filtered, b];
+              })}
             >
               {b}
             </Button>
@@ -287,13 +265,7 @@ const ServiceeGrowthPage = () => {
               <XAxis dataKey="year" />
               <YAxis unit="%" />
               <Tooltip content={<CustomTooltip />} />
-              {(
-                (branchFilter.includes(ALL_BRANCH) ? ["ALL"] : []).concat(
-                  branchFilter.length === 0
-                    ? BRANCHES
-                    : branchFilter.filter((b) => b !== ALL_BRANCH)
-                )
-              ).map((b) => (
+              {branchesToRender.map((b) => (
                 <Line
                   key={b}
                   dataKey={b}
@@ -317,13 +289,7 @@ const ServiceeGrowthPage = () => {
               <XAxis dataKey="year" />
               <YAxis unit="%" />
               <Tooltip content={<CustomTooltip />} />
-              {(
-                (branchFilter.includes(ALL_BRANCH) ? ["ALL"] : []).concat(
-                  branchFilter.length === 0
-                    ? BRANCHES
-                    : branchFilter.filter((b) => b !== ALL_BRANCH)
-                )
-              ).map((b) => (
+              {branchesToRender.map((b) => (
                 <Bar
                   key={b}
                   dataKey={b}
@@ -341,4 +307,4 @@ const ServiceeGrowthPage = () => {
   );
 };
 
-export default ServiceeGrowthPage;
+export default GrowthChartPage;

@@ -13,39 +13,41 @@ import {
 } from "recharts";
 import { fetchData } from "../../api/uploadService";
 
-/* ---------------- CONSTANTS ---------------- */
-const MONTHS = ["APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR"];
-const START_YEAR = 2005;
-const CURRENT_YEAR = new Date().getFullYear();
-
-const YEARS = Array.from(
-  { length: CURRENT_YEAR - START_YEAR + 1 },
-  (_, i) => String(START_YEAR + i)
-);
-
-const CHANNELS = ["ARENA","NEXA"];
-const BRANCHES = [
-  "Balmatta","Uppinangady","Surathkal","Sullia",
-  "Bantwal","Nexa","Kadaba","Vittla"
-];
-
-const BRANCHES_WITH_ALL = ["ALL", ...BRANCHES];
-
-/* ---------------- COMPONENT ---------------- */
-const SalesBarChartPage = () => {
+const GenericBarChartPage = ({
+  title,
+  apiEndpoint,
+  dataKey,
+  yearsStart,
+  branches,
+  extraFilters = null,
+  lineChartPath,
+  tablePath,
+  growthPath,
+}) => {
   const navigate = useNavigate();
 
   /* -------- FILTER STATES -------- */
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [selectedYears, setSelectedYears] = useState([]);
   const [selectedChannels, setSelectedChannels] = useState([]);
+  const [selectedExtra, setSelectedExtra] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
 
   /* -------- RAW DATA -------- */
   const [chartRaw, setChartRaw] = useState([]);
 
+  const MONTHS = ["APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR"];
+  const CURRENT_YEAR = new Date().getFullYear();
+  const YEARS = Array.from(
+    { length: CURRENT_YEAR - yearsStart + 1 },
+    (_, i) => String(yearsStart + i)
+  );
+  const CHANNELS = ["ARENA","NEXA"];
+  const BRANCHES_WITH_ALL = ["ALL", ...branches];
+
   /* ================= FETCH DATA ================= */
   useEffect(() => {
+    let isMounted = true;
     const load = async () => {
       const months = selectedMonths.length ? selectedMonths : MONTHS;
       const years = selectedYears.length ? selectedYears : YEARS;
@@ -55,17 +57,25 @@ const SalesBarChartPage = () => {
         const query =
           `?months=${m}` +
           `&years=${years.join(",")}` +
-          (selectedChannels.length ? `&channels=${selectedChannels.join(",")}` : "");
+          (selectedChannels.length ? `&channels=${selectedChannels.join(",")}` : "") +
+          (extraFilters && selectedExtra.length ? `&${extraFilters.queryKey}=${selectedExtra.join(",")}` : "");
 
-        const res = await fetchData(`/api/sales/sales_branch_summary${query}`);
-        if (Array.isArray(res)) all.push(...res);
+        try {
+          const res = await fetchData(`${apiEndpoint}${query}`);
+          if (Array.isArray(res)) all.push(...res);
+        } catch (error) {
+          console.error('Fetch error:', error);
+        }
       }
 
-      setChartRaw(all);
+      if (isMounted) {
+        setChartRaw(all);
+      }
     };
 
     load();
-  }, [selectedMonths, selectedYears, selectedChannels]);
+    return () => { isMounted = false; };
+  }, [selectedMonths, selectedYears, selectedChannels, selectedExtra, extraFilters]);
 
   /* ================= BAR DATA (ALL + BRANCHES) ================= */
   const chartData = useMemo(() => {
@@ -73,16 +83,15 @@ const SalesBarChartPage = () => {
     let grandTotal = 0;
 
     chartRaw.forEach(r => {
-      branchTotals[r.branch] = (branchTotals[r.branch] || 0) + (r.count || 0);
-      grandTotal += r.count || 0;
+      branchTotals[r.branch] = (branchTotals[r.branch] || 0) + (r[dataKey] || 0);
+      grandTotal += r[dataKey] || 0;
     });
 
     const showAll = selectedBranches.includes("ALL");
-
     const branchesToShow =
       selectedBranches.filter(b => b !== "ALL").length
         ? selectedBranches.filter(b => b !== "ALL")
-        : BRANCHES;
+        : branches;
 
     const data = branchesToShow.map(b => ({
       branch: b,
@@ -97,7 +106,7 @@ const SalesBarChartPage = () => {
     }
 
     return data;
-  }, [chartRaw, selectedBranches]);
+  }, [chartRaw, selectedBranches, dataKey, branches]);
 
   /* ---------------- UI STYLE ---------------- */
   const slicerStyle = selected => ({
@@ -123,17 +132,17 @@ const SalesBarChartPage = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">SALES</Typography>
+        <Typography variant="h4">{title}</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales")}>Line Chart</Button>
+          <Button variant="contained" onClick={() => navigate(lineChartPath)}>Line Chart</Button>
           <Button variant="contained">Bar Chart</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales_table")}>Table</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/sales_growth")}>Growth</Button>
+          <Button variant="contained" onClick={() => navigate(tablePath)}>Table</Button>
+          <Button variant="contained" onClick={() => navigate(growthPath)}>Growth</Button>
         </Box>
       </Box>
 
       <Paper sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h6">Monthly Sales (Branch-wise)</Typography>
+        <Typography variant="h6">Monthly {title} (Branch-wise)</Typography>
 
         {/* YEARS */}
         <Box sx={{ my: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -158,6 +167,20 @@ const SalesBarChartPage = () => {
             </Button>
           ))}
         </Box>
+
+        {/* EXTRA FILTERS (Service Codes) */}
+        {extraFilters && (
+          <Box sx={{ my: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
+            {extraFilters.options.map(s => (
+              <Button key={s} size="small" sx={slicerStyle(selectedExtra.includes(s))}
+                onClick={() =>
+                  setSelectedExtra(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s])
+                }>
+                {s}
+              </Button>
+            ))}
+          </Box>
+        )}
 
         {/* BRANCHES WITH ALL */}
         <Box sx={{ my: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -201,4 +224,4 @@ const SalesBarChartPage = () => {
   );
 };
 
-export default SalesBarChartPage;
+export default GenericBarChartPage;
