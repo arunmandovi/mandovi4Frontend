@@ -51,25 +51,37 @@ const CityWiseSummaryTable = ({
     chartMonths.reduce((s, m) => s + grandTotals[m].percentage, 0) /
     chartMonths.length;
 
+  const cellStyle = {
+    padding: 8,
+    border: "1px solid #ccc",
+    textAlign: "center",
+    fontSize: "0.72rem",
+  };
+
+  const headerCellStyle = {
+    padding: 8,
+    border: "1px solid #ccc",
+    fontSize: "0.8rem",
+  };
+
   return (
     <Box sx={{ mt: 4 }}>
-      <Typography variant="h6" sx={{ mb: 1 }}>
+      <Typography variant="h6" sx={{ mb: 1, fontSize: "1.1rem" }}>
         City-wise Summary – {selectedGrowth}
       </Typography>
 
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
         <thead>
           {/* -------- HEADER MONTH ROW -------- */}
           <tr style={{ background: "#f0f0f0" }}>
-            <th style={{ padding: 8, border: "1px solid #ccc" }}>City</th>
+            <th style={{ ...headerCellStyle, fontSize: "12px" }}>City</th>
 
             {chartMonths.map((m) => (
               <th
                 key={m}
                 colSpan={keys.length}
                 style={{
-                  padding: 8,
-                  border: "1px solid #ccc",
+                  ...headerCellStyle,
                   textAlign: "center",
                 }}
               >
@@ -80,8 +92,7 @@ const CityWiseSummaryTable = ({
             <th
               colSpan={keys.length}
               style={{
-                padding: 8,
-                border: "1px solid #ccc",
+                ...headerCellStyle,
                 background: "#ffeccc",
                 textAlign: "center",
                 fontWeight: "bold",
@@ -93,13 +104,13 @@ const CityWiseSummaryTable = ({
 
           {/* -------- HEADER KEYS ROW -------- */}
           <tr style={{ background: "#fafafa" }}>
-            <th style={{ padding: 8, border: "1px solid #ccc" }}></th>
+            <th style={headerCellStyle}></th>
 
             {chartMonths.flatMap((m) =>
               keys.map((k) => (
                 <th
                   key={`${m}_${k}`}
-                  style={{ padding: 8, border: "1px solid #ccc" }}
+                  style={headerCellStyle}
                 >
                   {beautifyHeader(k)}
                 </th>
@@ -110,8 +121,7 @@ const CityWiseSummaryTable = ({
               <th
                 key={`ALL_${k}`}
                 style={{
-                  padding: 8,
-                  border: "1px solid #ccc",
+                  ...headerCellStyle,
                   background: "#fff7e6",
                   fontWeight: "bold",
                 }}
@@ -182,8 +192,7 @@ const CityWiseSummaryTable = ({
                 {/* CITY NAME */}
                 <td
                   style={{
-                    padding: 8,
-                    border: "1px solid #ccc",
+                    ...cellStyle,
                     fontWeight: "bold",
                     textAlign: "center",
                   }}
@@ -216,11 +225,7 @@ const CityWiseSummaryTable = ({
                     return (
                       <td
                         key={`${m}_${k}`}
-                        style={{
-                          padding: 8,
-                          border: "1px solid #ccc",
-                          textAlign: "center",
-                        }}
+                        style={cellStyle}
                       >
                         {formatted}
                       </td>
@@ -245,10 +250,8 @@ const CityWiseSummaryTable = ({
                     <td
                       key={`all_${k}`}
                       style={{
-                        padding: 8,
-                        border: "1px solid #ccc",
+                        ...cellStyle,
                         background: "#fff7e6",
-                        textAlign: "center",
                         fontWeight: "600",
                       }}
                     >
@@ -262,7 +265,9 @@ const CityWiseSummaryTable = ({
 
           {/* -------- GRAND TOTAL ROW -------- */}
           <tr style={{ background: "#d9edf7", fontWeight: "bold" }}>
-            <td style={{ padding: 8, border: "1px solid #ccc" }}>Grand Total</td>
+            <td style={{ ...cellStyle, fontSize: "14px", fontWeight: "bold" }}>
+              Grand Total
+            </td>
 
             {chartMonths.flatMap((m) =>
               keys.map((k) => {
@@ -288,11 +293,7 @@ const CityWiseSummaryTable = ({
                   return (
                     <td
                       key={`${m}_${k}`}
-                      style={{
-                        padding: 8,
-                        border: "1px solid #ccc",
-                        textAlign: "center",
-                      }}
+                      style={cellStyle}
                     >
                       {pct.toFixed(0)}%
                     </td>
@@ -317,11 +318,7 @@ const CityWiseSummaryTable = ({
                   return (
                     <td
                       key={`${m}_${k}`}
-                      style={{
-                        padding: 8,
-                        border: "1px solid #ccc",
-                        textAlign: "center",
-                      }}
+                      style={cellStyle}
                     >
                       {pct.toFixed(percentageDecimalDigits)}%
                     </td>
@@ -348,11 +345,7 @@ const CityWiseSummaryTable = ({
                   return (
                     <td
                       key={`${m}_${k}`}
-                      style={{
-                        padding: 8,
-                        border: "1px solid #ccc",
-                        textAlign: "center",
-                      }}
+                      style={cellStyle}
                     >
                       {pct.toFixed(growthDecimalDigits)}%
                     </td>
@@ -368,11 +361,7 @@ const CityWiseSummaryTable = ({
                 return (
                   <td
                     key={`${m}_${k}`}
-                    style={{
-                      padding: 8,
-                      border: "1px solid #ccc",
-                      textAlign: "center",
-                    }}
+                    style={cellStyle}
                   >
                     {total.toFixed(decimalDigits)}
                   </td>
@@ -415,10 +404,9 @@ const CityWiseSummaryTable = ({
                   <td
                     key={`all_gt_${k}`}
                     style={{
-                      padding: 8,
-                      border: "1px solid #ccc",
+                      ...cellStyle,
                       background: "#c8e6ff",
-                      textAlign: "center",
+                      fontWeight: "bold",
                     }}
                   >
                     {pct.toFixed(0)}%
@@ -454,10 +442,9 @@ const CityWiseSummaryTable = ({
                   <td
                     key={`all_gt_${k}`}
                     style={{
-                      padding: 8,
-                      border: "1px solid #ccc",
+                      ...cellStyle,
                       background: "#c8e6ff",
-                      textAlign: "center",
+                      fontWeight: "bold",
                     }}
                   >
                     {pct.toFixed(percentageDecimalDigits)}%
@@ -494,10 +481,9 @@ const CityWiseSummaryTable = ({
                   <td
                     key={`all_gt_${k}`}
                     style={{
-                      padding: 8,
-                      border: "1px solid #ccc",
+                      ...cellStyle,
                       background: "#c8e6ff",
-                      textAlign: "center",
+                      fontWeight: "bold",
                     }}
                   >
                     {pct.toFixed(growthDecimalDigits)}%
@@ -520,10 +506,9 @@ const CityWiseSummaryTable = ({
                 <td
                   key={`all_gt_${k}`}
                   style={{
-                    padding: 8,
-                    border: "1px solid #ccc",
+                    ...cellStyle,
                     background: "#c8e6ff",
-                    textAlign: "center",
+                    fontWeight: "bold",
                   }}
                 >
                   {total.toFixed(decimalDigits)}

@@ -41,6 +41,7 @@ const timeline = [
   { label: "Oct 25", key: "oct_25", month: "Oct" },
   { label: "Nov 25", key: "nov_25", month: "Nov" },
   { label: "Dec 25", key: "dec_25", month: "Dec" },
+  { label: "Jan 25", key: "jan_25", month: "Jan" },
   { label: "2025-26", key: "fy_2025_26", month: "Total" },
 ];
 
