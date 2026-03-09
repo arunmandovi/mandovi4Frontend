@@ -4,7 +4,7 @@ import DataTable from "../../components/DataTable";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
-function ProfitLossSRBRLoaddPage() {
+function ProfitLossSRBRTablePage() {
   const [citySummary, setCitySummary] = useState([]);
   const [branchSummary, setBranchSummary] = useState([]);
   const [selectedCity, setSelectedCity] = useState("ALL");
@@ -140,15 +140,12 @@ function ProfitLossSRBRLoaddPage() {
         </Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_monthly")}>
-            P&L Monthly Graph
-          </Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_monthly")}>P&L Monthly Graph(CityWise)</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_branches")}>P&L Monthly Graph(BranchWise)</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle")}>P&L PerVehicle Graph(CityWise)</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle_branch")}>P&L PerVehicle Graph(BranchWise)</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss")}>P&L Table</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_srbr")}>SR&BR Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_table")}>P&L Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_srbr_table")}>SR&BR Table</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
@@ -183,4 +180,4 @@ function ProfitLossSRBRLoaddPage() {
   );
 }
 
-export default ProfitLossSRBRLoaddPage;
+export default ProfitLossSRBRTablePage;

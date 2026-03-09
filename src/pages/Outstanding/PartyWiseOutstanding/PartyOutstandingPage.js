@@ -182,7 +182,7 @@ const PartyOutstandingPage = ({ type }) => {
       XLSX.utils.book_append_sheet(wb, ws, 'Data');
       
       const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-      const filename = `${config.filename}_${timestamp}.xlsx`;
+      const filename = `${config.filename}.xlsx`;
       
       console.log('Writing file:', filename);
       XLSX.writeFile(wb, filename);

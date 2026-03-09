@@ -187,7 +187,7 @@ const OutstandingPage = ({ type = "cash" }) => {
       const ws = XLSX.utils.json_to_sheet(excelData);
       XLSX.utils.book_append_sheet(wb, ws, 'Branch Summary');
       const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-      XLSX.writeFile(wb, `${config?.filename || 'Branch_Summary'}_${timestamp}.xlsx`);
+      XLSX.writeFile(wb, `${config?.filename}.xlsx`);
     } catch (error) {
       console.error('Download error:', error);
       alert('Download failed');
@@ -223,7 +223,7 @@ const OutstandingPage = ({ type = "cash" }) => {
       const ws = XLSX.utils.json_to_sheet(excelData);
       XLSX.utils.book_append_sheet(wb, ws, `${selectedBranch}_${type === 'id' ? 'Insurance' : 'SA'}`);
       const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-      XLSX.writeFile(wb, `${config?.filename || 'Detail_Summary'}_${selectedBranch}_${timestamp}.xlsx`);
+      XLSX.writeFile(wb, `${config?.filename || 'Detail_Summary'}_${selectedBranch}.xlsx`);
     } catch (error) {
       console.error('Download error:', error);
       alert('Download failed');
@@ -273,7 +273,7 @@ const OutstandingPage = ({ type = "cash" }) => {
       const ws = XLSX.utils.json_to_sheet(excelData);
       XLSX.utils.book_append_sheet(wb, ws, `${selectedBranch}_${selectedInsuranceParty || selectedAdvisor || 'All_Parties'}`);
       const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-      XLSX.writeFile(wb, `${config?.filename || 'Party_Summary'}_${selectedBranch}_${selectedInsuranceParty || selectedAdvisor || 'All_Parties'}_${timestamp}.xlsx`);
+      XLSX.writeFile(wb, `${config?.filename || 'Party_Summary'}_${selectedBranch}_${selectedInsuranceParty || selectedAdvisor || 'All_Parties'}.xlsx`);
     } catch (error) {
       console.error('Download error:', error);
       alert('Download failed');

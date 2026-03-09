@@ -24,4 +24,5 @@ export const uploadNavbarButtons = [
   { label: "SA Conversion", path: "/sa_conversion-upload" },
   { label: "Sales", path: "/sales-upload" },
   { label: "Service", path: "/servicee-upload" },
+  { label: "ServiceLoad", path: "/service_load-upload" },
 ];

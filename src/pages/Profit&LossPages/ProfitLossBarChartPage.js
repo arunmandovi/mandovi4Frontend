@@ -9,7 +9,10 @@ import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelectio
 function ProfitLossBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("profit_loss"));
+  const [selectedGrowth, setSelectedGrowthState] = useState(() => {
+    const saved = getSelectedGrowth("profit_loss");
+    return saved || "Apr 24"; 
+  });
 
   const growthOptions = [
     "Apr 24",
@@ -153,8 +156,8 @@ function ProfitLossBarChartPage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_branches")}>P&L Monthly Graph(BranchWise)</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle")}>P&L PerVehicle Graph(CityWise)</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle_branch")}>P&L PerVehicle Graph(BranchWise)</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss")}>P&L Table</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_srbr")}>SR&BR Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_table")}>P&L Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_srbr_table")}>SR&BR Table</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>

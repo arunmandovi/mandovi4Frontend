@@ -9,7 +9,6 @@ function Layout() {
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  /* ---------- ACTIVITY TRACKING ---------- */
   useEffect(() => {
     localStorage.setItem("employeeLastActive", Date.now());
   }, [location.pathname]);
@@ -20,7 +19,6 @@ function Layout() {
     window.location.href = "/EmployeeLogin";
   };
 
-  /* ---------- CURRENT VIEW MODE ---------- */
   const VIEW_MODES = {
     "branches-bar-chart": "branches-bar-chart",
     "branches": "branches",
@@ -34,7 +32,6 @@ function Layout() {
       currentPath.includes(key)
     )?.[1] || null;
 
-  /* ---------- ALL MODULES ---------- */
   const modules = [
     "loadd",
     "hold_up",
@@ -56,7 +53,7 @@ function Layout() {
     "tat",
     "mcp",
     "referencee",
-    "profit_loss",
+    "profit_loss_table",
     "cc_conversion",
     "sa_conversion",
     "sales",
@@ -94,7 +91,6 @@ function Layout() {
     servicee: ["bar-chart", "growth", "table"],
   };
 
-  /* ---------- LINK BUILDERS ---------- */
   const linkMap = {
     "bar-chart": (m) => `/DashboardHome/${m}-bar-chart`,
     "branches": (m) => `/DashboardHome/${m}_branches`,
@@ -104,7 +100,6 @@ function Layout() {
     "table": (m) => `/DashboardHome/${m}_table`,
   };
 
-  /* ---------- SAFE LINK RESOLUTION ---------- */
   const buildLink = (module) => {
     if (!viewMode) {
       return `/DashboardHome/${module}`;
@@ -112,12 +107,10 @@ function Layout() {
 
     const supportedModes = MODULE_VIEW_SUPPORT[module] || [];
 
-    // ❌ If module does NOT support current view → fallback
     if (!supportedModes.includes(viewMode)) {
       return `/DashboardHome/${module}`;
     }
 
-    // ✅ Supported view
     return linkMap[viewMode]?.(module) || `/DashboardHome/${module}`;
   };
 
@@ -160,7 +153,6 @@ function Layout() {
   );
 }
 
-/* ---------- LABEL FORMATTER ---------- */
 function formatLabel(name) {
   const specialCases = {
     loadd: "Load",
@@ -172,7 +164,7 @@ function formatLabel(name) {
     battery_tyre: "Battery & Tyre",
     msgp_profit: "MSGP Profit",
     mga_profit: "MGA Profit",
-    profit_loss: "Profit & Loss",
+    profit_loss_table: "Profit & Loss",
     cc_conversion: "CC Conversion",
     sa_conversion: "SA Conversion",
     vas: "VAS",

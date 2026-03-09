@@ -11,47 +11,46 @@ import * as XLSX from 'xlsx';
 
 const NAVIGATION_MAP = {
   cash: {
-    title: "Cash Outstanding – Workshop Summary",
+    title: "Cash Outstanding – SA Summary",
     api: "/api/outstanding/cash_sa_outstanding",
     branchPath: "/DashboardHome/cash_branch_outstanding",
-    filename: "Cash_Outstanding_Workshop_Summary"
+    filename: "Cash_Outstanding_SA_Summary"
   },
   total: {
-    title: "Total Outstanding – Workshop Summary",
+    title: "Total Outstanding – SA Summary",
     api: "/api/outstanding/total_sa_outstanding",
     branchPath: "/DashboardHome/total_branch_outstanding",
-    filename: "Total_Outstanding_Workshop_Summary"
+    filename: "Total_Outstanding_SA_Summary"
   },
   invoice: {
-    title: "Invoice Outstanding – Workshop Summary",
+    title: "Invoice Outstanding – SA Summary",
     api: "/api/outstanding/invoice_sa_outstanding",
     branchPath: "/DashboardHome/invoice_branch_outstanding",
-    filename: "Invoice_Outstanding_Workshop_Summary"
+    filename: "Invoice_Outstanding_SA_Summary"
   },
   insurance: {
-    title: "Insurance Outstanding – Workshop Summary",
+    title: "Insurance Outstanding – SA Summary",
     api: "/api/outstanding/insurance_sa_outstanding",
     branchPath: "/DashboardHome/insurance_branch_outstanding",
-    filename: "Insurance_Outstanding_Workshop_Summary"
+    filename: "Insurance_Outstanding_SA_Summary"
   },
   others: {
-    title: "Others Outstanding – Workshop Summary",
+    title: "Others Outstanding – SA Summary",
     api: "/api/outstanding/others_sa_outstanding",
     branchPath: "/DashboardHome/others_branch_outstanding",
-    filename: "Others_Outstanding_Workshop_Summary"
+    filename: "Others_Outstanding_SA_Summary"
   },
   id: {
-    title: "Insurance Outstanding – Workshop Summary",
+    title: "Insurance Outstanding – SA Summary",
     api: "/api/outstanding/id_sa_outstanding",
     branchPath: "/DashboardHome/id_branch_outstanding",
-    filename: "ID_Outstanding_Workshop_Summary"
+    filename: "ID_Outstanding_SA_Summary"
   },
-  // ✅ NEW: CustomerCollect configuration
   customercollect: {
-    title: "Customer Collect Outstanding – Workshop Summary",
+    title: "Customer Collect Outstanding – SA Summary",
     api: "/api/outstanding/cc_sa_outstanding",
     branchPath: "/DashboardHome/customercollect_branch_outstanding",
-    filename: "CustomerCollect_Outstanding_Workshop_Summary"
+    filename: "CustomerCollect_Outstanding_SA_Summary"
   }
 };
 
@@ -169,7 +168,7 @@ const SAOutstandingPage = ({ type }) => {
       XLSX.utils.book_append_sheet(wb, ws, 'Summary');
       
       const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-      const filename = `${config.filename}_${timestamp}.xlsx`;
+      const filename = `${config.filename}.xlsx`;
       
       console.log('Writing file:', filename);
       XLSX.writeFile(wb, filename);

@@ -26,17 +26,23 @@ import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
 
 const timeline = [
-  { label: "SR&BR Apr 25", key: "apr25_per_100k", month: "Apr" },
-  { label: "SR&BR May 25", key: "may25_per_100k", month: "May" },
-  { label: "SR&BR Apr 25", key: "jun25_per_100k", month: "Jun" },
-  { label: "SR&BR Apr 25", key: "jul25_per_100k", month: "Jul" },
-  { label: "SR&BR Aug 25", key: "aug25_per_100k", month: "Aug" },
-  { label: "SR&BR Sep 25", key: "sep25_per_100k", month: "Sep" },
-  { label: "SR&BR Oct 25", key: "oct25_per_100k", month: "Oct" },
-  { label: "SR&BR Nov 25", key: "nov25_per_100k", month: "Nov" },
-  { label: "SR&BR Dec 25", key: "dec25_per_100k", month: "Dec" },
-  { label: "SR&BR Jan 25", key: "jan25_per_100k", month: "Jan" },
-  { label: "SR&BR Apr 25", key: "total25_per_100k", month: "Total" },
+  { label: "Apr 24", key: "apr_24", month: "Apr" },
+  { label: "May 24", key: "may_24", month: "May" },
+  { label: "Jun 24", key: "jun_24", month: "Jun" },
+  { label: "Jul 24", key: "jul_24", month: "Jul" },
+  { label: "2024-25", key: "total_24", month: "Total" },
+
+  { label: "Apr 25", key: "apr_25", month: "Apr" },
+  { label: "May 25", key: "may_25", month: "May" },
+  { label: "Jun 25", key: "jun_25", month: "Jun" },
+  { label: "Jul 25", key: "jul_25", month: "Jul" },
+  { label: "Aug 25", key: "aug_25", month: "Aug" },
+  { label: "Sep 25", key: "sep_25", month: "Sep" },
+  { label: "Oct 25", key: "oct_25", month: "Oct" },
+  { label: "Nov 25", key: "nov_25", month: "Nov" },
+  { label: "Dec 25", key: "dec_25", month: "Dec" },
+  { label: "Jan 25", key: "jan_25", month: "Jan" },
+  { label: "2025-26", key: "fy_2025_26", month: "Total" },
 ];
 
 const BRANCH_ORDER = [
@@ -76,7 +82,7 @@ const titleCase = (s) =>
 
 const sanitizeId = (s) => String(s).replace(/[^a-z0-9_-]/gi, "_");
 
-export default function ProfitLossPerVehicleBranchWisePage() {
+export default function ProfitLossMonthlyBranchWisePage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [branchListNormalized, setBranchListNormalized] = useState([]); 
@@ -217,8 +223,8 @@ export default function ProfitLossPerVehicleBranchWisePage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_branches")}>P&L Monthly Graph(BranchWise)</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle")}>P&L PerVehicle Graph(CityWise)</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_per_vehicle_branch")}>P&L PerVehicle Graph(BranchWise)</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss")}>P&L Table</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_srbr")}>SR&BR Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_table")}>P&L Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_srbr_table")}>SR&BR Table</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/profit_loss_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>

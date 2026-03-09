@@ -156,4 +156,10 @@ export const apiModules = [
   getByMonthYear: '/api/vas/getvas',
   deleteAll: "/api/vas/delete_all",
 },
+{ name: 'ServiceLoad', 
+  upload: '/api/service_load/upload', 
+  get: '/api/service_load/getallservice_load',
+  getByMonthYear: '/api/service_load/getservice_load' ,
+  deleteAll: "/api/service_load/delete_all",
+},
 ];

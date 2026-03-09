@@ -25,10 +25,6 @@ import OilPage from "./pages/GraphView/OilPage";
 import PMSPartsPage from "./pages/GraphView/PMSPartsPage";
 import ProductivityPage from "./pages/GraphView/ProductivityPage";
 import ProductivityTablePage from "./pages/GraphView/ProductivityTablePage";
-import ProfitLossPage from "./pages/GraphView/ProfitLossPage";
-import ProfitLossSRBRLoaddPage from "./pages/GraphView/ProfitLossSRBRLoadd";
-import ProfitLossMonthlyGraphPage from "./pages/GraphView/ProfitLossMonthlyGraphPage";
-import ProfitLossPerVehicleGraphPage from "./pages/GraphView/ProfitLossPerVehicleGraphPage";
 import ReferenceePage from "./pages/GraphView/ReferenceePage";
 import ReferenceeTablePage from "./pages/GraphView/ReferenceeTablePage";
 import RevenuePage from "./pages/GraphView/RevenuePage";
@@ -52,14 +48,11 @@ import OilBranchWisePage from "./pages/BranchWiseGraph/OilBranchWisePage";
 import PerVehicleBranchWisePage from "./pages/BranchWiseGraph/PerVehicleBranchWisePage";
 import PMSPartsBranchWisePage from "./pages/BranchWiseGraph/PMSPartsBranchWisePage";
 import ProductivityBranchWisePage from "./pages/BranchWiseGraph/ProductivityBranchWisePage";
-import ProfitLossMonthlyBranchWisePage from "./pages/BranchWiseGraph/ProfitLossMonthlyBranchWisePage";
-import ProfitLossPerVehicleBranchWisePage from "./pages/BranchWiseGraph/ProfitLossPerVehicleBranchWisePage";
 import ReferenceeBranchWisePage from "./pages/BranchWiseGraph/ReferenceeBranchWisePage";
 import RevenueBranchWisePage from "./pages/BranchWiseGraph/RevenueBranchWisePage";
 import SparesBranchWisePage from "./pages/BranchWiseGraph/SparesBranchWisePage";
 import TATBranchWisePage from "./pages/BranchWiseGraph/TATBranchWisePage";
 import VASBranchWisePage from "./pages/BranchWiseGraph/VASBranchWisePage";
-
 
 // File upload pages
 import BatteryTyreUploadPage from "./pages/FileUpload/BatteryTyreUploadPage";
@@ -82,6 +75,7 @@ import ReferenceeUploadPage from "./pages/FileUpload/ReferenceeUploadPage";
 import RevenueUploadPage from "./pages/FileUpload/RevenueUploadPage";
 import SalesUploadPage from "./pages/FileUpload/SalesUploadPage.js";
 import ServiceeUploadPage from "./pages/FileUpload/ServiceeUploadPage.js";
+import ServiceLoadUploadPage from "./pages/FileUpload/ServiceLoadUploadPage.js";
 import SAConversionUploadPage from "./pages/FileUpload/SAConversionUploadPage";
 import SparesUploadPage from "./pages/FileUpload/SparesUploadPage";
 import TATUploadPage from "./pages/FileUpload/TATUploadPage";
@@ -103,7 +97,6 @@ import MSGPProfitBarChartPage from "./pages/BarChartView/MSGPProfitBarChartPage"
 import OilBarChartPage from "./pages/BarChartView/OilBarChartPage";
 import PMSPartsBarChartPage from "./pages/BarChartView/PMSPartsBarChartPage";
 import ProductivityBarChartPage from "./pages/BarChartView/ProductivityBarChartPage";
-import ProfitLossBarChartPage from "./pages/BarChartView/ProfitLossBarChartPage";
 import ReferenceeBarChartPage from "./pages/BarChartView/ReferenceeBarChartPage";
 import RevenueBarChartPage from "./pages/BarChartView/RevenueBarChartPage";
 import SparesBarChartPage from "./pages/BarChartView/SparesBarChartPage";
@@ -127,7 +120,6 @@ import MSGPProfitBranchesBarChartPage from "./pages/BranchWiseBarChartView/MSGPP
 import OilBranchesBarChartPage from "./pages/BranchWiseBarChartView/OilBranchesBarChartPage";
 import PMSPartsBranchesBarChartPage from "./pages/BranchWiseBarChartView/PMSPartsBranchesBarChartPage";
 import ProductivityBranchesBarChartPage from "./pages/BranchWiseBarChartView/ProductivityBranchesBarChartPage";
-import ProfitLossBranchesBarChartPage from "./pages/BranchWiseBarChartView/ProfitLossBranchesBarChartPage";
 import ReferenceeeBranchesBarChartPage from "./pages/BranchWiseBarChartView/ReferenceeBranchesBarChartPage";
 import RevenueBranchesBarChartPage from "./pages/BranchWiseBarChartView/RevenueBranchesBarChartPage";
 import SparesBranchesBarChartPage from "./pages/BranchWiseBarChartView/SparesBranchesBarChartPage";
@@ -141,6 +133,16 @@ import CCConversionPage from "./pages/CC&SAConversion/CCConversionPage.js";
 import SAConversionPage from "./pages/CC&SAConversion/SAConversionPage.js";
 import CCConversionBarChartPage from "./pages/CC&SAConversion/CCConversionBarChartPage.js";
 import SAConversionBarChartPage from "./pages/CC&SAConversion/SAConversionBarChartPage.js";
+
+//Profit&Loss Pages
+import ProfitLossTablePage from "./pages/Profit&LossPages/ProfitLossTablePage.js";
+import ProfitLossSRBRTablePage from "./pages/Profit&LossPages/ProfitLossSRBRTablePage.js";
+import ProfitLossMonthlyGraphPage from "./pages/Profit&LossPages/ProfitLossMonthlyGraphPage.js";
+import ProfitLossPerVehicleGraphPage from "./pages/Profit&LossPages/ProfitLossPerVehicleGraphPage.js";
+import ProfitLossMonthlyBranchWisePage from "./pages/Profit&LossPages/ProfitLossMonthlyBranchWisePage.js";
+import ProfitLossPerVehicleBranchWisePage from "./pages/Profit&LossPages/ProfitLossPerVehicleBranchWisePage.js";
+import ProfitLossBarChartPage from "./pages/Profit&LossPages/ProfitLossBarChartPage.js";
+import ProfitLossBranchesBarChartPage from "./pages/Profit&LossPages/ProfitLossBranchesBarChartPage.js";
 
 //Sales&Service Pages
 import SalesTablePage from "./pages/Sales&Service/SalesTablePage.js";
@@ -228,6 +230,7 @@ function App() {
         <Route path="/revenue-upload" element={ <AdminProtectedRoute><RevenueUploadPage /></AdminProtectedRoute> } />
         <Route path="/sales-upload" element={ <AdminProtectedRoute><SalesUploadPage /></AdminProtectedRoute> } />
         <Route path="/servicee-upload" element={ <AdminProtectedRoute><ServiceeUploadPage /></AdminProtectedRoute> } />
+        <Route path="/service_load-upload" element={ <AdminProtectedRoute><ServiceLoadUploadPage /></AdminProtectedRoute> } />
         <Route path="/spares-upload" element={ <AdminProtectedRoute><SparesUploadPage /></AdminProtectedRoute> } />
         <Route path="/tat-upload" element={ <AdminProtectedRoute><TATUploadPage /></AdminProtectedRoute> } />
         <Route path="/vas-upload" element={ <AdminProtectedRoute><VASUploadPage /></AdminProtectedRoute> } />
@@ -252,7 +255,6 @@ function App() {
           <Route path="cc_conversion-bar-chart" element={<CCConversionBarChartPage />} />
           <Route path="sa_conversion-bar-chart" element={<SAConversionBarChartPage />} />
 
-
           {/* 🧭 Sales&Service Pages */}
           <Route path="sales" element={<SalesPage />} />
           <Route path="servicee" element={<ServiceePage />} />
@@ -263,8 +265,18 @@ function App() {
           <Route path="sales-bar-chart" element={<SalesBarChartPage />} />
           <Route path="servicee-bar-chart" element={<ServiceeBarChartPage />} />
           <Route path="sales_servicee_growth" element={<SalesServiceeGrowthPage />} />
-          
 
+          {/* 🧭 Profit&Loss Pages */}
+          <Route path="profit_loss_table" element={<ProfitLossTablePage />} />
+          <Route path="profit_loss_srbr_table" element={<ProfitLossSRBRTablePage />} />
+          <Route path="profit_loss_monthly" element={<ProfitLossMonthlyGraphPage />} />
+          <Route path="profit_loss_per_vehicle" element={<ProfitLossPerVehicleGraphPage />} />
+          <Route path="profit_loss_branches" element={<ProfitLossMonthlyBranchWisePage />} />
+          <Route path="profit_loss_per_vehicle_branch" element={<ProfitLossPerVehicleBranchWisePage />} />
+          <Route path="profit_loss-bar-chart" element={<ProfitLossBarChartPage />} />
+          <Route path="profit_loss_branches-bar-chart" element={<ProfitLossBranchesBarChartPage />} />
+
+          
           {/* 🧭 Outstanding Pages */}
           <Route path="total_branch_outstanding" element={<TotalBranchOutstandingPage />} />
           <Route path="total_sa_outstanding" element={<TotalSAOutstandingPage />} />
@@ -313,10 +325,6 @@ function App() {
           <Route path="pms_parts" element={<PMSPartsPage />} />
           <Route path="productivity" element={<ProductivityPage />} />
           <Route path="productivity_table" element={<ProductivityTablePage />} />
-          <Route path="profit_loss" element={<ProfitLossPage />} />
-          <Route path="profit_loss_srbr" element={<ProfitLossSRBRLoaddPage />} />
-          <Route path="profit_loss_monthly" element={<ProfitLossMonthlyGraphPage />} />
-          <Route path="profit_loss_per_vehicle" element={<ProfitLossPerVehicleGraphPage />} />
           <Route path="referencee" element={<ReferenceePage />} />
           <Route path="referencee_table" element={<ReferenceeTablePage />} />
           <Route path="revenue" element={<RevenuePage />} />
@@ -341,8 +349,6 @@ function App() {
           <Route path="per_vehicle_branches" element={<PerVehicleBranchWisePage />} />
           <Route path="pms_parts_branches" element={<PMSPartsBranchWisePage />} />
           <Route path="productivity_branches" element={<ProductivityBranchWisePage />} />
-          <Route path="profit_loss_branches" element={<ProfitLossMonthlyBranchWisePage />} />
-          <Route path="profit_loss_per_vehicle_branch" element={<ProfitLossPerVehicleBranchWisePage />} />
           <Route path="referencee_branches" element={<ReferenceeBranchWisePage />} />
           <Route path="revenue_branches" element={<RevenueBranchWisePage />} />
           <Route path="spares_branches" element={<SparesBranchWisePage />} />
@@ -366,7 +372,6 @@ function App() {
           <Route path="oil-bar-chart" element={<OilBarChartPage />} />
           <Route path="pms_parts-bar-chart" element={<PMSPartsBarChartPage />} />
           <Route path="productivity-bar-chart" element={<ProductivityBarChartPage />} />
-          <Route path="profit_loss-bar-chart" element={<ProfitLossBarChartPage />} />
           <Route path="referencee-bar-chart" element={<ReferenceeBarChartPage />} />
           <Route path="revenue-bar-chart" element={<RevenueBarChartPage />} />
           <Route path="spares-bar-chart" element={<SparesBarChartPage />} />
@@ -390,7 +395,6 @@ function App() {
           <Route path="oil_branches-bar-chart" element={<OilBranchesBarChartPage />} />
           <Route path="pms_parts_branches-bar-chart" element={<PMSPartsBranchesBarChartPage />} />
           <Route path="productivity_branches-bar-chart" element={<ProductivityBranchesBarChartPage />} />
-          <Route path="profit_loss_branches-bar-chart" element={<ProfitLossBranchesBarChartPage />} />
           <Route path="referencee_branches-bar-chart" element={<ReferenceeeBranchesBarChartPage />} />
           <Route path="revenue_branches-bar-chart" element={<RevenueBranchesBarChartPage />} />
           <Route path="spares_branches-bar-chart" element={<SparesBranchesBarChartPage />} />

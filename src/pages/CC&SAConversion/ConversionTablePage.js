@@ -109,7 +109,7 @@ const ConversionTablePage = ({ type }) => {
     const filters = [];
     if (selectedMonths.length) filters.push(`Months_${selectedMonths.join('_')}`);
     if (selectedBranches.length) filters.push(`Branches_${selectedBranches.slice(0,3).join('_')}${selectedBranches.length > 3 ? '_etc' : ''}`);
-    const filename = `${isSA ? 'SA' : 'CC'}_Conversion_${new Date().toISOString().slice(0,10)}${filters.length ? '_' + filters.join('_') : ''}.xlsx`;
+    const filename = `${isSA ? 'SA' : 'CC'}_Conversion_Report.xlsx`;
     
     XLSX.writeFile(wb, filename);
   };
@@ -213,6 +213,13 @@ const ConversionTablePage = ({ type }) => {
     "&:hover": { background: "#aed581" },
   });
 
+  const FONT_SIZES = {
+    header: '0.85rem',    
+    subheader: '0.75rem', 
+    cell: '0.8rem',       
+    title: 'h5'           
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3, alignItems: "center" }}>
@@ -297,11 +304,11 @@ const ConversionTablePage = ({ type }) => {
       {/* Dynamic Table Header & Body - ALL VALUES NOW BOLD */}
       <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 4, border: "2px solid #455a64" }}>
         <Table size="small" sx={{ 
-          borderCollapse: "collapse", 
-          "& th, & td": { 
+          "& th, & td": {
             border: "1px solid #9e9e9e",
-            fontWeight: 700  // ALL CELLS BOLD
-          } 
+            fontSize: FONT_SIZES.cell,
+            padding: "4px 6px"
+          }
         }}>
           <TableHead>
             <TableRow sx={{ background: "#718390ff", "& th": { color: "#fff", fontWeight: 800 } }}>
