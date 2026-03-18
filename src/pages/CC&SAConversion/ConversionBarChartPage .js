@@ -8,8 +8,15 @@ import {
   Checkbox,
   ListItemText,
   OutlinedInput,
+  IconButton,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { 
+  KeyboardArrowDown as ArrowDownIcon,
+  KeyboardArrowUp as ArrowUpIcon,
+  Close as CloseIcon,
+  Edit as EditIcon
+} from "@mui/icons-material";
 import { fetchData } from "../../api/uploadService";
 import {
   ResponsiveContainer,
@@ -58,6 +65,13 @@ const MONTH_COLORS = {
   ALL: "#2e7d32", APPT: "#1976d2", CONV: "#d32f2f",
 };
 
+const CCE_STATUS_COLORS = {
+  PSF: "#400dce",
+  SMR: "#000000",
+  NO_EXPERIENCE: "#d32f2f",
+  NORMAL: "#000000"
+};
+
 const GROWTH_OPTIONS = ["PMS %", "Appointment", "Conversion", "A&C"];
 
 const growthKeyMap = {
@@ -66,24 +80,46 @@ const growthKeyMap = {
   "Conversion": "pmsConversion",
 };
 
+const HIGHLIGHTED_CCE = [
+  { branchName: "ADYAR", cceName: "KUSUMA" },
+  { branchName: "ADYAR", cceName: "GAYATHRI" },
+  { branchName: "ADYAR", cceName: "PRAPTHI" },
+  { branchName: "BALMATTA", cceName: "RASHMITHA" },
+  { branchName: "BALMATTA", cceName: "GAYATHRI" },
+  { branchName: "BALMATTA", cceName: "RESHMA" },
+  { branchName: "BANTWAL", cceName: "RAKSHA" },
+  { branchName: "NARAVI", cceName: "RASHMI" },
+  { branchName: "NEXA", cceName: "THEJASWINI" },
+  { branchName: "SULLIA", cceName: "SHILPA" },
+  { branchName: "SUJITH BAGH", cceName: "KAVYA" },
+  { branchName: "SULLIA", cceName: "RANJITHA" },
+  { branchName: "SULLIA", cceName: "SHUKALATHA" },
+  { branchName: "SURATHKAL", cceName: "KRITHIKA" },
+  { branchName: "SURATHKAL", cceName: "SHREE RAKSHA" },
+  { branchName: "UPPINANGADY", cceName: "SHRADHA" },
+  { branchName: "YEYYADI", cceName: "KAVYA" },
+];
+
 const ConversionBarChartPage = ({ type = "sa" }) => {
   const navigate = useNavigate();
   
   const isSA = type === "sa";
+  const isCC = type === "cc";
   const titlePrefix = isSA ? "SA" : "CC";
   const personKey = isSA ? "saName" : "cceName";
-  const personPlural = isSA ? "SAs" : "CCes";
   const personParam = isSA ? "saNames" : "cceNames";
   const apiPrefix = isSA ? "/api/sa" : "/api/cc";
   const lineRoute = isSA ? "/DashboardHome/sa_conversion" : "/DashboardHome/cc_conversion";
   const tableRoute = isSA ? "/DashboardHome/sa_conversion_table" : "/DashboardHome/cc_conversion_table";
 
+  const [sortByExp, setSortByExp] = useState(false);
+  const [expSortAsc, setExpSortAsc] = useState(false);
+  const [filterMode, setFilterMode] = useState("ALL");
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [allSelected, setAllSelected] = useState(true);
   const [selectedBranches, setSelectedBranches] = useState([]);
   const [selectedPersons, setSelectedPersons] = useState([]);
   const [selectedGrowth, setSelectedGrowth] = useState("PMS %");
-
   const [summary, setSummary] = useState([]);
   const [personKeys, setPersonKeys] = useState([]);
   const [branchPersonMap, setBranchPersonMap] = useState({});
@@ -91,9 +127,25 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
   const normalize = v => v?.trim().toUpperCase() || "";
   const isPercentage = selectedGrowth === "PMS %";
   const isAC = selectedGrowth === "A&C";
-  const growthKey = growthKeyMap[selectedGrowth];
+  const isAllMonthsSelected = allSelected || !selectedMonths.length;
 
-  /* ---------- PERSON BRANCH MAPPING ---------- */
+  const getFilteredPersonKeys = useMemo(() => {
+    if (!isCC || filterMode === "ALL") return personKeys;
+    
+    return personKeys.filter(person => {
+      if (filterMode === "PSF") {
+        return HIGHLIGHTED_CCE.some(highlight => 
+          normalize(person).includes(normalize(highlight.cceName))
+        );
+      } else if (filterMode === "SMR") {
+        return !HIGHLIGHTED_CCE.some(highlight => 
+          normalize(person).includes(normalize(highlight.cceName))
+        );
+      }
+      return true;
+    });
+  }, [personKeys, filterMode, isCC]);
+
   const personBranchMap = useMemo(() => {
     const map = {};
     Object.entries(branchPersonMap).forEach(([branch, persons]) => {
@@ -104,12 +156,10 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
     return map;
   }, [branchPersonMap]);
 
-  /* ---------- MASTER DATA ---------- */
   useEffect(() => {
     const loadMasterData = async () => {
       const res = await fetchData(`${apiPrefix}/${type}_conversion_summary`);
       const rows = Array.isArray(res) ? res : [];
-
       const map = {};
       rows.forEach(r => {
         const b = normalize(r.branch);
@@ -117,16 +167,13 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
         if (!map[b]) map[b] = new Set();
         map[b].add(p);
       });
-
       const normalized = {};
       Object.keys(map).forEach(b => normalized[b] = [...map[b]]);
       setBranchPersonMap(normalized);
     };
-
     loadMasterData();
   }, [apiPrefix, type, personKey]);
 
-  /* ---------- PERSON OPTIONS ---------- */
   const dropdownPersons = useMemo(() => {
     if (!selectedBranches.length) {
       return [...new Set(Object.values(branchPersonMap).flat())];
@@ -146,7 +193,6 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
     setSelectedPersons(prev => prev.filter(p => dropdownPersons.includes(p)));
   }, [dropdownPersons]);
 
-  /* ---------- DATA FETCH ---------- */
   useEffect(() => {
     const loadData = async () => {
       const monthsToFetch = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
@@ -155,141 +201,340 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
 
       for (const month of monthsToFetch) {
         const query = `?months=${month}` +
-          (selectedBranches.length ? `&branches=${selectedBranches.join(",")}` : "") +
-          (selectedPersons.length ? `&${personParam}=${selectedPersons.join(",")}` : "");
-
+         (selectedBranches.length ? `&branches=${selectedBranches.join(",")}` : "") +
+         (selectedPersons.length ? `&${personParam}=${selectedPersons.join(",")}` : "");
         const res = await fetchData(`${apiPrefix}/${type}_conversion_summary${query}`);
         const rows = Array.isArray(res) ? res : [];
-
         rows.forEach(r => personSet.add(normalize(r[personKey])));
         allData.push({ month, data: rows });
       }
-
       setSummary(allData);
       setPersonKeys([...personSet]);
     };
-
     loadData();
   }, [selectedMonths, allSelected, selectedBranches, selectedPersons, apiPrefix, type, personKey, personParam]);
 
-  /* ---------- CUSTOM TOOLTIP ---------- */
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const monthsForChart = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
-      const chartEntry = chartData.find(entry => normalize(entry.person) === normalize(label));
-      const branchName = chartEntry?.branch || 'N/A';
-      
-      return (
-        <Box sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.95)', borderRadius: 2, border: '1px solid #ccc', minWidth: 200 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1.5, color: '#1976d2' }}>
-            {titlePrefix}: {label}
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 1.5, color: '#666', fontSize: '0.8rem' }}>
-            Branch: {branchName}
-          </Typography>
-          
-          {monthsForChart.map(month => {
-            const dataPoint = payload.find(p => 
-              p.dataKey === month || 
-              p.dataKey === `${month}_APPT` || 
-              p.dataKey === `${month}_CONV`
-            );
-            
-            if (dataPoint && dataPoint.value !== 0) {
-              const displayValue = isPercentage ? `${Math.round(dataPoint.value)}%` : Math.round(dataPoint.value);
-              return (
-                <Box key={month} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.3 }}>
-                  <Typography variant="body2" sx={{ color: MONTH_COLORS[month], fontWeight: 500, fontSize: '0.85rem' }}>
-                    {month}:
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem' }}>
-                    {displayValue}
-                  </Typography>
-                </Box>
-              );
-            }
-            return null;
-          })}
-        </Box>
-      );
-    }
-    return null;
-  };
-
-  /* ---------- CHART DATA ---------- */
   const chartData = useMemo(() => {
-    const rows = personKeys.map(person => {
+    const rows = getFilteredPersonKeys.map(person => {
       let actualBranch = 'UNKNOWN';
+      let experienceDays = null;
       
       for (const { data } of summary) {
-        const matchingRow = data.find(d => normalize(d[personKey]) === person);
+        const matchingRow = data.find(d => normalize(d[personKey]) === normalize(person));
         if (matchingRow) {
           actualBranch = normalize(matchingRow.branch);
+          if (isCC) experienceDays = matchingRow.experienceDays;
           break;
         }
       }
 
       if (selectedBranches.length > 0) {
         const normalizedSelected = selectedBranches.map(normalize);
-        if (!normalizedSelected.includes(actualBranch)) {
-          return null;
-        }
+        if (!normalizedSelected.includes(actualBranch)) return null;
       }
 
-      const row = { person, branch: actualBranch };
-      let totalConv = 0, totalAppt = 0, totalVal = 0, count = 0;
+      const hasNoExperience = isCC && (experienceDays === null || experienceDays === undefined);
+      const isHighlightedCCE = isCC && HIGHLIGHTED_CCE.some(highlight => 
+        normalize(person).includes(normalize(highlight.cceName))
+      );
+      
+      let cceStatus = 'NORMAL';
+      if (isCC) {
+        if (hasNoExperience) {
+          cceStatus = 'NO_EXPERIENCE';
+        } else if (isHighlightedCCE) {
+          cceStatus = 'PSF';
+        } else {
+          cceStatus = 'SMR';
+        }
+      }
+      
+      const displayName = isCC && experienceDays !== null && experienceDays !== undefined 
+        ? `${person} (${Math.round(experienceDays)})` : person;
+
+      const row = { 
+        person: displayName,
+        originalPerson: person,
+        branch: actualBranch,
+        experienceDays,
+        hasNoExperience,
+        isHighlightedCCE,
+        cceStatus,
+        ALL_PMS_RAW: 0
+      };
 
       summary.forEach(({ month, data }) => {
-        const r = data.find(d => normalize(d[personKey]) === person);
-        const conv = Number(r?.pmsConversion ?? 0);
-        const appt = Number(r?.pmsAppointment ?? 0);
-        const val = Number(r?.[growthKey] ?? 0);
+        const r = data.find(d => normalize(d[personKey]) === normalize(person));
+        
+        if (!r) return;
 
-        if (isAC) {
-          row[`${month}_APPT`] = appt;
-          row[`${month}_CONV`] = conv;
+        const percentagePMS = Number(r?.percentagePMS ?? 0);
+        const pmsAppointment = Number(r?.pmsAppointment ?? 0);
+        const pmsConversion = Number(r?.pmsConversion ?? 0);
+
+        if (!isAC) {
+          if (selectedGrowth === "PMS %") {
+            row[month] = Math.round(percentagePMS);
+          } else if (selectedGrowth === "Appointment") {
+            row[month] = Math.round(pmsAppointment);
+          } else if (selectedGrowth === "Conversion") {
+            row[month] = Math.round(pmsConversion);
+          }
         } else {
-          row[month] = val;
+          const scaledPMSHeight = pmsAppointment > 0 ? Math.round((percentagePMS / 100) * pmsAppointment) : 0;
+          row[`${month}_APPT`] = Math.round(pmsAppointment);
+          row[`${month}_CONV`] = Math.round(percentagePMS);
+          row[`${month}_PMS_SCALED`] = scaledPMSHeight;
         }
-
-        totalConv += conv;
-        totalAppt += appt;
-        totalVal += val;
-        count++;
       });
 
-      let rankValue = 0;
-      if (isAC) {
-        if (allSelected || !selectedMonths.length) {
-          row.ALL_APPT = totalAppt;
-          row.ALL_CONV = totalConv;
+      let totalPMS = 0, totalAppt = 0, totalConv = 0, validMonths = 0;
+      summary.forEach(({ data }) => {
+        const r = data.find(d => normalize(d[personKey]) === normalize(person));
+        if (r) {
+          totalPMS += Number(r?.percentagePMS ?? 0);
+          totalAppt += Number(r?.pmsAppointment ?? 0);
+          totalConv += Number(r?.pmsConversion ?? 0);
+          validMonths++;
         }
-        rankValue = totalConv;
-      } else if (isPercentage && (allSelected || !selectedMonths.length)) {
-        rankValue = totalAppt ? (totalConv / totalAppt) * 100 : 0;
-        row.ALL = rankValue;
-      } else {
-        rankValue = isPercentage ? (count ? totalVal / count : 0) : totalVal;
-        if (allSelected || !selectedMonths.length) row.ALL = rankValue;
+      });
+
+      if (isAllMonthsSelected) {
+        if (!isAC) {
+          if (selectedGrowth === "PMS %") {
+            row.ALL = Math.round(totalPMS / validMonths || 0);
+          } else if (selectedGrowth === "Appointment") {
+            row.ALL = Math.round(totalAppt);
+          } else if (selectedGrowth === "Conversion") {
+            row.ALL = Math.round(totalConv);
+          }
+        } else {
+          row.ALL_APPT = Math.round(totalAppt);
+          row.ALL_PMS_RAW = Math.round(totalPMS / validMonths || 0);
+          row.ALL_PMS = totalAppt > 0 ? Math.round((totalPMS / validMonths / 100) * totalAppt) : 0;
+        }
       }
 
-      row.__rankValue = rankValue;
+      row.__rankValue = isAC ? (totalPMS / validMonths || 0) : (row.ALL || 0);
       row.__branchColor = BRANCH_COLORS[row.branch] || '#999';
       return row;
     });
 
-    return rows.filter(row => row !== null).sort((a, b) => b.__rankValue - a.__rankValue);
-  }, [personKeys, summary, allSelected, selectedMonths, growthKey, isPercentage, isAC, selectedBranches, personKey]);
+    let sortedRows = rows.filter(row => row !== null);
+    
+    if (sortByExp && isCC) {
+      sortedRows.sort((a, b) => {
+        const expA = a.experienceDays || 0;
+        const expB = b.experienceDays || 0;
+        return expSortAsc ? expA - expB : expB - expA;
+      });
+    } else {
+      sortedRows.sort((a, b) => b.__rankValue - a.__rankValue);
+    }
+    return sortedRows;
+  }, [getFilteredPersonKeys, summary, isAllMonthsSelected, selectedGrowth, selectedBranches, personKey, isCC, sortByExp, expSortAsc]);
 
-  /* ---------- Custom Label ---------- */
+  const CustomPMSLabel = (props) => {
+    const { x, y, width, height, value, index } = props;
+    const rowData = chartData[index];
+    if (!rowData) return null;
+    
+    if (isAC && !isAllMonthsSelected && selectedMonths.length === 1) {
+      const month = selectedMonths[0];
+      const pmsPercentage = rowData[`${month}_CONV`];
+      return (
+        <text
+          x={x + width / 2}
+          y={y - 5}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="12"
+          fontWeight="bold"
+          fill="#d32f2f"
+          fontFamily="Arial, sans-serif"
+        >
+          {pmsPercentage}%
+        </text>
+      );
+    }
+    
+    if (rowData.ALL_PMS_RAW && isAllMonthsSelected) {
+      return (
+        <text
+          x={x + width / 2}
+          y={y - 5}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="12"
+          fontWeight="bold"
+          fill="#d32f2f"
+          fontFamily="Arial, sans-serif"
+        >
+          {rowData.ALL_PMS_RAW}%
+        </text>
+      );
+    }
+    
+    return null;
+  };
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const monthsForChart = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
+      const chartEntry = chartData.find(entry => entry.person === label);
+      const branchName = chartEntry?.branch || 'N/A';
+      const hasNoExperience = chartEntry?.hasNoExperience || false;
+      const isHighlightedCCE = chartEntry?.isHighlightedCCE || false;
+      const cceStatus = chartEntry?.cceStatus || 'NORMAL';
+      const originalPerson = chartEntry?.originalPerson || label;
+      
+      const shouldShowPercentage = () => {
+        return selectedGrowth === "PMS %";
+      };
+      
+      return (
+        <Box sx={{ 
+          p: 2, 
+          bgcolor: '#ffffff', 
+          borderRadius: 2, 
+          border: `2px solid ${CCE_STATUS_COLORS[cceStatus] || '#e0e0e0'}`,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+          minWidth: 340,
+          maxHeight: 'none',
+          height: 'auto',
+          maxWidth: 380,
+          overflow: 'visible'
+        }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, pb: 1, borderBottom: '1px solid #e0e0e0' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: CCE_STATUS_COLORS[cceStatus] }}>
+              {titlePrefix}: {label}
+            </Typography>
+            <IconButton 
+              size="small" 
+              onClick={() => {
+                navigate(`/edit/${type}/${encodeURIComponent(originalPerson)}/${encodeURIComponent(branchName)}`, {
+                  state: { 
+                    person: originalPerson, 
+                    branch: branchName, 
+                    displayName: label,
+                    isHighlighted: isHighlightedCCE,
+                    type
+                  }
+                });
+              }}
+              sx={{ 
+                color: '#1976d2',
+                '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.1)' }
+              }}
+              title={`Edit ${titlePrefix} ${originalPerson}`}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Box sx={{ mb: 1.5 }}>
+            <Typography variant="body2" sx={{ color: '#666', fontSize: '0.85rem', mb: 0.5 }}>
+              📍 Branch: <strong>{branchName}</strong>
+            </Typography>
+          </Box>
+          
+          <Box sx={{ mb: 1.5 }}>
+            {payload.map((entry, index) => {
+              let displayValue = Math.round(entry.value);
+              let displayName = entry.name || entry.dataKey;
+              
+              // FIXED: Show ONLY base PMS % for PMS_SCALED and ALL_PMS bars
+              if (entry.dataKey?.includes('_PMS_SCALED')) {
+                displayName = 'PMS %';
+                const month = entry.dataKey.split('_')[0];
+                displayValue = chartEntry?.[`${month}_CONV`] || 0; // Show base PMS %
+              } 
+              // Handle ALL_PMS bar
+              else if (entry.dataKey === 'ALL_PMS') {
+                displayName = 'PMS %';
+                displayValue = chartEntry?.ALL_PMS_RAW || 0; // Show base PMS %
+              } 
+              // Handle APPT bars
+              else if (entry.dataKey?.includes('_APPT')) {
+                displayName = 'Appointments';
+              } 
+              // Handle CONV bars (PMS %)
+              else if (entry.dataKey?.includes('_CONV')) {
+                displayName = 'PMS %';
+              }
+              
+              return (
+                <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.6, px: 1.2, borderRadius: 1.2, bgcolor: 'rgba(25, 118, 210, 0.06)', mb: 0.4 }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8rem', color: MONTH_COLORS[entry.dataKey?.split('_')[0]] || '#1976d2' }}>
+                      {displayName}
+                    </Typography>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#1976d2', fontSize: '1rem' }}>
+                    {displayName === 'PMS %' 
+                      ? `${displayValue}%`
+                      : displayValue
+                    }
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
+
+          <Box sx={{ mb: 1.5 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 0.8 }}>
+              {monthsForChart.map(month => {
+                const apptData = chartEntry?.[`${month}_APPT`] || 0;
+                const convData = chartEntry?.[`${month}_CONV`] || chartEntry?.[month] || 0;
+                
+                if (apptData !== 0 || convData !== 0) {
+                  return (
+                    <Box key={month} sx={{ py: 0.4, px: 0.8, borderRadius: 0.8, bgcolor: 'rgba(0,0,0,0.02)', textAlign: 'center' }}>
+                      <Typography variant="caption" sx={{ color: MONTH_COLORS[month], fontWeight: 500, fontSize: '0.75rem', display: 'block' }}>
+                        {month}
+                      </Typography>
+                      {apptData !== 0 && (
+                        <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8rem', color: MONTH_COLORS.APPT }}>
+                          Appt: {Math.round(apptData)}
+                        </Typography>
+                      )}
+                      {convData !== 0 && (
+                        <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem', color: isAC ? MONTH_COLORS.CONV : '#1976d2' }}>
+                          {shouldShowPercentage() ? `${Math.round(convData)}%` : Math.round(convData)}
+                        </Typography>
+                      )}
+                    </Box>
+                  );
+                }
+                return null;
+              })}
+            </Box>
+          </Box>
+        </Box>
+      );
+    }
+    return null;
+  };
+
+  const CustomXAxisTick = ({ x, y, payload }) => {
+    const entry = chartData.find(e => e.person === payload.value);
+    const cceStatus = entry?.cceStatus || 'NORMAL';
+    const textColor = CCE_STATUS_COLORS[cceStatus];
+    
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text x={0} y={0} dy={20} textAnchor="end" fill={textColor} transform="rotate(-50)" fontSize="13" fontWeight="bold" fontFamily="Arial, sans-serif">
+          {payload.value}
+        </text>
+      </g>
+    );
+  };
+
   const VerticalBranchLabel = ({ x, y, width, height, value, index }) => {
     const entry = chartData[index];
     const branchName = entry?.branch || '';
-    
     if (!branchName || branchName === 'UNKNOWN') return null;
-
     const displayName = branchName.length > 8 ? branchName.substring(0, 8) + '...' : branchName;
-
     return (
       <text
         x={x + width / 2}
@@ -319,11 +564,108 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
 
   const getBarColor = (entry) => isAC ? MONTH_COLORS.APPT || MONTH_COLORS.CONV : entry.__branchColor;
 
+  const toggleExpSort = () => {
+    if (!isCC) return;
+    if (sortByExp) {
+      setExpSortAsc(!expSortAsc);
+    } else {
+      setSortByExp(true);
+      setExpSortAsc(false);
+    }
+  };
+
+  const disableExpSort = () => {
+    setSortByExp(false);
+  };
+
+  const renderACBars = () => {
+    const months = isAllMonthsSelected ? ["ALL"] : selectedMonths;
+    const bars = [];
+    
+    months.forEach(month => {
+      bars.push(
+        <Bar 
+          key={`${month}-APPT`} 
+          dataKey={`${month}_APPT`} 
+          barSize={14} 
+          fill={MONTH_COLORS.APPT}
+        >
+          <LabelList position="top" formatter={v => Math.round(v)} />
+        </Bar>
+      );
+      
+      if (!isAllMonthsSelected && selectedMonths.length === 1) {
+        bars.push(
+          <Bar 
+            key={`${month}_PMS_SCALED`} 
+            dataKey={`${month}_PMS_SCALED`} 
+            barSize={14} 
+            fill={MONTH_COLORS.CONV}
+          >
+            <LabelList content={CustomPMSLabel} position="top" />
+          </Bar>
+        );
+      } else {
+        bars.push(
+          <Bar 
+            key={`${month}-CONV`} 
+            dataKey={`${month}_CONV`} 
+            barSize={14} 
+            fill={MONTH_COLORS.CONV}
+          >
+            <LabelList position="top" formatter={v => `${Math.round(v)}%`} />
+          </Bar>
+        );
+      }
+    });
+    
+    if (isAllMonthsSelected && chartData.some(row => row.ALL_PMS > 0)) {
+      bars.push(
+        <Bar 
+          key="ALL_PMS" 
+          dataKey="ALL_PMS" 
+          barSize={14} 
+          fill={MONTH_COLORS.CONV}
+        >
+          <LabelList content={CustomPMSLabel} position="top" />
+        </Bar>
+      );
+    }
+    
+    return bars;
+  };
+
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3, alignItems: "center" }}>
         <Typography variant="h4">{titlePrefix} CONVERSION – {selectedGrowth} (Bar)</Typography>
-        <Box sx={{ display: "flex", gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+          {isCC && sortByExp && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 1 }}>
+              <Button size="small" variant="outlined" onClick={toggleExpSort} sx={{ minWidth: "auto", px: 1, borderRadius: 20, fontSize: "0.75rem" }} title="Toggle Experience Sort Direction">EXP</Button>
+              <IconButton size="small" onClick={toggleExpSort} sx={{ p: 0.25, background: expSortAsc ? "#4caf50" : "#f44336", color: "white", "&:hover": { background: expSortAsc ? "#45a049" : "#da190b" } }} title={expSortAsc ? "Ascending" : "Descending"}>
+                {expSortAsc ? <ArrowUpIcon fontSize="small" /> : <ArrowDownIcon fontSize="small" />}
+              </IconButton>
+              <IconButton size="small" onClick={disableExpSort} sx={{ p: 0.25, background: "#ff9800", color: "white", "&:hover": { background: "#f57c00" } }} title="Disable Experience Sort (Back to Performance Sort)">
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          )}
+          {isCC && !sortByExp && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 1 }}>
+              <Button size="small" variant="outlined" onClick={toggleExpSort} sx={{ minWidth: "auto", px: 1, borderRadius: 20, fontSize: "0.75rem" }} title="Sort by Experience">EXP</Button>
+              <IconButton size="small" onClick={toggleExpSort} sx={{ p: 0.25, background: "transparent", color: "#666", "&:hover": { background: "rgba(0,0,0,0.1)" } }} title="Click to sort by Experience">
+                <ArrowDownIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          )}
+          {isCC && (
+            <Box sx={{ display: "flex", gap: 0.5, mr: 1 }}>
+              <Button size="small" sx={btnStyle(filterMode === "ALL")} onClick={() => setFilterMode("ALL")}>ALL</Button>
+              <Button size="small" sx={btnStyle(filterMode === "PSF")} onClick={() => setFilterMode("PSF")}>PSF</Button>
+              <Button size="small" sx={btnStyle(filterMode === "SMR")} onClick={() => setFilterMode("SMR")}>SMR</Button>
+            </Box>
+          )}
           <Button variant="contained" onClick={() => navigate(lineRoute)}>Line Chart</Button>
           <Button variant="contained">Bar Chart</Button>
           <Button variant="contained" onClick={() => navigate(tableRoute)}>Table</Button>
@@ -331,32 +673,18 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
       </Box>
 
       <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
-        <Button size="small" sx={btnStyle(allSelected)} onClick={() => { setAllSelected(true); setSelectedMonths([]); }}>
-          ALL
-        </Button>
+        <Button size="small" sx={btnStyle(allSelected)} onClick={() => { setAllSelected(true); setSelectedMonths([]); }}>ALL</Button>
         {MONTHS.map(m => (
-          <Button
-            key={m}
-            size="small"
-            sx={btnStyle(selectedMonths.includes(m))}
-            onClick={() => {
-              setAllSelected(false);
-              setSelectedMonths(p => p.includes(m) ? p.filter(x => x !== m) : [...p, m]);
-            }}
-          >
-            {m}
-          </Button>
+          <Button key={m} size="small" sx={btnStyle(selectedMonths.includes(m))} onClick={() => {
+            setAllSelected(false);
+            setSelectedMonths(p => p.includes(m) ? p.filter(x => x !== m) : [...p, m]);
+          }}>{m}</Button>
         ))}
       </Box>
 
       <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
         {BRANCHES.map(b => (
-          <Button
-            key={b}
-            size="small"
-            sx={btnStyle(selectedBranches.includes(b))}
-            onClick={() => setSelectedBranches(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b])}
-          >
+          <Button key={b} size="small" sx={btnStyle(selectedBranches.includes(b))} onClick={() => setSelectedBranches(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b])}>
             {b}
           </Button>
         ))}
@@ -364,38 +692,23 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
 
       <Box sx={{ mb: 3, display: "flex", gap: 1.2 }}>
         {GROWTH_OPTIONS.map(g => (
-          <Button
-            key={g}
-            size="small"
-            sx={btnStyle(selectedGrowth === g)}
-            onClick={() => setSelectedGrowth(g)}
-          >
+          <Button key={g} size="small" sx={btnStyle(selectedGrowth === g)} onClick={() => setSelectedGrowth(g)}>
             {g}
           </Button>
         ))}
       </Box>
 
       <Box sx={{ mb: 3, width: 320 }}>
-        <Select
-          multiple
-          fullWidth
-          value={selectedPersons}
-          onChange={e => {
-            const value = e.target.value;
-            if (value.includes("ALL")) {
-              setSelectedPersons(allPersonSelected ? [] : dropdownPersons);
-            } else {
-              setSelectedPersons(value);
-            }
-          }}
-          input={<OutlinedInput />}
-          renderValue={s => s.join(", ")}
-        >
+        <Select multiple fullWidth value={selectedPersons} onChange={e => {
+          const value = e.target.value;
+          if (value.includes("ALL")) {
+            setSelectedPersons(allPersonSelected ? [] : dropdownPersons);
+          } else {
+            setSelectedPersons(value);
+          }
+        }} input={<OutlinedInput />} renderValue={s => s.join(", ")}>
           <MenuItem value="ALL">
-            <Checkbox
-              checked={allPersonSelected}
-              indeterminate={selectedPersons.length > 0 && selectedPersons.length < dropdownPersons.length}
-            />
+            <Checkbox checked={allPersonSelected} indeterminate={selectedPersons.length > 0 && selectedPersons.length < dropdownPersons.length} />
             <ListItemText primary="Select All" />
           </MenuItem>
           {dropdownPersons.map(person => (
@@ -407,31 +720,24 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
         </Select>
       </Box>
 
-      <Box sx={{ height: 700, background: "#fff", borderRadius: 3, p: 3 }}>
+      <Box sx={{ height: 750, background: "#fff", borderRadius: 3, p: 3 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="person" angle={-50} textAnchor="end" height={140} tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
+            <XAxis dataKey="person" height={160} interval={0} tick={<CustomXAxisTick />} />
+            <YAxis tickFormatter={v => (isPercentage || isAC) ? `${Math.round(v)}%` : Math.round(v)} />
             <Tooltip content={<CustomTooltip />} />
             
-            {isAC
-              ? (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).flatMap(k => ([
-                  <Bar key={`${k}-APPT`} dataKey={`${k}_APPT`} barSize={14} fill={MONTH_COLORS.APPT}>
-                    <LabelList position="top" />
-                  </Bar>,
-                  <Bar key={`${k}-CONV`} dataKey={`${k}_CONV`} barSize={14} fill={MONTH_COLORS.CONV}>
-                    <LabelList position="top" />
-                  </Bar>
-                ]))
-              : (allSelected || !selectedMonths.length ? ["ALL"] : selectedMonths).map(key => (
-                  <Bar key={key} dataKey={key} barSize={28} label={<VerticalBranchLabel />}>
-                    <LabelList position="top" formatter={v => isPercentage ? `${v.toFixed(0)}%` : v.toFixed(0)} />
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
-                    ))}
-                  </Bar>
-                ))}
+            {isAC ? renderACBars() : (
+              (isAllMonthsSelected ? ["ALL"] : selectedMonths).map(key => (
+                <Bar key={key} dataKey={key} barSize={28} label={<VerticalBranchLabel />}>
+                  <LabelList position="top" formatter={v => isPercentage ? `${Math.round(v)}%` : Math.round(v)} />
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
+                  ))}
+                </Bar>
+              ))
+            )}
           </BarChart>
         </ResponsiveContainer>
       </Box>

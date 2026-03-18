@@ -15,8 +15,14 @@ import {
   TableHead,
   TableRow,
   Paper,
+  IconButton,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
+import { 
+  KeyboardArrowDown as ArrowDownIcon,
+  KeyboardArrowUp as ArrowUpIcon,
+  Close as CloseIcon 
+} from "@mui/icons-material";
 import { fetchData } from "../../api/uploadService";
 import * as XLSX from 'xlsx';
 
@@ -24,6 +30,27 @@ const MONTHS = ["APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB
 const BRANCHES = [
   "BALMATTA","SURATHKAL","ADYAR","SULLIA","UPPINANGADY",
   "YEYYADI","BANTWAL","KADABA","VITTLA","SUJITH BAGH","NEXA","NARAVI"
+];
+
+// HIGHLIGHTED_CCE array from the chart components
+const HIGHLIGHTED_CCE = [
+  { branchName: "ADYAR", cceName: "KUSUMA" },
+  { branchName: "ADYAR", cceName: "GAYATHRI" },
+  { branchName: "ADYAR", cceName: "PRAPTHI" },
+  { branchName: "BALMATTA", cceName: "RASHMITHA" },
+  { branchName: "BALMATTA", cceName: "GAYATHRI" },
+  { branchName: "BALMATTA", cceName: "RESHMA" },
+  { branchName: "BANTWAL", cceName: "RAKSHA" },
+  { branchName: "NARAVI", cceName: "RASHMI" },
+  { branchName: "NEXA", cceName: "THEJASWINI" },
+  { branchName: "SULLIA", cceName: "SHILPA" },
+  { branchName: "SUJITH BAGH", cceName: "KAVYA" },
+  { branchName: "SULLIA", cceName: "RANJITHA" },
+  { branchName: "SULLIA", cceName: "SHUKALATHA" },
+  { branchName: "SURATHKAL", cceName: "KRITHIKA" },
+  { branchName: "SURATHKAL", cceName: "SHREE RAKSHA" },
+  { branchName: "UPPINANGADY", cceName: "SHRADHA" },
+  { branchName: "YEYYADI", cceName: "KAVYA" },
 ];
 
 const ConversionTablePage = ({ type }) => {
@@ -38,10 +65,13 @@ const ConversionTablePage = ({ type }) => {
   const personKey = isSA ? 'saName' : 'cceName';
   const personLabel = isSA ? 'SA' : 'CCE';
   const allPerson = isSA ? 'ALL_SA' : 'ALL_CCE';
-  const personState = isSA ? 'selectedSAs' : 'selectedCces';
-  const setPersonState = isSA ? 'setSelectedSAs' : 'setSelectedCces';
-  const branchMapState = isSA ? 'branchSAMap' : 'branchCceMap';
-  const dropdownPersons = isSA ? 'dropdownSAs' : 'dropdownCces';
+
+  // ✅ NEW: Experience sorting state (CC only)
+  const [sortByExp, setSortByExp] = useState(false);
+  const [expSortAsc, setExpSortAsc] = useState(false);
+
+  // ✅ NEW: PSF/SMR Filter state (CC only)
+  const [filterMode, setFilterMode] = useState("ALL"); // PSF, SMR, ALL
 
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
@@ -56,63 +86,6 @@ const ConversionTablePage = ({ type }) => {
   const showP = showAll || metrics.P;
 
   const normalize = (v) => v?.trim().toUpperCase() || "";
-
-  /* ---------- DOWNLOAD FUNCTION ---------- */
-  const downloadExcel = () => {
-    if (tableRows.length === 0) return;
-
-    const headers = ['Branch', personLabel];
-    if (isCC) headers.push('Exp'); // Only CC has Exp column
-    
-    existingMonths.forEach(month => {
-      if (showA) headers.push(`${month}_A`);
-      if (showC) headers.push(`${month}_C`);
-      if (showP) headers.push(`${month}_P`);
-    });
-    if (showA) headers.push('TOTAL_A');
-    if (showC) headers.push('TOTAL_C');
-    if (showP) headers.push('TOTAL_P');
-
-    const data = tableRows.map(row => {
-      const rowData = { 
-        Branch: row.branch, 
-        [personLabel]: row[personKey]
-      };
-      
-      if (isCC) {
-        rowData.Exp = row.experienceDays?.toFixed(1) ?? '';
-      }
-      
-      existingMonths.forEach(month => {
-        const dataMonth = row.months[month];
-        if (showA) rowData[`${month}_A`] = dataMonth?.pmsAppointment ?? '';
-        if (showC) rowData[`${month}_C`] = dataMonth?.pmsConversion ?? '';
-        if (showP) rowData[`${month}_P`] = dataMonth ? `${dataMonth.percentagePMS.toFixed(0)}%` : '';
-      });
-      
-      if (showA) rowData['TOTAL_A'] = row.totalApt;
-      if (showC) rowData['TOTAL_C'] = row.totalConv;
-      if (showP) rowData['TOTAL_P'] = `${row.totalPct.toFixed(0)}%`;
-      
-      return rowData;
-    });
-
-    const ws = XLSX.utils.json_to_sheet(data, { header: headers });
-    const colWidths = headers.map(h => ({
-      wch: Math.max(10, h.length, ...data.map(row => String(row[h] || '').length))
-    }));
-    ws['!cols'] = colWidths;
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, `${isSA ? 'SA' : 'CC'} Conversion Summary`);
-    
-    const filters = [];
-    if (selectedMonths.length) filters.push(`Months_${selectedMonths.join('_')}`);
-    if (selectedBranches.length) filters.push(`Branches_${selectedBranches.slice(0,3).join('_')}${selectedBranches.length > 3 ? '_etc' : ''}`);
-    const filename = `${isSA ? 'SA' : 'CC'}_Conversion_Report.xlsx`;
-    
-    XLSX.writeFile(wb, filename);
-  };
 
   /* ---------- MASTER DATA ---------- */
   useEffect(() => {
@@ -159,9 +132,9 @@ const ConversionTablePage = ({ type }) => {
       let all = [];
       for (const m of months) {
         const q =
-          `?months=${m}` +
-          (selectedBranches.length ? `&branches=${selectedBranches.join(",")}` : "") +
-          (selectedPersons.length ? `&${isSA ? 'saNames' : 'cceNames'}=${selectedPersons.join(",")}` : "");
+         `?months=${m}` +
+         (selectedBranches.length ? `&branches=${selectedBranches.join(",")}` : "") +
+         (selectedPersons.length ? `&${isSA ? 'saNames' : 'cceNames'}=${selectedPersons.join(",")}` : "");
         const res = await fetchData(`${apiPrefix}${q}`);
         if (Array.isArray(res)) all.push(...res.map(r => ({ ...r, month: m })));
       }
@@ -175,7 +148,7 @@ const ConversionTablePage = ({ type }) => {
     [rawRows]
   );
 
-  /* ---------- TABLE DATA ---------- */
+  /* ---------- TABLE DATA (MOVED BEFORE FILTER/SORT) ---------- */
   const tableRows = useMemo(() => {
     const map = {};
     rawRows.forEach(r => {
@@ -203,6 +176,95 @@ const ConversionTablePage = ({ type }) => {
       .sort((a, b) => b.totalConv - a.totalConv || b.totalPct - a.totalPct);
   }, [rawRows, personKey, isCC]);
 
+  // ✅ NEW: Filter logic for PSF/SMR (CC only)
+  const filteredTableRows = useMemo(() => {
+    if (!isCC || filterMode === "ALL") return tableRows;
+    
+    return tableRows.filter(row => {
+      if (filterMode === "PSF") {
+        return HIGHLIGHTED_CCE.some(highlight => 
+          normalize(row[personKey]).includes(normalize(highlight.cceName))
+        );
+      } else if (filterMode === "SMR") {
+        return !HIGHLIGHTED_CCE.some(highlight => 
+          normalize(row[personKey]).includes(normalize(highlight.cceName))
+        );
+      }
+      return true;
+    });
+  }, [tableRows, filterMode, isCC]);
+
+  // ✅ NEW: Apply EXP sorting (CC only)
+  const sortedTableRows = useMemo(() => {
+    let rows = filteredTableRows;
+    if (sortByExp && isCC) {
+      rows = [...rows].sort((a, b) => {
+        const expA = a.experienceDays || 0;
+        const expB = b.experienceDays || 0;
+        return expSortAsc ? expA - expB : expB - expA;
+      });
+    }
+    return rows;
+  }, [filteredTableRows, sortByExp, expSortAsc, isCC]);
+
+  /* ---------- DOWNLOAD FUNCTION (FIXED) ---------- */
+  const downloadExcel = () => {
+    if (sortedTableRows.length === 0) return;
+
+    const headers = ['Branch', personLabel];
+    if (isCC) headers.push('Exp');
+    
+    existingMonths.forEach(month => {
+      if (showA) headers.push(`${month}_A`);
+      if (showC) headers.push(`${month}_C`);
+      if (showP) headers.push(`${month}_P`);
+    });
+    if (showA) headers.push('TOTAL_A');
+    if (showC) headers.push('TOTAL_C');
+    if (showP) headers.push('TOTAL_P');
+
+    const data = sortedTableRows.map(row => {
+      const rowData = { 
+        Branch: row.branch, 
+        [personLabel]: row[personKey]
+      };
+      
+      if (isCC) {
+        rowData.Exp = row.experienceDays?.toFixed(1) ?? '';
+      }
+      
+      existingMonths.forEach(month => {
+        const dataMonth = row.months[month];
+        if (showA) rowData[`${month}_A`] = dataMonth?.pmsAppointment ?? '';
+        if (showC) rowData[`${month}_C`] = dataMonth?.pmsConversion ?? '';
+        if (showP) rowData[`${month}_P`] = dataMonth ? `${dataMonth.percentagePMS.toFixed(0)}%` : '';
+      });
+      
+      if (showA) rowData['TOTAL_A'] = row.totalApt;
+      if (showC) rowData['TOTAL_C'] = row.totalConv;
+      if (showP) rowData['TOTAL_P'] = `${row.totalPct.toFixed(0)}%`;
+      
+      return rowData;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data, { header: headers });
+    const colWidths = headers.map(h => ({
+      wch: Math.max(10, h.length, ...data.map(row => String(row[h] || '').length))
+    }));
+    ws['!cols'] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `${isSA ? 'SA' : 'CC'} Conversion Summary`);
+    
+    const filters = [];
+    if (selectedMonths.length) filters.push(`Months_${selectedMonths.join('_')}`);
+    if (selectedBranches.length) filters.push(`Branches_${selectedBranches.slice(0,3).join('_')}${selectedBranches.length > 3 ? '_etc' : ''}`);
+    if (isCC && filterMode !== "ALL") filters.push(`Filter_${filterMode}`);
+    const filename = `${isSA ? 'SA' : 'CC'}_Conversion_Report.xlsx`;
+    
+    XLSX.writeFile(wb, filename);
+  };
+
   const slicerStyle = (selected) => ({
     borderRadius: 20,
     fontWeight: 600,
@@ -213,6 +275,21 @@ const ConversionTablePage = ({ type }) => {
     "&:hover": { background: "#aed581" },
   });
 
+  // ✅ NEW: EXP sort toggle functions (CC only)
+  const toggleExpSort = () => {
+    if (!isCC) return;
+    if (sortByExp) {
+      setExpSortAsc(!expSortAsc);
+    } else {
+      setSortByExp(true);
+      setExpSortAsc(false);
+    }
+  };
+
+  const disableExpSort = () => {
+    setSortByExp(false);
+  };
+
   const FONT_SIZES = {
     header: '0.85rem',    
     subheader: '0.75rem', 
@@ -220,11 +297,131 @@ const ConversionTablePage = ({ type }) => {
     title: 'h5'           
   };
 
+  // ✅ NEW: Row styling function
+  const getRowStyle = (row) => {
+    if (!isCC) return {};
+    
+    const isHighlightedCCE = HIGHLIGHTED_CCE.some(highlight => 
+      normalize(row[personKey]).includes(normalize(highlight.cceName))
+    );
+    
+    const hasNoExperience = !row.experienceDays || row.experienceDays === null || row.experienceDays === undefined;
+    
+    if (isHighlightedCCE) {
+      return {
+        backgroundColor: 'rgba(255, 235, 59, 0.3) !important',
+        '& td': { borderColor: '#f57c00 !important' }
+      };
+    } else if (hasNoExperience) {
+      return {
+        backgroundColor: 'rgba(244, 67, 54, 0.1) !important',
+        '& td': { color: '#d32f2f !important' }
+      };
+    }
+    return {};
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3, alignItems: "center" }}>
         <Typography variant="h4">{title}</Typography>
-        <Box sx={{ display: "flex", gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+          {/* ✅ NEW: EXP Sort Controls (CC only) */}
+          {isCC && sortByExp && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 1 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={toggleExpSort}
+                sx={{ 
+                  minWidth: "auto", 
+                  px: 1, 
+                  borderRadius: 20,
+                  fontSize: "0.75rem"
+                }}
+                title="Toggle Experience Sort Direction"
+              >
+                EXP
+              </Button>
+              <IconButton
+                size="small"
+                onClick={toggleExpSort}
+                sx={{ 
+                  p: 0.25,
+                  background: expSortAsc ? "#4caf50" : "#f44336",
+                  color: "white",
+                  "&:hover": {
+                    background: expSortAsc ? "#45a049" : "#da190b",
+                  }
+                }}
+                title={expSortAsc ? "Ascending" : "Descending"}
+              >
+                {expSortAsc ? <ArrowUpIcon fontSize="small" /> : <ArrowDownIcon fontSize="small" />}
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={disableExpSort}
+                sx={{ 
+                  p: 0.25,
+                  background: "#ff9800",
+                  color: "white",
+                  "&:hover": {
+                    background: "#f57c00",
+                  }
+                }}
+                title="Disable Experience Sort (Back to Performance Sort)"
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          )}
+          {isCC && !sortByExp && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 1 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={toggleExpSort}
+                sx={{ 
+                  minWidth: "auto", 
+                  px: 1, 
+                  borderRadius: 20,
+                  fontSize: "0.75rem"
+                }}
+                title="Sort by Experience"
+              >
+                EXP
+              </Button>
+              <IconButton
+                size="small"
+                onClick={toggleExpSort}
+                sx={{ 
+                  p: 0.25,
+                  background: "transparent",
+                  color: "#666",
+                  "&:hover": {
+                    background: "rgba(0,0,0,0.1)",
+                  }
+                }}
+                title="Click to sort by Experience"
+              >
+                <ArrowDownIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          )}
+          {/* ✅ NEW: PSF/SMR Filter Buttons (CC only) */}
+          {isCC && (
+            <Box sx={{ display: "flex", gap: 0.5, mr: 1 }}>
+              <Button size="small" sx={slicerStyle(filterMode === "ALL")} onClick={() => setFilterMode("ALL")}>
+                ALL
+              </Button>
+              <Button size="small" sx={slicerStyle(filterMode === "PSF")} onClick={() => setFilterMode("PSF")}>
+                PSF
+              </Button>
+              <Button size="small" sx={slicerStyle(filterMode === "SMR")} onClick={() => setFilterMode("SMR")}>
+                SMR
+              </Button>
+            </Box>
+          )}
           <Button variant="contained" onClick={() => navigate(`/DashboardHome/${type}_conversion`)}>Line Chart</Button>
           <Button variant="contained" onClick={() => navigate(`/DashboardHome/${type}_conversion-bar-chart`)}>Bar Chart</Button>
           <Button variant="contained">Table</Button>
@@ -232,7 +429,7 @@ const ConversionTablePage = ({ type }) => {
             variant="contained" 
             color="success"
             onClick={downloadExcel}
-            disabled={tableRows.length === 0}
+            disabled={sortedTableRows.length === 0}
             sx={{ minWidth: 120 }}
           >
             Download
@@ -301,7 +498,7 @@ const ConversionTablePage = ({ type }) => {
         </Select>
       </Box>
 
-      {/* Dynamic Table Header & Body - ALL VALUES NOW BOLD */}
+      {/* Dynamic Table Header & Body */}
       <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 4, border: "2px solid #455a64" }}>
         <Table size="small" sx={{ 
           "& th, & td": {
@@ -338,8 +535,14 @@ const ConversionTablePage = ({ type }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {tableRows.map((r, i) => (
-              <TableRow key={i} sx={{ background: i % 2 ? "#fafafa" : "#fff" }}>
+            {sortedTableRows.map((r, i) => (
+              <TableRow 
+                key={i} 
+                sx={{ 
+                  background: i % 2 ? "#fafafa" : "#fff",
+                  ...getRowStyle(r)
+                }}
+              >
                 <TableCell sx={{ fontWeight: 800 }}>{r.branch}</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>{r[personKey]}</TableCell>
                 {isCC && <TableCell align="center" sx={{ fontWeight: 700 }}>{r.experienceDays?.toFixed(1) ?? "-"}</TableCell>}
