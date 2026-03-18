@@ -263,31 +263,7 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
         ALL_PMS_RAW: 0
       };
 
-      summary.forEach(({ month, data }) => {
-        const r = data.find(d => normalize(d[personKey]) === normalize(person));
-        
-        if (!r) return;
-
-        const percentagePMS = Number(r?.percentagePMS ?? 0);
-        const pmsAppointment = Number(r?.pmsAppointment ?? 0);
-        const pmsConversion = Number(r?.pmsConversion ?? 0);
-
-        if (!isAC) {
-          if (selectedGrowth === "PMS %") {
-            row[month] = Math.round(percentagePMS);
-          } else if (selectedGrowth === "Appointment") {
-            row[month] = Math.round(pmsAppointment);
-          } else if (selectedGrowth === "Conversion") {
-            row[month] = Math.round(pmsConversion);
-          }
-        } else {
-          const scaledPMSHeight = pmsAppointment > 0 ? Math.round((percentagePMS / 100) * pmsAppointment) : 0;
-          row[`${month}_APPT`] = Math.round(pmsAppointment);
-          row[`${month}_CONV`] = Math.round(percentagePMS);
-          row[`${month}_PMS_SCALED`] = scaledPMSHeight;
-        }
-      });
-
+      // Calculate rank value for sorting FIRST (before populating months)
       let totalPMS = 0, totalAppt = 0, totalConv = 0, validMonths = 0;
       summary.forEach(({ data }) => {
         const r = data.find(d => normalize(d[personKey]) === normalize(person));
@@ -299,23 +275,62 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
         }
       });
 
+      // FIXED: Always calculate rank value based on current growth metric
+      if (!isAC) {
+        if (selectedGrowth === "PMS %") {
+          row.__rankValue = totalPMS / validMonths || 0;
+        } else if (selectedGrowth === "Appointment") {
+          row.__rankValue = totalAppt;
+        } else if (selectedGrowth === "Conversion") {
+          row.__rankValue = totalConv;
+        }
+      } else {
+        row.__rankValue = totalPMS / validMonths || 0; // Use PMS % for A&C sorting
+      }
+
+      // Now populate monthly data
+      summary.forEach(({ month, data }) => {
+        const r = data.find(d => normalize(d[personKey]) === normalize(person));
+        
+        if (!r) return;
+
+        const percentagePMS = Number(r?.percentagePMS ?? 0);
+        const pmsAppointment = Number(r?.pmsAppointment ?? 0);
+        const pmsConversion = Number(r?.pmsConversion ?? 0);
+
+        if (!isAC) {
+         if (selectedGrowth === "PMS %") {
+           row[month] = Math.round(percentagePMS);
+         } else if (selectedGrowth === "Appointment") {
+           row[month] = Math.round(pmsAppointment);
+         } else if (selectedGrowth === "Conversion") {
+           row[month] = Math.round(pmsConversion);
+         }
+        } else {
+         const scaledPMSHeight = pmsAppointment > 0 ? Math.round((percentagePMS / 100) * pmsAppointment) : 0;
+         row[`${month}_APPT`] = Math.round(pmsAppointment);
+         row[`${month}_CONV`] = Math.round(percentagePMS); // Store percentagePMS data
+         row[`${month}_PMS_SCALED`] = scaledPMSHeight;
+        }
+      });
+
+      // Only set ALL values when all months are selected
       if (isAllMonthsSelected) {
         if (!isAC) {
-          if (selectedGrowth === "PMS %") {
-            row.ALL = Math.round(totalPMS / validMonths || 0);
-          } else if (selectedGrowth === "Appointment") {
-            row.ALL = Math.round(totalAppt);
-          } else if (selectedGrowth === "Conversion") {
-            row.ALL = Math.round(totalConv);
-          }
+        if (selectedGrowth === "PMS %") {
+          row.ALL = Math.round(totalPMS / validMonths || 0);
+        } else if (selectedGrowth === "Appointment") {
+          row.ALL = Math.round(totalAppt);
+        } else if (selectedGrowth === "Conversion") {
+          row.ALL = Math.round(totalConv);
+        }
         } else {
-          row.ALL_APPT = Math.round(totalAppt);
-          row.ALL_PMS_RAW = Math.round(totalPMS / validMonths || 0);
-          row.ALL_PMS = totalAppt > 0 ? Math.round((totalPMS / validMonths / 100) * totalAppt) : 0;
+        row.ALL_APPT = Math.round(totalAppt);
+        row.ALL_PMS_RAW = Math.round(totalPMS / validMonths || 0);
+        row.ALL_PMS = totalAppt > 0 ? Math.round((totalPMS / validMonths / 100) * totalAppt) : 0;
         }
       }
 
-      row.__rankValue = isAC ? (totalPMS / validMonths || 0) : (row.ALL || 0);
       row.__branchColor = BRANCH_COLORS[row.branch] || '#999';
       return row;
     });
@@ -339,26 +354,47 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
     const rowData = chartData[index];
     if (!rowData) return null;
     
-    if (isAC && !isAllMonthsSelected && selectedMonths.length === 1) {
-      const month = selectedMonths[0];
-      const pmsPercentage = rowData[`${month}_CONV`];
-      return (
-        <text
-          x={x + width / 2}
-          y={y - 5}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize="12"
-          fontWeight="bold"
-          fill="#d32f2f"
-          fontFamily="Arial, sans-serif"
-        >
-          {pmsPercentage}%
-        </text>
-      );
+    // ✅ FIXED: Always show % for PMS data in A&C mode
+    if (isAC) {
+      if (!isAllMonthsSelected && selectedMonths.length === 1) {
+        const month = selectedMonths[0];
+        const pmsPercentage = rowData[`${month}_CONV`]; // This is percentagePMS
+        return (
+          <text
+            x={x + width / 2}
+            y={y - 5}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="12"
+            fontWeight="bold"
+            fill="#d32f2f"
+            fontFamily="Arial, sans-serif"
+          >
+            {pmsPercentage}%
+          </text>
+        );
+      }
+      
+      if (isAllMonthsSelected && rowData.ALL_PMS_RAW) {
+        return (
+          <text
+            x={x + width / 2}
+            y={y - 5}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="12"
+            fontWeight="bold"
+            fill="#d32f2f"
+            fontFamily="Arial, sans-serif"
+          >
+            {rowData.ALL_PMS_RAW}%
+          </text>
+        );
+      }
     }
     
-    if (rowData.ALL_PMS_RAW && isAllMonthsSelected) {
+    // Regular PMS % mode
+    if (isPercentage && !isAC) {
       return (
         <text
           x={x + width / 2}
@@ -370,7 +406,7 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
           fill="#d32f2f"
           fontFamily="Arial, sans-serif"
         >
-          {rowData.ALL_PMS_RAW}%
+          {Math.round(value)}%
         </text>
       );
     }
@@ -380,7 +416,6 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      const monthsForChart = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
       const chartEntry = chartData.find(entry => entry.person === label);
       const branchName = chartEntry?.branch || 'N/A';
       const hasNoExperience = chartEntry?.hasNoExperience || false;
@@ -389,7 +424,7 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
       const originalPerson = chartEntry?.originalPerson || label;
       
       const shouldShowPercentage = () => {
-        return selectedGrowth === "PMS %";
+        return selectedGrowth === "PMS %" || (isAC && payload.some(p => p.dataKey?.includes('_CONV')));
       };
       
       return (
@@ -399,10 +434,10 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
           borderRadius: 2, 
           border: `2px solid ${CCE_STATUS_COLORS[cceStatus] || '#e0e0e0'}`,
           boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-          minWidth: 340,
+          minWidth: 420,
           maxHeight: 'none',
           height: 'auto',
-          maxWidth: 380,
+          maxWidth: 500,
           overflow: 'visible'
         }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, pb: 1, borderBottom: '1px solid #e0e0e0' }}>
@@ -437,76 +472,119 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
               📍 Branch: <strong>{branchName}</strong>
             </Typography>
           </Box>
-          
-          <Box sx={{ mb: 1.5 }}>
-            {payload.map((entry, index) => {
-              let displayValue = Math.round(entry.value);
-              let displayName = entry.name || entry.dataKey;
-              
-              // FIXED: Show ONLY base PMS % for PMS_SCALED and ALL_PMS bars
-              if (entry.dataKey?.includes('_PMS_SCALED')) {
-                displayName = 'PMS %';
-                const month = entry.dataKey.split('_')[0];
-                displayValue = chartEntry?.[`${month}_CONV`] || 0; // Show base PMS %
-              } 
-              // Handle ALL_PMS bar
-              else if (entry.dataKey === 'ALL_PMS') {
-                displayName = 'PMS %';
-                displayValue = chartEntry?.ALL_PMS_RAW || 0; // Show base PMS %
-              } 
-              // Handle APPT bars
-              else if (entry.dataKey?.includes('_APPT')) {
-                displayName = 'Appointments';
-              } 
-              // Handle CONV bars (PMS %)
-              else if (entry.dataKey?.includes('_CONV')) {
-                displayName = 'PMS %';
-              }
-              
-              return (
-                <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.6, px: 1.2, borderRadius: 1.2, bgcolor: 'rgba(25, 118, 210, 0.06)', mb: 0.4 }}>
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8rem', color: MONTH_COLORS[entry.dataKey?.split('_')[0]] || '#1976d2' }}>
-                      {displayName}
+
+          {/* ✅ "Selected Period Performance" - ONLY when ALL months selected */}
+          {isAllMonthsSelected && (
+            <Box sx={{ mb: 1.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#1976d2' }}>
+                Selected Period Performance:
+              </Typography>
+              {payload.map((entry, index) => {
+                let displayValue = Math.round(entry.value);
+                let displayName = entry.name || entry.dataKey;
+                
+                if (entry.dataKey?.includes('_PMS_SCALED')) {
+                  displayName = 'PMS %';
+                  const month = entry.dataKey.split('_')[0];
+                  displayValue = chartEntry?.[`${month}_CONV`] || 0;
+                } 
+                else if (entry.dataKey === 'ALL_PMS') {
+                  displayName = 'PMS %';
+                  displayValue = chartEntry?.ALL_PMS_RAW || 0;
+                } 
+                else if (entry.dataKey?.includes('_APPT')) {
+                  displayName = 'Appointments';
+                } 
+                else if (entry.dataKey?.includes('_CONV')) {
+                  displayName = 'PMS %';
+                }
+                
+                return (
+                  <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.6, px: 1.2, borderRadius: 1.2, bgcolor: 'rgba(25, 118, 210, 0.06)', mb: 0.4 }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8rem', color: MONTH_COLORS[entry.dataKey?.split('_')[0]] || '#1976d2' }}>
+                        {displayName}
+                      </Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#1976d2', fontSize: '1rem' }}>
+                      {displayName === 'PMS %' 
+                        ? `${displayValue}%`
+                        : displayValue
+                      }
                     </Typography>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#1976d2', fontSize: '1rem' }}>
-                    {displayName === 'PMS %' 
-                      ? `${displayValue}%`
-                      : displayValue
-                    }
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Box>
+                );
+              })}
+            </Box>
+          )}
 
-          <Box sx={{ mb: 1.5 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 0.8 }}>
-              {monthsForChart.map(month => {
+          {/* ✅ ALL MONTHS PERFORMANCE GRID (Always shown) */}
+          <Box sx={{ mb: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: '#1976d2' }}>
+              All Months Performance:
+            </Typography>
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(3, 1fr)',  
+              gridTemplateRows: 'repeat(4, 1fr)',      
+              gap: 0.8,
+              height: 200,                             
+              width: '100%',
+              overflow: 'hidden'                       
+            }}>
+              {MONTHS.map(month => {
                 const apptData = chartEntry?.[`${month}_APPT`] || 0;
                 const convData = chartEntry?.[`${month}_CONV`] || chartEntry?.[month] || 0;
                 
-                if (apptData !== 0 || convData !== 0) {
-                  return (
-                    <Box key={month} sx={{ py: 0.4, px: 0.8, borderRadius: 0.8, bgcolor: 'rgba(0,0,0,0.02)', textAlign: 'center' }}>
-                      <Typography variant="caption" sx={{ color: MONTH_COLORS[month], fontWeight: 500, fontSize: '0.75rem', display: 'block' }}>
-                        {month}
+                return (
+                  <Box
+                    key={month}
+                    sx={{ 
+                      py: 0.7,
+                      px: 0.8, 
+                      borderRadius: 1.2, 
+                      bgcolor: (apptData > 0 || convData > 0)
+                        ? 'rgba(0,0,0,0.03)'
+                        : 'rgba(0,0,0,0.01)',          
+                      textAlign: 'center',
+                      border: '1px solid rgba(0,0,0,0.05)',
+                      fontSize: '0.75rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      minHeight: 0
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ 
+                      color: MONTH_COLORS[month], 
+                      fontWeight: 600, 
+                      fontSize: '0.7rem',
+                      display: 'block',
+                      mb: 0.1
+                    }}>
+                      {month}
+                    </Typography>
+                    {apptData !== 0 && (
+                      <Typography variant="body2" sx={{ 
+                        fontWeight: 500, 
+                        fontSize: '0.7rem', 
+                        color: MONTH_COLORS.APPT 
+                      }}>
+                        Appt: {Math.round(apptData)}
                       </Typography>
-                      {apptData !== 0 && (
-                        <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8rem', color: MONTH_COLORS.APPT }}>
-                          Appt: {Math.round(apptData)}
-                        </Typography>
-                      )}
-                      {convData !== 0 && (
-                        <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem', color: isAC ? MONTH_COLORS.CONV : '#1976d2' }}>
-                          {shouldShowPercentage() ? `${Math.round(convData)}%` : Math.round(convData)}
-                        </Typography>
-                      )}
-                    </Box>
-                  );
-                }
-                return null;
+                    )}
+                    {convData !== 0 && (
+                      <Typography variant="body2" sx={{ 
+                        fontWeight: 600, 
+                        fontSize: '0.75rem',
+                        color: isAC ? MONTH_COLORS.CONV : '#1976d2',
+                        lineHeight: 1
+                      }}>
+                        {shouldShowPercentage() ? `${Math.round(convData)}%` : Math.round(convData)}
+                      </Typography>
+                    )}
+                  </Box>
+                );
               })}
             </Box>
           </Box>
@@ -596,25 +674,25 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
       
       if (!isAllMonthsSelected && selectedMonths.length === 1) {
         bars.push(
-          <Bar 
-            key={`${month}_PMS_SCALED`} 
-            dataKey={`${month}_PMS_SCALED`} 
-            barSize={14} 
-            fill={MONTH_COLORS.CONV}
-          >
-            <LabelList content={CustomPMSLabel} position="top" />
-          </Bar>
+        <Bar 
+          key={`${month}_PMS_SCALED`} 
+          dataKey={`${month}_PMS_SCALED`} 
+          barSize={14} 
+          fill={MONTH_COLORS.CONV}
+        >
+          <LabelList content={CustomPMSLabel} position="top" />
+        </Bar>
         );
       } else {
         bars.push(
-          <Bar 
-            key={`${month}-CONV`} 
-            dataKey={`${month}_CONV`} 
-            barSize={14} 
-            fill={MONTH_COLORS.CONV}
-          >
-            <LabelList position="top" formatter={v => `${Math.round(v)}%`} />
-          </Bar>
+        <Bar 
+          key={`${month}-CONV`} 
+          dataKey={`${month}_CONV`} 
+          barSize={14} 
+          fill={MONTH_COLORS.CONV}
+        >
+          <LabelList position="top" formatter={v => `${Math.round(v)}%`} />
+        </Bar>
         );
       }
     });
@@ -622,12 +700,12 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
     if (isAllMonthsSelected && chartData.some(row => row.ALL_PMS > 0)) {
       bars.push(
         <Bar 
-          key="ALL_PMS" 
-          dataKey="ALL_PMS" 
-          barSize={14} 
-          fill={MONTH_COLORS.CONV}
+        key="ALL_PMS" 
+        dataKey="ALL_PMS" 
+        barSize={14} 
+        fill={MONTH_COLORS.CONV}
         >
-          <LabelList content={CustomPMSLabel} position="top" />
+        <LabelList content={CustomPMSLabel} position="top" />
         </Bar>
       );
     }
@@ -638,7 +716,7 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3, alignItems: "center" }}>
-        <Typography variant="h4">{titlePrefix} CONVERSION – {selectedGrowth} (Bar)</Typography>
+        <Typography variant="h4">{titlePrefix} CONVERSION – {selectedGrowth}</Typography>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           {isCC && sortByExp && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 1 }}>
@@ -722,23 +800,23 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
 
       <Box sx={{ height: 750, background: "#fff", borderRadius: 3, p: 3 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="person" height={160} interval={0} tick={<CustomXAxisTick />} />
-            <YAxis tickFormatter={v => (isPercentage || isAC) ? `${Math.round(v)}%` : Math.round(v)} />
-            <Tooltip content={<CustomTooltip />} />
-            
-            {isAC ? renderACBars() : (
-              (isAllMonthsSelected ? ["ALL"] : selectedMonths).map(key => (
-                <Bar key={key} dataKey={key} barSize={28} label={<VerticalBranchLabel />}>
-                  <LabelList position="top" formatter={v => isPercentage ? `${Math.round(v)}%` : Math.round(v)} />
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
-                  ))}
-                </Bar>
-              ))
-            )}
-          </BarChart>
+        <BarChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="person" height={160} interval={0} tick={<CustomXAxisTick />} />
+          <YAxis tickFormatter={v => (isPercentage || isAC) ? `${Math.round(v)}%` : Math.round(v)} />
+          <Tooltip content={<CustomTooltip />} />
+          
+          {isAC ? renderACBars() : (
+            (isAllMonthsSelected ? ["ALL"] : selectedMonths).map(key => (
+              <Bar key={key} dataKey={key} barSize={28} label={<VerticalBranchLabel />}>
+                <LabelList position="top" formatter={v => isPercentage ? `${Math.round(v)}%` : Math.round(v)} />
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
+                ))}
+              </Bar>
+            ))
+          )}
+        </BarChart>
         </ResponsiveContainer>
       </Box>
     </Box>
