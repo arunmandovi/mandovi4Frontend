@@ -294,8 +294,14 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
           if (selectedGrowth === "Appointment") row[month] = Math.round(pmsAppointment);
           if (selectedGrowth === "Conversion") row[month] = Math.round(r?.pmsConversion ?? 0);
         } else {
+          const scaledPMSHeight =
+            pmsAppointment > 0
+              ? Math.round((percentagePMS / 100) * pmsAppointment)
+              : 0;
+        
           row[`${month}_APPT`] = Math.round(pmsAppointment);
-          row[`${month}_CONV`] = Math.round(percentagePMS);
+          row[`${month}_CONV`] = Math.round(percentagePMS); // actual %
+          row[`${month}_PMS_SCALED`] = scaledPMSHeight;     // visual height
         }
       });
 
@@ -306,9 +312,15 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
           if (selectedGrowth === "Appointment") row.ALL = Math.round(totalAppt);
           if (selectedGrowth === "Conversion") row.ALL = Math.round(totalConv);
         } else {
+          const avgPMS = totalPMS / validMonths || 0;
+           
           row.ALL_APPT = Math.round(totalAppt);
-          row.ALL_CONV = Math.round(totalPMS / validMonths || 0);
-        }
+          row.ALL_PMS_RAW = Math.round(avgPMS);
+          row.ALL_PMS =
+            totalAppt > 0
+              ? Math.round((avgPMS / 100) * totalAppt)
+              : 0;
+                  }
       }
 
       row.__branchColor = BRANCH_COLORS[row.branch] || '#999';
@@ -332,32 +344,56 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
 
   // 🔴 FIXED Custom label renderer for data points - SAFE null checks
   const renderCustomLabel = (props) => {
-    const { x, y, value, index, payload } = props;
-    if (!value || value === 0) return null;
-    
-    let isPercent = isPercentage; // PMS % mode
-    
-    // ✅ A&C mode: Check if this is CONV line (PMS %) or APPT line
-    if (isAC && payload && payload.dataKey) {
-      isPercent = payload.dataKey.includes('_CONV') || payload.dataKey === 'ALL_CONV';
-    }
-    
-    return (
-      <g>
-        <text
-          x={x}
-          y={y - 10}
-          textAnchor="middle"
-          fill="#000"
-          fontSize="12"
-          fontWeight="bold"
-          fontFamily="Arial, sans-serif"
-        >
-          {isPercent ? `${Math.round(value)}%` : Math.round(value)}
-        </text>
-      </g>
-    );
-  };
+  const { x, y, value, payload, dataKey } = props;
+
+  if (!value || value === 0) return null;
+
+  // ✅ SAFETY: fallback if dataKey missing
+  const key = dataKey || props?.dataKey || "";
+
+  let displayValue = value;
+  let isPercent = false;
+
+  // ✅ PMS scaled line → show actual %
+  if (key && key.includes("PMS_SCALED")) {
+    const month = key.split("_")[0];
+    displayValue = payload?.[`${month}_CONV`] ?? 0;
+    isPercent = true;
+  }
+
+  // ✅ ALL mode PMS
+  else if (key === "ALL_PMS") {
+    displayValue = payload?.ALL_PMS_RAW ?? 0;
+    isPercent = true;
+  }
+
+  // ✅ Appointment line
+  else if (key && key.includes("_APPT")) {
+    isPercent = false;
+  }
+
+  // ✅ fallback (non A&C cases)
+  else {
+    isPercent = false;
+  }
+
+  return (
+    <g>
+      <text
+        x={x}
+        y={y - 10}
+        textAnchor="middle"
+        fill="#000"
+        fontSize="12"
+        fontWeight="bold"
+      >
+        {isPercent
+          ? `${Math.round(displayValue)}%`
+          : Math.round(displayValue)}
+      </text>
+    </g>
+  );
+};
 
 
   const CustomTooltip = ({ active, payload, label }) => {
@@ -586,41 +622,43 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
     if (isAC) {
       if (isAllMonthsSelected) {
         lines.push(
-          <Line 
-            key="ALL_APPT" 
-            dataKey="ALL_APPT" 
-            stroke={MONTH_COLORS.APPT} 
+          <Line
+            key="ALL_APPT"
+            dataKey="ALL_APPT"
+            stroke={MONTH_COLORS.APPT}
             strokeWidth={3}
-            label={renderCustomLabel}  // ✅ SAFE labels
+            label={renderCustomLabel}
           />
         );
+    
         lines.push(
-          <Line 
-            key="ALL_CONV" 
-            dataKey="ALL_CONV" 
-            stroke={MONTH_COLORS.CONV} 
+          <Line
+            key="ALL_PMS"
+            dataKey="ALL_PMS"
+            stroke={MONTH_COLORS.CONV}
             strokeWidth={3}
-            label={renderCustomLabel}  // ✅ SAFE labels
+            label={renderCustomLabel}
           />
         );
       } else {
         selectedMonths.forEach(month => {
           lines.push(
-            <Line 
-              key={`${month}_APPT`} 
-              dataKey={`${month}_APPT`} 
-              stroke={MONTH_COLORS.APPT} 
+            <Line
+              key={`${month}_APPT`}
+              dataKey={`${month}_APPT`}
+              stroke={MONTH_COLORS.APPT}
               strokeWidth={3}
-              label={renderCustomLabel}  // ✅ SAFE labels
+              label={renderCustomLabel}
             />
           );
+    
           lines.push(
-            <Line 
-              key={`${month}_CONV`} 
-              dataKey={`${month}_CONV`} 
-              stroke={MONTH_COLORS.CONV} 
+            <Line
+              key={`${month}_PMS_SCALED`}
+              dataKey={`${month}_PMS_SCALED`}
+              stroke={MONTH_COLORS.CONV}
               strokeWidth={3}
-              label={renderCustomLabel}  // ✅ SAFE labels
+              label={renderCustomLabel}
             />
           );
         });
