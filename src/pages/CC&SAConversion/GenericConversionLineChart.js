@@ -36,8 +36,8 @@ const MONTHS = [
 ];
 
 const BRANCHES = [
-  "BALMATTA","SURATHKAL","ADYAR","BANTWAL","KADABA","VITTLA","SUJITH BAGH",
-  "NEXA","NARAVI"
+  "BALMATTA","SURATHKAL","ADYAR","SULLIA","UPPINANGADY",
+  "YEYYADI","BANTWAL","KADABA","VITTLA","SUJITH BAGH","NEXA","NARAVI"
 ];
 
 const BRANCH_COLORS = {
@@ -235,7 +235,8 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
 
       const hasNoExperience = isCC && (experienceDays === null || experienceDays === undefined);
       const isHighlightedCCE = isCC && HIGHLIGHTED_CCE.some(highlight => 
-        normalize(person).includes(normalize(highlight.cceName))
+        normalize(person) === normalize(highlight.cceName) &&
+        normalize(actualBranch) === normalize(highlight.branchName)
       );
 
       let cceStatus = 'NORMAL';

@@ -48,15 +48,15 @@ function GenericUploadPage({ moduleName, tableName }) {
     setLoading(false);
   };
 
-  // 🔹 Download as Excel - REMOVES FIRST COLUMN (Primary Key)
+  // 🔹 Download as Excel - REMOVES FIRST COLUMN (Primary Key) - NO SI.No
   const handleDownloadExcel = () => {
     if (tableData.length === 0) return;
 
     try {
-      // Transform data - REMOVE FIRST COLUMN + Add SI.No
-      const exportData = tableData.map((row, index) => {
+      // Transform data - REMOVE FIRST COLUMN only
+      const exportData = tableData.map((row) => {
         const rowKeys = Object.keys(row);
-        const cleanRow = { "SI.No": index + 1 };
+        const cleanRow = {};
         
         // Skip FIRST column (index 0) - that's your primary key
         for (let i = 1; i < rowKeys.length; i++) {

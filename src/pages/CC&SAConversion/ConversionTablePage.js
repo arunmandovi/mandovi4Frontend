@@ -181,15 +181,14 @@ const ConversionTablePage = ({ type }) => {
     if (!isCC || filterMode === "ALL") return tableRows;
     
     return tableRows.filter(row => {
-      if (filterMode === "PSF") {
-        return HIGHLIGHTED_CCE.some(highlight => 
-          normalize(row[personKey]).includes(normalize(highlight.cceName))
-        );
-      } else if (filterMode === "SMR") {
-        return !HIGHLIGHTED_CCE.some(highlight => 
-          normalize(row[personKey]).includes(normalize(highlight.cceName))
-        );
-      }
+      const isMatch = HIGHLIGHTED_CCE.some(highlight => 
+        normalize(row[personKey]) === normalize(highlight.cceName) &&
+        normalize(row.branch) === normalize(highlight.branchName)
+      );
+  
+      if (filterMode === "PSF") return isMatch;
+      if (filterMode === "SMR") return !isMatch;
+  
       return true;
     });
   }, [tableRows, filterMode, isCC]);
@@ -302,11 +301,12 @@ const ConversionTablePage = ({ type }) => {
     if (!isCC) return {};
     
     const isHighlightedCCE = HIGHLIGHTED_CCE.some(highlight => 
-      normalize(row[personKey]).includes(normalize(highlight.cceName))
+      normalize(row[personKey]) === normalize(highlight.cceName) &&
+      normalize(row.branch) === normalize(highlight.branchName)
     );
     
-    const hasNoExperience = !row.experienceDays || row.experienceDays === null || row.experienceDays === undefined;
-    
+    const hasNoExperience = !row.experienceDays;
+  
     if (isHighlightedCCE) {
       return {
         backgroundColor: 'rgba(255, 235, 59, 0.3) !important',

@@ -36,8 +36,8 @@ const MONTHS = [
 ];
 
 const BRANCHES = [
-  "BALMATTA","SURATHKAL","ADYAR","BANTWAL","KADABA","VITTLA","SUJITH BAGH",
-  "NEXA","NARAVI"
+ "BALMATTA","SURATHKAL","ADYAR","SULLIA","UPPINANGADY",
+  "YEYYADI","BANTWAL","KADABA","VITTLA","SUJITH BAGH","NEXA","NARAVI"
 ];
 
 const BRANCH_COLORS = {
@@ -93,7 +93,6 @@ const HIGHLIGHTED_CCE = [
   { branchName: "SULLIA", cceName: "SHILPA" },
   { branchName: "SUJITH BAGH", cceName: "KAVYA" },
   { branchName: "SULLIA", cceName: "RANJITHA" },
-  { branchName: "SULLIA", cceName: "SHUKALATHA" },
   { branchName: "SURATHKAL", cceName: "KRITHIKA" },
   { branchName: "SURATHKAL", cceName: "SHREE RAKSHA" },
   { branchName: "UPPINANGADY", cceName: "SHRADHA" },
@@ -235,7 +234,8 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
 
       const hasNoExperience = isCC && (experienceDays === null || experienceDays === undefined);
       const isHighlightedCCE = isCC && HIGHLIGHTED_CCE.some(highlight => 
-        normalize(person).includes(normalize(highlight.cceName))
+        normalize(person) === normalize(highlight.cceName) &&
+        normalize(actualBranch) === normalize(highlight.branchName)
       );
       
       let cceStatus = 'NORMAL';
