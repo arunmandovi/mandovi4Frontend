@@ -44,7 +44,8 @@ function ProfitLossTablePage() {
         "Oct 2025": row.oct_25 ?? "-",
         "Nov 2025": row.nov_25 ?? "-",
         "Dec 2025": row.dec_25 ?? "-",
-        "Jan 2025": row.jan_25 ?? "-",
+        "Jan 2026": row.jan_26 ?? "-",
+        "Feb 2026": row.feb_26 ?? "-",
         "2025-26": row.fy_2025_26 ?? "-",
       }));
   
@@ -116,7 +117,8 @@ function ProfitLossTablePage() {
             "Oct 2025": row.oct_25 ?? "-",
             "Nov 2025": row.nov_25 ?? "-",
             "Dec 2025": row.dec_25 ?? "-",
-            "Jan 2025": row.jan_25 ?? "-",
+            "Jan 2026": row.jan_26 ?? "-",
+            "Feb 2026": row.feb_26 ?? "-",
             "2025-26": row.fy_2025_26 ?? "-",
           }))
           .sort((a, b) => {
