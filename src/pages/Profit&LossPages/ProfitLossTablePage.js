@@ -84,7 +84,7 @@ function ProfitLossTablePage() {
   "Basavangudi", "Basavanagudi-SOW", "Kolar Nexa", "Maluru WS", "BANGALORE",
 
   "KRS Road", "Hunsur Road", "Bannur", "Mandya", "Gonikoppa", "Kushalnagar", "ChamrajNagar",
-  "Krishnarajapet","Somvarpet", "Maddur", "Nagamangala", "Narasipura", "Mysore Nexa", "Kollegal","Mandya Nexa", "MYSORE",
+  "Krishnarajapet","Somvarpet", "Maddur", "Nagamangala", "Narasipura", "Mysore Nexa", "Kollegal","Mandya Nexa","Gonikoppa Nexa", "MYSORE",
    
   "Balmatta", "Sujith Bagh Lane", "Nexa Service", "Yeyyadi BR", "Adyar", "Surathkal", "Bantwal",
   "Uppinangady", "Sullia", "Kadaba", "Vittla", "Naravi", "MANGALORE"

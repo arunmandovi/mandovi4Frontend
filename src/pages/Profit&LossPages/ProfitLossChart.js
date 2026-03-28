@@ -11,13 +11,13 @@ const BRANCH_ORDER = [
   'vidyarannapura','vijayanagar','wilson garden','yelahanka','yeshwanthpur ws','bannur',
   'chamrajnagar','hunsur road','maddur','gonikoppa','mandya','krs road','kushalnagar',
   'krishnarajapet','mysore nexa','nagamangala','somvarpet','narasipura','kollegal',
-  'mandya nexa','balmatta','bantwal','vittla','kadaba','uppinangady','surathkal',
+  'mandya nexa','Gonikoppa Nexa', 'balmatta','bantwal','vittla','kadaba','uppinangady','surathkal',
   'sullia','adyar','yeyyadi br','nexa service','sujith bagh lane','naravi'
 ];
 
 const GROUPS = [
   { label: 'Bangalore', list: ['ns palya','sarjapura','basaveshwarnagar','kolar nexa','gowribidanur','hennur','jp nagar','kolar','basavanagudi-sow','basavangudi','malur sow','maluru ws','uttarahali kengeri','vidyarannapura','vijayanagar','wilson garden','yelahanka','yeshwanthpur ws'] },
-  { label: 'Mysore', list: ['bannur','chamrajnagar','hunsur road','maddur','gonikoppa','mandya','krs road','kushalnagar','krishnarajapet','mysore nexa','nagamangala','somvarpet','narasipura','kollegal','mandya nexa'] },
+  { label: 'Mysore', list: ['bannur','chamrajnagar','hunsur road','maddur','gonikoppa','mandya','krs road','kushalnagar','krishnarajapet','mysore nexa','nagamangala','somvarpet','narasipura','kollegal','mandya nexa','Gonikoppa Nexa'] },
   { label: 'Mangalore', list: ['balmatta','bantwal','vittla','kadaba','uppinangady','surathkal','sullia','adyar','yeyyadi br','nexa service','sujith bagh lane','naravi'] }
 ];
 

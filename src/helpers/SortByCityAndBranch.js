@@ -34,6 +34,7 @@ export const BRANCH_CITY_MAP = {
   "Narasipura": "Mysore",
   "Kollegal": "Mysore",
   "Mandya Nexa": "Mysore",
+  "Gonikoppa Nexa": "Mysore",
 
   "Balmatta": "Mangalore",
   "Bantwal": "Mangalore",

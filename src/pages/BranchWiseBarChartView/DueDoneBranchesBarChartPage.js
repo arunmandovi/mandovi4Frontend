@@ -157,6 +157,7 @@ function DueDoneBranchesBarChartPage() {
               item.name === "Maluru WS" ||
               item.name === "Kollegal" ||
               item.name === "Mandya Nexa" ||
+              item.name === "Gonikoppa Nexa" ||
               item.name === "Narasipura" ||
               item.name === "Nagamangala" ||
               item.name === "Maddur" ||
