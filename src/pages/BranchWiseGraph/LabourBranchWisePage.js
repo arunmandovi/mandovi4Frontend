@@ -31,6 +31,7 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
     .map(([br]) => br)
 ).sort((a, b) => a.localeCompare(b));
 
+// Growth Key Map
 const growthKeyMap = {
     "Service Growth %": "growthService",
     "BodyShop Growth %": "growthBodyShop",
@@ -40,7 +41,7 @@ const growthKeyMap = {
     "FPR Growth %": "growthFPR",
     "RR Growth %": "growthRunningRepair",
     "Others Growth %": "growthOthers",
-  };
+};
 
 function LabourBranchWisePage() {
   const navigate = useNavigate();
@@ -48,14 +49,21 @@ function LabourBranchWisePage() {
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [channels, setChannels] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState("SR&BR Growth %");
+  // ✅ Added Financial Year state
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
+  const [selectedGrowth, setSelectedGrowthState] = useState("PMS Growth %");
 
   const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden", "Balmatta", "KRS Road"]);
+  // ✅ Added selectedCities state
+  const [selectedCities, setSelectedCities] = useState([]);
 
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+  const cityOptions = ["Bangalore", "Mysore", "Mangalore"]; // ✅ Added city options
   const channelOptions = ["Arena", "Nexa"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const growthOptions = Object.keys(growthKeyMap);
 
+  // Read branch exactly as API sends
   const readBranchName = (row) => {
     return row?.branch || row?.Branch || row?.branchName || row?.BranchName || "";
   };
@@ -73,14 +81,17 @@ function LabourBranchWisePage() {
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
+  // ✅ UPDATED API Fetch WITH FINANCIAL YEAR
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
         const activeMonths = months.length ? months : monthOptions;
+        const activeFY = financialYears[0] || "2025-2026";
+        
         const combined = [];
 
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
+          let query = `?months=${m}&selectedFinancialYear=${activeFY}`;
           if (channels.length === 1) query += `&channels=${channels[0]}`;
 
           const data = await fetchData(`/api/labour/labour_branch_summary${query}`);
@@ -96,8 +107,9 @@ function LabourBranchWisePage() {
     };
 
     fetchCitySummary();
-  }, [months, channels]);
+  }, [months, channels, financialYears]);
 
+  // Build Chart Data
   const buildChartData = () => {
     if (!selectedGrowth || selectedBranches.length === 0)
       return { formatted: [], sortedBranches: [] };
@@ -113,6 +125,10 @@ function LabourBranchWisePage() {
 
       (data || []).forEach((row) => {
         const apiBranch = readBranchName(row);
+        // ✅ Filter by selected cities
+        const rowCity = row?.city || row?.City || row?.cityName || row?.CityName || "";
+        if (selectedCities.length > 0 && !selectedCities.includes(rowCity)) return;
+        
         if (!selectedBranches.includes(apiBranch)) return;
 
         const val = readGrowthValue(row, apiKey);
@@ -127,6 +143,7 @@ function LabourBranchWisePage() {
 
   const { formatted: chartData, sortedBranches: cityKeys } = buildChartData();
 
+  // Select Branches
   const handleBranchChange = (e) => {
     const value = e.target.value;
 
@@ -134,6 +151,24 @@ function LabourBranchWisePage() {
       setSelectedBranches(ALL_BRANCHES);
     } else {
       setSelectedBranches(value.filter((x) => x !== "ALL"));
+    }
+  };
+
+  // ✅ Added handleCityChange
+  const handleCityChange = (e) => {
+    const newSelectedCities = e.target.value;
+    setSelectedCities(newSelectedCities);
+    
+    // Auto-select branches for selected cities
+    if (newSelectedCities.length > 0) {
+      const branchesForCities = newSelectedCities.flatMap(city => 
+        Object.entries(BRANCH_CITY_MAP)
+          .filter(([_, c]) => c === city)
+          .map(([br]) => br)
+      );
+      setSelectedBranches(branchesForCities);
+    } else {
+      setSelectedBranches(ALL_BRANCHES);
     }
   };
 
@@ -150,16 +185,40 @@ function LabourBranchWisePage() {
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+      {/* ✅ NEW CITIES SELECTOR */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select Cities</InputLabel>
+          <Select
+            multiple
+            label="Select Cities"
+            value={selectedCities}
+            onChange={handleCityChange}
+            renderValue={(selected) => 
+              selected.length === 0 ? "All Cities" : 
+              selected.length === cityOptions.length ? "All Cities" : 
+              `${selected.length} Cities`
+            }
+          >
+            {cityOptions.map((city) => (
+              <MenuItem value={city} key={city}>
+                <Checkbox checked={selectedCities.includes(city)} />
+                <ListItemText primary={city} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      
+
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
-           <Select
+          <Select
             multiple
             label="Select Branches"
             value={selectedBranches}
             onChange={handleBranchChange}
             displayEmpty
-            renderValue={() => "Select Branches"}  
+            renderValue={() => selectedCities.length > 0 ? `${selectedBranches.length} Branches` : "Select Branches"}
             MenuProps={{
               PaperProps: {
                 style: { maxHeight: 300 },
@@ -175,7 +234,8 @@ function LabourBranchWisePage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mysore")
               .map(([br]) => (
@@ -184,7 +244,8 @@ function LabourBranchWisePage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mangalore")
               .map(([br]) => (
@@ -196,6 +257,7 @@ function LabourBranchWisePage() {
           </Select>
         </FormControl>
       </Box>
+      
       <SlicerFilters
         monthOptions={monthOptions}
         months={months}
@@ -203,6 +265,9 @@ function LabourBranchWisePage() {
         channelOptions={channelOptions}
         channels={channels}
         setChannels={setChannels}
+        financialYearOptions={financialYearOptions}
+        financialYears={financialYears}
+        setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons

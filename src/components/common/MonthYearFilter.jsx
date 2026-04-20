@@ -6,13 +6,13 @@ const MONTHS = [
   "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"
 ];
 
-const YEARS = ["2024", "2025", "2026"];
+const FINANCIAL_YEARS = ["2025-2026", "2026-2027"];
 
 const MonthYearFilter = ({
   months = [],
-  years = [],
+  financialYears = [],
   setMonths = () => {},
-  setYears = () => {},
+  setFinancialYears = () => {},
   onFilter,
   onViewAll,
 }) => {
@@ -37,12 +37,19 @@ const MonthYearFilter = ({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mb: 3 }}>
-      {/* Row: Month & Year Filters */}
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 4, flexWrap: "wrap" }}>
-        
-        {/* Month slicer */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 4,
+          flexWrap: "wrap",
+        }}
+      >
+        {/* Month */}
         <Box>
-          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Month(s)</Typography>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>
+            Select Month(s)
+          </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
             {MONTHS.map((m) => {
               const selected = months.includes(m);
@@ -52,7 +59,9 @@ const MonthYearFilter = ({
                   size="small"
                   sx={commonButtonStyles(selected)}
                   onClick={() =>
-                    selected ? setMonths(months.filter((x) => x !== m)) : setMonths([...months, m])
+                    selected
+                      ? setMonths(months.filter((x) => x !== m))
+                      : setMonths([...months, m])
                   }
                 >
                   {m}
@@ -62,33 +71,42 @@ const MonthYearFilter = ({
           </Box>
         </Box>
 
-        {/* Year slicer */}
+        {/* Financial Year */}
         <Box>
-          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Year(s)</Typography>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>
+            Select Financial Year(s)
+          </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-            {YEARS.map((y) => {
-              const selected = years.includes(y);
+            {FINANCIAL_YEARS.map((fy) => {
+              const selected = financialYears.includes(fy);
               return (
                 <Button
-                  key={y}
+                  key={fy}
                   size="small"
                   sx={commonButtonStyles(selected)}
                   onClick={() =>
-                    selected ? setYears(years.filter((x) => x !== y)) : setYears([...years, y])
+                    selected
+                      ? setFinancialYears(
+                          financialYears.filter((x) => x !== fy)
+                        )
+                      : setFinancialYears([...financialYears, fy])
                   }
                 >
-                  {y}
+                  {fy}
                 </Button>
               );
             })}
           </Box>
         </Box>
-
       </Box>
 
-      {/* Action Buttons */}
+      {/* Actions */}
       <Box sx={{ display: "flex", gap: 2 }}>
-        <Button variant="contained" color="secondary" onClick={onViewAll}>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={onViewAll}
+        >
           📄 View All
         </Button>
 
@@ -96,7 +114,10 @@ const MonthYearFilter = ({
           variant="contained"
           color="primary"
           onClick={onFilter}
-          disabled={months.length === 0 && years.length === 0}
+          disabled={
+            months.length === 0 &&
+            financialYears.length === 0
+          }
         >
           🔎 Apply Filter
         </Button>

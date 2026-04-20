@@ -33,24 +33,32 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
 
 // Growth Key Map
 const growthKeyMap = {
-    "Arena BR Conversion %": "percentageArenaBRConversion",
-    "Nexa BR Conversion %": "percentageNexaBRConversion",
-    "Arena&Nexa BR Conversion %": "percentageArenaNexaBRConversion",
-    "Arena Total Amount": "totalArenaAmount",
-    "Nexa Total Amount": "totalNexaAmount",
-    "Arena&Nexa Total Amount": "totalArenaNexaAmount",
-  };
+  "Arena BR Conversion %": "percentageArenaBRConversion",
+  "Nexa BR Conversion %": "percentageNexaBRConversion",
+  "Arena&Nexa BR Conversion %": "percentageArenaNexaBRConversion",
+  "Arena Total Amount": "totalArenaAmount",
+  "Nexa Total Amount": "totalNexaAmount",
+  "Arena&Nexa Total Amount": "totalArenaNexaAmount",
+};
 
 function BRConversionBranchWisePage() {
   const navigate = useNavigate();
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [channels, setChannels] = useState([]);
+  // ✅ Added Financial Year state as array
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState("Arena&Nexa BR Conversion %");
 
   const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden", "Balmatta", "KRS Road"]);
+  // ✅ Added selectedCities state
+  const [selectedCities, setSelectedCities] = useState([]);
 
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+  const cityOptions = ["Bangalore", "Mysore", "Mangalore"]; // ✅ Added city options
+  const channelOptions = ["Arena", "Nexa"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const growthOptions = Object.keys(growthKeyMap);
 
   // Read branch exactly as API sends
@@ -71,15 +79,18 @@ function BRConversionBranchWisePage() {
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
-  // API Fetch
+  // ✅ UPDATED API Fetch WITH FINANCIAL YEAR AS ARRAY AND CHANNELS
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
         const activeMonths = months.length ? months : monthOptions;
+        const activeFY = financialYears[0] || "2025-2026";
+        
         const combined = [];
 
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
+          let query = `?months=${m}&selectedFinancialYear=${activeFY}`;
+          if (channels.length === 1) query += `&channels=${channels[0]}`;
 
           const data = await fetchData(`/api/br_conversion/br_conversion_branch_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
@@ -94,7 +105,7 @@ function BRConversionBranchWisePage() {
     };
 
     fetchCitySummary();
-  }, [months]);
+  }, [months, channels, financialYears]);
 
   // Build Chart Data
   const buildChartData = () => {
@@ -112,6 +123,10 @@ function BRConversionBranchWisePage() {
 
       (data || []).forEach((row) => {
         const apiBranch = readBranchName(row);
+        // ✅ Filter by selected cities
+        const rowCity = row?.city || row?.City || row?.cityName || row?.CityName || "";
+        if (selectedCities.length > 0 && !selectedCities.includes(rowCity)) return;
+        
         if (!selectedBranches.includes(apiBranch)) return;
 
         const val = readGrowthValue(row, apiKey);
@@ -137,6 +152,24 @@ function BRConversionBranchWisePage() {
     }
   };
 
+  // ✅ Added handleCityChange
+  const handleCityChange = (e) => {
+    const newSelectedCities = e.target.value;
+    setSelectedCities(newSelectedCities);
+    
+    // Auto-select branches for selected cities
+    if (newSelectedCities.length > 0) {
+      const branchesForCities = newSelectedCities.flatMap(city => 
+        Object.entries(BRANCH_CITY_MAP)
+          .filter(([_, c]) => c === city)
+          .map(([br]) => br)
+      );
+      setSelectedBranches(branchesForCities);
+    } else {
+      setSelectedBranches(ALL_BRANCHES);
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
@@ -150,16 +183,39 @@ function BRConversionBranchWisePage() {
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+      {/* ✅ NEW CITIES SELECTOR */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select Cities</InputLabel>
+          <Select
+            multiple
+            label="Select Cities"
+            value={selectedCities}
+            onChange={handleCityChange}
+            renderValue={(selected) => 
+              selected.length === 0 ? "All Cities" : 
+              selected.length === cityOptions.length ? "All Cities" : 
+              `${selected.length} Cities`
+            }
+          >
+            {cityOptions.map((city) => (
+              <MenuItem value={city} key={city}>
+                <Checkbox checked={selectedCities.includes(city)} />
+                <ListItemText primary={city} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
-           <Select
+          <Select
             multiple
             label="Select Branches"
             value={selectedBranches}
             onChange={handleBranchChange}
             displayEmpty
-            renderValue={() => "Select Branches"}  // << ALWAYS SHOWN
+            renderValue={() => selectedCities.length > 0 ? `${selectedBranches.length} Branches` : "Select Branches"}
             MenuProps={{
               PaperProps: {
                 style: { maxHeight: 300 },
@@ -175,7 +231,8 @@ function BRConversionBranchWisePage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mysore")
               .map(([br]) => (
@@ -184,7 +241,8 @@ function BRConversionBranchWisePage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mangalore")
               .map(([br]) => (
@@ -196,10 +254,17 @@ function BRConversionBranchWisePage() {
           </Select>
         </FormControl>
       </Box>
+     
       <SlicerFilters
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
+        channelOptions={channelOptions}
+        channels={channels}
+        setChannels={setChannels}
+        financialYearOptions={financialYearOptions}
+        financialYears={financialYears}
+        setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons
@@ -237,10 +302,10 @@ function BRConversionBranchWisePage() {
             chartData={chartData}
             cityKeys={cityKeys}
             decimalDigits={["Arena BR Conversion %", "Nexa BR Conversion %", "Arena&Nexa BR Conversion %"]
-                .includes(selectedGrowth) ? 1 : 0 }
+              .includes(selectedGrowth) ? 1 : 0 }
             showPercent={
-                ["Arena BR Conversion %", "Nexa BR Conversion %", "Arena&Nexa BR Conversion %"]
-                .includes(selectedGrowth) ? true : false }
+              ["Arena BR Conversion %", "Nexa BR Conversion %", "Arena&Nexa BR Conversion %"]
+              .includes(selectedGrowth) ? true : false }
           />
         </Box>
       )}

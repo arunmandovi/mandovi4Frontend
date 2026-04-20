@@ -16,12 +16,14 @@ function LoaddBarChartPage() {
   const [channels, setChannels] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]); // ✅ ADDED
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
-  const channelOptions = ["ARENA", "NEXA"];
+  const channelOptions = ["Arena", "Nexa"]; // ✅ FIXED: Consistent casing
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
+  const financialYearOptions = ["2025-2026", "2026-2027"]; // ✅ ADDED
 
   const growthOptions = [
     "Service Growth %","BodyShop Growth %","Free Service Growth %",
@@ -56,23 +58,29 @@ function LoaddBarChartPage() {
     }
   }, []);
 
+  // ✅ UPDATED FETCH WITH FINANCIAL YEAR
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
+        const activeFinancialYear = financialYears[0] || "2025-2026"; // ✅ ADDED
         const params = new URLSearchParams();
-        if (months.length) params.append("months", months.join(","));
-        if (channels.length) params.append("channels", channels.join(","));
-        if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
-        if (halfYear.length) params.append("halfYear", halfYear.join(","));
+        params.append("selectedFinancialYear", activeFinancialYear); // ✅ ADDED
+        
+        if (months.length) months.forEach(m => params.append("months", m)); // ✅ FIXED: Loop instead of join
+        if (channels.length) channels.forEach(c => params.append("channels", c)); // ✅ FIXED: Loop instead of join
+        if (qtrWise.length) qtrWise.forEach(q => params.append("qtrWise", q));
+        if (halfYear.length) halfYear.forEach(h => params.append("halfYear", h));
+        
         const query = params.toString() ? `?${params.toString()}` : "";
         const data = await fetchData(`/api/loadd/loadd_summary${query}`);
-        setSummary(Array.isArray(data) ? data : []);
+        setSummary(Array.isArray(data) ? data : data?.result || []);
       } catch (err) {
         console.error("fetchCitySummary error:", err);
+        setSummary([]);
       }
     };
     fetchCitySummary();
-  }, [months,channels, qtrWise, halfYear]);
+  }, [months, channels, qtrWise, halfYear, financialYears]); // ✅ ADDED financialYears dependency
 
   // -----------------------------------------
   // Helpers
@@ -147,37 +155,37 @@ function LoaddBarChartPage() {
 
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/loadd", {
-                state: { fromNavigation: true },
-              })
-            }
+            variant="contained" 
+            onClick={() => navigate("/DashboardHome/loadd", {
+              state: { fromNavigation: true },
+            })}
           >
             Graph-CityWise
           </Button>
 
           <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/loadd_branches", {
-                state: { fromNavigation: true },
-              })
-            }
+            variant="contained" 
+            onClick={() => navigate("/DashboardHome/loadd_branches", {
+              state: { fromNavigation: true },
+            })}
           >
             Graph-BranchWise
           </Button>
 
           <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/loadd-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
+            variant="contained" 
+            onClick={() => navigate("/DashboardHome/loadd-bar-chart", {
+              state: { fromNavigation: true },
+            })}
           >
             Bar Chart-CityWise
           </Button>
 
           <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
+            variant="contained" 
+            onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart", {
+              state: { fromNavigation: true },
+            })}
           >
             Bar Chart-BranchWise
           </Button>
@@ -197,6 +205,9 @@ function LoaddBarChartPage() {
         halfYearOptions={halfYearOptions}
         halfYear={halfYear}
         setHalfYear={setHalfYear}
+        financialYearOptions={financialYearOptions} // ✅ ADDED
+        financialYears={financialYears} // ✅ ADDED
+        setFinancialYears={setFinancialYears} // ✅ ADDED
       />
 
       <GrowthButtons

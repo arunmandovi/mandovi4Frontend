@@ -15,33 +15,30 @@ export async function fetchAllRecords(apiUrl) {
 }
 
 /* ============================================================
-   🔹 Filter by Multiple Months / Types / Years
+   🔹 Filter by Multiple Months / Years / Financial Years
+   (GET with query params)
 ============================================================ */
-export async function filterByMonthYear(apiUrl, months,years, types ) {
+export async function filterByMonthYear(
+  apiUrl,
+  months,
+  years,
+  financialYears
+) {
   try {
     const params = new URLSearchParams();
 
-    if (Array.isArray(months)) months.forEach((m) => params.append("months", m));
-    if (Array.isArray(years)) years.forEach((y) => params.append("years", y));
-    if (Array.isArray(types)) types.forEach((t) => params.append("types", t));
+    if (Array.isArray(months)) {
+      months.forEach((m) => params.append("months", m));
+    }
 
-    const url = `${apiUrl}?${params.toString()}`;
-    const data = await fetchData(url);
+    if (Array.isArray(years)) {
+      years.forEach((y) => params.append("years", y));
+    }
 
-    return Array.isArray(data) ? data : [];
-  } catch (err) {
-    console.error("Filter Error:", err);
-    return [];
-  }
-}
-
-// uploadPageService.js
-export async function filterByTypes(apiUrl, types) {
-  try {
-    const params = new URLSearchParams();
-
-    if (Array.isArray(types)) {
-      types.forEach((t) => params.append("types", t)); // ✅ plural
+    if (Array.isArray(financialYears)) {
+      financialYears.forEach((fy) =>
+        params.append("financialYears", fy)
+      );
     }
 
     const url = `${apiUrl}?${params.toString()}`;
@@ -54,6 +51,26 @@ export async function filterByTypes(apiUrl, types) {
   }
 }
 
+/* ============================================================
+   🔹 (Optional) Filter by Types – keep if you still use it elsewhere
+============================================================ */
+export async function filterByTypes(apiUrl, types) {
+  try {
+    const params = new URLSearchParams();
+
+    if (Array.isArray(types)) {
+      types.forEach((t) => params.append("types", t));
+    }
+
+    const url = `${apiUrl}?${params.toString()}`;
+    const data = await fetchData(url);
+
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error("Filter Error:", err);
+    return [];
+  }
+}
 
 /* ============================================================
    🔹 Upload File

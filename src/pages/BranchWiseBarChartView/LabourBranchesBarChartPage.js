@@ -40,7 +40,7 @@ const growthKeyMap = {
     "FPR Growth %": "growthFPR",
     "RR Growth %": "growthRunningRepair",
     "Others Growth %": "growthOthers",
-  };
+};
 
 function LabourBranchesBarChartPage() {
   const navigate = useNavigate();
@@ -52,25 +52,25 @@ function LabourBranchesBarChartPage() {
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
 
-  const [selectedGrowth, setSelectedGrowthState] = useState("SR&BR Growth %");
+  // ✅ Financial Year
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
 
+  const [selectedGrowth, setSelectedGrowthState] = useState("PMS Growth %");
   const [selectedBranches, setSelectedBranches] = useState(ALL_BRANCHES);
+  // ✅ Added selectedCities state
+  const [selectedCities, setSelectedCities] = useState([]);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const cityOptions = ["Bangalore","Mysore","Mangalore"];
   const channelOptions = ["ARENA","NEXA"];
   const qtrWiseOptions = ["Qtr1","Qtr2","Qtr3","Qtr4"];
   const halfYearOptions = ["H1","H2"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
+
   const growthOptions = Object.keys(growthKeyMap);
 
   const readBranchName = (row) =>
-    row?.branch ||
-    row?.Branch ||
-    row?.branchName ||
-    row?.BranchName ||
-    row?.name ||
-    row?.Name ||
-    "";
+    row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
 
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || "";
@@ -88,19 +88,22 @@ function LabourBranchesBarChartPage() {
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
+  // ✅ FETCH WITH FINANCIAL YEAR
   useEffect(() => {
     const fetchSummary = async () => {
       try {
         const params = new URLSearchParams();
+
         if (months.length) params.append("months", months.join(","));
         if (cities.length) params.append("cities", cities.join(","));
         if (channels.length) params.append("channels", channels.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
 
-        const endpoint = `/api/labour/labour_branch_summary${
-          params.toString() ? `?${params.toString()}` : ""
-        }`;
+        const activeFY = financialYears[0] || "2025-2026";
+        params.append("selectedFinancialYear", activeFY);
+
+        const endpoint = `/api/labour/labour_branch_summary?${params.toString()}`;
 
         const data = await fetchData(endpoint);
         setSummary(Array.isArray(data) ? data : []);
@@ -112,7 +115,7 @@ function LabourBranchesBarChartPage() {
     };
 
     fetchSummary();
-  }, [months, cities, channels, qtrWise, halfYear]);
+  }, [months, cities, channels, qtrWise, halfYear, financialYears]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return [];
@@ -124,6 +127,9 @@ function LabourBranchesBarChartPage() {
 
     summary.forEach((row) => {
       const br = readBranchName(row);
+      // ✅ Filter branches by selected cities
+      const city = readCityName(row);
+      if (!selectedCities.includes(city) && selectedCities.length > 0) return;
       if (!selectedBranches.includes(br)) return;
 
       const val = readGrowthValue(row, apiKey);
@@ -131,7 +137,7 @@ function LabourBranchesBarChartPage() {
 
       totals[br] = (totals[br] || 0) + val;
       counts[br] = (counts[br] || 0) + 1;
-      cityMap[br] = readCityName(row);
+      cityMap[br] = city;
     });
 
     return Object.keys(totals)
@@ -146,8 +152,28 @@ function LabourBranchesBarChartPage() {
   const chartData = buildChartData();
 
   const handleBranchChange = (e) => {
-    const value = e.target.value;
-    setSelectedBranches(value);
+    setSelectedBranches(e.target.value);
+  };
+
+  // ✅ Added handleCityChange
+  const handleCityChange = (e) => {
+    const newSelectedCities = e.target.value;
+    setSelectedCities(newSelectedCities);
+    
+    // Auto-select all branches for selected cities
+    if (newSelectedCities.length > 0) {
+      const branchesForCities = CITY_ORDER
+        .filter(city => newSelectedCities.includes(city))
+        .flatMap(city => 
+          Object.entries(BRANCH_CITY_MAP)
+            .filter(([_, c]) => c === city)
+            .map(([br]) => br)
+        );
+      setSelectedBranches(branchesForCities);
+    } else {
+      // If no cities selected, select all branches
+      setSelectedBranches(ALL_BRANCHES);
+    }
   };
 
   return (
@@ -163,52 +189,67 @@ function LabourBranchesBarChartPage() {
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",justifyContent: "flex-end",gap: 2,mb: 3,flexWrap: "wrap"  
+        }}
+      >
+        {/* ✅ CITY SELECTOR */}
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select Cities</InputLabel>
+          <Select
+            multiple
+            label="Select Cities"
+            value={selectedCities}
+            onChange={handleCityChange}
+            renderValue={(selected) =>
+              selected.length === 0
+                ? "All Cities"
+                : selected.length === cityOptions.length
+                ? "All Cities"
+                : `${selected.length} Cities`
+            }
+          >
+            {cityOptions.map((city) => (
+              <MenuItem value={city} key={city}>
+                <Checkbox checked={selectedCities.includes(city)} />
+                <ListItemText primary={city} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      
+        {/* ✅ BRANCH SELECTOR */}
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
-
           <Select
             multiple
             label="Select Branches"
             value={selectedBranches}
             onChange={handleBranchChange}
-            displayEmpty
-            renderValue={() => "Select Branches"}  // << ALWAYS SHOWN
-            MenuProps={{
-              PaperProps: {
-                style: { maxHeight: 300 },
-              },
-            }}
+            renderValue={() =>
+              selectedCities.length > 0
+                ? `${selectedBranches.length} Branches`
+                : "All Branches"
+            }
           >
-            <ListItemText primary="Bangalore" sx={{ pl: 2, fontWeight: "bold" }} />
-            {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, c]) => c === "Bangalore")
-              .map(([br]) => (
-                <MenuItem value={br} key={br}>
-                  <Checkbox checked={selectedBranches.includes(br)} />
-                  <ListItemText primary={br} />
-                </MenuItem>
-              ))}
-
-            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
-            {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, c]) => c === "Mysore")
-              .map(([br]) => (
-                <MenuItem value={br} key={br}>
-                  <Checkbox checked={selectedBranches.includes(br)} />
-                  <ListItemText primary={br} />
-                </MenuItem>
-              ))}
-
-            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
-            {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, c]) => c === "Mangalore")
-              .map(([br]) => (
-                <MenuItem value={br} key={br}>
-                  <Checkbox checked={selectedBranches.includes(br)} />
-                  <ListItemText primary={br} />
-                </MenuItem>
-              ))}
+            {CITY_ORDER.map((city) => (
+              <React.Fragment key={city}>
+                <ListItemText
+                  primary={city}
+                  sx={{ pl: 2, fontWeight: "bold" }}
+                />
+      
+                {Object.entries(BRANCH_CITY_MAP)
+                  .filter(([_, c]) => c === city)
+                  .map(([br]) => (
+                    <MenuItem value={br} key={br}>
+                      <Checkbox checked={selectedBranches.includes(br)} />
+                      <ListItemText primary={br} />
+                    </MenuItem>
+                  ))}
+              </React.Fragment>
+            ))}
           </Select>
         </FormControl>
       </Box>
@@ -229,6 +270,9 @@ function LabourBranchesBarChartPage() {
         halfYearOptions={halfYearOptions}
         halfYear={halfYear}
         setHalfYear={setHalfYear}
+        financialYearOptions={financialYearOptions}
+        financialYears={financialYears}
+        setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons
@@ -247,16 +291,7 @@ function LabourBranchesBarChartPage() {
       ) : chartData.length === 0 ? (
         <Typography sx={{ mt: 2 }}>No data available.</Typography>
       ) : (
-        <Box
-          sx={{
-            mt: 2,
-            height: 520,
-            background: "#fff",
-            borderRadius: 2,
-            boxShadow: 3,
-            p: 2,
-          }}
-        >
+        <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
           <BranchBarChart
             chartData={chartData}
             selectedGrowth={selectedGrowth}

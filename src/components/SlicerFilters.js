@@ -10,13 +10,14 @@ const SlicerFilters = ({
   halfYearOptions = [],
   cityOptions = [],
   branchOptions = [],
+  financialYearOptions = [],
 
   months = [],
   setMonths = () => {},
 
   dates = [],
   setDates = () => {},
-  dateSingleSelect = false,   
+  dateSingleSelect = false,
 
   years = [],
   setYears = () => {},
@@ -33,8 +34,11 @@ const SlicerFilters = ({
   cities = [],
   setCities = () => {},
 
-  branhces = [],
+  branches = [],
   setBranches = () => {},
+
+  financialYears = [],
+  setFinancialYears = () => {},
 }) => {
   const quarterMapping = {
     Qtr1: ["Apr", "May", "Jun"],
@@ -137,10 +141,12 @@ const SlicerFilters = ({
         },
       }}
     >
-      {/* ✅ Months */}
+      {/* Months */}
       {monthOptions.length > 0 && (
         <Box sx={{ minWidth: 200 }}>
-          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Month(s)</Typography>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>
+            Select Month(s)
+          </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
             {monthOptions.map((m) => {
               const selected = months.includes(m);
@@ -163,31 +169,29 @@ const SlicerFilters = ({
         </Box>
       )}
 
-      {/* ✅ Dates */}
-      {dateOptions.length > 0 && (
-        <Box sx={{ minWidth: 180 }}>
-          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Date(s)</Typography>
+      {/* Financial Years */}
+      {financialYearOptions.length > 0 && (
+        <Box sx={{ minWidth: 220 }}>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>
+            Select Financial Year
+          </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-            {dateOptions.map((d) => {
-              const selected = dates.includes(d);
+            {financialYearOptions.map((fy) => {
+              const selected = financialYears.includes(fy);
               return (
                 <Button
-                  key={d}
+                  key={fy}
                   sx={commonButtonStyles(selected)}
                   size="small"
                   onClick={() => {
-                    if (dateSingleSelect) {
-                      // ✅ Single select mode (for bar chart / monthly report)
-                      setDates([d]);
+                    if (selected) {
+                      setFinancialYears(financialYears.filter((x) => x !== fy));
                     } else {
-                      // Multi-select mode
-                      selected
-                        ? setDates(dates.filter((x) => x !== d))
-                        : setDates([...dates, d]);
+                      setFinancialYears([fy]); // Single select for FY
                     }
                   }}
                 >
-                  {d}
+                  {fy}
                 </Button>
               );
             })}
@@ -195,85 +199,7 @@ const SlicerFilters = ({
         </Box>
       )}
 
-      {/* ✅ Years */}
-      {yearOptions.length > 0 && (
-        <Box sx={{ minWidth: 150 }}>
-          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Year(s)</Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-            {yearOptions.map((y) => {
-              const selected = years.includes(y);
-              return (
-                <Button
-                  key={y}
-                  sx={commonButtonStyles(selected)}
-                  size="small"
-                  onClick={() =>
-                    selected
-                      ? setYears(years.filter((x) => x !== y))
-                      : setYears([...years, y])
-                  }
-                >
-                  {y}
-                </Button>
-              );
-            })}
-          </Box>
-        </Box>
-      )}
-
-      {/* ✅ Cities */}
-      {cityOptions.length > 0 && (
-        <Box sx={{ minWidth: 200 }}>
-          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select City(s)</Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-            {cityOptions.map((c) => {
-              const selected = cities.includes(c);
-              return (
-                <Button
-                  key={c}
-                  sx={commonButtonStyles(selected)}
-                  size="small"
-                  onClick={() =>
-                    selected
-                      ? setCities(cities.filter((x) => x !== c))
-                      : setCities([...cities, c])
-                  }
-                >
-                  {c}
-                </Button>
-              );
-            })}
-          </Box>
-        </Box>
-      )}
-
-      {/* ✅ Branches */}
-      {branchOptions.length > 0 && (
-        <Box sx={{ minWidth: 200 }}>
-          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Branch(s)</Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-            {branchOptions.map((b) => {
-              const selected = branhces.includes(b);
-              return (
-                <Button
-                  key={b}
-                  sx={commonButtonStyles(selected)}
-                  size="small"
-                  onClick={() =>
-                    selected
-                      ? setBranches(cities.filter((x) => x !== b))
-                      : setBranches([...cities, b])
-                  }
-                >
-                  {b}
-                </Button>
-              );
-            })}
-          </Box>
-        </Box>
-      )}
-
-      {/* ✅ Channels */}
+      {/* Channels */}
       {channelOptions.length > 0 && (
         <Box sx={{ minWidth: 200 }}>
           <Typography sx={{ fontWeight: 600, mb: 1 }}>
@@ -301,10 +227,12 @@ const SlicerFilters = ({
         </Box>
       )}
 
-      {/* ✅ Quarters */}
-      {qtrWiseOptions.length > 0 && (
+      {/* Quarters */}
+      {qtrWiseOptions && qtrWiseOptions.length > 0 && (
         <Box sx={{ minWidth: 180 }}>
-          <Typography sx={{ fontWeight: 600, mb: 1 }}>Select Quarter(s)</Typography>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>
+            Select Quarter(s)
+          </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
             {qtrWiseOptions.map((q) => {
               const selected = qtrWise.includes(q);
@@ -323,11 +251,11 @@ const SlicerFilters = ({
         </Box>
       )}
 
-      {/* ✅ Half Years */}
-      {halfYearOptions.length > 0 && (
-        <Box sx={{ minWidth: 180 }}>
+      {/* Half Years */}
+      {halfYearOptions && halfYearOptions.length > 0 && (
+        <Box sx={{ minWidth: 140 }}>
           <Typography sx={{ fontWeight: 600, mb: 1 }}>
-            Select Half Year(s)
+            Select Half Year
           </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
             {halfYearOptions.map((h) => {

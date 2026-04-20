@@ -8,57 +8,43 @@ import GrowthLineChart from "../../components/GrowthLineChart";
 import { sortCities } from "../../components/CityOrderHelper";
 import CityWiseSummaryTable from "../../components/common/CityWiseSummaryTable ";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
-
 import { buildPivotTable } from "../../utils/buildPivotTable";
 
-function BRConversionPage() {
+function ServiceLoadPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [financialYears, setFinancialYears] = useState("2026-2027");
-  const [selectedGrowth, setSelectedGrowthState] = useState("Arena&Nexa BR Conversion %");
+  const [channels, setChannels] = useState([]);
+  const [financialYears, setFinancialYears] = useState([]);
+  const [selectedGrowth, setSelectedGrowthState] = useState("Service Load");
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep",
     "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
-  const financialYearOptions = ["2025-2026", "2026-2027"];
 
-  const growthOptions = [
-    "Arena BR Conversion %", "Nexa BR Conversion %", "Arena&Nexa BR Conversion %",
-    "Arena Total Amount", "Nexa Total Amount", "Arena&Nexa Total Amount",
-  ];
+  const channelOptions = ["ARENA", "NEXA"];
+  const financialYearOptions = ["2024-2025", "2025-2026"];
+
+  const growthOptions = ["Service Load"];
 
   const growthKeyMap = {
-    "Arena BR Conversion %": "percentageArenaBRConversion",
-    "Nexa BR Conversion %": "percentageNexaBRConversion",
-    "Arena&Nexa BR Conversion %": "percentageArenaNexaBRConversion",
-    "Arena Total Amount": "totalArenaAmount",
-    "Nexa Total Amount": "totalNexaAmount",
-    "Arena&Nexa Total Amount": "totalArenaNexaAmount",
+    "Service Load": "serviceLoad",
   };
 
   const valueKeyMap = {
-    "Arena BR Conversion %": ["fspmsLoaddArena", "brConversionArena", "percentageArenaBRConversion"],
-    "Nexa BR Conversion %": ["fspmsLoaddNexa", "brConversionNexa", "percentageNexaBRConversion"],
-    "Arena&Nexa BR Conversion %": ["fspmsLoaddArenaNexa", "brConversionArenaNexa", "percentageArenaNexaBRConversion"],
-    "Arena Total Amount": ["labourAmountArena", "partAmountArena", "totalArenaAmount"],
-    "Nexa Total Amount": ["labourAmountNexa","partAmountNexa", "totalNexaAmount"],
-    "Arena&Nexa Total Amount": ["labourAmountArenaNexa", "partAmountArenaNexa", "totalArenaNexaAmount"],
+    "Service Load": ["serviceLoad"],
   };
 
   const beautifyHeader = (key) => {
-    if (key.startsWith("fspmsLoadd")) return "FSPMS";
-    if (key.startsWith("brConversion")) return "BR";
-    if (key.startsWith("labourAmount")) return "Lab";
-    if (key.startsWith("partAmount")) return "Spr";
-    if (key.startsWith("total")) return "Tot";
-    if (key.startsWith("percentage")) return "BR %";
+    if (key.startsWith("previous")) return "LY";
+    if (key.startsWith("current")) return "TY";
+    if (key.startsWith("growth")) return "GR %";
     return key;
   };
 
   useEffect(() => {
-    const saved = getSelectedGrowth("br_conversion");
+    const saved = getSelectedGrowth("service_load");
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
@@ -81,9 +67,23 @@ function BRConversionPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          let q = `?&months=${m}&financialYears=${financialYears}`;
+          let q = `?months=${encodeURIComponent(m)}`;
 
-          const data = await fetchData(`/api/br_conversion/br_conversion_summary${q}`);
+          // channels: support 0, 1 or many (Spring will bind repeated params to List)
+          if (channels.length > 0) {
+            channels.forEach((ch) => {
+              q += `&channels=${encodeURIComponent(ch)}`;
+            });
+          }
+
+          // financialYears: support 0, 1 or many
+          if (financialYears.length > 0) {
+            financialYears.forEach((fy) => {
+              q += `&financialYears=${encodeURIComponent(fy)}`;
+            });
+          }
+
+          const data = await fetchData(`/api/service_load/service_load_summary${q}`);
           const safe = Array.isArray(data) ? data : data?.result || [];
 
           combined.push({ month: m, data: safe });
@@ -96,7 +96,7 @@ function BRConversionPage() {
     };
 
     fetchCitySummary();
-  }, [months, financialYears]);
+  }, [months, channels, financialYears]);
 
   // Build chart data
   const buildChartData = () => {
@@ -129,22 +129,53 @@ function BRConversionPage() {
   };
 
   const { formatted: chartData, sortedCities: cityKeys } = buildChartData();
+
   const keys = selectedGrowth ? valueKeyMap[selectedGrowth] : [];
 
-  // NEW REUSABLE PIVOT TABLE LOGIC
   const citiesToShow = ["Bangalore", "Mysore", "Mangalore"];
-  const { tableData, chartMonths } = buildPivotTable(summary, keys, citiesToShow);
+
+  const pivotResult = buildPivotTable(summary, keys, citiesToShow);
+  const tableData = pivotResult?.tableData || [];
+  const chartMonths = pivotResult?.chartMonths || [];
 
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">BR CONVERSION GRAPH (CityWise)</Typography>
+        <Typography variant="h4">SERVICE LOAD GRAPH (CityWise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion")}>Graph-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches")}>Graph-BranchWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/service_load")}
+          >
+            Graph-CityWise
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/DashboardHome/service_load_branches")}
+          >
+            Graph-BranchWise
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() =>
+              navigate("/DashboardHome/service_load-bar-chart")
+            }
+          >
+            Bar Chart-CityWise
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() =>
+              navigate("/DashboardHome/service_load_branches-bar-chart")
+            }
+          >
+            Bar Chart-BranchWise
+          </Button>
         </Box>
       </Box>
 
@@ -152,6 +183,9 @@ function BRConversionPage() {
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
+        channelOptions={channelOptions}
+        channels={channels}
+        setChannels={setChannels}
         financialYearOptions={financialYearOptions}
         financialYears={financialYears}
         setFinancialYears={setFinancialYears}
@@ -162,7 +196,7 @@ function BRConversionPage() {
         selectedGrowth={selectedGrowth}
         setSelectedGrowth={(v) => {
           setSelectedGrowthState(v);
-          setSelectedGrowth(v, "br_conversion");
+          setSelectedGrowth(v, "service_load");
         }}
       />
 
@@ -186,32 +220,41 @@ function BRConversionPage() {
               {selectedGrowth}
             </Typography>
 
-            <GrowthLineChart 
-            chartData={chartData} 
-            cityKeys={cityKeys} 
-            decimalDigits={["Arena BR Conversion %", "Nexa BR Conversion %", "Arena&Nexa BR Conversion %"].includes(selectedGrowth) ? 1 : 2} 
-            showPercent={selectedGrowth.includes("%")}
+            <GrowthLineChart
+              chartData={chartData}
+              cityKeys={cityKeys}
+              decimalDigits={0}
+              showPercent={false}
             />
           </Box>
 
-          {/* TABLE USING REUSABLE LOGIC */}
-          <CityWiseSummaryTable
-            selectedGrowth={selectedGrowth}
-            chartMonths={chartMonths}
-            keys={keys}
-            beautifyHeader={beautifyHeader}
-            tableData={tableData}
-          
-            decimalDigits={0}
-            percentageDecimalDigits={
-              selectedGrowth.includes("%") ? 1 : 0   
-            }
-            growthDecimalDigits={1}
-          />
+          {tableData && tableData.length > 0 ? (
+            <CityWiseSummaryTable
+              selectedGrowth={selectedGrowth}
+              chartMonths={chartMonths}
+              keys={keys}
+              beautifyHeader={beautifyHeader}
+              tableData={tableData}
+            />
+          ) : (
+            <Box
+              sx={{
+                mt: 2,
+                p: 2,
+                background: "#fff",
+                borderRadius: 2,
+                boxShadow: 1,
+              }}
+            >
+              <Typography>
+                No table data available for the selected criteria.
+              </Typography>
+            </Box>
+          )}
         </>
       )}
     </Box>
   );
 }
 
-export default BRConversionPage;
+export default ServiceLoadPage;

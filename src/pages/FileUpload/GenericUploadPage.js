@@ -19,61 +19,78 @@ import LoadingAnimation from "../../components/LoadingAnimation";
 
 function GenericUploadPage({ moduleName, tableName }) {
   const config = apiModules.find((m) => m.name === moduleName);
+
   const [tableData, setTableData] = useState([]);
   const [months, setMonths] = useState([]);
   const [years, setYears] = useState([]);
+  const [financialYears, setFinancialYears] = useState([]);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  // 🔹 Fetch all data
   const handleFetch = async () => {
     setLoading(true);
-    const data = await fetchAllRecords(config.get);
-    setTableData(data);
+    try {
+      const data = await fetchAllRecords(config.get);
+      setTableData(data || []);
+    } catch (err) {
+      console.error("Fetch failed:", err);
+    }
     setLoading(false);
   };
 
-  // 🔹 Apply filter
   const handleFilter = async () => {
-    if (months.length === 0 && years.length === 0) {
-      alert("⚠ Please select Month or Year!");
+    if (
+      months.length === 0 &&
+      years.length === 0 &&
+      financialYears.length === 0
+    ) {
+      alert("⚠ Please select Month, Year or Financial Year!");
       return;
     }
 
     setLoading(true);
-    const data = await filterByMonthYear(config.getByMonthYear, months, years);
-    setTableData(data);
+    try {
+      const data = await filterByMonthYear(
+        config.getByMonthYear,
+        months,
+        years,
+        financialYears
+      );
+      setTableData(data || []);
+    } catch (err) {
+      console.error("Filter failed:", err);
+      alert(
+        "❌ Filter failed: " +
+          (err.response?.data?.message || err.message)
+      );
+    }
     setLoading(false);
   };
 
-  // 🔹 Download as Excel - REMOVES FIRST COLUMN (Primary Key) - NO SI.No
   const handleDownloadExcel = () => {
     if (tableData.length === 0) return;
 
     try {
-      // Transform data - REMOVE FIRST COLUMN only
       const exportData = tableData.map((row) => {
         const rowKeys = Object.keys(row);
         const cleanRow = {};
-        
-        // Skip FIRST column (index 0) - that's your primary key
+        // skip first key (PK)
         for (let i = 1; i < rowKeys.length; i++) {
           const key = rowKeys[i];
           cleanRow[key] = row[key];
         }
-        
         return cleanRow;
       });
 
       const ws = XLSX.utils.json_to_sheet(exportData);
       const colWidths = Object.keys(exportData[0]).map(() => ({ wch: 18 }));
-      ws['!cols'] = colWidths;
+      ws["!cols"] = colWidths;
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Data");
-      
+
       const filename = `${tableName}_report.xlsx`;
       XLSX.writeFile(wb, filename);
     } catch (err) {
@@ -81,7 +98,6 @@ function GenericUploadPage({ moduleName, tableName }) {
     }
   };
 
-  // 🔹 Upload file
   const handleUpload = async () => {
     if (!file) return alert("⚠ Select a file first!");
 
@@ -92,12 +108,14 @@ function GenericUploadPage({ moduleName, tableName }) {
       setFile(null);
       handleFetch();
     } catch (err) {
-      alert("❌ Upload failed: " + (err.response?.data?.message || err.message));
+      alert(
+        "❌ Upload failed: " +
+          (err.response?.data?.message || err.message)
+      );
     }
     setLoading(false);
   };
 
-  // 🔹 Delete all
   const handleDeleteAll = async () => {
     if (!window.confirm(`⚠ Delete ALL ${moduleName} data?`)) return;
 
@@ -107,13 +125,17 @@ function GenericUploadPage({ moduleName, tableName }) {
       alert(`🗑 All ${moduleName} data deleted!`);
       setTableData([]);
     } catch (err) {
-      alert("❌ Delete failed: " + (err.response?.data?.message || err.message));
+      alert(
+        "❌ Delete failed: " +
+          (err.response?.data?.message || err.message)
+      );
     }
     setLoading(false);
   };
 
   useEffect(() => {
     handleFetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) return <LoadingAnimation />;
@@ -136,18 +158,25 @@ function GenericUploadPage({ moduleName, tableName }) {
         >
           <TitleBar title={`${moduleName} Upload File`} />
           <Box sx={{ display: "flex", gap: 2 }}>
-            <Button 
-              variant="contained" 
-              color="success" 
+            <Button
+              variant="contained"
+              color="success"
               onClick={handleDownloadExcel}
               sx={{ minWidth: 140 }}
             >
               📥 Download Excel
             </Button>
-            <Button variant="contained" color="error" onClick={handleDeleteAll}>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleDeleteAll}
+            >
               Delete All
             </Button>
-            <Button variant="outlined" onClick={() => navigate("/AdminDashboard")}>
+            <Button
+              variant="outlined"
+              onClick={() => navigate("/AdminDashboard")}
+            >
               Back
             </Button>
           </Box>
@@ -159,8 +188,10 @@ function GenericUploadPage({ moduleName, tableName }) {
           <MonthYearFilter
             months={months}
             years={years}
+            financialYears={financialYears}
             setMonths={setMonths}
             setYears={setYears}
+            setFinancialYears={setFinancialYears}
             onFilter={handleFilter}
             onViewAll={handleFetch}
           />

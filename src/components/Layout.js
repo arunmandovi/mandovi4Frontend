@@ -59,12 +59,14 @@ function Layout() {
     "sales",
     "servicee",
     "sales_servicee_growth",
+    "service_load",
     "total_branch_outstanding",
   ];
 
   const COMMON_VIEWS = ["bar-chart", "branches", "branches-bar-chart"];
   const MODULE_VIEW_SUPPORT = {
     loadd: COMMON_VIEWS,
+    service_load: COMMON_VIEWS,
     hold_up: COMMON_VIEWS,
     productivity: COMMON_VIEWS,
     due_done: COMMON_VIEWS,
@@ -176,6 +178,7 @@ function formatLabel(name) {
     sales: "Sales",
     servicee: "Service",
     sales_servicee_growth: "Sales & Service",
+    service_load: "Service Load",
     total_branch_outstanding: "Outstanding",
   };
 

@@ -16,6 +16,7 @@ import HoldUpDayWiseSummaryPage from "./pages/GraphView/HoldUpDayWiseSummaryPage
 import LabourPage from "./pages/GraphView/LabourPage";
 import PerVehiclePage from "./pages/GraphView/PerVehiclePage";
 import LoaddPage from "./pages/GraphView/LoaddPage";
+import ServiceLoadPage from "./pages/GraphView/ServiceLoadPage.js";
 import MCPPage from "./pages/GraphView/MCPPage";
 import MGAPage from "./pages/GraphView/MGAPage";
 import MGAProfitPage from "./pages/GraphView/MGAProfitPage";
@@ -316,6 +317,7 @@ function App() {
           <Route path="labour" element={<LabourPage />} />
           <Route path="per_vehicle" element={<PerVehiclePage />} />
           <Route path="loadd" element={<LoaddPage />} />
+          <Route path="service_load" element={<ServiceLoadPage />} />
           <Route path="mcp" element={<MCPPage />} />
           <Route path="mga" element={<MGAPage />} />
           <Route path="mga_profit" element={<MGAProfitPage />} />

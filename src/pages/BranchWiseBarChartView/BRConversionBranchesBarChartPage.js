@@ -32,19 +32,20 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
 ).sort((a, b) => a.localeCompare(b));
 
 const growthKeyMap = {
-    "Arena BR Conversion %": "percentageArenaBRConversion",
-    "Nexa BR Conversion %": "percentageNexaBRConversion",
-    "Arena&Nexa BR Conversion %": "percentageArenaNexaBRConversion",
-    "Arena Total Amount": "totalArenaAmount",
-    "Nexa Total Amount": "totalNexaAmount",
-    "Arena&Nexa Total Amount": "totalArenaNexaAmount",
-  };
+  "Arena BR Conversion %": "percentageArenaBRConversion",
+  "Nexa BR Conversion %": "percentageNexaBRConversion",
+  "Arena&Nexa BR Conversion %": "percentageArenaNexaBRConversion",
+  "Arena Total Amount": "totalArenaAmount",
+  "Nexa Total Amount": "totalNexaAmount",
+  "Arena&Nexa Total Amount": "totalArenaNexaAmount",
+};
 
 function BRConversionBranchesBarChartPage() {
   const navigate = useNavigate();
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [cities, setCities] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
@@ -53,20 +54,18 @@ function BRConversionBranchesBarChartPage() {
 
   const [selectedBranches, setSelectedBranches] = useState(ALL_BRANCHES);
 
+  // ✅ NEW: selectedCities
+  const [selectedCities, setSelectedCities] = useState([]);
+
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const cityOptions = ["Bangalore","Mysore","Mangalore"];
   const qtrWiseOptions = ["Qtr1","Qtr2","Qtr3","Qtr4"];
   const halfYearOptions = ["H1","H2"];
   const growthOptions = Object.keys(growthKeyMap);
 
   const readBranchName = (row) =>
-    row?.branch ||
-    row?.Branch ||
-    row?.branchName ||
-    row?.BranchName ||
-    row?.name ||
-    row?.Name ||
-    "";
+    row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
 
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || "";
@@ -89,6 +88,7 @@ function BRConversionBranchesBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
+        if (financialYears.length) params.append("financialYears", financialYears.join(","));
         if (cities.length) params.append("cities", cities.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
@@ -99,7 +99,6 @@ function BRConversionBranchesBarChartPage() {
 
         const data = await fetchData(endpoint);
         setSummary(Array.isArray(data) ? data : []);
-
       } catch (e) {
         console.error(e);
         setSummary([]);
@@ -107,8 +106,9 @@ function BRConversionBranchesBarChartPage() {
     };
 
     fetchSummary();
-  }, [months, cities, qtrWise, halfYear]);
+  }, [months, financialYears, cities, qtrWise, halfYear]);
 
+  // ✅ UPDATED: include city filter
   const buildChartData = () => {
     if (!selectedGrowth) return [];
     const apiKey = growthKeyMap[selectedGrowth];
@@ -119,6 +119,11 @@ function BRConversionBranchesBarChartPage() {
 
     summary.forEach((row) => {
       const br = readBranchName(row);
+      const city = readCityName(row);
+
+      // ✅ City filter
+      if (!selectedCities.includes(city) && selectedCities.length > 0) return;
+
       if (!selectedBranches.includes(br)) return;
 
       const val = readGrowthValue(row, apiKey);
@@ -126,7 +131,7 @@ function BRConversionBranchesBarChartPage() {
 
       totals[br] = (totals[br] || 0) + val;
       counts[br] = (counts[br] || 0) + 1;
-      cityMap[br] = readCityName(row);
+      cityMap[br] = city;
     });
 
     return Object.keys(totals)
@@ -141,8 +146,26 @@ function BRConversionBranchesBarChartPage() {
   const chartData = buildChartData();
 
   const handleBranchChange = (e) => {
-    const value = e.target.value;
-    setSelectedBranches(value);
+    setSelectedBranches(e.target.value);
+  };
+
+  // ✅ NEW: handleCityChange (same logic as your first file)
+  const handleCityChange = (e) => {
+    const newSelectedCities = e.target.value;
+    setSelectedCities(newSelectedCities);
+
+    if (newSelectedCities.length > 0) {
+      const branchesForCities = CITY_ORDER
+        .filter(city => newSelectedCities.includes(city))
+        .flatMap(city =>
+          Object.entries(BRANCH_CITY_MAP)
+            .filter(([_, c]) => c === city)
+            .map(([br]) => br)
+        );
+      setSelectedBranches(branchesForCities);
+    } else {
+      setSelectedBranches(ALL_BRANCHES);
+    }
   };
 
   return (
@@ -158,7 +181,35 @@ function BRConversionBranchesBarChartPage() {
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+      {/* ✅ UPDATED FILTER ROW */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
+
+        {/* CITY FILTER */}
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select Cities</InputLabel>
+          <Select
+            multiple
+            label="Select Cities"
+            value={selectedCities}
+            onChange={handleCityChange}
+            renderValue={(selected) =>
+              selected.length === 0
+                ? "All Cities"
+                : selected.length === cityOptions.length
+                ? "All Cities"
+                : `${selected.length} Cities`
+            }
+          >
+            {cityOptions.map((city) => (
+              <MenuItem value={city} key={city}>
+                <Checkbox checked={selectedCities.includes(city)} />
+                <ListItemText primary={city} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* BRANCH FILTER */}
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
 
@@ -167,51 +218,37 @@ function BRConversionBranchesBarChartPage() {
             label="Select Branches"
             value={selectedBranches}
             onChange={handleBranchChange}
-            displayEmpty
-            renderValue={() => "Select Branches"}  // << ALWAYS SHOWN
-            MenuProps={{
-              PaperProps: {
-                style: { maxHeight: 300 },
-              },
-            }}
+            renderValue={() =>
+              selectedCities.length > 0
+                ? `${selectedBranches.length} Branches`
+                : "All Branches"
+            }
           >
-            <ListItemText primary="Bangalore" sx={{ pl: 2, fontWeight: "bold" }} />
-            {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, c]) => c === "Bangalore")
-              .map(([br]) => (
-                <MenuItem value={br} key={br}>
-                  <Checkbox checked={selectedBranches.includes(br)} />
-                  <ListItemText primary={br} />
-                </MenuItem>
-              ))}
-
-            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
-            {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, c]) => c === "Mysore")
-              .map(([br]) => (
-                <MenuItem value={br} key={br}>
-                  <Checkbox checked={selectedBranches.includes(br)} />
-                  <ListItemText primary={br} />
-                </MenuItem>
-              ))}
-
-            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
-            {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, c]) => c === "Mangalore")
-              .map(([br]) => (
-                <MenuItem value={br} key={br}>
-                  <Checkbox checked={selectedBranches.includes(br)} />
-                  <ListItemText primary={br} />
-                </MenuItem>
-              ))}
+            {CITY_ORDER.map((city) => (
+              <React.Fragment key={city}>
+                <ListItemText primary={city} sx={{ pl: 2, fontWeight: "bold" }} />
+                {Object.entries(BRANCH_CITY_MAP)
+                  .filter(([_, c]) => c === city)
+                  .map(([br]) => (
+                    <MenuItem value={br} key={br}>
+                      <Checkbox checked={selectedBranches.includes(br)} />
+                      <ListItemText primary={br} />
+                    </MenuItem>
+                  ))}
+              </React.Fragment>
+            ))}
           </Select>
         </FormControl>
       </Box>
 
+      {/* rest unchanged */}
       <SlicerFilters
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
+        financialYearOptions={financialYearOptions}
+        financialYears={financialYears}
+        setFinancialYears={setFinancialYears}
         cityOptions={cityOptions}
         cities={cities}
         setCities={setCities}
@@ -239,26 +276,25 @@ function BRConversionBranchesBarChartPage() {
       ) : chartData.length === 0 ? (
         <Typography sx={{ mt: 2 }}>No data available.</Typography>
       ) : (
-        <Box
-          sx={{
-            mt: 2,
-            height: 520,
-            background: "#fff",
-            borderRadius: 2,
-            boxShadow: 3,
-            p: 2,
-          }}
-        >
-          {!selectedGrowth ? <Typography sx={{mt:2}}>👆 Select a growth type to view the chart below</Typography> :
-        <BranchBarChart 
-        chartData={chartData} 
-        selectedGrowth={selectedGrowth}
-        decimalPlaces={["Arena Total Amount", "Nexa Total Amount", "Arena&Nexa Total Amount"]
-          .includes(selectedGrowth) ? 0 : 1 }
-        chartType={["Arena Total Amount", "Nexa Total Amount", "Arena&Nexa Total Amount"]
-          .includes(selectedGrowth) ? "MGABranchesBarChart" : "absValue"}
-        />
-      }
+        <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
+          {!selectedGrowth ? (
+            <Typography sx={{ mt: 2 }}>
+              👆 Select a growth type to view the chart below
+            </Typography>
+          ) : (
+            <BranchBarChart
+              chartData={chartData}
+              selectedGrowth={selectedGrowth}
+              decimalPlaces={
+                ["Arena Total Amount", "Nexa Total Amount", "Arena&Nexa Total Amount"]
+                  .includes(selectedGrowth) ? 0 : 1
+              }
+              chartType={
+                ["Arena Total Amount", "Nexa Total Amount", "Arena&Nexa Total Amount"]
+                  .includes(selectedGrowth) ? "MGABranchesBarChart" : "absValue"
+              }
+            />
+          )}
         </Box>
       )}
     </Box>

@@ -15,11 +15,13 @@ function BRConversionBarChartPage() {
   const [months, setMonths] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
+  const [financialYears, setFinancialYear] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
 
   const growthOptions = [
     "Arena BR Conversion %", "Nexa BR Conversion %", "Arena&Nexa BR Conversion %",
@@ -59,6 +61,7 @@ function BRConversionBarChartPage() {
         if (months.length) params.append("months", months.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
+        if (financialYears.length) params.append("financialYears", financialYears.join(","));
         const query = params.toString() ? `?${params.toString()}` : "";
         const data = await fetchData(`/api/br_conversion/br_conversion_summary${query}`);
         setSummary(Array.isArray(data) ? data : []);
@@ -67,7 +70,7 @@ function BRConversionBarChartPage() {
       }
     };
     fetchCitySummary();
-  }, [months, qtrWise, halfYear]);
+  }, [months, qtrWise, halfYear, financialYears]);
 
   // -----------------------------------------
   // Helpers
@@ -112,7 +115,7 @@ function BRConversionBarChartPage() {
       }
     });
 
-    const preferredOrder = ["BANGALORE", "MYSORE", "MANGALORE"];
+    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
     const allCities = Object.keys(totals);
 
     const sortedCities = [
@@ -189,6 +192,9 @@ function BRConversionBarChartPage() {
         halfYearOptions={halfYearOptions}
         halfYear={halfYear}
         setHalfYear={setHalfYear}
+        financialYearOptions={financialYearOptions}
+        financialYears={financialYears}
+        setFinancialYears={setFinancialYear}
       />
 
       <GrowthButtons
