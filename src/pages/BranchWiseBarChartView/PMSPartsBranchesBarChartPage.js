@@ -32,32 +32,23 @@ function PMSPartsBranchesBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [cities, setCities] = useState([]);
+  const [selectedCities, setSelectedCities] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState("7 PARTS PMS %");
   const [selectedBranches, setSelectedBranches] = useState(ALL_BRANCHES);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
   const qtrWiseOptions = ["Qtr1","Qtr2","Qtr3","Qtr4"];
   const halfYearOptions = ["H1","H2"];
   
   const growthOptions = [
-    "Air filter %",
-    "Belt water pump %",
-    "Brake fluid %",
-    "Coolant %",
-    "Fuel Filter %",
-    "Oil filter %",
-    "Spark plug %",
-    "7 PARTS PMS %",
-    "DRAIN PLUG GASKET %",
-    "ISG BELT GENERATOR %",
-    "CNG FILTER %",
-    "3 PARTS PMS %",
-    "Grand Total %",
-  ];
+    "Air filter %","Belt water pump %","Brake fluid %", "Coolant %", "Fuel Filter %", "Oil filter %", "Spark plug %",
+    "7 PARTS PMS %", "DRAIN PLUG GASKET %", "ISG BELT GENERATOR %", "CNG FILTER %", "3 PARTS PMS %", "Grand Total %", ];
 
   const growthKeyMap = {
     "Air filter %": "airFilter",
@@ -85,6 +76,7 @@ function PMSPartsBranchesBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length>0) params.append("months", months.join(","));
+        if (financialYears.length>0) params.append("financialYears", financialYears.join(","));
         if (cities.length>0) params.append("cities", cities.join(","));
         if (qtrWise.length>0) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length>0) params.append("halfYear", halfYear.join(","));
@@ -97,7 +89,7 @@ function PMSPartsBranchesBarChartPage() {
       }
     };
     fetchSummary();
-  }, [months,cities,qtrWise,halfYear]);
+  }, [months,financialYears,cities,qtrWise,halfYear]);
 
   const readBranchName = (row) => row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
   const readCityName = (row) => row?.city || row?.City || row?.cityName || row?.CityName || "";
@@ -147,26 +139,11 @@ function PMSPartsBranchesBarChartPage() {
           selectedGrowth === "BS on FPR 2025-26 %"
         ) {
           return !(
-            item.name === "Vittla" ||
-            item.name === "Naravi" ||
-            item.name === "Gowribidanur" ||
-            item.name === "Malur SOW" ||
-            item.name === "Maluru WS" ||
-            item.name === "Kollegal" ||
-            item.name === "Mandya Nexa" ||
-            item.name === "Gonikoppa Nexa" ||
-            item.name === "Narasipura" ||
-            item.name === "Nagamangala" ||
-            item.name === "Maddur" ||
-            item.name === "Somvarpet" ||
-            item.name === "Krishnarajapet" ||
-            item.name === "ChamrajNagar" ||
-            item.name === "KRS Road" ||
-            item.name === "Balmatta" ||
-            item.name === "Bantwal" ||
-            item.name === "Nexa Service" ||
-            item.name === "Kadaba" ||
-            item.name === "Sujith Bagh Lane"
+            item.name === "Vittla" || item.name === "Naravi" || item.name === "Gowribidanur" || item.name === "Malur SOW" ||
+            item.name === "Maluru WS" || item.name === "Kollegal" || item.name === "Mandya Nexa" || item.name === "Gonikoppa Nexa" ||
+            item.name === "Narasipura" || item.name === "Nagamangala" || item.name === "Maddur" || item.name === "Somvarpet" ||
+            item.name === "Krishnarajapet" || item.name === "ChamrajNagar" || item.name === "KRS Road" || item.name === "Balmatta" ||
+            item.name === "Bantwal" || item.name === "Nexa Service" || item.name === "Kadaba" || item.name === "Sujith Bagh Lane"
           );
         }
        return true;
@@ -175,9 +152,25 @@ function PMSPartsBranchesBarChartPage() {
   : [];
 
   const handleBranchChange = (e) => {
-      const value = e.target.value;
-      setSelectedBranches(value);
-    };
+    const value = e.target.value;
+    setSelectedBranches(value);
+  };
+
+  const handleCityChange = (e) => {
+    const newSelectedCities = e.target.value;
+    setSelectedCities(newSelectedCities);
+    
+    if (newSelectedCities.length > 0) {
+      const branchesForCities = newSelectedCities.flatMap(city => 
+        Object.entries(BRANCH_CITY_MAP)
+          .filter(([_, c]) => c === city)
+          .map(([br]) => br)
+      );
+      setSelectedBranches(branchesForCities);
+    } else {
+      setSelectedBranches(ALL_BRANCHES);
+    }
+  };
 
   return (
     <Box sx={{p:3}}>
@@ -191,16 +184,39 @@ function PMSPartsBranchesBarChartPage() {
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select Cities</InputLabel>
+          <Select
+            multiple
+            label="Select Cities"
+            value={selectedCities}
+            onChange={handleCityChange}
+            renderValue={(selected) => 
+              selected.length === 0 ? "All Cities" : 
+              selected.length === cityOptions.length ? "All Cities" : 
+              `${selected.length} Cities`
+            }
+          >
+            {cityOptions.map((city) => (
+              <MenuItem value={city} key={city}>
+                <Checkbox checked={selectedCities.includes(city)} />
+                <ListItemText primary={city} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      
+
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
-           <Select
+          <Select
             multiple
             label="Select Branches"
             value={selectedBranches}
             onChange={handleBranchChange}
             displayEmpty
-            renderValue={() => "Select Branches"} 
+            renderValue={() => selectedCities.length > 0 ? `${selectedBranches.length} Branches` : "Select Branches"}
             MenuProps={{
               PaperProps: {
                 style: { maxHeight: 300 },
@@ -216,7 +232,8 @@ function PMSPartsBranchesBarChartPage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mysore")
               .map(([br]) => (
@@ -225,7 +242,8 @@ function PMSPartsBranchesBarChartPage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mangalore")
               .map(([br]) => (
@@ -240,6 +258,7 @@ function PMSPartsBranchesBarChartPage() {
 
       <SlicerFilters
         monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
         cityOptions={cityOptions} cities={cities} setCities={setCities}
         qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
         halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}

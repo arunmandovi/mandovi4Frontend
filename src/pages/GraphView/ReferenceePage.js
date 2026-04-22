@@ -12,23 +12,15 @@ function ReferenceePage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [channels, setChannels] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState("E-B %");
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const financialYearOptions = ["2025-2026","2026-2027"];
   const channelOptions = ["Arena", "Nexa"];
-  
-  const growthOptions = [
-    "E-B %",
-    "E-R %",
-    "B-R %",
-  ];
-
-  const growthKeyMap = {
-    "E-B %": "percentageEnquiryBooking",
-    "E-R %": "percentageEnquiryInvoice",
-    "B-R %": "percentageBookingInvoice",
-  };
+  const growthOptions = [  "E-B %",  "E-R %",  "B-R %",];
+  const growthKeyMap = {"E-B %": "percentageEnquiryBooking", "E-R %": "percentageEnquiryInvoice", "B-R %": "percentageBookingInvoice", };
 
   useEffect(() => {
     const savedGrowth = getSelectedGrowth("referencee");
@@ -50,7 +42,7 @@ function ReferenceePage() {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
+          let query = `?&months=${m}&financialYears=${financialYears}`;
           if (channels.length === 1) query += `&channels=${channels[0]}`;
           const data = await fetchData(`/api/referencee/referencee_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
@@ -62,7 +54,7 @@ function ReferenceePage() {
       }
     };
     fetchCitySummary();
-  }, [months, channels]);
+  }, [months,financialYears, channels]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
@@ -98,12 +90,9 @@ function ReferenceePage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+        channelOptions={channelOptions} channels={channels} setChannels={setChannels}
       />
 
       <GrowthButtons

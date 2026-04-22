@@ -50,16 +50,14 @@ function LoaddBranchWisePage() {
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [channels, setChannels] = useState([]);
-  // ✅ Added Financial Year state
   const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState("PMS Growth %");
 
   const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden", "Balmatta", "KRS Road"]);
-  // ✅ Added selectedCities state
   const [selectedCities, setSelectedCities] = useState([]);
 
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
-  const cityOptions = ["Bangalore", "Mysore", "Mangalore"]; // ✅ Added city options
+  const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
   const channelOptions = ["Arena", "Nexa"];
   const financialYearOptions = ["2025-2026", "2026-2027"];
   const growthOptions = Object.keys(growthKeyMap);
@@ -82,7 +80,6 @@ function LoaddBranchWisePage() {
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
-  // ✅ UPDATED API Fetch WITH FINANCIAL YEAR
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
@@ -110,7 +107,6 @@ function LoaddBranchWisePage() {
     fetchCitySummary();
   }, [months, channels, financialYears]);
 
-  // Build Chart Data
   const buildChartData = () => {
     if (!selectedGrowth || selectedBranches.length === 0)
       return { formatted: [], sortedBranches: [] };
@@ -155,12 +151,10 @@ function LoaddBranchWisePage() {
     }
   };
 
-  // ✅ Added handleCityChange
   const handleCityChange = (e) => {
     const newSelectedCities = e.target.value;
     setSelectedCities(newSelectedCities);
     
-    // Auto-select branches for selected cities
     if (newSelectedCities.length > 0) {
       const branchesForCities = newSelectedCities.flatMap(city => 
         Object.entries(BRANCH_CITY_MAP)
@@ -186,7 +180,6 @@ function LoaddBranchWisePage() {
         </Box>
       </Box>
 
-      {/* ✅ NEW CITIES SELECTOR */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>Select Cities</InputLabel>
@@ -260,15 +253,9 @@ function LoaddBranchWisePage() {
       </Box>
       
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
-        financialYearOptions={financialYearOptions}
-        financialYears={financialYears}
-        setFinancialYears={setFinancialYears}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        channelOptions={channelOptions} channels={channels} setChannels={setChannels} 
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons

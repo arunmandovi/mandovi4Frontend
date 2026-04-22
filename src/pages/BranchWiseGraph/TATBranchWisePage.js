@@ -33,7 +33,8 @@ import {
 } from "recharts";
 
 const monthOptions = [ "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", ];
-
+const financialYearOptions = ["2025-2026", "2026-2027"];
+const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
 const growthOptions = ["FR1", "FR2", "FR3", "PMS"];
 
 const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
@@ -42,12 +43,7 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
     .map(([br]) => br)
 ).sort((a, b) => a.localeCompare(b));
 
-const growthKeyMap = {
-    FR1: "firstFreeService",
-    FR2: "secondFreeService",
-    FR3: "thirdFreeService",
-    PMS: "paidService",
-  };
+const growthKeyMap = {  FR1: "firstFreeService",  FR2: "secondFreeService",  FR3: "thirdFreeService",  PMS: "paidService",};
 
 const timeToSeconds = (hhmmss) => {
   if (hhmmss === null || hhmmss === undefined) return null;
@@ -141,11 +137,13 @@ const TATBranchLineChart = ({ chartData = [], cityKeys = [] }) => {
 const TATBranchWisePage = () => {
   const navigate = useNavigate();
 
-  const [summary, setSummary] = useState([]); // [{ month, data: [...] }, ...]
+  const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
+  const [selectedCities, setSelectedCities] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("tat") || "FR1");
 
-  const [selectedBranches, setSelectedBranches] = useState(["Adyar", "KRS Road", "Wilson Garden"]);
+  const [selectedBranches, setSelectedBranches] = useState(["Balmatta", "KRS Road", "Wilson Garden"]);
 
   useEffect(() => {
     const saved = getSelectedGrowth("tat");
@@ -159,7 +157,7 @@ const TATBranchWisePage = () => {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?&months=${m}`;
+          const query = `?&months=${m}&financialYears=${financialYears}`;
           const data = await fetchData(`/api/tat/tat_branch_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
           combined.push({ month: m, data: safeData });
@@ -172,7 +170,7 @@ const TATBranchWisePage = () => {
     };
 
     fetchBranchSummary();
-  }, [months]);
+  }, [months, financialYears]);
 
   const readBranchName = (row) => row?.branch || row?.Branch || row?.branchName || row?.BranchName || "";
 
@@ -220,6 +218,22 @@ const TATBranchWisePage = () => {
     }
   };
 
+  const handleCityChange = (e) => {
+    const newSelectedCities = e.target.value;
+    setSelectedCities(newSelectedCities);
+    
+    if (newSelectedCities.length > 0) {
+      const branchesForCities = newSelectedCities.flatMap(city => 
+        Object.entries(BRANCH_CITY_MAP)
+          .filter(([_, c]) => c === city)
+          .map(([br]) => br)
+      );
+      setSelectedBranches(branchesForCities);
+    } else {
+      setSelectedBranches(ALL_BRANCHES);
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
@@ -233,16 +247,39 @@ const TATBranchWisePage = () => {
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select Cities</InputLabel>
+          <Select
+            multiple
+            label="Select Cities"
+            value={selectedCities}
+            onChange={handleCityChange}
+            renderValue={(selected) => 
+              selected.length === 0 ? "All Cities" : 
+              selected.length === cityOptions.length ? "All Cities" : 
+              `${selected.length} Cities`
+            }
+          >
+            {cityOptions.map((city) => (
+              <MenuItem value={city} key={city}>
+                <Checkbox checked={selectedCities.includes(city)} />
+                <ListItemText primary={city} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      
+
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
-           <Select
+          <Select
             multiple
             label="Select Branches"
             value={selectedBranches}
             onChange={handleBranchChange}
             displayEmpty
-            renderValue={() => "Select Branches"}  
+            renderValue={() => selectedCities.length > 0 ? `${selectedBranches.length} Branches` : "Select Branches"}
             MenuProps={{
               PaperProps: {
                 style: { maxHeight: 300 },
@@ -258,7 +295,8 @@ const TATBranchWisePage = () => {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mysore")
               .map(([br]) => (
@@ -267,7 +305,8 @@ const TATBranchWisePage = () => {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mangalore")
               .map(([br]) => (
@@ -280,7 +319,10 @@ const TATBranchWisePage = () => {
         </FormControl>
       </Box>
 
-      <SlicerFilters monthOptions={monthOptions} months={months} setMonths={setMonths} />
+      <SlicerFilters
+      monthOptions={monthOptions} months={months} setMonths={setMonths}
+      financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+      />
 
       <GrowthButtons
         growthOptions={growthOptions}

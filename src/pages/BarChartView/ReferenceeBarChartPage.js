@@ -13,25 +13,17 @@ function ReferenceeBarChartPage() {
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
-
-  const growthOptions = [
-    "E-B %",
-    "E-R %",
-    "B-R %",
-  ];
-
-  const growthKeyMap = {
-    "E-B %": "percentageEnquiryBooking",
-    "E-R %": "percentageEnquiryInvoice",
-    "B-R %": "percentageBookingInvoice",
-  };
+  const growthOptions = [ "E-B %", "E-R %", "B-R %",];
+  const growthKeyMap = {"E-B %": "percentageEnquiryBooking","E-R %": "percentageEnquiryInvoice","B-R %": "percentageBookingInvoice", };
 
   useEffect(() => {
     const prev = getSelectedGrowth("referencee");
@@ -55,6 +47,7 @@ function ReferenceeBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
+        if (financialYears.length) params.append("financialYears", financialYears.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
         const query = params.toString() ? `?${params.toString()}` : "";
@@ -65,7 +58,7 @@ function ReferenceeBarChartPage() {
       }
     };
     fetchCitySummary();
-  }, [months, qtrWise, halfYear]);
+  }, [months, financialYears, qtrWise, halfYear]);
 
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
@@ -183,15 +176,10 @@ function ReferenceeBarChartPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
       />
 
       <GrowthButtons

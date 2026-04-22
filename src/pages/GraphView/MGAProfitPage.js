@@ -12,15 +12,12 @@ function MGAProfitPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState("Service&BodyShop Profit %");
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
-
-  const growthOptions = [
-    "Service&BodyShop Profit %",
-    "Service Profit %",
-    "BodyShop Profit %",
-  ];
+  const financialYearOptions= ["2025-2026","2026-2027"];
+  const growthOptions = [  "Service&BodyShop Profit %",  "Service Profit %",  "BodyShop Profit %",];
 
   const growthKeyMap = {
     "Service&BodyShop Profit %": "serviceBodyShopPercentageProfit",
@@ -48,7 +45,7 @@ function MGAProfitPage() {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
+          let query = `?&months=${m}&financialYears=${financialYears}`;
           const data = await fetchData(`/api/mga_profit/mga_profit_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
           combined.push({ month: m, data: safeData });
@@ -59,7 +56,7 @@ function MGAProfitPage() {
       }
     };
     fetchCitySummary();
-  }, [months]);
+  }, [months, financialYears]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
@@ -94,9 +91,8 @@ function MGAProfitPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons

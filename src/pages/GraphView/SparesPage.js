@@ -15,12 +15,11 @@ function SparesPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState("SR&BR Spares Growth %");
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
+  const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
 
   const growthOptions = [
     "SR Spares Growth %", "BR Spares Growth %", "SR&BR Spares Growth %", "Battery Growth %", "Tyre Growth %",
@@ -73,7 +72,7 @@ function SparesPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          let q = `?&months=${m}`;
+          let q = `?&months=${m}&financialYears=${financialYears}`;
 
           const data = await fetchData(`/api/spares/spares_summary${q}`);
           const safe = Array.isArray(data) ? data : data?.result || [];
@@ -88,7 +87,7 @@ function SparesPage() {
     };
 
     fetchCitySummary();
-  }, [months]);
+  }, [months, financialYears]);
 
   // Build chart data
   const buildChartData = () => {
@@ -144,6 +143,9 @@ function SparesPage() {
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
+        financialYearOptions={financialYearOptions}
+        financialYears={financialYears}
+        setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons

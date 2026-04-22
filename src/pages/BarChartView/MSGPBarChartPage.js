@@ -13,22 +13,21 @@ function MSGPBarChartPage() {
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [channels, setChannels] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]); // ✅ ADDED
+  const [selectedGrowth, setSelectedGrowthState] = useState("SR&BR Growth %");
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const channelOptions = ["Arena", "Nexa"]; 
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
+  const financialYearOptions = ["2025-2026", "2026-2027"]; 
 
   const growthOptions = [
-    "SR&BR Growth %",
-    "Service Growth %",
-    "BodyShop Growth %",
-    "Free Service Growth %",
-    "PMS Growth %",
-    "RR Growth %",
-    "Others Growth %",
+    "SR&BR Growth %", "Service Growth %", "BodyShop Growth %", "Free Service Growth %",
+    "PMS Growth %", "RR Growth %", "Others Growth %",
   ];
 
   const growthKeyMap = {
@@ -48,32 +47,39 @@ function MSGPBarChartPage() {
 
     if (!fromPages) {
       if (!prev) {
-        setSelectedGrowthState("SR&BR Growth %");
-        setSelectedGrowth("SR&BR Growth %", "msgp");
+        setSelectedGrowthState("PMS Growth %");
+        setSelectedGrowth("PMS Growth %", "msgp");
       } else {
         setSelectedGrowthState(prev);
       }
     } else {
-      setSelectedGrowthState(prev || "SR&BR Growth %");
+      setSelectedGrowthState(prev || "PMS Growth %");
     }
   }, []);
 
+  // ✅ UPDATED FETCH WITH FINANCIAL YEAR
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
+        const activeFinancialYear = financialYears[0] || "2025-2026"; 
         const params = new URLSearchParams();
-        if (months.length) params.append("months", months.join(","));
-        if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
-        if (halfYear.length) params.append("halfYear", halfYear.join(","));
+        params.append("selectedFinancialYear", activeFinancialYear); 
+        
+        if (months.length) months.forEach(m => params.append("months", m)); 
+        if (channels.length) channels.forEach(c => params.append("channels", c)); 
+        if (qtrWise.length) qtrWise.forEach(q => params.append("qtrWise", q));
+        if (halfYear.length) halfYear.forEach(h => params.append("halfYear", h));
+        
         const query = params.toString() ? `?${params.toString()}` : "";
         const data = await fetchData(`/api/msgp/msgp_summary${query}`);
-        setSummary(Array.isArray(data) ? data : []);
+        setSummary(Array.isArray(data) ? data : data?.result || []);
       } catch (err) {
         console.error("fetchCitySummary error:", err);
+        setSummary([]);
       }
     };
     fetchCitySummary();
-  }, [months, qtrWise, halfYear]);
+  }, [months, channels, qtrWise, halfYear, financialYears]);
 
   // -----------------------------------------
   // Helpers
@@ -118,7 +124,7 @@ function MSGPBarChartPage() {
       }
     });
 
-    const preferredOrder = ["BANGALORE", "MYSORE", "MANGALORE"];
+    const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
     const allCities = Object.keys(totals);
 
     const sortedCities = [
@@ -141,9 +147,6 @@ function MSGPBarChartPage() {
   const chartData =
     selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
-  // -----------------------------------------
-  // Render
-  // -----------------------------------------
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
@@ -151,37 +154,37 @@ function MSGPBarChartPage() {
 
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/msgp", {
-                state: { fromNavigation: true },
-              })
-            }
+            variant="contained" 
+            onClick={() => navigate("/DashboardHome/msgp", {
+              state: { fromNavigation: true },
+            })}
           >
             Graph-CityWise
           </Button>
 
           <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/msgp_branches", {
-                state: { fromNavigation: true },
-              })
-            }
+            variant="contained" 
+            onClick={() => navigate("/DashboardHome/msgp_branches", {
+              state: { fromNavigation: true },
+            })}
           >
             Graph-BranchWise
           </Button>
 
           <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/msgp-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
+            variant="contained" 
+            onClick={() => navigate("/DashboardHome/msgp-bar-chart", {
+              state: { fromNavigation: true },
+            })}
           >
             Bar Chart-CityWise
           </Button>
 
           <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/msgp_branches-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
+            variant="contained" 
+            onClick={() => navigate("/DashboardHome/msgp_branches-bar-chart", {
+              state: { fromNavigation: true },
+            })}
           >
             Bar Chart-BranchWise
           </Button>
@@ -189,15 +192,11 @@ function MSGPBarChartPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        channelOptions={channelOptions} channels={channels} setChannels={setChannels}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears} 
       />
 
       <GrowthButtons

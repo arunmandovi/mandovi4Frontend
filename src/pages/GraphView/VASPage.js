@@ -12,9 +12,11 @@ function VASPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState("Diagnostic Charges %");
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const financialYearOptions = ["2025-2026","2026-2027"];
   
   const growthOptions = [
     "Diagnostic Charges %",
@@ -64,7 +66,7 @@ function VASPage() {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
+          let query = `?&months=${m}&financialYears=${financialYears}`;
           const data = await fetchData(`/api/vas/vas_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
           combined.push({ month: m, data: safeData });
@@ -75,7 +77,7 @@ function VASPage() {
       }
     };
     fetchCitySummary();
-  }, [months]);
+  }, [months, financialYears]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
@@ -110,9 +112,8 @@ function VASPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons

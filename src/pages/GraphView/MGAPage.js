@@ -12,25 +12,18 @@ function MGAPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears,setFinancialYears] = useState(["2026-2027"]);
   const [channels, setChannels] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("mga"));
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
+  const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct","Nov", "Dec", "Jan", "Feb", "Mar",];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const channelOptions = ["Arena", "Nexa"];
 
-  const growthOptions = [
-    "MGA By VEH",
-  ];
+  const growthOptions = [ "MGA By VEH", ];
 
-  const growthKeyMap = {
-    "MGA By VEH": "mgaVeh",
-  };
+  const growthKeyMap = { "MGA By VEH": "mgaVeh", };
 
-   // ✅ Auto-select the only growth option when the page loads
   useEffect(() => {
     if (!selectedGrowth && growthOptions.length === 1) {
       const defaultGrowth = growthOptions[0];
@@ -57,7 +50,7 @@ function MGAPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
+          let query = `?&months=${m}&financialYears=${financialYears}`;
           if (channels.length === 1) query += `&channels=${channels[0]}`;
 
           const data = await fetchData(`/api/mga/mga_summary${query}`);
@@ -72,7 +65,7 @@ function MGAPage() {
     };
 
     fetchCitySummary();
-  }, [months, channels]);
+  }, [months,financialYears, channels]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
@@ -114,12 +107,9 @@ function MGAPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+        channelOptions={channelOptions} channels={channels} setChannels={setChannels}
       />
 
       <GrowthButtons

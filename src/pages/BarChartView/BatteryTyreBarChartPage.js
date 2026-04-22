@@ -13,17 +13,17 @@ function BatteryTyreBarChartPage() {
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
 
-  const growthOptions = [
-    "Battery Qty", "Tyre Qty", "Battery Profit", "Tyre Profit", "BatteryTyre Profit","Battery Growth","Tyre Growth",
-  ];
+  const growthOptions = ["Battery Qty", "Tyre Qty", "Battery Profit", "Tyre Profit", "BatteryTyre Profit","Battery Growth","Tyre Growth",];
 
   const growthKeyMap = {
     "Battery Qty": "batteryQty",
@@ -57,6 +57,7 @@ function BatteryTyreBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
+        if (financialYears.length) params.append("financialYears", financialYears.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
         const query = params.toString() ? `?${params.toString()}` : "";
@@ -67,11 +68,8 @@ function BatteryTyreBarChartPage() {
       }
     };
     fetchCitySummary();
-  }, [months, qtrWise, halfYear]);
+  }, [months, financialYears, qtrWise, halfYear]);
 
-  // -----------------------------------------
-  // Helpers
-  // -----------------------------------------
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
@@ -180,15 +178,10 @@ function BatteryTyreBarChartPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
       />
 
       <GrowthButtons
@@ -208,7 +201,7 @@ function BatteryTyreBarChartPage() {
         <CityBarChart
           chartData={chartData}
           selectedGrowth={selectedGrowth}
-          decimalPlaces={["Battery Growth", "Tyre Growth"].includes(selectedGrowth) ? 1 : 0 }
+          decimalPlaces={0}
           showPercent={["Battery Growth", "Tyre Growth"].includes(selectedGrowth) ? true : false }
         />
       )}

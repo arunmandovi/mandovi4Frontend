@@ -9,6 +9,7 @@ import {
   MenuItem,
   Checkbox,
   ListItemText,
+  Divider
 } from "@mui/material";
 
 import { fetchData } from "../../api/uploadService";
@@ -53,12 +54,10 @@ function LoaddBranchesBarChartPage() {
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
 
-  // ✅ Financial Year
   const [financialYears, setFinancialYears] = useState(["2026-2027"]);
 
   const [selectedGrowth, setSelectedGrowthState] = useState("PMS Growth %");
   const [selectedBranches, setSelectedBranches] = useState(ALL_BRANCHES);
-  // ✅ Added selectedCities state
   const [selectedCities, setSelectedCities] = useState([]);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
@@ -89,7 +88,6 @@ function LoaddBranchesBarChartPage() {
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
-  // ✅ FETCH WITH FINANCIAL YEAR
   useEffect(() => {
     const fetchSummary = async () => {
       try {
@@ -128,8 +126,8 @@ function LoaddBranchesBarChartPage() {
 
     summary.forEach((row) => {
       const br = readBranchName(row);
-      // ✅ Filter branches by selected cities
       const city = readCityName(row);
+
       if (!selectedCities.includes(city) && selectedCities.length > 0) return;
       if (!selectedBranches.includes(br)) return;
 
@@ -152,27 +150,48 @@ function LoaddBranchesBarChartPage() {
 
   const chartData = buildChartData();
 
+  // ✅ Get branches based on selected cities
+  const getFilteredBranches = () => {
+    if (selectedCities.length === 0) return ALL_BRANCHES;
+
+    return CITY_ORDER
+      .filter(city => selectedCities.includes(city))
+      .flatMap(city =>
+        Object.entries(BRANCH_CITY_MAP)
+          .filter(([_, c]) => c === city)
+          .map(([br]) => br)
+      );
+  };
+
+  const filteredBranches = getFilteredBranches();
+
+  // ✅ Select All Toggle
+  const handleSelectAllToggle = () => {
+    if (selectedBranches.length === filteredBranches.length) {
+      setSelectedBranches([]);
+    } else {
+      setSelectedBranches(filteredBranches);
+    }
+  };
+
   const handleBranchChange = (e) => {
     setSelectedBranches(e.target.value);
   };
 
-  // ✅ Added handleCityChange
   const handleCityChange = (e) => {
     const newSelectedCities = e.target.value;
     setSelectedCities(newSelectedCities);
-    
-    // Auto-select all branches for selected cities
+
     if (newSelectedCities.length > 0) {
       const branchesForCities = CITY_ORDER
         .filter(city => newSelectedCities.includes(city))
-        .flatMap(city => 
+        .flatMap(city =>
           Object.entries(BRANCH_CITY_MAP)
             .filter(([_, c]) => c === city)
             .map(([br]) => br)
         );
       setSelectedBranches(branchesForCities);
     } else {
-      // If no cities selected, select all branches
       setSelectedBranches(ALL_BRANCHES);
     }
   };
@@ -190,12 +209,7 @@ function LoaddBranchesBarChartPage() {
         </Box>
       </Box>
 
-      <Box
-        sx={{
-          display: "flex",justifyContent: "flex-end",gap: 2,mb: 3,flexWrap: "wrap"  
-        }}
-      >
-        {/* ✅ CITY SELECTOR */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>Select Cities</InputLabel>
           <Select
@@ -203,12 +217,10 @@ function LoaddBranchesBarChartPage() {
             label="Select Cities"
             value={selectedCities}
             onChange={handleCityChange}
-            renderValue={(selected) =>
-              selected.length === 0
-                ? "All Cities"
-                : selected.length === cityOptions.length
-                ? "All Cities"
-                : `${selected.length} Cities`
+            renderValue={(selected) => 
+              selected.length === 0 ? "All Cities" : 
+              selected.length === cityOptions.length ? "All Cities" : 
+              `${selected.length} Cities`
             }
           >
             {cityOptions.map((city) => (
@@ -220,60 +232,61 @@ function LoaddBranchesBarChartPage() {
           </Select>
         </FormControl>
       
-        {/* ✅ BRANCH SELECTOR */}
-        <FormControl size="small" sx={{ minWidth: 260 }}>
+          <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
           <Select
             multiple
             label="Select Branches"
             value={selectedBranches}
             onChange={handleBranchChange}
-            renderValue={() =>
-              selectedCities.length > 0
-                ? `${selectedBranches.length} Branches`
-                : "All Branches"
-            }
+            displayEmpty
+            renderValue={() => selectedCities.length > 0 ? `${selectedBranches.length} Branches` : "Select Branches"}
+            MenuProps={{
+              PaperProps: {
+                style: { maxHeight: 300 },
+              },
+            }}
           >
-            {CITY_ORDER.map((city) => (
-              <React.Fragment key={city}>
-                <ListItemText
-                  primary={city}
-                  sx={{ pl: 2, fontWeight: "bold" }}
-                />
-      
-                {Object.entries(BRANCH_CITY_MAP)
-                  .filter(([_, c]) => c === city)
-                  .map(([br]) => (
-                    <MenuItem value={br} key={br}>
-                      <Checkbox checked={selectedBranches.includes(br)} />
-                      <ListItemText primary={br} />
-                    </MenuItem>
-                  ))}
-              </React.Fragment>
-            ))}
+            <ListItemText primary="Bangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+            {Object.entries(BRANCH_CITY_MAP)
+              .filter(([_, c]) => c === "Bangalore")
+              .map(([br]) => (
+                <MenuItem value={br} key={br}>
+                  <Checkbox checked={selectedBranches.includes(br)} />
+                  <ListItemText primary={br} />
+                </MenuItem>
+              ))}
+           
+            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+            {Object.entries(BRANCH_CITY_MAP)
+              .filter(([_, c]) => c === "Mysore")
+              .map(([br]) => (
+                <MenuItem value={br} key={br}>
+                  <Checkbox checked={selectedBranches.includes(br)} />
+                  <ListItemText primary={br} />
+                </MenuItem>
+              ))}
+           
+            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+            {Object.entries(BRANCH_CITY_MAP)
+              .filter(([_, c]) => c === "Mangalore")
+              .map(([br]) => (
+                <MenuItem value={br} key={br}>
+                  <Checkbox checked={selectedBranches.includes(br)} />
+                  <ListItemText primary={br} />
+                </MenuItem>
+              ))}
           </Select>
         </FormControl>
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        cityOptions={cityOptions}
-        cities={cities}
-        setCities={setCities}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
-        financialYearOptions={financialYearOptions}
-        financialYears={financialYears}
-        setFinancialYears={setFinancialYears}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        cityOptions={cityOptions} cities={cities} setCities={setCities}
+        channelOptions={channelOptions} channels={channels} setChannels={setChannels}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons

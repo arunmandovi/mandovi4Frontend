@@ -16,13 +16,11 @@ function MSGPProfitPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState("Service&BodyShop Profit %");
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
+  const monthOptions = [ "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", ];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const growthOptions = [
     "Service&BodyShop Profit %",
     "Service Profit %",
@@ -71,7 +69,7 @@ function MSGPProfitPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          let q = `?&months=${m}`;
+          let q = `?&months=${m}&financialYears=${financialYears}`;
 
           const data = await fetchData(`/api/msgp_profit/msgp_profit_summary${q}`);
           const safe = Array.isArray(data) ? data : data?.result || [];
@@ -86,7 +84,7 @@ function MSGPProfitPage() {
     };
 
     fetchCitySummary();
-  }, [months]);
+  }, [months, financialYears]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
@@ -137,9 +135,8 @@ function MSGPProfitPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons
@@ -182,11 +179,11 @@ function MSGPProfitPage() {
             beautifyHeader={beautifyHeader}
             tableData={tableData}
           
-            decimalDigits={0}
+            decimalDigits={2}
             percentageDecimalDigits={
               selectedGrowth.includes("%") ? 1 : 0   
             }
-            growthDecimalDigits={1}
+            growthDecimalDigits={2}
           />
         </>
       )}

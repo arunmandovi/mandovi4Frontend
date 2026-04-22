@@ -11,20 +11,20 @@ function MCPBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [channels, setChannels] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("mcp"));
 
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const channelOptions = ["ARENA", "NEXA"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
-
   const growthOptions = ["MCP NO"];
   const growthKeyMap = { "MCP NO": "mcp" };
 
-   // ✅ Auto-select the only growth option when the page loads
   useEffect(() => {
     if (!selectedGrowth && growthOptions.length === 1) {
       const defaultGrowth = growthOptions[0];
@@ -38,6 +38,7 @@ function MCPBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
+        if (financialYears.length) params.append("financialYears", financialYears.join(","));
         if (channels.length) params.append("channels", channels.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
@@ -49,7 +50,7 @@ function MCPBarChartPage() {
       }
     };
     fetchCitySummary();
-  }, [months, channels, qtrWise, halfYear]);
+  }, [months, financialYears, channels, qtrWise, halfYear]);
 
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
@@ -90,7 +91,6 @@ function MCPBarChartPage() {
       }
     });
 
-    // Include all known cities even if they have no value
     const knownCities = ["Bangalore", "Mysore", "Mangalore"];
     const allCities = Array.from(new Set([...knownCities, ...Object.keys(totals)]));
 
@@ -104,7 +104,6 @@ function MCPBarChartPage() {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">MCP REPORT (City-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
@@ -115,23 +114,14 @@ function MCPBarChartPage() {
         </Box>
       </Box>
 
-      {/* Filters */}
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+        channelOptions={channelOptions} channels={channels} setChannels={setChannels}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
       />
 
-      {/* Growth Selector */}
       <GrowthButtons
         growthOptions={growthOptions}
         selectedGrowth={selectedGrowth}
@@ -141,7 +131,6 @@ function MCPBarChartPage() {
         }}
       />
 
-      {/* Chart */}
       {!selectedGrowth ? (
         <Typography>👆 Select a growth type to view the chart below</Typography>
       ) : summary.length === 0 ? (

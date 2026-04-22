@@ -16,14 +16,14 @@ function LoaddBarChartPage() {
   const [channels, setChannels] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [financialYears, setFinancialYears] = useState(["2026-2027"]); // ✅ ADDED
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]); 
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
-  const channelOptions = ["Arena", "Nexa"]; // ✅ FIXED: Consistent casing
+  const channelOptions = ["Arena", "Nexa"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
-  const financialYearOptions = ["2025-2026", "2026-2027"]; // ✅ ADDED
+  const financialYearOptions = ["2025-2026", "2026-2027"];
 
   const growthOptions = [
     "Service Growth %","BodyShop Growth %","Free Service Growth %",
@@ -62,12 +62,12 @@ function LoaddBarChartPage() {
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
-        const activeFinancialYear = financialYears[0] || "2025-2026"; // ✅ ADDED
+        const activeFinancialYear = financialYears[0] || "2025-2026"; 
         const params = new URLSearchParams();
-        params.append("selectedFinancialYear", activeFinancialYear); // ✅ ADDED
+        params.append("selectedFinancialYear", activeFinancialYear); 
         
-        if (months.length) months.forEach(m => params.append("months", m)); // ✅ FIXED: Loop instead of join
-        if (channels.length) channels.forEach(c => params.append("channels", c)); // ✅ FIXED: Loop instead of join
+        if (months.length) months.forEach(m => params.append("months", m)); 
+        if (channels.length) channels.forEach(c => params.append("channels", c)); 
         if (qtrWise.length) qtrWise.forEach(q => params.append("qtrWise", q));
         if (halfYear.length) halfYear.forEach(h => params.append("halfYear", h));
         

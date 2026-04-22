@@ -53,11 +53,14 @@ function PMSPartsBranchWisePage() {
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
+  const [selectedCities, setSelectedCities] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState("7 PARTS PMS %");
 
   const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden", "Balmatta", "KRS Road"]);
-
+  const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+  const financialYearOptions = ["2025-2026","2026-2027"];
   const growthOptions = Object.keys(growthKeyMap);
 
   const readBranchName = (row) => {
@@ -84,7 +87,7 @@ function PMSPartsBranchWisePage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
+          let query = `?&months=${m}&financialYears=${financialYears}`;
 
           const data = await fetchData(`/api/pms_parts/pms_parts_branch_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
@@ -99,7 +102,7 @@ function PMSPartsBranchWisePage() {
     };
 
     fetchCitySummary();
-  }, [months]);
+  }, [months, financialYears]);
 
   const buildChartData = () => {
     if (!selectedGrowth || selectedBranches.length === 0)
@@ -140,6 +143,22 @@ function PMSPartsBranchWisePage() {
     }
   };
 
+  const handleCityChange = (e) => {
+      const newSelectedCities = e.target.value;
+      setSelectedCities(newSelectedCities);
+      
+      if (newSelectedCities.length > 0) {
+        const branchesForCities = newSelectedCities.flatMap(city => 
+          Object.entries(BRANCH_CITY_MAP)
+            .filter(([_, c]) => c === city)
+            .map(([br]) => br)
+        );
+        setSelectedBranches(branchesForCities);
+      } else {
+        setSelectedBranches(ALL_BRANCHES);
+      }
+    };
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
@@ -153,16 +172,39 @@ function PMSPartsBranchWisePage() {
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select Cities</InputLabel>
+          <Select
+            multiple
+            label="Select Cities"
+            value={selectedCities}
+            onChange={handleCityChange}
+            renderValue={(selected) => 
+              selected.length === 0 ? "All Cities" : 
+              selected.length === cityOptions.length ? "All Cities" : 
+              `${selected.length} Cities`
+            }
+          >
+            {cityOptions.map((city) => (
+              <MenuItem value={city} key={city}>
+                <Checkbox checked={selectedCities.includes(city)} />
+                <ListItemText primary={city} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      
+
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
-           <Select
+          <Select
             multiple
             label="Select Branches"
             value={selectedBranches}
             onChange={handleBranchChange}
             displayEmpty
-            renderValue={() => "Select Branches"}  
+            renderValue={() => selectedCities.length > 0 ? `${selectedBranches.length} Branches` : "Select Branches"}
             MenuProps={{
               PaperProps: {
                 style: { maxHeight: 300 },
@@ -178,7 +220,8 @@ function PMSPartsBranchWisePage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mysore")
               .map(([br]) => (
@@ -187,7 +230,8 @@ function PMSPartsBranchWisePage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mangalore")
               .map(([br]) => (
@@ -199,10 +243,10 @@ function PMSPartsBranchWisePage() {
           </Select>
         </FormControl>
       </Box>
+
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons

@@ -13,29 +13,19 @@ function PMSPartsBarChartPage() {
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const financialYearOptions = ["2025-2026","2026-2027"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
 
-  const growthOptions = [
-    "Air filter %",
-    "Belt water pump %",
-    "Brake fluid %",
-    "Coolant %",
-    "Fuel Filter %",
-    "Oil filter %",
-    "Spark plug %",
-    "7 PARTS PMS %",
-    "DRAIN PLUG GASKET %",
-    "ISG BELT GENERATOR %",
-    "CNG FILTER %",
-    "3 PARTS PMS %",
-    "Grand Total %",
-  ];
+  const growthOptions = ["Air filter %","Belt water pump %","Brake fluid %", "Coolant %",
+    "Fuel Filter %", "Oil filter %", "Spark plug %",  "7 PARTS PMS %", "DRAIN PLUG GASKET %",
+    "ISG BELT GENERATOR %", "CNG FILTER %", "3 PARTS PMS %", "Grand Total %", ];
 
   const growthKeyMap = {
     "Air filter %": "airFilter",
@@ -75,6 +65,7 @@ function PMSPartsBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
+        if (financialYears.length) params.append("financialYears", financialYears.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
         const query = params.toString() ? `?${params.toString()}` : "";
@@ -85,7 +76,7 @@ function PMSPartsBarChartPage() {
       }
     };
     fetchCitySummary();
-  }, [months, qtrWise, halfYear]);
+  }, [months, financialYears, qtrWise, halfYear]);
 
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
@@ -195,15 +186,10 @@ function PMSPartsBarChartPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
       />
 
       <GrowthButtons

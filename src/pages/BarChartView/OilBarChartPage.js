@@ -13,24 +13,22 @@ function OilBarChartPage() {
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
 
-  const growthOptions = [
-    "Full Synthetic QTY %",
-    "Semi Synthetic QTY %",
-    "Full & Semi Synthetic QTY %",
-  ];
+  const growthOptions = [  "Full Synthetic QTY %",  "Semi Synthetic QTY %",  "Full & Semi Synthetic QTY %",];
 
   const growthKeyMap = {
-    "Full Synthetic QTY %": "fullSyntheticPercentageQTY",
-    "Semi Synthetic QTY %": "semiSyntheticPercentageQTY",
-    "Full & Semi Synthetic QTY %": "fullSemiSyntheticPercentageQTY",
+    "Full Synthetic QTY %": "qtyFullSynthetic",
+    "Semi Synthetic QTY %": "qtySemiSynthetic",
+    "Full & Semi Synthetic QTY %": "qtyFullSemiSynthetic",
   };
 
   useEffect(() => {
@@ -40,13 +38,13 @@ function OilBarChartPage() {
 
     if (!fromPages) {
       if (!prev) {
-        setSelectedGrowthState("Full & Semi Synthetic QTY %");
-        setSelectedGrowth("Full & Semi Synthetic QTY %", "oil");
+        setSelectedGrowthState("Service&BodyShop Profit %");
+        setSelectedGrowth("Service&BodyShop Profit %", "oil");
       } else {
         setSelectedGrowthState(prev);
       }
     } else {
-      setSelectedGrowthState(prev || "Full & Semi Synthetic QTY %");
+      setSelectedGrowthState(prev || "Service&BodyShop Profit %");
     }
   }, []);
 
@@ -55,6 +53,7 @@ function OilBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
+        if (financialYears.length) params.append("financialYears", financialYears.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
         const query = params.toString() ? `?${params.toString()}` : "";
@@ -65,8 +64,11 @@ function OilBarChartPage() {
       }
     };
     fetchCitySummary();
-  }, [months, qtrWise, halfYear]);
+  }, [months, financialYears, qtrWise, halfYear]);
 
+  // -----------------------------------------
+  // Helpers
+  // -----------------------------------------
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
@@ -175,15 +177,10 @@ function OilBarChartPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYears={financialYears} financialYearOptions={financialYearOptions} setFinancialYears={setFinancialYears}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
       />
 
       <GrowthButtons

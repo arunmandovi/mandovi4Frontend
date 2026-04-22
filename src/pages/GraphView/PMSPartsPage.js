@@ -12,27 +12,15 @@ function PMSPartsPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState("7 PARTS PMS %");
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const financialYearOptions = ["2025-2026","2026-2027"];
 
-  
-  const growthOptions = [
-    "Air filter %",
-    "Belt water pump %",
-    "Brake fluid %",
-    "Coolant %",
-    "Fuel Filter %",
-    "Oil filter %",
-    "Spark plug %",
-    "7 PARTS PMS %",
-    "DRAIN PLUG GASKET %",
-    "ISG BELT GENERATOR %",
-    "CNG FILTER %",
-    "3 PARTS PMS %",
-    "Grand Total %",
-  ];
+  const growthOptions = [ "Air filter %", "Belt water pump %", "Brake fluid %", "Coolant %", "Fuel Filter %",
+    "Oil filter %", "Spark plug %", "7 PARTS PMS %", "DRAIN PLUG GASKET %", "ISG BELT GENERATOR %",
+    "CNG FILTER %", "3 PARTS PMS %", "Grand Total %", ];
 
   const growthKeyMap = {
     "Air filter %": "airFilter",
@@ -70,7 +58,7 @@ function PMSPartsPage() {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
+          let query = `?&months=${m}&financialYears=${financialYears}`;
 
           const data = await fetchData(`/api/pms_parts/pms_parts_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
@@ -82,7 +70,7 @@ function PMSPartsPage() {
       }
     };
     fetchCitySummary();
-  }, [months]);
+  }, [months, financialYears]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
@@ -117,9 +105,8 @@ function PMSPartsPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons

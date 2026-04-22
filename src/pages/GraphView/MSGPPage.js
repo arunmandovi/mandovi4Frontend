@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate } from "react-router-dom";
@@ -9,19 +9,27 @@ import { sortCities } from "../../components/CityOrderHelper";
 import CityWiseSummaryTable from "../../components/common/CityWiseSummaryTable ";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
-// NEW IMPORT
 import { buildPivotTable } from "../../utils/buildPivotTable";
 
 function MSGPPage() {
   const navigate = useNavigate();
+
   const [summary, setSummary] = useState([]);
+  const [monthlySummary, setMonthlySummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState("SR&BR Growth %");
+  const [channels, setChannels] = useState([]);
+  const [qtrWise, setQtrWise] = useState([]);
+  const [halfYear, setHalfYear] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
+  const [selectedGrowth, setSelectedGrowthState] = useState("PMS Growth %");
 
   const monthOptions = [
     "Apr", "May", "Jun", "Jul", "Aug", "Sep",
     "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
   ];
+
+  const channelOptions = ["Arena", "Nexa"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
 
   const growthOptions = [
     "SR&BR Growth %",
@@ -76,47 +84,65 @@ function MSGPPage() {
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  // Fetch summary data
+  // ✅ FETCH DATA WITH FINANCIAL YEAR FILTER
   useEffect(() => {
-    const fetchCitySummary = async () => {
+    const fetchMonthlyData = async () => {
       try {
         const activeMonths = months.length ? months : monthOptions;
+        const activeFinancialYear = financialYears[0] || "2025-2026";
+
         const combined = [];
 
-        for (const m of activeMonths) {
-          let q = `?&months=${m}`;
+        for (const month of activeMonths) {
+          let queryParams = new URLSearchParams();
+          queryParams.append("months", month);
+          queryParams.append("selectedFinancialYear", activeFinancialYear);
 
-          const data = await fetchData(`/api/msgp/msgp_summary${q}`);
+          if (channels.length) channels.forEach(c => queryParams.append("channels", c));
+          if (qtrWise.length) qtrWise.forEach(q => queryParams.append("qtrWise", q));
+          if (halfYear.length) halfYear.forEach(h => queryParams.append("halfYear", h));
+
+          const data = await fetchData(`/api/msgp/msgp_summary?${queryParams.toString()}`);
           const safe = Array.isArray(data) ? data : data?.result || [];
 
-          combined.push({ month: m, data: safe });
+          combined.push({ month, data: safe });
         }
 
-        setSummary(combined);
+        setMonthlySummary(combined);
+
+        // overall summary (optional)
+        let overallParams = new URLSearchParams();
+        overallParams.append("selectedFinancialYear", activeFinancialYear);
+
+        const overallData = await fetchData(`/api/msgp/msgp_summary?${overallParams.toString()}`);
+        const overallSafe = Array.isArray(overallData) ? overallData : overallData?.result || [];
+
+        setSummary(overallSafe);
+
       } catch (err) {
         console.error("summary error:", err);
+        setMonthlySummary([]);
+        setSummary([]);
       }
     };
 
-    fetchCitySummary();
-  }, [months]);
+    fetchMonthlyData();
+  }, [months, channels, qtrWise, halfYear, financialYears]);
 
-  // Build chart data
-  const buildChartData = () => {
-    if (!selectedGrowth) return { formatted: [], sortedCities: [] };
+  // ✅ CHART DATA
+  const buildChartData = useMemo(() => {
+    if (!selectedGrowth || monthlySummary.length === 0) return { formatted: [], sortedCities: [] };
 
     const apiKey = growthKeyMap[selectedGrowth];
     const cities = new Set();
 
-    const filteredSummary = summary.filter((s) => s.data && s.data.length > 0);
-
-    filteredSummary.forEach(({ data }) =>
-      data.forEach((r) => cities.add(readCityName(r)))
-    );
+    monthlySummary.forEach(({ data }) => {
+      data.forEach((r) => cities.add(readCityName(r)));
+    });
 
     const sortedCities = sortCities([...cities]);
 
-    const formatted = filteredSummary.map(({ month, data }) => {
+    const formatted = monthlySummary.map(({ month, data }) => {
       const row = { month };
       sortedCities.forEach((c) => (row[c] = 0));
 
@@ -129,20 +155,26 @@ function MSGPPage() {
     });
 
     return { formatted, sortedCities };
-  };
+  }, [selectedGrowth, monthlySummary, financialYears]);
 
-  const { formatted: chartData, sortedCities: cityKeys } = buildChartData();
+  const { formatted: chartData, sortedCities: cityKeys } = buildChartData;
   const keys = selectedGrowth ? valueKeyMap[selectedGrowth] : [];
 
-  // NEW REUSABLE PIVOT TABLE LOGIC
-  const citiesToShow = ["BANGALORE", "MYSORE", "MANGALORE"];
-  const { tableData, chartMonths } = buildPivotTable(summary, keys, citiesToShow);
+  // ✅ REUSABLE PIVOT TABLE (CLEAN)
+  const citiesToShow = sortCities(
+    [...new Set(summary.map((r) => readCityName(r)))]
+  ).slice(0, 10);
+
+  const { tableData, chartMonths } = buildPivotTable(
+    monthlySummary,
+    keys,
+    citiesToShow
+  );
 
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">MSGP GRAPH (CityWise)</Typography>
-
+        <Typography variant="h4">MSGP REPORT (Branch-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp")}>Graph-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp_branches")}>Graph-BranchWise</Button>
@@ -155,6 +187,18 @@ function MSGPPage() {
         monthOptions={monthOptions}
         months={months}
         setMonths={setMonths}
+        channelOptions={channelOptions}
+        channels={channels}
+        setChannels={setChannels}
+        qtrWiseOptions={["Qtr1", "Qtr2", "Qtr3", "Qtr4"]}
+        qtrWise={qtrWise}
+        setQtrWise={setQtrWise}
+        halfYearOptions={["H1", "H2"]}
+        halfYear={halfYear}
+        setHalfYear={setHalfYear}
+        financialYearOptions={financialYearOptions}
+        financialYears={financialYears}
+        setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons
@@ -167,37 +211,32 @@ function MSGPPage() {
       />
 
       {!selectedGrowth ? (
-        <Typography>Select a growth type to view the chart</Typography>
+        <Typography>Select a growth type</Typography>
       ) : chartData.length === 0 ? (
-        <Typography>No data available for the selected criteria.</Typography>
+        <Typography>No data available</Typography>
       ) : (
         <>
-          <Box
-            sx={{
-              mt: 2,
-              height: 400,
-              background: "#fff",
-              borderRadius: 2,
-              boxShadow: 3,
-              p: 2,
-            }}
-          >
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              {selectedGrowth}
-            </Typography>
+          <Box sx={{ mt: 2, height: 400, background: "#fff", p: 2 }}>
+            <Typography variant="h6">{selectedGrowth}</Typography>
 
-            <GrowthLineChart chartData={chartData} cityKeys={cityKeys} decimalDigits={1} showPercent={true} />
+            <GrowthLineChart
+              chartData={chartData}
+              cityKeys={cityKeys}
+              decimalDigits={1}
+              showPercent={true}
+            />
           </Box>
 
-          {/* TABLE USING REUSABLE LOGIC */}
-          <CityWiseSummaryTable
-            selectedGrowth={selectedGrowth}
-            chartMonths={chartMonths}
-            keys={keys}
-            beautifyHeader={beautifyHeader}
-            tableData={tableData}
-            decimalDigits={2}
-          />
+          <Box sx={{ mt: 2 }}>
+            <CityWiseSummaryTable
+              selectedGrowth={selectedGrowth}
+              chartMonths={chartMonths}
+              keys={keys}
+              beautifyHeader={beautifyHeader}
+              tableData={tableData}
+              decimalDigits={2}
+            />
+          </Box>
         </>
       )}
     </Box>

@@ -15,16 +15,12 @@ function OilPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState("Full & Semi Synthetic QTY %");
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
-  const growthOptions = [
-    "Full Synthetic QTY %", "Semi Synthetic QTY %", "Full & Semi Synthetic QTY %",
-  ];
+  const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep","Oct", "Nov", "Dec", "Jan", "Feb", "Mar",];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
+  const growthOptions = ["Full Synthetic QTY %", "Semi Synthetic QTY %", "Full & Semi Synthetic QTY %",];
 
   const growthKeyMap = {
     "Full Synthetic QTY %": "qtyFullSynthetic",
@@ -70,7 +66,7 @@ function OilPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          let q = `?&months=${m}`;
+          let q = `?&months=${m}&financialYears=${financialYears}`;
 
           const data = await fetchData(`/api/oil/oil_summary${q}`);
           const safe = Array.isArray(data) ? data : data?.result || [];
@@ -85,7 +81,7 @@ function OilPage() {
     };
 
     fetchCitySummary();
-  }, [months]);
+  }, [months, financialYears]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
@@ -136,9 +132,8 @@ function OilPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons

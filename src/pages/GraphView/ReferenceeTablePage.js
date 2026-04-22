@@ -8,15 +8,14 @@ import SlicerFilters from "../../components/SlicerFilters";
 function ReferenceeTablePage() {
   const [groupDesignationSummary, setGroupDesignationSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears,setFinancialYears] = useState(["2026-2027"]);
   const [cities, setCities] = useState([]);
   const [availableCities, setAvailableCities] = useState([]);
 
   const navigate = useNavigate();
 
-  const monthOptions = [
-    "Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"
-  ];
-
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar" ];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const cityOptions = ["BANGALORE", "MYSORE", "MANGALORE"];
 
   const toNumberOrNull = (v) => {
@@ -75,6 +74,7 @@ function ReferenceeTablePage() {
     try {
       const query = new URLSearchParams();
       months.forEach((m) => query.append("months", m));
+      financialYears.forEach((f) => query.append("financialYears", f));
       cities.forEach((c) => query.append("cities", c));
 
       const data = await fetchData(`/api/referencee/referencee_table_summary?${query.toString()}`);
@@ -111,7 +111,7 @@ function ReferenceeTablePage() {
 
   useEffect(() => {
     loadGroupDesignationSummary();
-  }, [months, cities]);
+  }, [months, financialYears, cities]);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -132,12 +132,9 @@ function ReferenceeTablePage() {
 
         {/* Filters using SlicerFilters for both Month and City */}
         <SlicerFilters
-          monthOptions={monthOptions}
-          months={months}
-          setMonths={setMonths}
-          cityOptions={cityOptions}
-          cities={cities}
-          setCities={setCities}
+          monthOptions={monthOptions} months={months} setMonths={setMonths}
+          financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+          cityOptions={cityOptions} cities={cities} setCities={setCities}
         />
 
         {/* Navigation Buttons */}

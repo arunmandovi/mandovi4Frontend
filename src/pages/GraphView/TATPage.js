@@ -33,7 +33,7 @@ function TATPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-
+  const [financialYears,setFinancialYears] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState("FR1");
 
   useEffect(() => {
@@ -41,23 +41,12 @@ function TATPage() {
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
+  const monthOptions = [  "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",  "Nov", "Dec", "Jan", "Feb", "Mar",];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const growthOptions = ["FR1", "FR2", "FR3", "PMS"];
-
-  const growthKeyMap = {
-    FR1: "firstFreeService",
-    FR2: "secondFreeService",
-    FR3: "thirdFreeService",
-    PMS: "paidService",
-  };
-
+  const growthKeyMap = {  FR1: "firstFreeService",  FR2: "secondFreeService",  FR3: "thirdFreeService",  PMS: "paidService",};
   const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
 
-  // ---------------- FIXED COLORS ------------------
   const COLOR_MAP = {
     Bangalore: "rgba(101, 189, 7, 1)",
     Mysore: "#003399",
@@ -69,7 +58,6 @@ function TATPage() {
   };
   // ------------------------------------------------
 
-  // ---------- Fetch city summary ----------
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
@@ -77,7 +65,7 @@ function TATPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          const query = `?groupBy=city&months=${m}`;
+          const query = `?groupBy=city&months=${m}&financialYears=${financialYears}`;
           const data = await fetchData(`/api/tat/tat_summary${query}`);
 
           if (
@@ -94,7 +82,7 @@ function TATPage() {
       }
     };
     fetchCitySummary();
-  }, [months]);
+  }, [months, financialYears]);
 
   const readCityName = (row) => {
     if (!row) return "";
@@ -241,7 +229,10 @@ function TATPage() {
         </Box>
       </Box>
 
-      <SlicerFilters monthOptions={monthOptions} months={months} setMonths={setMonths} />
+      <SlicerFilters 
+      monthOptions={monthOptions} months={months} setMonths={setMonths}
+      financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+      />
 
       <GrowthButtons
         growthOptions={growthOptions}

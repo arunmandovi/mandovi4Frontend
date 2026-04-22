@@ -15,23 +15,14 @@ import { buildPivotTable } from "../../utils/buildPivotTable";
 function RevenuePage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [months, setMonths] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState("SR&Br Total Growth %");
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
-
-  const growthOptions = [
-    "SR LABOUR Growth %",
-    "BR LABOUR Growth %",
-    "SR&BR LABOUR Growth %",
-    "SR Spares Growth %",
-    "BR Spares Growth %",
-    "SR&BR Spares Growth %",
-    "SR&Br Total Growth %",
+  const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep","Oct", "Nov", "Dec", "Jan", "Feb", "Mar",];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
+  const growthOptions = [ "SR LABOUR Growth %", "BR LABOUR Growth %", "SR&BR LABOUR Growth %", "SR Spares Growth %",
+    "BR Spares Growth %", "SR&BR Spares Growth %", "SR&Br Total Growth %",
   ];
 
   const growthKeyMap = {
@@ -85,7 +76,7 @@ function RevenuePage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          let q = `?&months=${m}`;
+          let q = `?&months=${m}&financialYears=${financialYears}`;
 
           const data = await fetchData(`/api/revenue/revenue_summary${q}`);
           const safe = Array.isArray(data) ? data : data?.result || [];
@@ -100,7 +91,7 @@ function RevenuePage() {
     };
 
     fetchCitySummary();
-  }, [months]);
+  }, [months, financialYears]);
 
   // Build chart data
   const buildChartData = () => {
@@ -153,9 +144,8 @@ function RevenuePage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons

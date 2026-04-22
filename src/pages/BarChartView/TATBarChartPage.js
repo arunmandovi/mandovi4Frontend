@@ -26,26 +26,18 @@ function TATBarChartPage() {
   const location =useLocation();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("tat"));
 
-  // ---------- Filter Options ----------
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
+  const monthOptions = [ "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
   const growthOptions = ["FR1", "FR2", "FR3", "PMS"];
 
-  const growthKeyMap = {
-    FR1: "firstFreeService",
-    FR2: "secondFreeService",
-    FR3: "thirdFreeService",
-    PMS: "paidService",
-  };
+  const growthKeyMap = { FR1: "firstFreeService", FR2: "secondFreeService",  FR3: "thirdFreeService",  PMS: "paidService",};
 
   const preferredOrder = ["Bangalore", "Mysore", "Mangalore"];
 
@@ -71,11 +63,13 @@ function TATBarChartPage() {
     const fetchCitySummary = async () => {
       try {
         const activeMonths = months.length ? months : [];
+        const activeFinancialYears = financialYears.length ? financialYears : [];
         const activeQtrWise = qtrWise.length ? qtrWise : [];
         const activeHalfYear = halfYear.length ? halfYear : [];
 
         const queryParams = new URLSearchParams();
         if (activeMonths.length) queryParams.append("months", activeMonths.join(","));
+        if (activeFinancialYears.length) queryParams.append("financialYears", activeFinancialYears.join(","));
         if (activeQtrWise.length) queryParams.append("qtrWise", activeQtrWise.join(","));
         if (activeHalfYear.length) queryParams.append("halfYear", activeHalfYear.join(","));
 
@@ -94,7 +88,7 @@ function TATBarChartPage() {
     };
 
     fetchCitySummary();
-  }, [months, qtrWise, halfYear]);
+  }, [months, financialYears, qtrWise, halfYear]);
 
   // ---------- Helpers ----------
   const readCityName = (row) => {
@@ -133,7 +127,6 @@ function TATBarChartPage() {
     return `${h}:${m}:${s}`;
   };
 
-  // ---------- Build averaged dataset ----------
   const buildCombinedAverageData = (dataArr) => {
     const apiKey = growthKeyMap[selectedGrowth];
     const cityTotals = {};
@@ -193,10 +186,8 @@ function TATBarChartPage() {
     return null;
   };
 
-  // ---------- Render ----------
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header Buttons */}
       <Box
         sx={{
           display: "flex",
@@ -217,15 +208,10 @@ function TATBarChartPage() {
 
       {/* Filters Section */}
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
       />
 
       <GrowthButtons

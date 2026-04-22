@@ -187,7 +187,7 @@ const BranchBarChart = ({
     value: item.value == null ? 0 : item.value,
   }));
 
-  const showPercent = !isMCPChart && selectedGrowth?.includes("%");
+  const showPercent = !isMCPChart && (selectedGrowth?.includes("%") || (selectedGrowth?.includes("Growth")));
 
   const values = sanitizedData.map((d) => d.value ?? 0);
   const maxValue = Math.max(...values);

@@ -12,13 +12,13 @@ function BatteryTyrePage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState("Battery Qty");
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
+  const [selectedGrowth, setSelectedGrowthState] = useState("BatteryTyre Profit");
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
 
-  const growthOptions = [
-    "Battery Qty", "Tyre Qty", "Battery Profit", "Tyre Profit", "BatteryTyre Profit","Battery Growth %","Tyre Growth %",
-  ];
+  const growthOptions = ["Battery Qty", "Tyre Qty", "Battery Profit", "Tyre Profit", "BatteryTyre Profit","Battery Growth","Tyre Growth",];
 
   const growthKeyMap = {
     "Battery Qty": "batteryQty",
@@ -26,8 +26,8 @@ function BatteryTyrePage() {
     "Battery Profit": "batteryProfit",
     "Tyre Profit": "tyreProfit",
     "BatteryTyre Profit": "batteryTyreProfit",
-    "Battery Growth %": "sparesBatteryGrowth",
-    "Tyre Growth %": "sparesTyreGrowth",
+    "Battery Growth": "sparesBatteryGrowth",
+    "Tyre Growth": "sparesTyreGrowth",
   };
 
   useEffect(() => {
@@ -50,7 +50,7 @@ function BatteryTyrePage() {
         const activeMonths = months.length ? months : monthOptions;
         const combined = [];
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
+          let query = `?&months=${m}&financialYears=${financialYears}`;
           const data = await fetchData(`/api/battery_tyre/battery_tyre_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
           combined.push({ month: m, data: safeData });
@@ -61,7 +61,7 @@ function BatteryTyrePage() {
       }
     };
     fetchCitySummary();
-  }, [months]);
+  }, [months, financialYears]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
@@ -96,9 +96,8 @@ function BatteryTyrePage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons
@@ -120,8 +119,8 @@ function BatteryTyrePage() {
           <GrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
-            decimalDigits={["Battery Growth %","Tyre Growth %"].includes(selectedGrowth) ? 1 : 0}
-            showPercent={selectedGrowth.includes("%")}
+            decimalDigits={0}
+            showPercent={selectedGrowth.includes("Growth")}
           />
         </Box>
       )}

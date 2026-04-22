@@ -48,11 +48,14 @@ function BatteryTyreBranchWisePage() {
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState("Battery Qty");
-
+  const [selectedCities, setSelectedCities] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden", "Balmatta", "KRS Road"]);
 
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
+  const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
   const growthOptions = Object.keys(growthKeyMap);
 
   // Read branch exactly as API sends
@@ -81,7 +84,7 @@ function BatteryTyreBranchWisePage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
+          let query = `?&months=${m}&financialYears=${financialYears}`;
 
           const data = await fetchData(`/api/battery_tyre/battery_tyre_branch_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
@@ -96,7 +99,7 @@ function BatteryTyreBranchWisePage() {
     };
 
     fetchCitySummary();
-  }, [months]);
+  }, [months, financialYears]);
 
   // Build Chart Data
   const buildChartData = () => {
@@ -128,7 +131,6 @@ function BatteryTyreBranchWisePage() {
 
   const { formatted: chartData, sortedBranches: cityKeys } = buildChartData();
 
-  // Select Branches
   const handleBranchChange = (e) => {
     const value = e.target.value;
 
@@ -136,6 +138,22 @@ function BatteryTyreBranchWisePage() {
       setSelectedBranches(ALL_BRANCHES);
     } else {
       setSelectedBranches(value.filter((x) => x !== "ALL"));
+    }
+  };
+
+  const handleCityChange = (e) => {
+    const newSelectedCities = e.target.value;
+    setSelectedCities(newSelectedCities);
+    
+    if (newSelectedCities.length > 0) {
+      const branchesForCities = newSelectedCities.flatMap(city => 
+        Object.entries(BRANCH_CITY_MAP)
+          .filter(([_, c]) => c === city)
+          .map(([br]) => br)
+      );
+      setSelectedBranches(branchesForCities);
+    } else {
+      setSelectedBranches(ALL_BRANCHES);
     }
   };
 
@@ -152,17 +170,39 @@ function BatteryTyreBranchWisePage() {
         </Box>
       </Box>
 
-      {/* Branch Dropdown (ONLY dropdown now) */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select Cities</InputLabel>
+          <Select
+            multiple
+            label="Select Cities"
+            value={selectedCities}
+            onChange={handleCityChange}
+            renderValue={(selected) => 
+              selected.length === 0 ? "All Cities" : 
+              selected.length === cityOptions.length ? "All Cities" : 
+              `${selected.length} Cities`
+            }
+          >
+            {cityOptions.map((city) => (
+              <MenuItem value={city} key={city}>
+                <Checkbox checked={selectedCities.includes(city)} />
+                <ListItemText primary={city} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      
+
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
-           <Select
+          <Select
             multiple
             label="Select Branches"
             value={selectedBranches}
             onChange={handleBranchChange}
             displayEmpty
-            renderValue={() => "Select Branches"}  // << ALWAYS SHOWN
+            renderValue={() => selectedCities.length > 0 ? `${selectedBranches.length} Branches` : "Select Branches"}
             MenuProps={{
               PaperProps: {
                 style: { maxHeight: 300 },
@@ -178,7 +218,8 @@ function BatteryTyreBranchWisePage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mysore")
               .map(([br]) => (
@@ -187,7 +228,8 @@ function BatteryTyreBranchWisePage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mangalore")
               .map(([br]) => (
@@ -199,10 +241,10 @@ function BatteryTyreBranchWisePage() {
           </Select>
         </FormControl>
       </Box>
+
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons
@@ -239,7 +281,7 @@ function BatteryTyreBranchWisePage() {
           <BranchWiseGrowthLineChart
             chartData={chartData}
             cityKeys={cityKeys}
-            decimalDigits={["Battery Growth", "Tyre Growth"].includes(selectedGrowth) ? 1 : 0 }
+            decimalDigits={0}
             showPercent={["Battery Growth", "Tyre Growth"].includes(selectedGrowth) ? true : false }
           />
         </Box>

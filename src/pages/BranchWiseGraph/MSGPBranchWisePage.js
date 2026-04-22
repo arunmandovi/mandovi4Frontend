@@ -31,7 +31,8 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
     .map(([br]) => br)
 ).sort((a, b) => a.localeCompare(b));
 
-  const growthKeyMap = {
+// Growth Key Map
+const growthKeyMap = {
     "SR&BR Growth %": "growthSRBS",
     "Service Growth %": "growthService",
     "BodyShop Growth %": "growthBodyShop",
@@ -41,19 +42,25 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
     "Others Growth %": "growthOthers",
   };
 
-
 function MSGPBranchWisePage() {
   const navigate = useNavigate();
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [channels, setChannels] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState("SR&BR Growth %");
 
   const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden", "Balmatta", "KRS Road"]);
+  const [selectedCities, setSelectedCities] = useState([]);
 
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+  const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
+  const channelOptions = ["Arena", "Nexa"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const growthOptions = Object.keys(growthKeyMap);
 
+  // Read branch exactly as API sends
   const readBranchName = (row) => {
     return row?.branch || row?.Branch || row?.branchName || row?.BranchName || "";
   };
@@ -75,10 +82,13 @@ function MSGPBranchWisePage() {
     const fetchCitySummary = async () => {
       try {
         const activeMonths = months.length ? months : monthOptions;
+        const activeFY = financialYears[0] || "2025-2026";
+        
         const combined = [];
 
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
+          let query = `?months=${m}&selectedFinancialYear=${activeFY}`;
+          if (channels.length === 1) query += `&channels=${channels[0]}`;
 
           const data = await fetchData(`/api/msgp/msgp_branch_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
@@ -93,7 +103,7 @@ function MSGPBranchWisePage() {
     };
 
     fetchCitySummary();
-  }, [months]);
+  }, [months, channels, financialYears]);
 
   const buildChartData = () => {
     if (!selectedGrowth || selectedBranches.length === 0)
@@ -110,6 +120,10 @@ function MSGPBranchWisePage() {
 
       (data || []).forEach((row) => {
         const apiBranch = readBranchName(row);
+        // ✅ Filter by selected cities
+        const rowCity = row?.city || row?.City || row?.cityName || row?.CityName || "";
+        if (selectedCities.length > 0 && !selectedCities.includes(rowCity)) return;
+        
         if (!selectedBranches.includes(apiBranch)) return;
 
         const val = readGrowthValue(row, apiKey);
@@ -124,6 +138,7 @@ function MSGPBranchWisePage() {
 
   const { formatted: chartData, sortedBranches: cityKeys } = buildChartData();
 
+  // Select Branches
   const handleBranchChange = (e) => {
     const value = e.target.value;
 
@@ -131,6 +146,22 @@ function MSGPBranchWisePage() {
       setSelectedBranches(ALL_BRANCHES);
     } else {
       setSelectedBranches(value.filter((x) => x !== "ALL"));
+    }
+  };
+
+  const handleCityChange = (e) => {
+    const newSelectedCities = e.target.value;
+    setSelectedCities(newSelectedCities);
+    
+    if (newSelectedCities.length > 0) {
+      const branchesForCities = newSelectedCities.flatMap(city => 
+        Object.entries(BRANCH_CITY_MAP)
+          .filter(([_, c]) => c === city)
+          .map(([br]) => br)
+      );
+      setSelectedBranches(branchesForCities);
+    } else {
+      setSelectedBranches(ALL_BRANCHES);
     }
   };
 
@@ -147,16 +178,40 @@ function MSGPBranchWisePage() {
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+      {/* ✅ NEW CITIES SELECTOR */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select Cities</InputLabel>
+          <Select
+            multiple
+            label="Select Cities"
+            value={selectedCities}
+            onChange={handleCityChange}
+            renderValue={(selected) => 
+              selected.length === 0 ? "All Cities" : 
+              selected.length === cityOptions.length ? "All Cities" : 
+              `${selected.length} Cities`
+            }
+          >
+            {cityOptions.map((city) => (
+              <MenuItem value={city} key={city}>
+                <Checkbox checked={selectedCities.includes(city)} />
+                <ListItemText primary={city} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      
+
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
-           <Select
+          <Select
             multiple
             label="Select Branches"
             value={selectedBranches}
             onChange={handleBranchChange}
             displayEmpty
-            renderValue={() => "Select Branches"}  
+            renderValue={() => selectedCities.length > 0 ? `${selectedBranches.length} Branches` : "Select Branches"}
             MenuProps={{
               PaperProps: {
                 style: { maxHeight: 300 },
@@ -172,7 +227,8 @@ function MSGPBranchWisePage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mysore")
               .map(([br]) => (
@@ -181,7 +237,8 @@ function MSGPBranchWisePage() {
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mangalore")
               .map(([br]) => (
@@ -193,10 +250,11 @@ function MSGPBranchWisePage() {
           </Select>
         </FormControl>
       </Box>
+      
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        channelOptions={channelOptions} channels={channels} setChannels={setChannels} 
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons

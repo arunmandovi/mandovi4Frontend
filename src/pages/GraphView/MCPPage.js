@@ -12,23 +12,16 @@ function MCPPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [channels, setChannels] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("mcp"));
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-    "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
+  const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct","Nov", "Dec", "Jan", "Feb", "Mar",];
+  const financialYearOptions = ["2025-2026","2026-2027"];
   const channelOptions = ["Arena", "Nexa"];
-
   const growthOptions = ["MCP NO"]; 
+  const growthKeyMap = { "MCP NO": "mcp", };
 
-  const growthKeyMap = {
-    "MCP NO": "mcp",
-  };
-
-   // ✅ Auto-select the only growth option when the page loads
   useEffect(() => {
     if (!selectedGrowth && growthOptions.length === 1) {
       const defaultGrowth = growthOptions[0];
@@ -55,7 +48,7 @@ function MCPPage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          let query = `?&months=${m}`;
+          let query = `?&months=${m}&financialYears=${financialYears}`;
           if (channels.length === 1) query += `&channels=${channels[0]}`;
 
           const data = await fetchData(`/api/mcp/mcp_summary${query}`);
@@ -70,7 +63,7 @@ function MCPPage() {
     };
 
     fetchCitySummary();
-  }, [months, channels]);
+  }, [months, financialYears, channels]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
@@ -112,12 +105,9 @@ function MCPPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+        channelOptions={channelOptions} channels={channels} setChannels={setChannels}
       />
 
       <GrowthButtons
