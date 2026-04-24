@@ -169,6 +169,30 @@ const SlicerFilters = ({
         </Box>
       )}
 
+      {/* Years */}
+      {yearOptions.length > 0 && (
+        <Box sx={{ minWidth: 200 }}>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>
+            Select Year
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
+            {yearOptions.map((year) => {
+              const selected = years === year;  // Single value comparison
+              return (
+                <Button
+                  key={year}
+                  sx={commonButtonStyles(selected)}
+                  size="small"
+                  onClick={() => setYears(year)}  // Always set single value
+                >
+                  {year}
+                </Button>
+              );
+            })}
+          </Box>
+        </Box>
+      )}
+
       {/* Financial Years */}
       {financialYearOptions.length > 0 && (
         <Box sx={{ minWidth: 220 }}>

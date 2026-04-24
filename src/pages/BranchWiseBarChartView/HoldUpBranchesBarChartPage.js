@@ -22,23 +22,24 @@ function HoldUpBranchesBarChartPage() {
   const [summary, setSummary] = useState([]);
   const getCurrentFYMonth = () => {
   const monthMapReverse = {
-      0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun", 6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
+     0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun", 6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
     };
     const today = new Date();
     const jsMonth = today.getMonth();
     return monthMapReverse[jsMonth] || "Apr";
   };
 
-const [months, setMonths] = useState([getCurrentFYMonth()]);
+  const [months, setMonths] = useState([getCurrentFYMonth()]);
+  const [years, setYears] = useState("2026");
   const [days, setDays] = useState([]);
   const [selectedDate, setSelectedDate] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
   const [selectedBranches, setSelectedBranches] = useState(ALL_BRANCHES);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
-  const cityOptions = ["BANGALORE", "MYSORE", "MANGALORE"];
+  const yearOtions = ["2025","2026"];
+  const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
   const growthOptions = ["Service", "BodyShop", "PMS", "ServiceBodyShop"];
-
   const growthKeyMap = {
     Service: "countService",
     BodyShop: "countBodyShop",
@@ -103,7 +104,7 @@ const [months, setMonths] = useState([getCurrentFYMonth()]);
             ? `&cities=${selectedCities.join(",")}`
             : "";
   
-        const query = `?month=${month}&day=${day}${cityQuery}`;
+        const query = `?month=${month}&day=${day}${cityQuery}&years=${years}`;
   
         try {
           const res = await fetchData(
@@ -129,7 +130,7 @@ const [months, setMonths] = useState([getCurrentFYMonth()]);
     };
   
     autoSelectLastAvailableDate();
-  }, [days, months, selectedCities]);
+  }, [days, months,years, selectedCities]);
 
   useEffect(() => {
     if (!months || selectedDate.length === 0) return;
@@ -143,7 +144,7 @@ const [months, setMonths] = useState([getCurrentFYMonth()]);
           ? `&cities=${selectedCities.join(",")}`
           : "";
 
-        const query = `?month=${month}&day=${day}${cityQuery}`;
+        const query = `?month=${month}&day=${day}${cityQuery}&years=${years}`;
 
         const data = await fetchData(
           `/api/hold_up/hold_up_branch_summary${query}`
@@ -157,7 +158,7 @@ const [months, setMonths] = useState([getCurrentFYMonth()]);
     };
 
     fetchSummary();
-  }, [months, selectedDate, selectedCities]);
+  }, [months, selectedDate, years, selectedCities]);
 
   const readBranchName = (row) =>
     row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
@@ -263,6 +264,22 @@ const [months, setMonths] = useState([getCurrentFYMonth()]);
     setSelectedBranches(value);
   };
 
+  const handleCityChange = (e) => {
+    const newSelectedCities = e.target.value;
+    setSelectedCities(newSelectedCities);
+    
+    if (newSelectedCities.length > 0) {
+      const branchesForCities = newSelectedCities.flatMap(city => 
+        Object.entries(BRANCH_CITY_MAP)
+          .filter(([_, c]) => c === city)
+          .map(([br]) => br)
+      );
+      setSelectedBranches(branchesForCities);
+    } else {
+      setSelectedBranches(ALL_BRANCHES);
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Box
@@ -334,69 +351,91 @@ const [months, setMonths] = useState([getCurrentFYMonth()]);
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select Cities</InputLabel>
+          <Select
+            multiple
+            label="Select Cities"
+            value={selectedCities}
+            onChange={handleCityChange}
+            renderValue={(selected) => 
+              selected.length === 0 ? "All Cities" : 
+              selected.length === cityOptions.length ? "All Cities" : 
+              `${selected.length} Cities`
+            }
+          >
+            {cityOptions.map((city) => (
+              <MenuItem value={city} key={city}>
+                <Checkbox checked={selectedCities.includes(city)} />
+                <ListItemText primary={city} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      
+
         <FormControl size="small" sx={{ minWidth: 260 }}>
-         <InputLabel>Select Branches</InputLabel>
-         <Select
-           multiple
-           label="Select Branches"
-           value={selectedBranches}
-           onChange={handleBranchChange}
-           displayEmpty
-           renderValue={() => "Select Branches"}  
-           MenuProps={{
-             PaperProps: {
-               style: { maxHeight: 300 },
-             },
-           }}
-         >
-           <ListItemText primary="Bangalore" sx={{ pl: 2, fontWeight: "bold" }} />
-           {Object.entries(BRANCH_CITY_MAP)
-             .filter(([_, c]) => c === "Bangalore")
-             .map(([br]) => (
-               <MenuItem value={br} key={br}>
-                 <Checkbox checked={selectedBranches.includes(br)} />
-                 <ListItemText primary={br} />
-               </MenuItem>
-             ))}
-           <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
-           {Object.entries(BRANCH_CITY_MAP)
-             .filter(([_, c]) => c === "Mysore")
-             .map(([br]) => (
-               <MenuItem value={br} key={br}>
-                 <Checkbox checked={selectedBranches.includes(br)} />
-                 <ListItemText primary={br} />
-               </MenuItem>
-             ))}
-           <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
-           {Object.entries(BRANCH_CITY_MAP)
-             .filter(([_, c]) => c === "Mangalore")
-             .map(([br]) => (
-               <MenuItem value={br} key={br}>
-                 <Checkbox checked={selectedBranches.includes(br)} />
-                 <ListItemText primary={br} />
-               </MenuItem>
-             ))}
-         </Select>
+          <InputLabel>Select Branches</InputLabel>
+          <Select
+            multiple
+            label="Select Branches"
+            value={selectedBranches}
+            onChange={handleBranchChange}
+            displayEmpty
+            renderValue={() => selectedCities.length > 0 ? `${selectedBranches.length} Branches` : "Select Branches"}
+            MenuProps={{
+              PaperProps: {
+                style: { maxHeight: 300 },
+              },
+            }}
+          >
+            <ListItemText primary="Bangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+            {Object.entries(BRANCH_CITY_MAP)
+              .filter(([_, c]) => c === "Bangalore")
+              .map(([br]) => (
+                <MenuItem value={br} key={br}>
+                  <Checkbox checked={selectedBranches.includes(br)} />
+                  <ListItemText primary={br} />
+                </MenuItem>
+              ))}
+           
+            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+            {Object.entries(BRANCH_CITY_MAP)
+              .filter(([_, c]) => c === "Mysore")
+              .map(([br]) => (
+                <MenuItem value={br} key={br}>
+                  <Checkbox checked={selectedBranches.includes(br)} />
+                  <ListItemText primary={br} />
+                </MenuItem>
+              ))}
+           
+            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+            {Object.entries(BRANCH_CITY_MAP)
+              .filter(([_, c]) => c === "Mangalore")
+              .map(([br]) => (
+                <MenuItem value={br} key={br}>
+                  <Checkbox checked={selectedBranches.includes(br)} />
+                  <ListItemText primary={br} />
+                </MenuItem>
+              ))}
+          </Select>
         </FormControl>
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
+        monthOptions={monthOptions}  months={months}
         setMonths={(selected) => {
           const lastSelected = selected[selected.length - 1];
           setMonths(lastSelected ? [lastSelected] : []);
         }}
-        cityOptions={cityOptions}
-        cities={selectedCities}
-        setCities={setSelectedCities}
-        dateOptions={days}
-        dates={selectedDate}
+        cityOptions={cityOptions} cities={selectedCities} setCities={setSelectedCities}
+        dateOptions={days} dates={selectedDate}
         setDates={(arr) => {
           const last = arr[arr.length - 1];
           setSelectedDate(last ? [last.padStart(2, "0")] : []);
         }}
+        yearOptions={yearOtions} years={years} setYears={setYears}
       />
 
       <GrowthButtons

@@ -27,12 +27,9 @@ import { fetchData } from "../../api/uploadService";
 import * as XLSX from 'xlsx';
 
 const MONTHS = ["APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR"];
-const BRANCHES = [
-  "BALMATTA","SURATHKAL","ADYAR","SULLIA","UPPINANGADY",
-  "YEYYADI","BANTWAL","KADABA","VITTLA","SUJITH BAGH","NEXA","NARAVI"
-];
+const BRANCHES = ["BALMATTA","SURATHKAL","ADYAR","SULLIA","UPPINANGADY","YEYYADI","BANTWAL","KADABA","VITTLA","SUJITH BAGH","NEXA","NARAVI"];
+const FINANCIAL_YEARS = ["2025-2026", "2026-2027"];
 
-// HIGHLIGHTED_CCE array from the chart components
 const HIGHLIGHTED_CCE = [
   { branchName: "ADYAR", cceName: "KUSUMA" },
   { branchName: "ADYAR", cceName: "GAYATHRI" },
@@ -66,13 +63,14 @@ const ConversionTablePage = ({ type }) => {
   const personLabel = isSA ? 'SA' : 'CCE';
   const allPerson = isSA ? 'ALL_SA' : 'ALL_CCE';
 
-  // ✅ NEW: Experience sorting state (CC only)
   const [sortByExp, setSortByExp] = useState(false);
   const [expSortAsc, setExpSortAsc] = useState(false);
 
-  // ✅ NEW: PSF/SMR Filter state (CC only)
-  const [filterMode, setFilterMode] = useState("ALL"); // PSF, SMR, ALL
-
+  const [filterMode, setFilterMode] = useState("ALL");
+  
+  // ✅ CHANGED: Single Financial Year (string instead of array)
+  const [selectedFinancialYear, setSelectedFinancialYear] = useState("2026-2027");
+  
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
   const [selectedPersons, setSelectedPersons] = useState([]);
@@ -87,10 +85,11 @@ const ConversionTablePage = ({ type }) => {
 
   const normalize = (v) => v?.trim().toUpperCase() || "";
 
-  /* ---------- MASTER DATA ---------- */
   useEffect(() => {
     const load = async () => {
-      const res = await fetchData(apiPrefix);
+      // ✅ UPDATED: Include financialYear in master data
+      const q = `?financialYears=${selectedFinancialYear}`;
+      const res = await fetchData(`${apiPrefix}${q}`);
       const map = {};
       (Array.isArray(res) ? res : []).forEach(r => {
         const b = normalize(r.branch);
@@ -103,9 +102,8 @@ const ConversionTablePage = ({ type }) => {
       setBranchPersonMap(out);
     };
     load();
-  }, [apiPrefix, personKey]);
+  }, [apiPrefix, personKey, selectedFinancialYear]); // ✅ Added dependency
 
-  /* ---------- PERSON OPTIONS ---------- */
   const dropdownPersonsMemo = useMemo(() => {
     if (!selectedBranches.length)
       return [...new Set(Object.values(branchPersonMap).flat())].sort();
@@ -125,30 +123,32 @@ const ConversionTablePage = ({ type }) => {
     setSelectedPersons(prev => prev.filter(p => dropdownPersonsMemo.includes(p)));
   }, [dropdownPersonsMemo]);
 
-  /* ---------- FETCH DATA ---------- */
+  // ✅ UPDATED: Single Financial Year fetch (much faster!)
   useEffect(() => {
     const load = async () => {
       const months = selectedMonths.length ? selectedMonths : MONTHS;
       let all = [];
+      
+      // ✅ CHANGED: Single FY (no loop needed)
+      const fy = selectedFinancialYear;
+      
       for (const m of months) {
-        const q =
-         `?months=${m}` +
-         (selectedBranches.length ? `&branches=${selectedBranches.join(",")}` : "") +
-         (selectedPersons.length ? `&${isSA ? 'saNames' : 'cceNames'}=${selectedPersons.join(",")}` : "");
+        const q = `?financialYears=${fy}&months=${m}` +
+                 (selectedBranches.length ? `&branches=${selectedBranches.join(",")}` : "") +
+                 (selectedPersons.length ? `&${isSA ? 'saNames' : 'cceNames'}=${selectedPersons.join(",")}` : "");
         const res = await fetchData(`${apiPrefix}${q}`);
-        if (Array.isArray(res)) all.push(...res.map(r => ({ ...r, month: m })));
+        if (Array.isArray(res)) all.push(...res.map(r => ({ ...r, month: m, financialYear: fy })));
       }
       setRawRows(all);
     };
     load();
-  }, [selectedMonths, selectedBranches, selectedPersons, apiPrefix, isSA]);
+  }, [selectedMonths, selectedBranches, selectedPersons, selectedFinancialYear, apiPrefix, isSA]); // ✅ Updated dependency
 
   const existingMonths = useMemo(
     () => MONTHS.filter(m => rawRows.some(r => r.month === m)),
     [rawRows]
   );
 
-  /* ---------- TABLE DATA (MOVED BEFORE FILTER/SORT) ---------- */
   const tableRows = useMemo(() => {
     const map = {};
     rawRows.forEach(r => {
@@ -176,7 +176,6 @@ const ConversionTablePage = ({ type }) => {
       .sort((a, b) => b.totalConv - a.totalConv || b.totalPct - a.totalPct);
   }, [rawRows, personKey, isCC]);
 
-  // ✅ NEW: Filter logic for PSF/SMR (CC only)
   const filteredTableRows = useMemo(() => {
     if (!isCC || filterMode === "ALL") return tableRows;
     
@@ -185,15 +184,14 @@ const ConversionTablePage = ({ type }) => {
         normalize(row[personKey]) === normalize(highlight.cceName) &&
         normalize(row.branch) === normalize(highlight.branchName)
       );
-  
+ 
       if (filterMode === "PSF") return isMatch;
       if (filterMode === "SMR") return !isMatch;
-  
+ 
       return true;
     });
   }, [tableRows, filterMode, isCC]);
 
-  // ✅ NEW: Apply EXP sorting (CC only)
   const sortedTableRows = useMemo(() => {
     let rows = filteredTableRows;
     if (sortByExp && isCC) {
@@ -206,7 +204,6 @@ const ConversionTablePage = ({ type }) => {
     return rows;
   }, [filteredTableRows, sortByExp, expSortAsc, isCC]);
 
-  /* ---------- DOWNLOAD FUNCTION (FIXED) ---------- */
   const downloadExcel = () => {
     if (sortedTableRows.length === 0) return;
 
@@ -255,11 +252,13 @@ const ConversionTablePage = ({ type }) => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, `${isSA ? 'SA' : 'CC'} Conversion Summary`);
     
+    // ✅ UPDATED: Single FY in filename
     const filters = [];
+    filters.push(`FY_${selectedFinancialYear}`);
     if (selectedMonths.length) filters.push(`Months_${selectedMonths.join('_')}`);
     if (selectedBranches.length) filters.push(`Branches_${selectedBranches.slice(0,3).join('_')}${selectedBranches.length > 3 ? '_etc' : ''}`);
     if (isCC && filterMode !== "ALL") filters.push(`Filter_${filterMode}`);
-    const filename = `${isSA ? 'SA' : 'CC'}_Conversion_Report.xlsx`;
+    const filename = `${isSA ? 'SA' : 'CC'}_Conversion_Report${filters.length ? `_${filters.join('_')}` : ''}.xlsx`;
     
     XLSX.writeFile(wb, filename);
   };
@@ -274,7 +273,6 @@ const ConversionTablePage = ({ type }) => {
     "&:hover": { background: "#aed581" },
   });
 
-  // ✅ NEW: EXP sort toggle functions (CC only)
   const toggleExpSort = () => {
     if (!isCC) return;
     if (sortByExp) {
@@ -296,7 +294,6 @@ const ConversionTablePage = ({ type }) => {
     title: 'h5'           
   };
 
-  // ✅ NEW: Row styling function
   const getRowStyle = (row) => {
     if (!isCC) return {};
     
@@ -306,7 +303,7 @@ const ConversionTablePage = ({ type }) => {
     );
     
     const hasNoExperience = !row.experienceDays;
-  
+
     if (isHighlightedCCE) {
       return {
         backgroundColor: 'rgba(255, 235, 59, 0.3) !important',
@@ -326,7 +323,6 @@ const ConversionTablePage = ({ type }) => {
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3, alignItems: "center" }}>
         <Typography variant="h4">{title}</Typography>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-          {/* ✅ NEW: EXP Sort Controls (CC only) */}
           {isCC && sortByExp && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 1 }}>
               <Button
@@ -408,7 +404,6 @@ const ConversionTablePage = ({ type }) => {
               </IconButton>
             </Box>
           )}
-          {/* ✅ NEW: PSF/SMR Filter Buttons (CC only) */}
           {isCC && (
             <Box sx={{ display: "flex", gap: 0.5, mr: 1 }}>
               <Button size="small" sx={slicerStyle(filterMode === "ALL")} onClick={() => setFilterMode("ALL")}>
@@ -437,7 +432,20 @@ const ConversionTablePage = ({ type }) => {
         </Box>
       </Box>
 
-      {/* Filters - identical for both */}
+      {/* ✅ CHANGED: Single Select Financial Year (Radio Style) */}
+      <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
+        {FINANCIAL_YEARS.map(fy => (
+          <Button 
+            key={fy} 
+            size="small" 
+            sx={slicerStyle(fy === selectedFinancialYear)}
+            onClick={() => setSelectedFinancialYear(fy)} // ✅ Single select logic
+          >
+            {fy}
+          </Button>
+        ))}
+      </Box>
+
       <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
         {MONTHS.map(m => (
           <Button key={m} size="small" sx={slicerStyle(selectedMonths.includes(m))}
@@ -447,6 +455,7 @@ const ConversionTablePage = ({ type }) => {
         ))}
       </Box>
 
+      {/* ✅ FIXED: Branch filter bug */}
       <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
         {BRANCHES.map(b => (
           <Button key={b} size="small" sx={slicerStyle(selectedBranches.includes(b))}
@@ -498,7 +507,6 @@ const ConversionTablePage = ({ type }) => {
         </Select>
       </Box>
 
-      {/* Dynamic Table Header & Body */}
       <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 4, border: "2px solid #455a64" }}>
         <Table size="small" sx={{ 
           "& th, & td": {

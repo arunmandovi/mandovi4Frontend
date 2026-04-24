@@ -27,35 +27,17 @@ import {
   Tooltip,
   CartesianGrid,
   ReferenceLine,
-  LabelList,  // ✅ ADDED for data labels
+  LabelList,
 } from "recharts";
 
-const MONTHS = [
-  "APR","MAY","JUN","JUL","AUG","SEP",
-  "OCT","NOV","DEC","JAN","FEB","MAR"
-];
-
-const BRANCHES = [
-  "BALMATTA","SURATHKAL","ADYAR","SULLIA","UPPINANGADY",
-  "YEYYADI","BANTWAL","KADABA","VITTLA","SUJITH BAGH","NEXA","NARAVI"
-];
+const MONTHS = ["APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR"];
+const BRANCHES = [ "BALMATTA","SURATHKAL","ADYAR","SULLIA","UPPINANGADY","YEYYADI","BANTWAL","KADABA","VITTLA","SUJITH BAGH","NEXA","NARAVI"];
+const FINANCIAL_YEARS = ["2025-2026", "2026-2027"];
 
 const BRANCH_COLORS = {
-  BALMATTA: "#1f77b4",
-  SURATHKAL: "#ff7f0e", 
-  ADYAR: "#2ca02c",
-  SULLIA: "#d62728",
-  UPPINANGADY: "#9467bd",
-  YEYYADI: "#8c564b",
-  BANTWAL: "#e377c2",
-  KADABA: "#7f7f7f",
-  VITTLA: "#bcbd22",
-  "SUJITH BAGH": "#17becf",
-  NEXA: "#4e79a7",
-  NARAVI: "#f28e2b",
-  ALL: "#2e7d32",
-  APPT: "#1976d2",
-  CONV: "#d32f2f",
+  BALMATTA: "#1f77b4",SURATHKAL: "#ff7f0e", ADYAR: "#2ca02c",SULLIA: "#d62728",UPPINANGADY: "#9467bd",
+  YEYYADI: "#8c564b", BANTWAL: "#e377c2", KADABA: "#7f7f7f", VITTLA: "#bcbd22", "SUJITH BAGH": "#17becf",
+  NEXA: "#4e79a7", NARAVI: "#f28e2b", ALL: "#2e7d32", APPT: "#1976d2", CONV: "#d32f2f",
 };
 
 const MONTH_COLORS = {
@@ -115,6 +97,9 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
   const [sortByExp, setSortByExp] = useState(false);
   const [expSortAsc, setExpSortAsc] = useState(false);
   const [filterMode, setFilterMode] = useState("ALL");
+  
+  const [selectedFinancialYear, setSelectedFinancialYear] = useState("2026-2027");
+  
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [allSelected, setAllSelected] = useState(true);
   const [selectedBranches, setSelectedBranches] = useState([]);
@@ -158,7 +143,7 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
 
   useEffect(() => {
     const loadMasterData = async () => {
-      const res = await fetchData(`${apiPrefix}/${type}_conversion_summary`);
+      const res = await fetchData(`${apiPrefix}/${type}_conversion_summary?financialYears=${selectedFinancialYear}`);
       const rows = Array.isArray(res) ? res : [];
       const map = {};
       rows.forEach(r => {
@@ -172,7 +157,7 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
       setBranchPersonMap(normalized);
     };
     loadMasterData();
-  }, [apiPrefix, type, personKey]);
+  }, [apiPrefix, type, personKey, selectedFinancialYear]); // ✅ Added dependency
 
   const dropdownPersons = useMemo(() => {
     if (!selectedBranches.length) {
@@ -200,19 +185,19 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
       const personSet = new Set();
 
       for (const month of monthsToFetch) {
-        const query = `?months=${month}` +
-         (selectedBranches.length ? `&branches=${selectedBranches.join(",")}` : "") +
-         (selectedPersons.length ? `&${personParam}=${selectedPersons.join(",")}` : "");
+        const query = `?financialYears=${selectedFinancialYear}&months=${month}` +
+                     (selectedBranches.length ? `&branches=${selectedBranches.join(",")}` : "") +
+                     (selectedPersons.length ? `&${personParam}=${selectedPersons.join(",")}` : "");
         const res = await fetchData(`${apiPrefix}/${type}_conversion_summary${query}`);
         const rows = Array.isArray(res) ? res : [];
         rows.forEach(r => personSet.add(normalize(r[personKey])));
-        allData.push({ month, data: rows });
+        allData.push({ month, financialYear: selectedFinancialYear, data: rows });
       }
       setSummary(allData);
       setPersonKeys([...personSet]);
     };
     loadData();
-  }, [selectedMonths, allSelected, selectedBranches, selectedPersons, apiPrefix, type, personKey, personParam]);
+  }, [selectedMonths, allSelected, selectedBranches, selectedPersons, selectedFinancialYear, apiPrefix, type, personKey, personParam]); // ✅ Added dependency
 
   const chartData = useMemo(() => {
     const rows = getFilteredPersonKeys.map(person => {
@@ -273,7 +258,6 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
         }
       });
 
-      // ✅ Rank
       if (!isAC) {
         if (selectedGrowth === "PMS %") row.__rankValue = totalPMS / validMonths || 0;
         if (selectedGrowth === "Appointment") row.__rankValue = totalAppt;
@@ -282,7 +266,6 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
         row.__rankValue = totalPMS / validMonths || 0;
       }
 
-      // ✅ MONTH DATA
       summary.forEach(({ month, data }) => {
         const r = data.find(d => normalize(d[personKey]) === normalize(person));
         if (!r) return;
@@ -299,14 +282,13 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
             pmsAppointment > 0
               ? Math.round((percentagePMS / 100) * pmsAppointment)
               : 0;
-        
+          
           row[`${month}_APPT`] = Math.round(pmsAppointment);
           row[`${month}_CONV`] = Math.round(percentagePMS); // actual %
           row[`${month}_PMS_SCALED`] = scaledPMSHeight;     // visual height
         }
       });
 
-      // ✅ ALL MODE (MATCH BAR CHART)
       if (isAllMonthsSelected) {
         if (!isAC) {
           if (selectedGrowth === "PMS %") row.ALL = Math.round(totalPMS / validMonths || 0);
@@ -314,14 +296,14 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
           if (selectedGrowth === "Conversion") row.ALL = Math.round(totalConv);
         } else {
           const avgPMS = totalPMS / validMonths || 0;
-           
+          
           row.ALL_APPT = Math.round(totalAppt);
           row.ALL_PMS_RAW = Math.round(avgPMS);
           row.ALL_PMS =
             totalAppt > 0
               ? Math.round((avgPMS / 100) * totalAppt)
               : 0;
-                  }
+        }
       }
 
       row.__branchColor = BRANCH_COLORS[row.branch] || '#999';
@@ -343,59 +325,52 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
     return sortedRows;
   }, [getFilteredPersonKeys, summary, selectedGrowth, selectedBranches, isAllMonthsSelected, isCC, sortByExp, expSortAsc]);
 
-  // 🔴 FIXED Custom label renderer for data points - SAFE null checks
   const renderCustomLabel = (props) => {
-  const { x, y, value, payload, dataKey } = props;
+    const { x, y, value, payload, dataKey } = props;
 
-  if (!value || value === 0) return null;
+    if (!value || value === 0) return null;
 
-  // ✅ SAFETY: fallback if dataKey missing
-  const key = dataKey || props?.dataKey || "";
+    const key = dataKey || props?.dataKey || "";
 
-  let displayValue = value;
-  let isPercent = false;
+    let displayValue = value;
+    let isPercent = false;
 
-  // ✅ PMS scaled line → show actual %
-  if (key && key.includes("PMS_SCALED")) {
-    const month = key.split("_")[0];
-    displayValue = payload?.[`${month}_CONV`] ?? 0;
-    isPercent = true;
-  }
+    if (key && key.includes("PMS_SCALED")) {
+      const month = key.split("_")[0];
+      displayValue = payload?.[`${month}_CONV`] ?? 0;
+      isPercent = true;
+    }
 
-  // ✅ ALL mode PMS
-  else if (key === "ALL_PMS") {
-    displayValue = payload?.ALL_PMS_RAW ?? 0;
-    isPercent = true;
-  }
+    else if (key === "ALL_PMS") {
+      displayValue = payload?.ALL_PMS_RAW ?? 0;
+      isPercent = true;
+    }
 
-  // ✅ Appointment line
-  else if (key && key.includes("_APPT")) {
-    isPercent = false;
-  }
+    else if (key && key.includes("_APPT")) {
+      isPercent = false;
+    }
 
-  // ✅ fallback (non A&C cases)
-  else {
-    isPercent = false;
-  }
+    else {
+      isPercent = false;
+    }
 
-  return (
-    <g>
-      <text
-        x={x}
-        y={y - 10}
-        textAnchor="middle"
-        fill="#000"
-        fontSize="12"
-        fontWeight="bold"
-      >
-        {isPercent
-          ? `${Math.round(displayValue)}%`
-          : Math.round(displayValue)}
-      </text>
-    </g>
-  );
-};
-
+    return (
+      <g>
+        <text
+          x={x}
+          y={y - 10}
+          textAnchor="middle"
+          fill="#000"
+          fontSize="12"
+          fontWeight="bold"
+        >
+          {isPercent
+            ? `${Math.round(displayValue)}%`
+            : Math.round(displayValue)}
+        </text>
+      </g>
+    );
+  };
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -423,7 +398,6 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
           overflow: 'visible'
         }}>
           
-          {/* HEADER */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, pb: 1, borderBottom: '1px solid #e0e0e0' }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, color: CCE_STATUS_COLORS[cceStatus] }}>
               {titlePrefix}: {label}
@@ -450,14 +424,16 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
             </IconButton>
           </Box>
 
-          {/* BRANCH */}
           <Box sx={{ mb: 1.5 }}>
             <Typography variant="body2" sx={{ color: '#666', fontSize: '0.85rem', mb: 0.5 }}>
               📍 Branch: <strong>{branchName}</strong>
             </Typography>
+            {/* ✅ NEW: Show selected Financial Year */}
+            <Typography variant="body2" sx={{ color: '#666', fontSize: '0.85rem' }}>
+              📅 Financial Year: <strong>{selectedFinancialYear}</strong>
+            </Typography>
           </Box>
 
-          {/* ✅ Selected Period Performance */}
           {isAllMonthsSelected && (
             <Box sx={{ mb: 1.5 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#1976d2' }}>
@@ -498,7 +474,6 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
             </Box>
           )}
 
-          {/* ✅ All Months Performance */}
           <Box>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: '#1976d2' }}>
               All Months Performance:
@@ -507,7 +482,7 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
             <Box sx={{ 
               display: 'grid', 
               gridTemplateColumns: 'repeat(3, 1fr)',  
-              gridTemplateRows: 'repeat(4, 1fr)',      
+              gridTemplateRows: 'repeat(4, 1fr)',     
               gap: 0.8,
               height: 200,                             
               width: '100%',
@@ -526,7 +501,7 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
                       borderRadius: 1.2, 
                       bgcolor: (appt > 0 || conv > 0)
                         ? 'rgba(0,0,0,0.03)'
-                        : 'rgba(0,0,0,0.01)',          
+                        : 'rgba(0,0,0,0.01)',         
                       textAlign: 'center',
                       border: '1px solid rgba(0,0,0,0.05)',
                       fontSize: '0.75rem',
@@ -631,7 +606,7 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
             label={renderCustomLabel}
           />
         );
-    
+        
         lines.push(
           <Line
             key="ALL_PMS"
@@ -652,7 +627,7 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
               label={renderCustomLabel}
             />
           );
-    
+          
           lines.push(
             <Line
               key={`${month}_PMS_SCALED`}
@@ -672,7 +647,7 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
             dataKey="ALL" 
             stroke="#2e7d32" 
             strokeWidth={4}
-            label={renderCustomLabel}  // ✅ SAFE labels
+            label={renderCustomLabel}
           />
         );
       } else {
@@ -683,7 +658,7 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
               dataKey={month} 
               stroke={MONTH_COLORS[month]} 
               strokeWidth={3}
-              label={renderCustomLabel}  // ✅ SAFE labels
+              label={renderCustomLabel}
             />
           );
         });
@@ -728,6 +703,20 @@ const GenericConversionLineChart = ({ type = "sa" }) => {
           <Button variant="contained" onClick={() => navigate(`/DashboardHome/${type}_conversion-bar-chart`)}>Bar Chart</Button>
           <Button variant="contained" onClick={() => navigate(tableRoute)}>Table</Button>
         </Box>
+      </Box>
+
+      {/* ✅ NEW: Financial Year Filter Row (Single Select) */}
+      <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
+        {FINANCIAL_YEARS.map(fy => (
+          <Button 
+            key={fy} 
+            size="small" 
+            sx={btnStyle(fy === selectedFinancialYear)}
+            onClick={() => setSelectedFinancialYear(fy)}
+          >
+            {fy}
+          </Button>
+        ))}
       </Box>
 
       <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>

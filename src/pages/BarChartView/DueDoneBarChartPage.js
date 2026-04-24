@@ -11,22 +11,19 @@ function DueDoneBarChartPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState("2026-2027");
   const [channels, setChannels] = useState([]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("due_done"));
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const financialYearOptions = ["2025-2026","2026-2027"];
   const channelOptions = ["ARENA", "NEXA"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
-
-  const growthOptions = [
-    "Done %"
-  ];
-  const growthKeyMap = {
-    "Done %": "percentageDone",
-  };
+  const growthOptions = ["Done %"];
+  const growthKeyMap = {"Done %": "percentageDone",};
 
   useEffect(() => {
       if (!selectedGrowth && growthOptions.length === 1) {
@@ -42,6 +39,7 @@ function DueDoneBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
+        if (financialYears.length) params.append("financialYears", financialYears.join(","));
         if (channels.length) params.append("channels", channels.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
@@ -53,7 +51,7 @@ function DueDoneBarChartPage() {
       }
     };
     fetchCitySummary();
-  }, [months, channels, qtrWise, halfYear]);
+  }, [months,financialYears, channels, qtrWise, halfYear]);
 
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
@@ -121,18 +119,11 @@ function DueDoneBarChartPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+        channelOptions={channelOptions} channels={channels} setChannels={setChannels}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
       />
 
       <GrowthButtons

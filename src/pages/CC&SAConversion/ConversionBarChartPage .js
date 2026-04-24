@@ -36,9 +36,11 @@ const MONTHS = [
 ];
 
 const BRANCHES = [
- "BALMATTA","SURATHKAL","ADYAR","SULLIA","UPPINANGADY",
+  "BALMATTA","SURATHKAL","ADYAR","SULLIA","UPPINANGADY",
   "YEYYADI","BANTWAL","KADABA","VITTLA","SUJITH BAGH","NEXA","NARAVI"
 ];
+
+const FINANCIAL_YEARS = ["2025-2026", "2026-2027"]; // ✅ NEW: Added
 
 const BRANCH_COLORS = {
   BALMATTA: "#1f77b4",
@@ -114,6 +116,10 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
   const [sortByExp, setSortByExp] = useState(false);
   const [expSortAsc, setExpSortAsc] = useState(false);
   const [filterMode, setFilterMode] = useState("ALL");
+  
+  // ✅ NEW: Single Financial Year state (radio button style)
+  const [selectedFinancialYear, setSelectedFinancialYear] = useState("2026-2027");
+  
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [allSelected, setAllSelected] = useState(true);
   const [selectedBranches, setSelectedBranches] = useState([]);
@@ -155,9 +161,10 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
     return map;
   }, [branchPersonMap]);
 
+  // ✅ UPDATED: Include financialYear in master data fetch
   useEffect(() => {
     const loadMasterData = async () => {
-      const res = await fetchData(`${apiPrefix}/${type}_conversion_summary`);
+      const res = await fetchData(`${apiPrefix}/${type}_conversion_summary?financialYears=${selectedFinancialYear}`);
       const rows = Array.isArray(res) ? res : [];
       const map = {};
       rows.forEach(r => {
@@ -171,7 +178,7 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
       setBranchPersonMap(normalized);
     };
     loadMasterData();
-  }, [apiPrefix, type, personKey]);
+  }, [apiPrefix, type, personKey, selectedFinancialYear]); // ✅ Added dependency
 
   const dropdownPersons = useMemo(() => {
     if (!selectedBranches.length) {
@@ -192,6 +199,7 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
     setSelectedPersons(prev => prev.filter(p => dropdownPersons.includes(p)));
   }, [dropdownPersons]);
 
+  // ✅ UPDATED: Data loading with Financial Year
   useEffect(() => {
     const loadData = async () => {
       const monthsToFetch = allSelected || !selectedMonths.length ? MONTHS : selectedMonths;
@@ -199,19 +207,20 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
       const personSet = new Set();
 
       for (const month of monthsToFetch) {
-        const query = `?months=${month}` +
-         (selectedBranches.length ? `&branches=${selectedBranches.join(",")}` : "") +
-         (selectedPersons.length ? `&${personParam}=${selectedPersons.join(",")}` : "");
+        // ✅ NEW: Single FY parameter
+        const query = `?financialYears=${selectedFinancialYear}&months=${month}` +
+                     (selectedBranches.length ? `&branches=${selectedBranches.join(",")}` : "") +
+                     (selectedPersons.length ? `&${personParam}=${selectedPersons.join(",")}` : "");
         const res = await fetchData(`${apiPrefix}/${type}_conversion_summary${query}`);
         const rows = Array.isArray(res) ? res : [];
         rows.forEach(r => personSet.add(normalize(r[personKey])));
-        allData.push({ month, data: rows });
+        allData.push({ month, financialYear: selectedFinancialYear, data: rows });
       }
       setSummary(allData);
       setPersonKeys([...personSet]);
     };
     loadData();
-  }, [selectedMonths, allSelected, selectedBranches, selectedPersons, apiPrefix, type, personKey, personParam]);
+  }, [selectedMonths, allSelected, selectedBranches, selectedPersons, selectedFinancialYear, apiPrefix, type, personKey, personParam]); // ✅ Added dependency
 
   const chartData = useMemo(() => {
     const rows = getFilteredPersonKeys.map(person => {
@@ -471,6 +480,10 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
             <Typography variant="body2" sx={{ color: '#666', fontSize: '0.85rem', mb: 0.5 }}>
               📍 Branch: <strong>{branchName}</strong>
             </Typography>
+            {/* ✅ NEW: Show selected Financial Year */}
+            <Typography variant="body2" sx={{ color: '#666', fontSize: '0.85rem' }}>
+              📅 Financial Year: <strong>{selectedFinancialYear}</strong>
+            </Typography>
           </Box>
 
           {/* ✅ "Selected Period Performance" - ONLY when ALL months selected */}
@@ -526,7 +539,7 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
             <Box sx={{ 
               display: 'grid', 
               gridTemplateColumns: 'repeat(3, 1fr)',  
-              gridTemplateRows: 'repeat(4, 1fr)',      
+              gridTemplateRows: 'repeat(4, 1fr)',     
               gap: 0.8,
               height: 200,                             
               width: '100%',
@@ -545,7 +558,7 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
                       borderRadius: 1.2, 
                       bgcolor: (apptData > 0 || convData > 0)
                         ? 'rgba(0,0,0,0.03)'
-                        : 'rgba(0,0,0,0.01)',          
+                        : 'rgba(0,0,0,0.01)',         
                       textAlign: 'center',
                       border: '1px solid rgba(0,0,0,0.05)',
                       fontSize: '0.75rem',
@@ -748,6 +761,20 @@ const ConversionBarChartPage = ({ type = "sa" }) => {
           <Button variant="contained">Bar Chart</Button>
           <Button variant="contained" onClick={() => navigate(tableRoute)}>Table</Button>
         </Box>
+      </Box>
+
+      {/* ✅ NEW: Single Select Financial Year (Radio Style) */}
+      <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
+        {FINANCIAL_YEARS.map(fy => (
+          <Button 
+            key={fy} 
+            size="small" 
+            sx={btnStyle(fy === selectedFinancialYear)}
+            onClick={() => setSelectedFinancialYear(fy)}
+          >
+            {fy}
+          </Button>
+        ))}
       </Box>
 
       <Box sx={{ mb: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>

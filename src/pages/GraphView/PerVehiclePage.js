@@ -13,25 +13,15 @@ function PerVehiclePage() {
 
   const [years, setYears] = useState(["2025"]);
   const [months, setMonths] = useState([]);
-
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [summary, setSummary] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState("SR LABOUR / VEH");
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"
-  ];
-
+  const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep","Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const yearOptions = ["2024", "2025"];
 
-  const growthOptions = [
-    "SR LABOUR / VEH",
-    "SR SPARES / VEH",
-    "SR REVENUE /VEH",
-    "BR LABOUR / VEH",
-    "BR SPARES / VEH",
-    "BR REVENUE /VEH",
-  ];
+  const growthOptions = [  "SR LABOUR / VEH",  "SR SPARES / VEH",  "SR REVENUE /VEH",  "BR LABOUR / VEH",  "BR SPARES / VEH",  "BR REVENUE /VEH",];
 
   const growthKeyMap = {
     "SR LABOUR / VEH": "srLabourByVEH",
@@ -42,7 +32,6 @@ function PerVehiclePage() {
     "BR REVENUE /VEH": "brRevenueByVeh",
   };
 
-  // Load previously selected growth
   useEffect(() => {
     const savedGrowth = getSelectedGrowth("per_vehicle");
     if (savedGrowth) setSelectedGrowthState(savedGrowth);
@@ -63,16 +52,11 @@ function PerVehiclePage() {
     const fetchCitySummary = async () => {
       try {
         const activeMonths = months.length ? months : monthOptions;
-        const activeYears = years.length ? years : yearOptions;
 
         const combined = [];
 
         for (const m of activeMonths) {
-          let query = `?months=${m}`;
-
-          if (activeYears.length) {
-            query += `&years=${activeYears.join(",")}`;
-          }
+          let query = `?months=${m}&financialYears=${financialYears}`;
 
           const data = await fetchData(`/api/per_vehicle/per_vehicle_summary${query}`);
           const safeData = Array.isArray(data) ? data : data?.result || [];
@@ -87,7 +71,7 @@ function PerVehiclePage() {
     };
 
     fetchCitySummary();
-  }, [months, years]); 
+  }, [months,financialYears, years]); 
 
   // Prepare chart data
   const buildChartData = () => {
@@ -130,16 +114,10 @@ function PerVehiclePage() {
         </Box>
       </Box>
 
-      {/* ----------------------------------------- */}
-      {/* UPDATED FILTERS — MONTH + YEAR */}
-      {/* ----------------------------------------- */}
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        yearOptions={yearOptions}
-        years={years}
-        setYears={setYears}
+        monthOptions={monthOptions} months={months} setMonths={setMonths} 
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+        yearOptions={yearOptions} years={years} setYears={setYears}
       />
 
       <GrowthButtons

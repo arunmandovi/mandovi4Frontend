@@ -22,15 +22,14 @@ function HoldUpBarChartPage() {
   };
 
   const [months, setMonths] = useState(getCurrentFYMonth());
+  const [years, setYears] = useState("2026");
   const [days, setDays] = useState([]);
   const [selectedDate, setSelectedDate] = useState([]);
 
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
-  const monthOptions = [
-    "Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"
-  ];
-
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const yearOptions = ["2025","2026"];
   const growthOptions = ["Service", "BodyShop", "PMS", "ServiceBodyShop"];
 
   const growthKeyMap = {
@@ -40,7 +39,6 @@ function HoldUpBarChartPage() {
     ServiceBodyShop: "countServiceBodyShop"
   };
 
-  // Load previous selected growth
   useEffect(() => {
     const prev = getSelectedGrowth("hold_up");
     const fromPages = location.state?.fromNavigation === true;
@@ -57,7 +55,6 @@ function HoldUpBarChartPage() {
     }
   }, []);
 
-  // Generate all days in selected month
   useEffect(() => {
     if (!months) return;
 
@@ -79,17 +76,15 @@ function HoldUpBarChartPage() {
     setDays(validDays);
   }, [months]);
 
-  // ⭐ AUTO-SELECT LAST AVAILABLE DATE WITH DATA
   useEffect(() => {
     const autoSelectLastAvailableDate = async () => {
       if (days.length === 0) return;
 
       let latestDateWithData = null;
 
-      // CHECK EACH DATE'S DATA
       for (let i = days.length - 1; i >= 0; i--) {
         const day = days[i];
-        const query = `?month=${months}&day=${day}`;
+        const query = `?month=${months}&day=${day}&years=${years}`;
 
         try {
           const res = await fetchData(`/api/hold_up/hold_up_summary${query}`);
@@ -104,19 +99,16 @@ function HoldUpBarChartPage() {
         }
       }
 
-      // If found → auto select
       if (latestDateWithData) {
         setSelectedDate([latestDateWithData]);
       } else {
-        // fallback to last day of month
         setSelectedDate([days[days.length - 1]]);
       }
     };
 
     autoSelectLastAvailableDate();
-  }, [days]);
+  }, [days, years]);
 
-  // Fetch summary for selected day
   useEffect(() => {
     if (!months || selectedDate.length === 0) return;
 
@@ -285,6 +277,7 @@ function HoldUpBarChartPage() {
           const last = arr[arr.length - 1];
           setSelectedDate(last ? [last.padStart(2, "0")] : []);
         }}
+        yearOptions={yearOptions} years={years} setYears={setYears}
       />
 
       <GrowthButtons

@@ -44,30 +44,23 @@ function HoldUpBranchWisePage() {
   const [summary, setSummary] = useState([]);
 
   const getCurrentFYMonth = () => {
-  const jsMonthToName = [
-    "Jan","Feb","Mar","Apr","May","Jun",
-    "Jul","Aug","Sep","Oct","Nov","Dec",
-  ];
+  const jsMonthToName = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec",];
 
   const today = new Date();
   return jsMonthToName[today.getMonth()];
 };
 
-const [months, setMonths] = useState(getCurrentFYMonth());
+  const [months, setMonths] = useState(getCurrentFYMonth());
+  const [years, setYears] = useState("2026");
+  const [selectedCities, setSelectedCities] = useState([]);
   const [days, setDays] = useState([]);
   const [selectedDate, setSelectedDate] = useState([]);
-
   const [selectedGrowth, setSelectedGrowthState] = useState("ServiceBodyShop");
-  const [selectedBranches, setSelectedBranches] = useState([
-    "Wilson Garden",
-    "Balmatta",
-    "KRS Road",
-  ]);
+  const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden","Balmatta","KRS Road",]);
 
-  const monthOptions = [
-    "Apr","May","Jun","Jul","Aug",
-    "Sep","Oct","Nov","Dec","Jan","Feb","Mar",
-  ];
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar",];
+  const yearOtions = ["2025","2026"];
+  const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
 
   const allDayOptions = Array.from({ length: 31 }, (_, i) =>
     String(i + 1).padStart(2, "0")
@@ -97,7 +90,7 @@ const [months, setMonths] = useState(getCurrentFYMonth());
         const valid = [];
 
         for (const d of allDayOptions) {
-          const query = `?month=${months}&day=${d}`;
+          const query = `?month=${months}&day=${d}&years=${years}`;
           const data = await fetchData(`/api/hold_up/hold_up_branch_summary${query}`);
 
           const safe = Array.isArray(data) ? data : data?.result || [];
@@ -111,7 +104,7 @@ const [months, setMonths] = useState(getCurrentFYMonth());
     };
 
     fetchValidDays();
-  }, [months]);
+  }, [months,years]);
 
   useEffect(() => {
     if (days.length > 0 ) {
@@ -197,6 +190,22 @@ const [months, setMonths] = useState(getCurrentFYMonth());
       : setSelectedBranches(value.filter((x) => x !== "ALL"));
   };
 
+  const handleCityChange = (e) => {
+    const newSelectedCities = e.target.value;
+    setSelectedCities(newSelectedCities);
+    
+    if (newSelectedCities.length > 0) {
+      const branchesForCities = newSelectedCities.flatMap(city => 
+        Object.entries(BRANCH_CITY_MAP)
+          .filter(([_, c]) => c === city)
+          .map(([br]) => br)
+      );
+      setSelectedBranches(branchesForCities);
+    } else {
+      setSelectedBranches(ALL_BRANCHES);
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
 
@@ -213,16 +222,39 @@ const [months, setMonths] = useState(getCurrentFYMonth());
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Select Cities</InputLabel>
+          <Select
+            multiple
+            label="Select Cities"
+            value={selectedCities}
+            onChange={handleCityChange}
+            renderValue={(selected) => 
+              selected.length === 0 ? "All Cities" : 
+              selected.length === cityOptions.length ? "All Cities" : 
+              `${selected.length} Cities`
+            }
+          >
+            {cityOptions.map((city) => (
+              <MenuItem value={city} key={city}>
+                <Checkbox checked={selectedCities.includes(city)} />
+                <ListItemText primary={city} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      
+
         <FormControl size="small" sx={{ minWidth: 260 }}>
           <InputLabel>Select Branches</InputLabel>
-           <Select
+          <Select
             multiple
             label="Select Branches"
             value={selectedBranches}
             onChange={handleBranchChange}
             displayEmpty
-            renderValue={() => "Select Branches"}  // << ALWAYS SHOWN
+            renderValue={() => selectedCities.length > 0 ? `${selectedBranches.length} Branches` : "Select Branches"}
             MenuProps={{
               PaperProps: {
                 style: { maxHeight: 300 },
@@ -238,7 +270,8 @@ const [months, setMonths] = useState(getCurrentFYMonth());
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mysore")
               .map(([br]) => (
@@ -247,7 +280,8 @@ const [months, setMonths] = useState(getCurrentFYMonth());
                   <ListItemText primary={br} />
                 </MenuItem>
               ))}
-             <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
+           
+            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
             {Object.entries(BRANCH_CITY_MAP)
               .filter(([_, c]) => c === "Mangalore")
               .map(([br]) => (
@@ -261,18 +295,17 @@ const [months, setMonths] = useState(getCurrentFYMonth());
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months ? [months] : []}
+        monthOptions={monthOptions} months={months ? [months] : []}
         setMonths={(selected) => {
           const lastSelected = selected[selected.length - 1] || "";
           setMonths(lastSelected);
         }}
-        dateOptions={[]}
-        dates={selectedDate}
+        dateOptions={[]} dates={selectedDate}
         setDates={(arr) => {
           const last = arr[arr.length - 1];
           setSelectedDate(last ? [last.padStart(2, "0")] : []);    
         }}
+        yearOptions={yearOtions} years={years} setYears={setYears}
       />
 
       <GrowthButtons

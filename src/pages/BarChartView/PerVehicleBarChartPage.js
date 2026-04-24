@@ -13,24 +13,17 @@ function PerVehicleBarChartPage() {
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
-  const [years, setYears] = useState(["2025"]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
-  const yearOptions = ["2024", "2025"];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const qtrWiseOptions = ["Qtr1", "Qtr2", "Qtr3", "Qtr4"];
   const halfYearOptions = ["H1", "H2"];
 
-  const growthOptions = [
-    "SR LABOUR / VEH",
-    "SR SPARES / VEH",
-    "SR REVENUE /VEH",
-    "BR LABOUR / VEH",
-    "BR SPARES / VEH",
-    "BR REVENUE /VEH",
-  ];
+  const growthOptions = ["SR LABOUR / VEH","SR SPARES / VEH","SR REVENUE /VEH","BR LABOUR / VEH","BR SPARES / VEH","BR REVENUE /VEH"];
 
   const growthKeyMap = {
     "SR LABOUR / VEH": "srLabourByVEH",
@@ -62,7 +55,7 @@ function PerVehicleBarChartPage() {
       try {
         const params = new URLSearchParams();
         if (months.length) params.append("months", months.join(","));
-        if (years.length) params.append("years", years.join(","));
+        if (financialYears.length) params.append ("financialYears", financialYears.join(","));
         if (qtrWise.length) params.append("qtrWise", qtrWise.join(","));
         if (halfYear.length) params.append("halfYear", halfYear.join(","));
         const query = params.toString() ? `?${params.toString()}` : "";
@@ -73,7 +66,7 @@ function PerVehicleBarChartPage() {
       }
     };
     fetchCitySummary();
-  }, [months, years, qtrWise, halfYear]);
+  }, [months, financialYears, qtrWise, halfYear]);
 
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
@@ -183,18 +176,10 @@ function PerVehicleBarChartPage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        yearOptions={yearOptions}
-        years={years}
-        setYears={setYears}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
+        monthOptions={monthOptions}  months={months}  setMonths={setMonths}
+        financialYears={financialYears} financialYearOptions={financialYearOptions} setFinancialYears={setFinancialYears}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
       />
 
       <GrowthButtons

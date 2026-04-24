@@ -9,29 +9,21 @@ import { sortCities } from "../../components/CityOrderHelper";
 import CityWiseSummaryTable from "../../components/common/CityWiseSummaryTable ";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
-// NEW IMPORT
 import { buildPivotTable } from "../../utils/buildPivotTable";
 
 function DueDonePage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [channels, setChannels] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(getSelectedGrowth("due_done"));
 
-  const monthOptions = [
-    "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-    "Oct", "Nov", "Dec", "Jan", "Feb", "Mar",
-  ];
-
+  const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep","Oct", "Nov", "Dec", "Jan", "Feb", "Mar",];
+  const financialYearOptions = ["2025-2026", "2026-2027"];
   const channelOptions = ["Arena", "Nexa"];
-
-  const growthOptions = [
-    "Done %"
-  ];
-  const growthKeyMap = {
-    "Done %": "percentageDone",
-  };
+  const growthOptions = ["Done %"];
+  const growthKeyMap = {"Done %": "percentageDone",};
 
     useEffect(() => {
       if (!selectedGrowth && growthOptions.length === 1) {
@@ -41,9 +33,7 @@ function DueDonePage() {
       }
     }, [selectedGrowth]);
 
-  const valueKeyMap = {
-    "Done %": ["due", "done", "percentageDone"],
-  };
+  const valueKeyMap = {"Done %": ["due", "done", "percentageDone"],};
 
   const beautifyHeader = (key) => {
     if (key.startsWith("due")) return "DUE";
@@ -68,7 +58,6 @@ function DueDonePage() {
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  // Fetch summary data
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
@@ -76,7 +65,7 @@ function DueDonePage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          let q = `?&months=${m}`;
+          let q = `?&months=${m}&financialYears=${financialYears}`;
           if (channels.length === 1) q += `&channels=${channels[0]}`;
 
           const data = await fetchData(`/api/due_done/due_done_summary${q}`);
@@ -92,9 +81,8 @@ function DueDonePage() {
     };
 
     fetchCitySummary();
-  }, [months, channels]);
+  }, [months,financialYears, channels]);
 
-  // Build chart data
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
 
@@ -127,7 +115,6 @@ function DueDonePage() {
   const { formatted: chartData, sortedCities: cityKeys } = buildChartData();
   const keys = selectedGrowth ? valueKeyMap[selectedGrowth] : [];
 
-  // NEW REUSABLE PIVOT TABLE LOGIC
   const citiesToShow = ["Bangalore", "Mysore", "Mangalore"];
   const { tableData, chartMonths } = buildPivotTable(summary, keys, citiesToShow);
 
@@ -145,12 +132,9 @@ function DueDonePage() {
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYears}
+        channelOptions={channelOptions} channels={channels} setChannels={setChannels}
       />
 
       <GrowthButtons
@@ -192,7 +176,6 @@ function DueDonePage() {
             />
           </Box>
 
-          {/* TABLE USING REUSABLE LOGIC */}
           <CityWiseSummaryTable
             selectedGrowth={selectedGrowth}
             chartMonths={chartMonths}
