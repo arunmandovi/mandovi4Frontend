@@ -175,6 +175,7 @@ function MSGPBranchWisePage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp-negative-table")}>Table</Button>
         </Box>
       </Box>
 

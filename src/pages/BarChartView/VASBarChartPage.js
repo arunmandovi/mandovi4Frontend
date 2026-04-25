@@ -87,9 +87,6 @@ function VASBarChartPage() {
     fetchCitySummary();
   }, [months, financialYears, qtrWise, halfYear]);
 
-  // -----------------------------------------
-  // Helpers
-  // -----------------------------------------
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
@@ -153,9 +150,6 @@ function VASBarChartPage() {
   const chartData =
     selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
 
-  // -----------------------------------------
-  // Render
-  // -----------------------------------------
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
@@ -170,7 +164,6 @@ function VASBarChartPage() {
           >
             Graph-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/vas_branches", {
                 state: { fromNavigation: true },
@@ -179,7 +172,6 @@ function VASBarChartPage() {
           >
             Graph-BranchWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/vas-bar-chart", {
                 state: { fromNavigation: true },
@@ -188,7 +180,6 @@ function VASBarChartPage() {
           >
             Bar Chart-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/vas_branches-bar-chart", {
                 state: { fromNavigation: true },
@@ -196,6 +187,14 @@ function VASBarChartPage() {
             }
           >
             Bar Chart-BranchWise
+          </Button>
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/vas-negative-table", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Table
           </Button>
         </Box>
       </Box>

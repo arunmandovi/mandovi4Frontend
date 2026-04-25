@@ -178,6 +178,7 @@ function LabourPage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/labour_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/labour-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/labour_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/labour-negative-table")}>Table</Button>
         </Box>
       </Box>
 

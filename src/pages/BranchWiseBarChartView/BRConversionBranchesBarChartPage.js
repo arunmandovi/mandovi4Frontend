@@ -178,6 +178,7 @@ function BRConversionBranchesBarChartPage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-negative-table")}>Table</Button>
         </Box>
       </Box>
 
@@ -297,7 +298,7 @@ function BRConversionBranchesBarChartPage() {
               selectedGrowth={selectedGrowth}
               decimalPlaces={
                 ["Arena Total Amount", "Nexa Total Amount", "Arena&Nexa Total Amount"]
-                  .includes(selectedGrowth) ? 0 : 1
+                  .includes(selectedGrowth) ? 2 : 1
               }
               chartType={
                 ["Arena Total Amount", "Nexa Total Amount", "Arena&Nexa Total Amount"]

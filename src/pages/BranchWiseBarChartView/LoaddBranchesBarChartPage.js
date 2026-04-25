@@ -206,6 +206,7 @@ function LoaddBranchesBarChartPage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/loadd_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/loadd-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/loadd-negative-table")}>Table</Button>
         </Box>
       </Box>
 

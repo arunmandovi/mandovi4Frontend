@@ -162,6 +162,7 @@ function SparesBranchWisePage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/spares_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/spares-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/spares_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/spares-negative-table")}>Table</Button>
         </Box>
       </Box>
 

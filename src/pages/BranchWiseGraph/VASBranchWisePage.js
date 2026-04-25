@@ -167,6 +167,7 @@ function VASBranchWisePage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/vas_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/vas-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/vas_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/vas-negative-table")}>Table</Button>
         </Box>
       </Box>
 

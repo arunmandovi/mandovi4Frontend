@@ -189,6 +189,14 @@ function LoaddBarChartPage() {
           >
             Bar Chart-BranchWise
           </Button>
+          <Button
+            variant="contained" 
+            onClick={() => navigate("/DashboardHome/loadd-negative-table", {
+              state: { fromNavigation: true },
+            })}
+          >
+            Table
+          </Button>        
         </Box>
       </Box>
 

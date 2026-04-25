@@ -151,7 +151,6 @@ function SparesBarChartPage() {
           >
             Graph-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/spares_branches", {
                 state: { fromNavigation: true },
@@ -160,7 +159,6 @@ function SparesBarChartPage() {
           >
             Graph-BranchWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/spares-bar-chart", {
                 state: { fromNavigation: true },
@@ -169,7 +167,6 @@ function SparesBarChartPage() {
           >
             Bar Chart-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/spares_branches-bar-chart", {
                 state: { fromNavigation: true },
@@ -177,6 +174,14 @@ function SparesBarChartPage() {
             }
           >
             Bar Chart-BranchWise
+          </Button>
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/spares-negative-table", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Table
           </Button>
         </Box>
       </Box>

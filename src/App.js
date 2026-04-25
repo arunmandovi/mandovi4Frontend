@@ -127,6 +127,15 @@ import SparesBranchesBarChartPage from "./pages/BranchWiseBarChartView/SparesBra
 import TATBranchesBarChartPage from "./pages/BranchWiseBarChartView/TATBranchesBarChartPage";
 import VASBranchesBarChartPage from "./pages/BranchWiseBarChartView/VASBranchesBarChartPage";
 
+// BranchWise NeagativeTable Pages
+import LoaddNegativeTable from "./pages/NegativeTable/LoaddNegativeTable.js";
+import LabourNegativeTable from "./pages/NegativeTable/LabourNegativeTable.js";
+import BRConversionNegativeTable from "./pages/NegativeTable/BRConversionNegativeTable";
+import SparesNegativeTable from "./pages/NegativeTable/SparesNegativeTable.js";
+import VASNegativeTable from "./pages/NegativeTable/VASNegativeTable.js";
+import MSGPNegativeTable from "./pages/NegativeTable/MSGPNegativeTable.js";
+import RevenueNegativeTable from "./pages/NegativeTable/RevenueNegativeTable.js";
+
 //CC&SA Conversion Pages
 import CCConversionTablePage from "./pages/CC&SAConversion/CCConversionTablePage.js";
 import SAConversionTablePage from "./pages/CC&SAConversion/SAConversionTablePage.js";
@@ -402,6 +411,15 @@ function App() {
           <Route path="spares_branches-bar-chart" element={<SparesBranchesBarChartPage />} />
           <Route path="tat_branches-bar-chart" element={<TATBranchesBarChartPage />} />
           <Route path="vas_branches-bar-chart" element={<VASBranchesBarChartPage />} />
+
+          {/* 🧭 BranchWise NegativeTable Pages */}
+          <Route path="loadd-negative-table" element={<LoaddNegativeTable />} />
+          <Route path="labour-negative-table" element={<LabourNegativeTable />} />
+          <Route path="br_conversion-negative-table" element={<BRConversionNegativeTable />} />
+          <Route path="spares-negative-table" element={<SparesNegativeTable />} />
+          <Route path="vas-negative-table" element={<VASNegativeTable />} />
+          <Route path="msgp-negative-table" element={<MSGPNegativeTable />} />
+          <Route path="revenue-negative-table" element={<RevenueNegativeTable />} />
         </Route>
       </Routes>
     </Router>

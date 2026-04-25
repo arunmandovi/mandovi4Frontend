@@ -176,6 +176,7 @@ function RevenueBranchesBarChartPage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/revenue_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/revenue-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/revenue_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/revenue-negative-table")}>Table</Button>
         </Box>
       </Box>
 

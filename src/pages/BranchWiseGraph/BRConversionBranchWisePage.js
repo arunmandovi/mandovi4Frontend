@@ -47,21 +47,18 @@ function BRConversionBranchWisePage() {
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
   const [channels, setChannels] = useState([]);
-  // ✅ Added Financial Year state as array
   const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [selectedGrowth, setSelectedGrowthState] = useState("Arena&Nexa BR Conversion %");
 
   const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden", "Balmatta", "KRS Road"]);
-  // ✅ Added selectedCities state
   const [selectedCities, setSelectedCities] = useState([]);
 
   const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
-  const cityOptions = ["Bangalore", "Mysore", "Mangalore"]; // ✅ Added city options
+  const cityOptions = ["Bangalore", "Mysore", "Mangalore"]; 
   const channelOptions = ["Arena", "Nexa"];
   const financialYearOptions = ["2025-2026", "2026-2027"];
   const growthOptions = Object.keys(growthKeyMap);
 
-  // Read branch exactly as API sends
   const readBranchName = (row) => {
     return row?.branch || row?.Branch || row?.branchName || row?.BranchName || "";
   };
@@ -79,7 +76,6 @@ function BRConversionBranchWisePage() {
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
-  // ✅ UPDATED API Fetch WITH FINANCIAL YEAR AS ARRAY AND CHANNELS
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
@@ -89,7 +85,7 @@ function BRConversionBranchWisePage() {
         const combined = [];
 
         for (const m of activeMonths) {
-          let query = `?months=${m}&selectedFinancialYear=${activeFY}`;
+          let query = `?months=${m}&financialYears=${activeFY}`;
           if (channels.length === 1) query += `&channels=${channels[0]}`;
 
           const data = await fetchData(`/api/br_conversion/br_conversion_branch_summary${query}`);
@@ -180,6 +176,7 @@ function BRConversionBranchWisePage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-negative-table")}>Table</Button>
         </Box>
       </Box>
 
@@ -302,7 +299,7 @@ function BRConversionBranchWisePage() {
             chartData={chartData}
             cityKeys={cityKeys}
             decimalDigits={["Arena BR Conversion %", "Nexa BR Conversion %", "Arena&Nexa BR Conversion %"]
-              .includes(selectedGrowth) ? 1 : 0 }
+              .includes(selectedGrowth) ? 1 : 2 }
             showPercent={
               ["Arena BR Conversion %", "Nexa BR Conversion %", "Arena&Nexa BR Conversion %"]
               .includes(selectedGrowth) ? true : false }

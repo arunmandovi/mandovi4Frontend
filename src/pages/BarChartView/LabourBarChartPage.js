@@ -80,11 +80,8 @@ function LabourBarChartPage() {
       }
     };
     fetchCitySummary();
-  }, [months, channels, qtrWise, halfYear, financialYears]); // ✅ ADDED financialYears dependency
+  }, [months, channels, qtrWise, halfYear, financialYears]);
 
-  // -----------------------------------------
-  // Helpers
-  // -----------------------------------------
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
@@ -157,7 +154,6 @@ function LabourBarChartPage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/labour", {state: { fromNavigation: true },})}>
             Graph-CityWise
           </Button>
-
           <Button
             variant="contained" 
             onClick={() => navigate("/DashboardHome/labour_branches", {
@@ -166,7 +162,6 @@ function LabourBarChartPage() {
           >
             Graph-BranchWise
           </Button>
-
           <Button
             variant="contained" 
             onClick={() => navigate("/DashboardHome/labour-bar-chart", {
@@ -175,7 +170,6 @@ function LabourBarChartPage() {
           >
             Bar Chart-CityWise
           </Button>
-
           <Button
             variant="contained" 
             onClick={() => navigate("/DashboardHome/labour_branches-bar-chart", {
@@ -184,25 +178,25 @@ function LabourBarChartPage() {
           >
             Bar Chart-BranchWise
           </Button>
+          <Button
+            variant="contained" 
+            onClick={() => navigate("/DashboardHome/labour-negative-table", {
+              state: { fromNavigation: true },
+            })}
+          >
+            Table
+          </Button>
         </Box>
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        channelOptions={channelOptions}
-        channels={channels}
-        setChannels={setChannels}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
-        financialYearOptions={financialYearOptions} // ✅ ADDED
-        financialYears={financialYears} // ✅ ADDED
-        setFinancialYears={setFinancialYears} // ✅ ADDED
+        monthOptions={monthOptions} months={months} setMonths={setMonths}
+        channelOptions={channelOptions} channels={channels} setChannels={setChannels}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
+        financialYearOptions={financialYearOptions} 
+        financialYears={financialYears} 
+        setFinancialYears={setFinancialYears}
       />
 
       <GrowthButtons

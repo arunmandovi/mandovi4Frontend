@@ -21,7 +21,6 @@ const CityBarChart = ({
   showPercent = true,
   threshold,
 }) => {
-  // ✅ Ensure all missing or null values become 0
   const safeData = chartData.map((d) => ({
     ...d,
     value:
@@ -30,7 +29,6 @@ const CityBarChart = ({
         : Number(d.value),
   }));
 
-  // ✅ Calculate Y-axis domain
   const values = safeData.map((d) => d.value);
   const maxValue = Math.max(...values);
   const minValue = Math.min(...values);
@@ -40,7 +38,6 @@ const CityBarChart = ({
       ? [-100, 100]
       : [Math.min(minValue, 0), Math.max(maxValue, 0)];
 
-  // ---------- Tooltip ----------
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const { value, payload: data } = payload[0];
@@ -79,7 +76,6 @@ const CityBarChart = ({
     return null;
   };
 
-  // ---------- Render ----------
   return (
     <Box
       sx={{
@@ -101,7 +97,6 @@ const CityBarChart = ({
           data={safeData}
           margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
         >
-          {/* Gradient + Shadow */}
           <defs>
             <linearGradient id="bar3dGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="hsla(238, 62%, 63%, 1.00)" />
@@ -116,7 +111,6 @@ const CityBarChart = ({
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="city" tick={{ fontSize: 12 }} />
 
-          {/* Dynamic Y-Axis Formatting */}
           <YAxis
             domain={domain}
             tick={{ fontSize: 12 }}

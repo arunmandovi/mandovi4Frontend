@@ -131,7 +131,7 @@ function BRConversionBarChartPage() {
 
     return sortedCities.map((city) => ({
       city,
-      value: parseFloat(((totals[city] || 0) / (counts[city] || 1)).toFixed(1)),
+      value: parseFloat(((totals[city] || 0) / (counts[city] || 1)).toFixed(2)),
     }));
   };
 
@@ -152,7 +152,6 @@ function BRConversionBarChartPage() {
           >
             Graph-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches", {
                 state: { fromNavigation: true },
@@ -161,7 +160,6 @@ function BRConversionBarChartPage() {
           >
             Graph-BranchWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart", {
                 state: { fromNavigation: true },
@@ -170,7 +168,6 @@ function BRConversionBarChartPage() {
           >
             Bar Chart-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart", {
                 state: { fromNavigation: true },
@@ -179,22 +176,22 @@ function BRConversionBarChartPage() {
           >
             Bar Chart-BranchWise
           </Button>
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-negative-table", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Table
+          </Button>
         </Box>
       </Box>
 
       <SlicerFilters
-        monthOptions={monthOptions}
-        months={months}
-        setMonths={setMonths}
-        qtrWiseOptions={qtrWiseOptions}
-        qtrWise={qtrWise}
-        setQtrWise={setQtrWise}
-        halfYearOptions={halfYearOptions}
-        halfYear={halfYear}
-        setHalfYear={setHalfYear}
-        financialYearOptions={financialYearOptions}
-        financialYears={financialYears}
-        setFinancialYears={setFinancialYear}
+        monthOptions={monthOptions}  months={months}  setMonths={setMonths}
+        qtrWiseOptions={qtrWiseOptions} qtrWise={qtrWise} setQtrWise={setQtrWise}
+        halfYearOptions={halfYearOptions} halfYear={halfYear} setHalfYear={setHalfYear}
+        financialYearOptions={financialYearOptions} financialYears={financialYears} setFinancialYears={setFinancialYear}
       />
 
       <GrowthButtons
@@ -217,7 +214,7 @@ function BRConversionBarChartPage() {
           decimalPlaces={
             ["Arena BR Conversion %", "Nexa BR Conversion %", "Arena&Nexa BR Conversion %"]
               .includes(selectedGrowth)
-              ? 1 : 0 
+              ? 1 : 2
           }
           showPercent={selectedGrowth.includes("%")}
         />

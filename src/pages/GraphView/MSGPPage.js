@@ -32,14 +32,8 @@ function MSGPPage() {
   const financialYearOptions = ["2025-2026", "2026-2027"];
 
   const growthOptions = [
-    "SR&BR Growth %",
-    "Service Growth %",
-    "BodyShop Growth %",
-    "Free Service Growth %",
-    "PMS Growth %",
-    "RR Growth %",
-    "Others Growth %",
-  ];
+    "SR&BR Growth %","Service Growth %","BodyShop Growth %","Free Service Growth %",
+    "PMS Growth %",  "RR Growth %",  "Others Growth %",];
 
   const growthKeyMap = {
     "SR&BR Growth %": "growthSRBS",
@@ -180,6 +174,7 @@ function MSGPPage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp-negative-table")}>Table</Button>
         </Box>
       </Box>
 

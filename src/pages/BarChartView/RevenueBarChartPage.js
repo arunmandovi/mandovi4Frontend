@@ -150,7 +150,6 @@ function RevenueBarChartPage() {
           >
             Graph-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/revenue_branches", {
                 state: { fromNavigation: true },
@@ -159,7 +158,6 @@ function RevenueBarChartPage() {
           >
             Graph-BranchWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/revenue-bar-chart", {
                 state: { fromNavigation: true },
@@ -168,7 +166,6 @@ function RevenueBarChartPage() {
           >
             Bar Chart-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/revenue_branches-bar-chart", {
                 state: { fromNavigation: true },
@@ -176,6 +173,14 @@ function RevenueBarChartPage() {
             }
           >
             Bar Chart-BranchWise
+          </Button>
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/revenue-negative-table", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Table
           </Button>
         </Box>
       </Box>

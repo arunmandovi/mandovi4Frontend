@@ -161,7 +161,6 @@ function MSGPBarChartPage() {
           >
             Graph-CityWise
           </Button>
-
           <Button
             variant="contained" 
             onClick={() => navigate("/DashboardHome/msgp_branches", {
@@ -170,7 +169,6 @@ function MSGPBarChartPage() {
           >
             Graph-BranchWise
           </Button>
-
           <Button
             variant="contained" 
             onClick={() => navigate("/DashboardHome/msgp-bar-chart", {
@@ -179,7 +177,6 @@ function MSGPBarChartPage() {
           >
             Bar Chart-CityWise
           </Button>
-
           <Button
             variant="contained" 
             onClick={() => navigate("/DashboardHome/msgp_branches-bar-chart", {
@@ -187,6 +184,14 @@ function MSGPBarChartPage() {
             })}
           >
             Bar Chart-BranchWise
+          </Button>
+          <Button
+            variant="contained" 
+            onClick={() => navigate("/DashboardHome/msgp-negative-table", {
+              state: { fromNavigation: true },
+            })}
+          >
+            Table
           </Button>
         </Box>
       </Box>

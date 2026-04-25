@@ -23,6 +23,7 @@ function Layout() {
     "branches-bar-chart": "branches-bar-chart",
     "branches": "branches",
     "bar-chart": "bar-chart",
+    "negative-table": "negative-table",
     "growth": "growth",
     "table": "table",
   };
@@ -63,7 +64,7 @@ function Layout() {
     "total_branch_outstanding",
   ];
 
-  const COMMON_VIEWS = ["bar-chart", "branches", "branches-bar-chart"];
+  const COMMON_VIEWS = ["bar-chart", "branches", "branches-bar-chart", "negative-table"];
   const MODULE_VIEW_SUPPORT = {
     loadd: COMMON_VIEWS,
     service_load: COMMON_VIEWS,
@@ -95,6 +96,7 @@ function Layout() {
 
   const linkMap = {
     "bar-chart": (m) => `/DashboardHome/${m}-bar-chart`,
+    "negative-table": (m) => `/DashboardHome/${m}-negative-table`,
     "branches": (m) => `/DashboardHome/${m}_branches`,
     "branches-bar-chart": (m) =>
       `/DashboardHome/${m}_branches-bar-chart`,

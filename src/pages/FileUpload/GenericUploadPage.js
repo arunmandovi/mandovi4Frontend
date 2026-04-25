@@ -23,7 +23,7 @@ function GenericUploadPage({ moduleName, tableName }) {
   const [tableData, setTableData] = useState([]);
   const [months, setMonths] = useState([]);
   const [years, setYears] = useState([]);
-  const [financialYears, setFinancialYears] = useState([]);
+  const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
