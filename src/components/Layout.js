@@ -68,7 +68,7 @@ function Layout() {
   const MODULE_VIEW_SUPPORT = {
     loadd: COMMON_VIEWS,
     service_load: COMMON_VIEWS,
-    hold_up: COMMON_VIEWS,
+    hold_up: ["bar-chart", "branches", "branches-bar-chart"],
     productivity: COMMON_VIEWS,
     due_done: COMMON_VIEWS,
     per_vehicle: COMMON_VIEWS,

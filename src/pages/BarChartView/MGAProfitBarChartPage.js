@@ -143,7 +143,6 @@ function MGAProfitBarChartPage() {
           >
             Graph-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/mga_profit_branches", {
                 state: { fromNavigation: true },
@@ -152,7 +151,6 @@ function MGAProfitBarChartPage() {
           >
             Graph-BranchWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/mga_profit-bar-chart", {
                 state: { fromNavigation: true },
@@ -161,7 +159,6 @@ function MGAProfitBarChartPage() {
           >
             Bar Chart-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/mga_profit_branches-bar-chart", {
                 state: { fromNavigation: true },
@@ -169,6 +166,14 @@ function MGAProfitBarChartPage() {
             }
           >
             Bar Chart-BranchWise
+          </Button>
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/mga_profit-negative-table", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Table
           </Button>
         </Box>
       </Box>

@@ -56,7 +56,6 @@ function TATPage() {
     MYSORE: "#003399",
     MANGALORE: "#cb0606ff",
   };
-  // ------------------------------------------------
 
   useEffect(() => {
     const fetchCitySummary = async () => {
@@ -226,6 +225,7 @@ function TATPage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/tat_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/tat-negative-table")}>Table</Button>
         </Box>
       </Box>
 
@@ -283,7 +283,6 @@ function TATPage() {
               <Tooltip content={<CustomTooltip />} />
               <Legend />
 
-              {/* -------------- FIXED COLOR LINES ---------------- */}
               {cityKeys.map((key) => {
                 const color =
                   COLOR_MAP[key] ||

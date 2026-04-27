@@ -145,7 +145,6 @@ function ReferenceeBarChartPage() {
           >
             Graph-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/referencee_branches", {
                 state: { fromNavigation: true },
@@ -154,7 +153,6 @@ function ReferenceeBarChartPage() {
           >
             Graph-BranchWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/referencee-bar-chart", {
                 state: { fromNavigation: true },
@@ -163,7 +161,6 @@ function ReferenceeBarChartPage() {
           >
             Bar Chart-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/referencee_branches-bar-chart", {
                 state: { fromNavigation: true },
@@ -171,6 +168,14 @@ function ReferenceeBarChartPage() {
             }
           >
             Bar Chart-BranchWise
+          </Button>
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/referencee-negative-table", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Table
           </Button>
         </Box>
       </Box>

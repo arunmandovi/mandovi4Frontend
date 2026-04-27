@@ -111,6 +111,7 @@ function PerVehiclePage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-negative-table")}>Table</Button>
         </Box>
       </Box>
 

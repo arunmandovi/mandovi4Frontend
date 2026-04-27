@@ -73,7 +73,6 @@ function BRConversionPage() {
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  // Fetch summary data
   useEffect(() => {
     const fetchCitySummary = async () => {
       try {
@@ -98,7 +97,6 @@ function BRConversionPage() {
     fetchCitySummary();
   }, [months, financialYears]);
 
-  // Build chart data
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
 
@@ -131,7 +129,6 @@ function BRConversionPage() {
   const { formatted: chartData, sortedCities: cityKeys } = buildChartData();
   const keys = selectedGrowth ? valueKeyMap[selectedGrowth] : [];
 
-  // NEW REUSABLE PIVOT TABLE LOGIC
   const citiesToShow = ["Bangalore", "Mysore", "Mangalore"];
   const { tableData, chartMonths } = buildPivotTable(summary, keys, citiesToShow);
 
@@ -195,7 +192,6 @@ function BRConversionPage() {
             />
           </Box>
 
-          {/* TABLE USING REUSABLE LOGIC */}
           <CityWiseSummaryTable
             selectedGrowth={selectedGrowth}
             chartMonths={chartMonths}

@@ -196,3 +196,242 @@ export const buildTableData = ({
 
   return result;
 };
+
+export const buildTableDataBelowAverage = ({
+  summary,
+  selectedBranches,
+  selectedCities,
+  valueFilter,
+  growthKeyMap,
+  growthFormatConfig,
+  readBranchName,
+  readCityName,
+  readGrowthValue,
+}) => {
+  if (!summary.length || !selectedBranches.length) return [];
+
+  const branchMap = new Map();
+
+  summary.forEach((row) => {
+    const br = readBranchName(row);
+    const city = readCityName(row);
+
+    if (selectedCities.length > 0 && !selectedCities.includes(city)) return;
+    if (!selectedBranches.includes(br)) return;
+
+    if (!branchMap.has(br)) {
+      branchMap.set(br, {
+        branch: br,
+        city,
+        growthValues: {},
+      });
+    }
+
+    const item = branchMap.get(br);
+
+    for (const key of Object.values(growthKeyMap)) {
+      const rawVal = readGrowthValue(row, key);
+      if (rawVal !== null) {
+        if (!item.growthValues[key]) {
+          item.growthValues[key] = { sum: 0, count: 0 };
+        }
+        item.growthValues[key].sum += rawVal;
+        item.growthValues[key].count += 1;
+      }
+    }
+  });
+
+  const overallAverages = {};
+  Object.values(growthKeyMap).forEach((key) => {
+    let totalSum = 0;
+    let totalCount = 0;
+
+    Array.from(branchMap.values()).forEach((item) => {
+      if (item.growthValues[key]) {
+        totalSum += item.growthValues[key].sum;
+        totalCount += item.growthValues[key].count;
+      }
+    });
+
+    overallAverages[key] = totalCount > 0 ? totalSum / totalCount : 0;
+  });
+
+  const result = Array.from(branchMap.values()).map((item) => {
+    const row = {
+      branch: item.branch,
+      city: item.city,
+      _overallAverages: overallAverages,
+    };
+  
+    let allAboveAverage = true;
+    let hasBelowAverage = false;
+
+    for (const [label, key] of Object.entries(growthKeyMap)) {
+      if (item.growthValues[key]) {
+        const avg = item.growthValues[key].sum / item.growthValues[key].count;
+
+        const format = growthFormatConfig?.[key] || {
+          decimalPlaces: 0,
+          showPercent: false,
+        };
+
+        const formatted = Number(avg).toFixed(format.decimalPlaces);
+        row[label] = format.showPercent ? `${formatted} %` : formatted;
+
+        const overallAvg = overallAverages[key];
+
+        if (avg < overallAvg) {
+          hasBelowAverage = true;
+          allAboveAverage = false;
+        }
+      } else {
+        row[label] = "--";
+      }
+    }
+
+    row._allAboveAverage = allAboveAverage;
+    row._hasBelowAverage = hasBelowAverage;
+
+    return row;
+  });
+
+  if (valueFilter.includes("positive") && valueFilter.includes("negative")) {
+    return result;
+  } else if (valueFilter.includes("positive")) {
+    return result.filter((row) => row._allAboveAverage);
+  } else if (valueFilter.includes("negative")) {
+    return result.filter((row) => row._hasBelowAverage);
+  }
+
+  return result;
+};
+export const buildTableDataBelowAverageTAT = ({
+  summary,
+  selectedBranches,
+  selectedCities,
+  valueFilter,
+  growthKeyMap,
+  growthFormatConfig,
+  readBranchName,
+  readCityName,
+  readGrowthValue,
+}) => {
+  if (!summary.length || !selectedBranches.length) return [];
+
+  // 🔹 local helpers (ONLY here, no global impact)
+  const timeToSeconds = (time) => {
+    if (!time || typeof time !== "string") return null;
+    const [h, m, s] = time.split(":").map(Number);
+    return h * 3600 + m * 60 + s;
+  };
+
+  const secondsToTime = (sec) => {
+    if (sec === null || sec === undefined) return "--";
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = Math.floor(sec % 60);
+    return [h, m, s].map(v => String(v).padStart(2, "0")).join(":");
+  };
+
+  const branchMap = new Map();
+
+  summary.forEach((row) => {
+    const br = readBranchName(row);
+    const city = readCityName(row);
+
+    if (selectedCities.length > 0 && !selectedCities.includes(city)) return;
+    if (!selectedBranches.includes(br)) return;
+
+    if (!branchMap.has(br)) {
+      branchMap.set(br, {
+        branch: br,
+        city,
+        growthValues: {},
+      });
+    }
+
+    const item = branchMap.get(br);
+
+    for (const key of Object.values(growthKeyMap)) {
+      const rawVal = readGrowthValue(row, key);
+
+      if (rawVal !== null) {
+        let numericVal = rawVal;
+
+        // ✅ ONLY TAT handling
+        if (typeof rawVal === "string" && rawVal.includes(":")) {
+          numericVal = timeToSeconds(rawVal);
+        }
+
+        if (!item.growthValues[key]) {
+          item.growthValues[key] = { sum: 0, count: 0 };
+        }
+
+        item.growthValues[key].sum += numericVal;
+        item.growthValues[key].count += 1;
+      }
+    }
+  });
+
+  const overallAverages = {};
+
+  Object.values(growthKeyMap).forEach((key) => {
+    let totalSum = 0;
+    let totalCount = 0;
+
+    Array.from(branchMap.values()).forEach((item) => {
+      if (item.growthValues[key]) {
+        totalSum += item.growthValues[key].sum;
+        totalCount += item.growthValues[key].count;
+      }
+    });
+
+    overallAverages[key] = totalCount > 0 ? totalSum / totalCount : 0;
+  });
+
+  const result = Array.from(branchMap.values()).map((item) => {
+    const row = {
+      branch: item.branch,
+      city: item.city,
+      _overallAverages: overallAverages,
+    };
+
+    let allAboveAverage = true;
+    let hasBelowAverage = false;
+
+    for (const [label, key] of Object.entries(growthKeyMap)) {
+      if (item.growthValues[key]) {
+        const avg = item.growthValues[key].sum / item.growthValues[key].count;
+
+        // ✅ convert back to time ONLY here
+        const formatted = secondsToTime(avg);
+
+        row[label] = formatted;
+
+        const overallAvg = overallAverages[key];
+
+        if (avg < overallAvg) {
+          hasBelowAverage = true;
+          allAboveAverage = false;
+        }
+      } else {
+        row[label] = "--";
+      }
+    }
+
+    row._allAboveAverage = allAboveAverage;
+    row._hasBelowAverage = hasBelowAverage;
+
+    return row;
+  });
+
+  if (valueFilter.includes("positive") && valueFilter.includes("negative")) {
+    return result;
+  } else if (valueFilter.includes("positive")) {
+    return result.filter((row) => row._allAboveAverage);
+  } else if (valueFilter.includes("negative")) {
+    return result.filter((row) => row._hasBelowAverage);
+  }
+
+  return result;
+};

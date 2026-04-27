@@ -135,6 +135,12 @@ import SparesNegativeTable from "./pages/NegativeTable/SparesNegativeTable.js";
 import VASNegativeTable from "./pages/NegativeTable/VASNegativeTable.js";
 import MSGPNegativeTable from "./pages/NegativeTable/MSGPNegativeTable.js";
 import RevenueNegativeTable from "./pages/NegativeTable/RevenueNegativeTable.js";
+import MSGPProfitNegativeTable from "./pages/NegativeTable/MSGPProfitNegativeTable.js";
+import OilNegativeTable from "./pages/NegativeTable/OilNegativeTable.js";
+import TATNegativeTable from "./pages/NegativeTable/TATNegativeTable.js";
+import PerVehicleNegativeTable from "./pages/NegativeTable/PerVehicleNegativeTable.js";
+import MGAProfitNegativeTable from "./pages/NegativeTable/MGAProfitNegativeTable.js";
+import ReferenceeNegativeTable from "./pages/NegativeTable/ReferenceeNegativeTable.js";
 
 //CC&SA Conversion Pages
 import CCConversionTablePage from "./pages/CC&SAConversion/CCConversionTablePage.js";
@@ -420,6 +426,12 @@ function App() {
           <Route path="vas-negative-table" element={<VASNegativeTable />} />
           <Route path="msgp-negative-table" element={<MSGPNegativeTable />} />
           <Route path="revenue-negative-table" element={<RevenueNegativeTable />} />
+          <Route path="msgp_profit-negative-table" element={<MSGPProfitNegativeTable />} />
+          <Route path="oil-negative-table" element={<OilNegativeTable />} />
+          <Route path="tat-negative-table" element={<TATNegativeTable />} />
+          <Route path="per_vehicle-negative-table" element={<PerVehicleNegativeTable />} />
+          <Route path="mga_profit-negative-table" element={<MGAProfitNegativeTable />} />
+          <Route path="referencee-negative-table" element={<ReferenceeNegativeTable />} />
         </Route>
       </Routes>
     </Router>

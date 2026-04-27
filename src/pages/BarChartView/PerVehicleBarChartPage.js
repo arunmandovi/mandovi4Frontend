@@ -145,7 +145,6 @@ function PerVehicleBarChartPage() {
           >
             Graph-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches", {
                 state: { fromNavigation: true },
@@ -154,7 +153,6 @@ function PerVehicleBarChartPage() {
           >
             Graph-BranchWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-bar-chart", {
                 state: { fromNavigation: true },
@@ -163,7 +161,6 @@ function PerVehicleBarChartPage() {
           >
             Bar Chart-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches-bar-chart", {
                 state: { fromNavigation: true },
@@ -171,6 +168,14 @@ function PerVehicleBarChartPage() {
             }
           >
             Bar Chart-BranchWise
+          </Button>
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-negative-table", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Table
           </Button>
         </Box>
       </Box>

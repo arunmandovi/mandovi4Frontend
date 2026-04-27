@@ -172,6 +172,7 @@ function OilBranchesBarChartPage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/oil_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/oil-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/oil_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/oil-negative-table")}>Table</Button>
         </Box>
       </Box>
 

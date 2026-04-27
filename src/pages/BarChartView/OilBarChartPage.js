@@ -66,9 +66,6 @@ function OilBarChartPage() {
     fetchCitySummary();
   }, [months, financialYears, qtrWise, halfYear]);
 
-  // -----------------------------------------
-  // Helpers
-  // -----------------------------------------
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
@@ -146,7 +143,6 @@ function OilBarChartPage() {
           >
             Graph-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/oil_branches", {
                 state: { fromNavigation: true },
@@ -155,7 +151,6 @@ function OilBarChartPage() {
           >
             Graph-BranchWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/oil-bar-chart", {
                 state: { fromNavigation: true },
@@ -164,7 +159,6 @@ function OilBarChartPage() {
           >
             Bar Chart-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/oil_branches-bar-chart", {
                 state: { fromNavigation: true },
@@ -172,6 +166,14 @@ function OilBarChartPage() {
             }
           >
             Bar Chart-BranchWise
+          </Button>
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/oil-negative-table", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Table
           </Button>
         </Box>
       </Box>

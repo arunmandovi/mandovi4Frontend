@@ -8,7 +8,7 @@ import {
   ToggleButtonGroup,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-
+import { buildTableDataBelowAverage } from "./NegativeHelperFiles/NegativeTableHelpers";
 import { fetchData } from "../../api/uploadService";
 import SlicerFilters from "../../components/SlicerFilters";
 import {
@@ -81,9 +81,16 @@ function readCityName(row) {
 
 function readGrowthValue(row, apiKey) {
   const raw = row?.[apiKey];
+
   if (raw === undefined || raw === null) return null;
+
+  if (typeof raw === "string" && raw.includes("/static/media")) {
+    return null;
+  }
+
   const cleaned = String(raw).replace("%", "").trim();
   const num = parseFloat(cleaned);
+
   return isNaN(num) ? null : num;
 }
 
@@ -166,22 +173,24 @@ function VASNegativeTable() {
     fetchSummary();
   }, [months, cities, qtrWise, halfYear, financialYears]);
 
-  const tableData = useMemo(
-    () =>
-      buildTableData({
-        summary,
-        selectedBranches, selectedCities, valueFilter,
-        growthKeyMap,growthFormatConfig,
-        readBranchName,  readCityName,  readGrowthValue,
-      }),
-    [summary, selectedBranches, selectedCities, valueFilter]
-  );
+  const tableData = useMemo(() => {
+  return buildTableDataBelowAverage({
+    summary,
+    selectedBranches,
+    selectedCities,
+    valueFilter,
+    growthKeyMap,
+    growthFormatConfig,
+    readBranchName,
+    readCityName,
+    readGrowthValue,
+  });
+}, [summary, selectedBranches, selectedCities, valueFilter]);
 
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">VAS Table (Branch-wise)</Typography>
-
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/vas")}>Graph-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/vas_branches")}>Graph-BranchWise</Button>
@@ -211,8 +220,8 @@ function VASNegativeTable() {
           size="small"
           sx={toggleGroupSx}
         >
-          <ToggleButton value="positive">Positive</ToggleButton>
-          <ToggleButton value="negative">Negative</ToggleButton>
+          <ToggleButton value="positive">Above Average</ToggleButton>
+          <ToggleButton value="negative">Below Average</ToggleButton>
         </ToggleButtonGroup>
       </Box>
 

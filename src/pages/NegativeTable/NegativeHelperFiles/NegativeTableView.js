@@ -10,6 +10,8 @@ import {
   TableRow,
   Paper,
 } from "@mui/material";
+import { red } from "@mui/material/colors";
+
 
 function NegativeTableView({
   selectedBranches,
@@ -20,6 +22,34 @@ function NegativeTableView({
   tableHeadRowSx,
   getNegativeCellSx,
 }) {
+  const isBelowAverage = (cellValue, row, label) => {
+    if (cellValue === "--" || cellValue === null) return false;
+    
+    const num = parseFloat(String(cellValue).replace("%", ""));
+    if (isNaN(num)) return false;
+    
+    const averages = row._overallAverages;
+    if (!averages) return false;
+    
+    const apiKey = growthKeyMap[label];
+    if (!apiKey || averages[apiKey] === undefined) return false;
+    
+    return num < averages[apiKey];
+  };
+
+  const getCellSx = (cellValue, row, label) => {
+    if (isBelowAverage(cellValue, row, label)) {
+      return {
+        backgroundColor: red[100],
+        color: red[800],
+        fontWeight: 800,
+        borderLeft: `4px solid ${red[400]}`,
+      };
+    }
+    
+    return getNegativeCellSx(cellValue);
+  };
+
   return (
     <Box sx={{ mt: 3 }}>
       {selectedBranches.length === 0 ? (
@@ -56,10 +86,7 @@ function NegativeTableView({
                     <TableCell
                       key={label}
                       align="center"
-                      sx={{
-                        fontWeight: 700,
-                        ...getNegativeCellSx(row[label]),
-                      }}
+                      sx={getCellSx(row[label], row, label)}
                     >
                       {row[label]}
                     </TableCell>
@@ -73,5 +100,6 @@ function NegativeTableView({
     </Box>
   );
 }
+
 
 export default NegativeTableView;

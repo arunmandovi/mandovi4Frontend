@@ -47,6 +47,20 @@ const growthKeyMap = {
   "BS on FPR 2025-26 %": "currentBSFPR",
 };
 
+const percentFormat = { decimalPlaces: 1, showPercent: true };
+
+const growthFormatConfig = {
+  growthService: percentFormat,
+  growthBodyShop: percentFormat,
+  growthFreeService: percentFormat,
+  growthPMS: percentFormat,
+  growthFPR: percentFormat,
+  growthRR: percentFormat,
+  growthOthers: percentFormat,
+  previousBSFPR: percentFormat,
+  currentBSFPR: percentFormat,
+};
+
 const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
 const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
 const channelOptions = ["ARENA", "NEXA"];
@@ -151,17 +165,13 @@ function LoaddNegativeTable() {
     fetchSummary();
   }, [months, cities, channels, qtrWise, halfYear, financialYears]);
 
-  const decimalPlaces = 1;
-  const showPercent = true
-
   const tableData = useMemo(
     () =>
       buildTableData({
         summary,
         selectedBranches, selectedCities, valueFilter,
-        growthKeyMap,
+        growthKeyMap, growthFormatConfig,
         readBranchName,  readCityName,  readGrowthValue,
-        decimalPlaces, showPercent 
       }),
     [summary, selectedBranches, selectedCities, valueFilter]
   );

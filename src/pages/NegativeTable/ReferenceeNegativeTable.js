@@ -35,18 +35,14 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
     .map(([br]) => br)
 ).sort((a, b) => a.localeCompare(b));
 
-const growthKeyMap = {
-    "Arena BR Conversion %": "percentageArenaBRConversion",
-    "Nexa BR Conversion %": "percentageNexaBRConversion",
-    "Arena&Nexa BR Conversion %": "percentageArenaNexaBRConversion",
-  };
+const growthKeyMap = {"E-B": "percentageEnquiryBooking", "E-R": "percentageEnquiryInvoice", "B-R": "percentageBookingInvoice", };
 
-const percentFormat = { decimalPlaces: 1, showPercent: true };
+const percentFormat = { decimalPlaces: 0, showPercent: true };
 
 const growthFormatConfig = {
-  percentageArenaBRConversion: percentFormat,
-  percentageNexaBRConversion: percentFormat,
-  percentageArenaNexaBRConversion: percentFormat,
+  percentageEnquiryBooking: percentFormat,
+  percentageEnquiryInvoice: percentFormat,
+  percentageBookingInvoice: percentFormat,
 };
 
 const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
@@ -78,7 +74,7 @@ function readGrowthValue(row, apiKey) {
   return isNaN(num) ? null : num;
 }
 
-function BRConversionNegativeTable() {
+function ReferenceeNegativeTable() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -145,7 +141,7 @@ function BRConversionNegativeTable() {
         const activeFY = financialYears[0] || "2025-2026";
         params.append("financialYears", activeFY);
 
-        const endpoint = `/api/br_conversion/br_conversion_branch_summary?${params.toString()}`;
+        const endpoint = `/api/referencee/referencee_branch_summary?${params.toString()}`;
         const data = await fetchData(endpoint);
         setSummary(Array.isArray(data) ? data : []);
       } catch (e) {
@@ -174,13 +170,14 @@ function BRConversionNegativeTable() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">BR CONVERSION Table (Branch-wise)</Typography>
+        <Typography variant="h4">REFERENCE Table (Branch-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion")}>Graph-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches")}>Graph-BranchWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>Bar Chart-BranchWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-negative-table")}>Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee_table")}>Referencee Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/referencee-negative-table")}>Table</Button>
         </Box>
       </Box>
 
@@ -222,4 +219,4 @@ function BRConversionNegativeTable() {
   );
 }
 
-export default BRConversionNegativeTable;
+export default ReferenceeNegativeTable;

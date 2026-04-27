@@ -36,17 +36,23 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
 ).sort((a, b) => a.localeCompare(b));
 
 const growthKeyMap = {
-    "Arena BR Conversion %": "percentageArenaBRConversion",
-    "Nexa BR Conversion %": "percentageNexaBRConversion",
-    "Arena&Nexa BR Conversion %": "percentageArenaNexaBRConversion",
-  };
+  "SR LABOUR / VEH": "srLabourByVEH",
+  "SR SPARES / VEH": "srSparesByVEH",
+  "SR REVENUE /VEH": "srRevenueByVEH",
+  "BR LABOUR / VEH": "brLabourByVeh",
+  "BR SPARES / VEH": "brSparesByVeh",
+  "BR REVENUE /VEH": "brRevenueByVeh",
+};
 
-const percentFormat = { decimalPlaces: 1, showPercent: true };
+const percentFormat = { decimalPlaces: 0, showPercent: false };
 
 const growthFormatConfig = {
-  percentageArenaBRConversion: percentFormat,
-  percentageNexaBRConversion: percentFormat,
-  percentageArenaNexaBRConversion: percentFormat,
+  srLabourByVEH: percentFormat,
+  srSparesByVEH: percentFormat,
+  srRevenueByVEH: percentFormat,
+  brLabourByVeh: percentFormat,
+  brSparesByVeh: percentFormat,
+  brRevenueByVeh: percentFormat,
 };
 
 const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
@@ -78,7 +84,7 @@ function readGrowthValue(row, apiKey) {
   return isNaN(num) ? null : num;
 }
 
-function BRConversionNegativeTable() {
+function PerVehicleNegativeTable() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -145,7 +151,7 @@ function BRConversionNegativeTable() {
         const activeFY = financialYears[0] || "2025-2026";
         params.append("financialYears", activeFY);
 
-        const endpoint = `/api/br_conversion/br_conversion_branch_summary?${params.toString()}`;
+        const endpoint = `/api/per_vehicle/per_vehicle_branch_summary?${params.toString()}`;
         const data = await fetchData(endpoint);
         setSummary(Array.isArray(data) ? data : []);
       } catch (e) {
@@ -174,13 +180,13 @@ function BRConversionNegativeTable() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">BR CONVERSION Table (Branch-wise)</Typography>
+        <Typography variant="h4">PER VEHICLE Table (Branch-wise)</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion")}>Graph-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches")}>Graph-BranchWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-bar-chart")}>Bar Chart-CityWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion_branches-bar-chart")}>Bar Chart-BranchWise</Button>
-          <Button variant="contained" onClick={() => navigate("/DashboardHome/br_conversion-negative-table")}>Table</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-negative-table")}>Table</Button>
         </Box>
       </Box>
 
@@ -222,4 +228,4 @@ function BRConversionNegativeTable() {
   );
 }
 
-export default BRConversionNegativeTable;
+export default PerVehicleNegativeTable;

@@ -70,9 +70,6 @@ function MSGPProfitBarChartPage() {
     fetchCitySummary();
   }, [months, financialYears, qtrWise, halfYear]);
 
-  // -----------------------------------------
-  // Helpers
-  // -----------------------------------------
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
@@ -150,7 +147,6 @@ function MSGPProfitBarChartPage() {
           >
             Graph-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/msgp_profit_branches", {
                 state: { fromNavigation: true },
@@ -159,7 +155,6 @@ function MSGPProfitBarChartPage() {
           >
             Graph-BranchWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/msgp_profit-bar-chart", {
                 state: { fromNavigation: true },
@@ -168,7 +163,6 @@ function MSGPProfitBarChartPage() {
           >
             Bar Chart-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/msgp_profit_branches-bar-chart", {
                 state: { fromNavigation: true },
@@ -176,6 +170,14 @@ function MSGPProfitBarChartPage() {
             }
           >
             Bar Chart-BranchWise
+          </Button>
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/msgp_profit-negative-table", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Table
           </Button>
         </Box>
       </Box>
