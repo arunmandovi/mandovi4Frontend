@@ -85,7 +85,7 @@ function Layout() {
     mga: COMMON_VIEWS,
     mga_profit: COMMON_VIEWS,
     tat: COMMON_VIEWS,
-    mcp: COMMON_VIEWS,
+    mcp: ["bar-chart", "branches", "branches-bar-chart"],
     referencee: COMMON_VIEWS,
     profit_loss: ["bar-chart"],
     cc_conversion: ["bar-chart", "table"],

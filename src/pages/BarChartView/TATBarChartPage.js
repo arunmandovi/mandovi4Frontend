@@ -203,6 +203,7 @@ function TATBarChartPage() {
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" color="secondary" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/tat-negative-table")}>Table</Button>
         </Box>
       </Box>
 

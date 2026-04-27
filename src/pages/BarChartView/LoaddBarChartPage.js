@@ -151,54 +151,16 @@ function LoaddBarChartPage() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">LOAD REPORT (City-wise)</Typography>
-
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained" 
-            onClick={() => navigate("/DashboardHome/loadd", {
-              state: { fromNavigation: true },
-            })}
-          >
-            Graph-CityWise
-          </Button>
-
-          <Button
-            variant="contained" 
-            onClick={() => navigate("/DashboardHome/loadd_branches", {
-              state: { fromNavigation: true },
-            })}
-          >
-            Graph-BranchWise
-          </Button>
-
-          <Button
-            variant="contained" 
-            onClick={() => navigate("/DashboardHome/loadd-bar-chart", {
-              state: { fromNavigation: true },
-            })}
-          >
-            Bar Chart-CityWise
-          </Button>
-
-          <Button
-            variant="contained" 
-            onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart", {
-              state: { fromNavigation: true },
-            })}
-          >
-            Bar Chart-BranchWise
-          </Button>
-          <Button
-            variant="contained" 
-            onClick={() => navigate("/DashboardHome/loadd-negative-table", {
-              state: { fromNavigation: true },
-            })}
-          >
-            Table
-          </Button>        
-        </Box>
-      </Box>
+              <Typography variant="h4">LOAD REPORT (City-wise)</Typography>
+      
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button variant="contained" onClick={() => navigate("/DashboardHome/loadd")}>Graph-CityWise</Button>
+                <Button variant="contained" onClick={() => navigate("/DashboardHome/loadd_branches")}>Graph-BranchWise</Button>
+                <Button variant="contained" onClick={() => navigate("/DashboardHome/loadd-bar-chart")}>Bar Chart-CityWise</Button>
+                <Button variant="contained" onClick={() => navigate("/DashboardHome/loadd_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+                <Button variant="contained" onClick={() => navigate("/DashboardHome/loadd-negative-table")}>Table</Button>
+              </Box>
+            </Box>
 
       <SlicerFilters
         monthOptions={monthOptions}

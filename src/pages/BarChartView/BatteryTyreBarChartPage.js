@@ -139,41 +139,11 @@ function BatteryTyreBarChartPage() {
         <Typography variant="h4">BATTERY & TYRE REPORT (City-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Graph-CityWise
-          </Button>
-
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre_branches", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Graph-BranchWise
-          </Button>
-
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Bar Chart-CityWise
-          </Button>
-
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre_branches-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Bar Chart-BranchWise
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre-negative-table")}>Table</Button>
         </Box>
       </Box>
 

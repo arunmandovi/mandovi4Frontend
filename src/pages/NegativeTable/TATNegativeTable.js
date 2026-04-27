@@ -1,10 +1,17 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
   Button,
   ToggleButton,
   ToggleButtonGroup,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { buildTableDataBelowAverageTAT } from "./NegativeHelperFiles/NegativeTableHelpers";
@@ -16,7 +23,6 @@ import {
 } from "../../helpers/SortByCityAndBranch";
 
 import NegativeFilters from "./NegativeHelperFiles/NegativeFilters";
-import NegativeTableView from "./NegativeHelperFiles/NegativeTableView";
 
 import {
   tableContainerSx,
@@ -37,15 +43,6 @@ const growthKeyMap = {
   FR2: "secondFreeService",
   FR3: "thirdFreeService",
   PMS: "paidService",
-};
-
-const timeFormat = { isTime: true };
-
-const growthFormatConfig = {
-  firstFreeService: timeFormat,
-  secondFreeService: timeFormat,
-  thirdFreeService: timeFormat,
-  paidService: timeFormat,
 };
 
 const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
@@ -87,8 +84,6 @@ function readGrowthValue(row, apiKey) {
 
 function TATNegativeTable() {
   const navigate = useNavigate();
-
-  const tableDataRef = useRef([]); // ✅ moved inside component
 
   const [summary, setSummary] = useState([]);
   const [months, setMonths] = useState([]);
@@ -171,56 +166,54 @@ function TATNegativeTable() {
       selectedCities,
       valueFilter,
       growthKeyMap,
-      growthFormatConfig,
       readBranchName,
       readCityName,
       readGrowthValue,
     });
 
-    const enhanced = data.map((row) => {
+    return data.map((row) => {
       const newRow = { ...row };
 
       Object.entries(growthKeyMap).forEach(([label, key]) => {
         const value = row[label];
         const overallAvg = row._overallAverages?.[key];
 
-        if (!value || value === "--" || !overallAvg) return;
+        if (!value || value === "--" || !overallAvg) {
+          newRow[`_${label}_isAbove`] = false;
+          return;
+        }
 
         const valueSec = timeToSeconds(value);
-        newRow[`_${label}_isNegative`] = valueSec > overallAvg;
+        newRow[`_${label}_isAbove`] = valueSec > overallAvg;
       });
 
       return newRow;
     });
-
-    return enhanced;
   }, [summary, selectedBranches, selectedCities, valueFilter]);
 
-  // ✅ update ref AFTER tableData is ready
-  tableDataRef.current = tableData;
-
-  const getNegativeCellSxTAT = (value) => {
-    if (!value || value === "--") return {};
-
-    for (const row of tableDataRef.current) {
-      for (const label of Object.keys(growthKeyMap)) {
-        if (row[label] === value && row[`_${label}_isNegative`]) {
-          return {
-            backgroundColor: "#ffcdd2",
-            color: "#b71c1c",
-            fontWeight: 900,
-          };
-        }
-      }
+  const getCellStyle = (row, label) => {
+    if (row[`_${label}_isAbove`]) {
+      return {
+        backgroundColor: "#ffcdd2",
+        color: "#b71c1c",
+        fontWeight: 900,
+      };
     }
     return {};
   };
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" mb={3}>
-        TAT Table (Branch-wise)
-      </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+        <Typography variant="h4">TAT Table (Branch-wise)</Typography>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/tat")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/tat_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/tat-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/tat_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained">Table</Button>
+        </Box>
+      </Box>
 
       <NegativeFilters
         cityOptions={cityOptions}
@@ -251,15 +244,37 @@ function TATNegativeTable() {
         </ToggleButtonGroup>
       </Box>
 
-      <NegativeTableView
-        selectedBranches={selectedBranches}
-        tableData={tableData}
-        growthKeyMap={growthKeyMap}
-        tableContainerSx={tableContainerSx}
-        tableSx={tableSx}
-        tableHeadRowSx={tableHeadRowSx}
-        getNegativeCellSx={getNegativeCellSxTAT}
-      />
+      <TableContainer component={Paper} sx={tableContainerSx}>
+        <Table size="small" sx={tableSx}>
+          <TableHead>
+            <TableRow sx={tableHeadRowSx}>
+              <TableCell>Branch</TableCell>
+              <TableCell>City</TableCell>
+              {Object.keys(growthKeyMap).map((label) => (
+                <TableCell key={label} align="center">{label}</TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {tableData.map((row, i) => (
+              <TableRow key={i}>
+                <TableCell sx={{ fontWeight: 800 }}>{row.branch}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{row.city}</TableCell>
+
+                {Object.keys(growthKeyMap).map((label) => (
+                  <TableCell
+                    key={label}
+                    align="center"
+                    sx={getCellStyle(row, label)}
+                  >
+                    {row[label]}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 }

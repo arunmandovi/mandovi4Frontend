@@ -73,6 +73,23 @@ export const getNegativeCellSx = (value) => {
   };
 };
 
+export const getThresholdCellSx = (value, threshold) => {
+  if (value === "--" || value === null) return {};
+
+  const num = parseFloat(String(value).replace("%", ""));
+  if (isNaN(num)) return {};
+
+  if (num < threshold) {
+    return {
+      backgroundColor: red[100],
+      color: red[800],
+      fontWeight: 900,
+    };
+  }
+
+  return {};
+};
+
 export const handleCityChangeExternal = ({
   e,
   setSelectedCities,
@@ -305,6 +322,8 @@ export const buildTableDataBelowAverage = ({
 
   return result;
 };
+
+
 export const buildTableDataBelowAverageTAT = ({
   summary,
   selectedBranches,
@@ -318,7 +337,6 @@ export const buildTableDataBelowAverageTAT = ({
 }) => {
   if (!summary.length || !selectedBranches.length) return [];
 
-  // 🔹 local helpers (ONLY here, no global impact)
   const timeToSeconds = (time) => {
     if (!time || typeof time !== "string") return null;
     const [h, m, s] = time.split(":").map(Number);
@@ -358,7 +376,6 @@ export const buildTableDataBelowAverageTAT = ({
       if (rawVal !== null) {
         let numericVal = rawVal;
 
-        // ✅ ONLY TAT handling
         if (typeof rawVal === "string" && rawVal.includes(":")) {
           numericVal = timeToSeconds(rawVal);
         }
@@ -396,31 +413,32 @@ export const buildTableDataBelowAverageTAT = ({
       _overallAverages: overallAverages,
     };
 
-    let allAboveAverage = true;
-    let hasBelowAverage = false;
+    let hasAboveAverage = false;   
+    let allBelowAverage = true;   
 
     for (const [label, key] of Object.entries(growthKeyMap)) {
       if (item.growthValues[key]) {
         const avg = item.growthValues[key].sum / item.growthValues[key].count;
-
-        // ✅ convert back to time ONLY here
         const formatted = secondsToTime(avg);
-
         row[label] = formatted;
 
         const overallAvg = overallAverages[key];
 
-        if (avg < overallAvg) {
-          hasBelowAverage = true;
-          allAboveAverage = false;
+        if (avg > overallAvg) {
+          hasAboveAverage = true;
+          allBelowAverage = false; 
+        } else if (avg < overallAvg) {
+        } else {
+          allBelowAverage = false;
         }
       } else {
         row[label] = "--";
+        allBelowAverage = false; 
       }
     }
 
-    row._allAboveAverage = allAboveAverage;
-    row._hasBelowAverage = hasBelowAverage;
+    row._hasAboveAverage = hasAboveAverage;
+    row._allBelowAverage = allBelowAverage;
 
     return row;
   });
@@ -428,10 +446,105 @@ export const buildTableDataBelowAverageTAT = ({
   if (valueFilter.includes("positive") && valueFilter.includes("negative")) {
     return result;
   } else if (valueFilter.includes("positive")) {
-    return result.filter((row) => row._allAboveAverage);
+    return result.filter((row) => row._hasAboveAverage);
   } else if (valueFilter.includes("negative")) {
-    return result.filter((row) => row._hasBelowAverage);
+    return result.filter((row) => row._allBelowAverage);
   }
 
   return result;
 };
+
+export const buildTableDataBelowThreshold = ({
+  summary,
+  selectedBranches,
+  selectedCities,
+  valueFilter,
+  growthKeyMap,
+  growthFormatConfig,
+  readBranchName,
+  readCityName,
+  readGrowthValue,
+  threshold,
+}) => {
+  if (!summary.length || !selectedBranches.length) return [];
+
+  const branchMap = new Map();
+
+  summary.forEach((row) => {
+    const br = readBranchName(row);
+    const city = readCityName(row);
+
+    if (selectedCities.length > 0 && !selectedCities.includes(city)) return;
+    if (!selectedBranches.includes(br)) return;
+
+    if (!branchMap.has(br)) {
+      branchMap.set(br, {
+        branch: br,
+        city,
+        growthValues: {},
+      });
+    }
+
+    const item = branchMap.get(br);
+
+    for (const key of Object.values(growthKeyMap)) {
+      const rawVal = readGrowthValue(row, key);
+
+      if (rawVal !== null) {
+        if (!item.growthValues[key]) {
+          item.growthValues[key] = { sum: 0, count: 0 };
+        }
+        item.growthValues[key].sum += rawVal;
+        item.growthValues[key].count += 1;
+      }
+    }
+  });
+
+  const result = Array.from(branchMap.values()).map((item) => {
+    const row = {
+      branch: item.branch,
+      city: item.city,
+    };
+
+    let allAboveThreshold = true;
+    let hasBelowThreshold = false;
+
+    for (const [label, key] of Object.entries(growthKeyMap)) {
+      if (item.growthValues[key]) {
+        const avg =
+          item.growthValues[key].sum / item.growthValues[key].count;
+
+        const format = growthFormatConfig?.[key] || {
+          decimalPlaces: 0,
+          showPercent: false,
+        };
+
+        const formatted = Number(avg).toFixed(format.decimalPlaces);
+        row[label] = format.showPercent ? `${formatted} %` : formatted;
+
+        if (avg < threshold) {
+          hasBelowThreshold = true;
+          allAboveThreshold = false;
+        }
+      } else {
+        row[label] = "--";
+      }
+    }
+
+    row._allAboveThreshold = allAboveThreshold;
+    row._hasBelowThreshold = hasBelowThreshold;
+
+    return row;
+  });
+
+  if (valueFilter.includes("positive") && valueFilter.includes("negative")) {
+    return result;
+  } else if (valueFilter.includes("positive")) {
+    return result.filter((row) => row._allAboveThreshold);
+  } else if (valueFilter.includes("negative")) {
+    return result.filter((row) => row._hasBelowThreshold);
+  }
+
+  return result;
+};
+

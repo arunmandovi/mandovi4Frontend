@@ -16,7 +16,7 @@ function OilBarChartPage() {
   const [financialYears, setFinancialYears] = useState(["2026-2027"]);
   const [qtrWise, setQtrWise] = useState([]);
   const [halfYear, setHalfYear] = useState([]);
-  const [selectedGrowth, setSelectedGrowthState] = useState(null);
+  const [selectedGrowth, setSelectedGrowthState] = useState(["Full & Semi Synthetic QTY %"]);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const financialYearOptions = ["2025-2026", "2026-2027"];
@@ -38,13 +38,13 @@ function OilBarChartPage() {
 
     if (!fromPages) {
       if (!prev) {
-        setSelectedGrowthState("Service&BodyShop Profit %");
-        setSelectedGrowth("Service&BodyShop Profit %", "oil");
+        setSelectedGrowthState("Full & Semi Synthetic QTY %");
+        setSelectedGrowth("Full & Semi Synthetic QTY %", "oil");
       } else {
         setSelectedGrowthState(prev);
       }
     } else {
-      setSelectedGrowthState(prev || "Service&BodyShop Profit %");
+      setSelectedGrowthState(prev || "Full & Semi Synthetic QTY %");
     }
   }, []);
 
@@ -135,46 +135,11 @@ function OilBarChartPage() {
         <Typography variant="h4">OIL REPORT (City-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/oil", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Graph-CityWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/oil_branches", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Graph-BranchWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/oil-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Bar Chart-CityWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/oil_branches-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Bar Chart-BranchWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/oil-negative-table", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Table
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/oil")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/oil_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/oil-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/oil_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/oil-negative-table")}>Table</Button>
         </Box>
       </Box>
 

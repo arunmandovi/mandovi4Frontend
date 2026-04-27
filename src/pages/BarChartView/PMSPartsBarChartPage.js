@@ -155,7 +155,6 @@ function PMSPartsBarChartPage() {
           >
             Graph-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/pms_parts_branches", {
                 state: { fromNavigation: true },
@@ -164,7 +163,6 @@ function PMSPartsBarChartPage() {
           >
             Graph-BranchWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/pms_parts-bar-chart", {
                 state: { fromNavigation: true },
@@ -173,7 +171,6 @@ function PMSPartsBarChartPage() {
           >
             Bar Chart-CityWise
           </Button>
-
           <Button
             variant="contained" onClick={() => navigate("/DashboardHome/pms_parts_branches-bar-chart", {
                 state: { fromNavigation: true },
@@ -181,6 +178,14 @@ function PMSPartsBarChartPage() {
             }
           >
             Bar Chart-BranchWise
+          </Button>
+          <Button
+            variant="contained" onClick={() => navigate("/DashboardHome/pms_parts-negative-table", {
+                state: { fromNavigation: true },
+              })
+            }
+          >
+            Table
           </Button>
         </Box>
       </Box>

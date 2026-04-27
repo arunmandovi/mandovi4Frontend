@@ -153,46 +153,11 @@ function MSGPBarChartPage() {
         <Typography variant="h4">MSGP REPORT (City-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained" 
-            onClick={() => navigate("/DashboardHome/msgp", {
-              state: { fromNavigation: true },
-            })}
-          >
-            Graph-CityWise
-          </Button>
-          <Button
-            variant="contained" 
-            onClick={() => navigate("/DashboardHome/msgp_branches", {
-              state: { fromNavigation: true },
-            })}
-          >
-            Graph-BranchWise
-          </Button>
-          <Button
-            variant="contained" 
-            onClick={() => navigate("/DashboardHome/msgp-bar-chart", {
-              state: { fromNavigation: true },
-            })}
-          >
-            Bar Chart-CityWise
-          </Button>
-          <Button
-            variant="contained" 
-            onClick={() => navigate("/DashboardHome/msgp_branches-bar-chart", {
-              state: { fromNavigation: true },
-            })}
-          >
-            Bar Chart-BranchWise
-          </Button>
-          <Button
-            variant="contained" 
-            onClick={() => navigate("/DashboardHome/msgp-negative-table", {
-              state: { fromNavigation: true },
-            })}
-          >
-            Table
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/msgp-negative-table")}>Table</Button>
         </Box>
       </Box>
 

@@ -101,5 +101,4 @@ function NegativeTableView({
   );
 }
 
-
 export default NegativeTableView;

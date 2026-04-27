@@ -141,6 +141,9 @@ import TATNegativeTable from "./pages/NegativeTable/TATNegativeTable.js";
 import PerVehicleNegativeTable from "./pages/NegativeTable/PerVehicleNegativeTable.js";
 import MGAProfitNegativeTable from "./pages/NegativeTable/MGAProfitNegativeTable.js";
 import ReferenceeNegativeTable from "./pages/NegativeTable/ReferenceeNegativeTable.js";
+import PMSPartsNegativeTable from "./pages/NegativeTable/PMSPartsNegativeTable.js";
+import MGANegativeTable from "./pages/NegativeTable/MGANegativeTable.js";
+import BatteryTyreNegativeTable from "./pages/NegativeTable/BatteryTyreNegativeTable.js";
 
 //CC&SA Conversion Pages
 import CCConversionTablePage from "./pages/CC&SAConversion/CCConversionTablePage.js";
@@ -432,6 +435,9 @@ function App() {
           <Route path="per_vehicle-negative-table" element={<PerVehicleNegativeTable />} />
           <Route path="mga_profit-negative-table" element={<MGAProfitNegativeTable />} />
           <Route path="referencee-negative-table" element={<ReferenceeNegativeTable />} />
+          <Route path="pms_parts-negative-table" element={<PMSPartsNegativeTable />} />
+          <Route path="mga-negative-table" element={<MGANegativeTable />} />
+          <Route path="battery_tyre-negative-table" element={<BatteryTyreNegativeTable />} />
         </Route>
       </Routes>
     </Router>

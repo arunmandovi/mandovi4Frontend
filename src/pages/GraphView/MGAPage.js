@@ -21,7 +21,6 @@ function MGAPage() {
   const channelOptions = ["Arena", "Nexa"];
 
   const growthOptions = [ "MGA By VEH", ];
-
   const growthKeyMap = { "MGA By VEH": "mgaVeh", };
 
   useEffect(() => {
@@ -103,6 +102,7 @@ function MGAPage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/mga_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/mga-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/mga_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/mga-negative-table")}>Table</Button>
         </Box>
       </Box>
 

@@ -135,46 +135,11 @@ function MGAProfitBarChartPage() {
         <Typography variant="h4">MGA PROFIT REPORT (City-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/mga_profit", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Graph-CityWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/mga_profit_branches", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Graph-BranchWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/mga_profit-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Bar Chart-CityWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/mga_profit_branches-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Bar Chart-BranchWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/mga_profit-negative-table", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Table
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/mga_profit")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/mga_profit_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/mga_profit-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/mga_profit_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/mga_profit-negative-table")}>Table</Button>
         </Box>
       </Box>
 

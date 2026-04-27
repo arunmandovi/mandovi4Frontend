@@ -137,46 +137,11 @@ function PerVehicleBarChartPage() {
         <Typography variant="h4">PER VEHICLE REPORT (City-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Graph-CityWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Graph-BranchWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Bar Chart-CityWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Bar Chart-BranchWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-negative-table", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Table
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/per_vehicle-negative-table")}>Table</Button>
         </Box>
       </Box>
 

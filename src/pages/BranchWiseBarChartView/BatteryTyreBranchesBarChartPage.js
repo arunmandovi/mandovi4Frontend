@@ -184,6 +184,7 @@ function BatteryTyreBranchesBarChartPage() {
           <Button variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre_branches")}>Graph-BranchWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre-bar-chart")}>Bar Chart-CityWise</Button>
           <Button variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/battery_tyre-negative-table")}>Table</Button>
         </Box>
       </Box>
 

@@ -143,46 +143,11 @@ function SparesBarChartPage() {
         <Typography variant="h4">SPARES REPORT (City-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/spares", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Graph-CityWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/spares_branches", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Graph-BranchWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/spares-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Bar Chart-CityWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/spares_branches-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Bar Chart-BranchWise
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate("/DashboardHome/spares-negative-table", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Table
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/spares")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/spares_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/spares-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/spares_branches-bar-chart")}>Bar Chart-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/spares-negative-table")}>Table</Button>
         </Box>
       </Box>
 
