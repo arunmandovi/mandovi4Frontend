@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, Typography, FormControl, InputLabel, Select, MenuItem, Checkbox, ListItemText, } from "@mui/material";
+import {
+  Box,
+  Button,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Checkbox,
+  ListItemText,
+} from "@mui/material";
 import { fetchData } from "../../api/uploadService";
 import { useNavigate, useLocation } from "react-router-dom";
 import SlicerFilters from "../../components/SlicerFilters";
@@ -7,7 +17,7 @@ import GrowthButtons from "../../components/GrowthButtons";
 import BranchBarChart from "../../components/BranchBarChart";
 import { getSelectedGrowth, setSelectedGrowth } from "../../utils/growthSelection";
 
-import { CITY_ORDER, BRANCH_CITY_MAP, } from "../../helpers/SortByCityAndBranch";
+import { CITY_ORDER, BRANCH_CITY_MAP } from "../../helpers/SortByCityAndBranch";
 
 const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
   Object.entries(BRANCH_CITY_MAP)
@@ -18,19 +28,21 @@ const ALL_BRANCHES = CITY_ORDER.flatMap((city) =>
 function HoldUpBranchesBarChartPage() {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [selectedCities, setSelectedCities] = useState([]);
   const [summary, setSummary] = useState([]);
+
   const getCurrentFYMonth = () => {
-  const monthMapReverse = {
-     0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun", 6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
+    const monthMapReverse = {
+      0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun",
+      6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
     };
-    const today = new Date();
-    const jsMonth = today.getMonth();
-    return monthMapReverse[jsMonth] || "Apr";
+    return monthMapReverse[new Date().getMonth()] || "Apr";
   };
 
   const [months, setMonths] = useState([getCurrentFYMonth()]);
   const [years, setYears] = useState("2026");
+  const [channels, setChannels] = useState([]); 
   const [days, setDays] = useState([]);
   const [selectedDate, setSelectedDate] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
@@ -39,6 +51,8 @@ function HoldUpBranchesBarChartPage() {
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const yearOtions = ["2025","2026"];
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
+  const channelOptions = ["ARENA","NEXA"]; 
+
   const growthOptions = ["Service", "BodyShop", "PMS", "ServiceBodyShop"];
   const growthKeyMap = {
     Service: "countService",
@@ -66,8 +80,9 @@ function HoldUpBranchesBarChartPage() {
   useEffect(() => {
     if (!months || months.length === 0) return;
 
-    const month = Array.isArray(months) ? months[0] : months;
+    const month = months[0];
     const currentYear = new Date().getFullYear();
+
     const monthMap = {
       Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8,
       Oct: 9, Nov: 10, Dec: 11, Jan: 0, Feb: 1, Mar: 2
@@ -83,36 +98,42 @@ function HoldUpBranchesBarChartPage() {
     setDays(validDays);
   }, [months]);
 
-  useEffect(() => {
-    if (days.length > 0 && selectedDate.length === 0) {
-      setSelectedDate([days[days.length - 1]]);
+  const buildQuery = (day) => {
+    const month = months[0];
+
+    let query = `?month=${month}&day=${day}&years=${years}`;
+
+    if (selectedCities.length > 0) {
+      selectedCities.forEach((c) => {
+        query += `&cities=${encodeURIComponent(c)}`;
+      });
     }
-  }, [days]);
+
+    if (channels.length > 0) {
+      channels.forEach((ch) => {
+        query += `&channels=${encodeURIComponent(ch)}`;
+      });
+    }
+
+    return query;
+  };
 
   useEffect(() => {
     const autoSelectLastAvailableDate = async () => {
       if (days.length === 0) return;
-  
+
       let latestDateWithData = null;
-  
+
       for (let i = days.length - 1; i >= 0; i--) {
         const day = days[i];
-        const month = Array.isArray(months) ? months[0] : months;
-  
-        const cityQuery =
-          selectedCities.length > 0
-            ? `&cities=${selectedCities.join(",")}`
-            : "";
-  
-        const query = `?month=${month}&day=${day}${cityQuery}&years=${years}`;
-  
+
         try {
           const res = await fetchData(
-            `/api/hold_up/hold_up_branch_summary${query}`
+            `/api/hold_up/hold_up_branch_summary${buildQuery(day)}`
           );
-  
+
           const safe = Array.isArray(res) ? res : res?.result || [];
-  
+
           if (safe.length > 0) {
             latestDateWithData = day;
             break;
@@ -121,33 +142,24 @@ function HoldUpBranchesBarChartPage() {
           console.error("Error checking date:", day, err);
         }
       }
-  
-      if (latestDateWithData) {
-        setSelectedDate([latestDateWithData]);
-      } else {
-        setSelectedDate([days[days.length - 1]]);
-      }
+
+      setSelectedDate([
+        latestDateWithData || days[days.length - 1]
+      ]);
     };
-  
+
     autoSelectLastAvailableDate();
-  }, [days, months,years, selectedCities]);
+  }, [days, months, years, selectedCities, channels]);
 
   useEffect(() => {
     if (!months || selectedDate.length === 0) return;
 
     const fetchSummary = async () => {
       try {
-        const month = Array.isArray(months) ? months[0] : months;
         const day = selectedDate[0];
 
-        const cityQuery = selectedCities.length > 0
-          ? `&cities=${selectedCities.join(",")}`
-          : "";
-
-        const query = `?month=${month}&day=${day}${cityQuery}&years=${years}`;
-
         const data = await fetchData(
-          `/api/hold_up/hold_up_branch_summary${query}`
+          `/api/hold_up/hold_up_branch_summary${buildQuery(day)}`
         );
 
         setSummary(Array.isArray(data) ? data : data?.result || []);
@@ -158,7 +170,7 @@ function HoldUpBranchesBarChartPage() {
     };
 
     fetchSummary();
-  }, [months, selectedDate, years, selectedCities]);
+  }, [months, selectedDate, years, selectedCities, channels]);
 
   const readBranchName = (row) =>
     row?.branch || row?.Branch || row?.branchName || row?.BranchName || row?.name || row?.Name || "";
@@ -167,40 +179,10 @@ function HoldUpBranchesBarChartPage() {
     row?.city || row?.City || row?.cityName || row?.CityName || "";
 
   const readGrowthValue = (row, apiKey) => {
-    if (!apiKey) return null;
     const val = row?.[apiKey];
-    if (val === null || val === undefined || val === "") return null;
-
+    if (val == null) return null;
     const num = parseFloat(String(val).replace("%", "").trim());
     return isNaN(num) ? null : num;
-  };
-
-  const getFillColor = (value, max) => {
-    if (max === 0) return "rgb(0,200,0)"; 
-  
-    const ratio = value / max; 
-  
-    const colors = [
-      { stop: 1.0, r: 180, g: 0,   b: 0 }, { stop: 0.75, r: 255, g: 0,   b: 0 }, { stop: 0.5, r: 255, g: 140, b: 0 },  
-      { stop: 0.25, r: 255, g: 255, b: 0 }, { stop: 0.0, r: 0,   g: 200, b: 0 }   
-    ];
-  
-    for (let i = 0; i < colors.length - 1; i++) {
-      const c1 = colors[i];
-      const c2 = colors[i + 1];
-  
-      if (ratio <= c1.stop && ratio >= c2.stop) {
-        const range = c1.stop - c2.stop;
-        const t = (ratio - c2.stop) / range;
-  
-        const r = Math.round(c2.r + (c1.r - c2.r) * t);
-        const g = Math.round(c2.g + (c1.g - c2.g) * t);
-        const b = Math.round(c2.b + (c1.b - c2.b) * t);
-  
-        return `rgb(${r},${g},${b})`;
-      }
-    }
-    return "rgb(0,200,0)";
   };
 
   const buildCombinedAverageData = (dataArr) => {
@@ -221,221 +203,57 @@ function HoldUpBranchesBarChartPage() {
       cityMap[branch] = city;
     });
 
-    const raw = Object.keys(totals).map((b) => ({
-      name: b,
-      city: cityMap[b],
-      value: counts[b] ? totals[b] / counts[b] : 0
-    }));
-
-    const max = Math.max(...raw.map((x) => x.value), 0);
-
-    return raw
-      .map((item) => ({
-        ...item,
-        fill: getFillColor(item.value, max)
+    return Object.keys(totals)
+      .map((b) => ({
+        name: b,
+        city: cityMap[b],
+        value: counts[b] ? totals[b] / counts[b] : 0
       }))
       .sort((a, b) => b.value - a.value);
   };
 
   const chartData =
-  selectedGrowth && summary.length > 0
-    ? buildCombinedAverageData(summary)
-        .filter(item => {
-          if (
-            selectedGrowth === "BodyShop Growth %" ||  selectedGrowth === "BS on FPR 2024-25 %" || selectedGrowth === "BS on FPR 2025-26 %"
-          ) {
-            return !(
-              item.name === "Vittla" || item.name === "Naravi" || item.name === "Gowribidanur" || item.name === "Malur SOW" ||
-              item.name === "Maluru WS" || item.name === "Kollegal" || item.name === "Mandya Nexa" || item.name === "Gonikoppa Nexa" ||
-              item.name === "Narasipura" || item.name === "Nagamangala" ||
-              item.name === "Maddur" || item.name === "Somvarpet" || item.name === "Krishnarajapet" || item.name === "ChamrajNagar" ||
-              item.name === "KRS Road" || item.name === "Balmatta" || item.name === "Bantwal" ||
-              item.name === "Nexa Service" || item.name === "Kadaba" || item.name === "Sujith Bagh Lane"
-            );
-          }
-
-          return true;
-        })
-        .filter(item => selectedBranches.includes(item.name))
-    : [];
-
-  const handleBranchChange = (e) => {
-    const value = e.target.value;
-    setSelectedBranches(value);
-  };
-
-  const handleCityChange = (e) => {
-    const newSelectedCities = e.target.value;
-    setSelectedCities(newSelectedCities);
-    
-    if (newSelectedCities.length > 0) {
-      const branchesForCities = newSelectedCities.flatMap(city => 
-        Object.entries(BRANCH_CITY_MAP)
-          .filter(([_, c]) => c === city)
-          .map(([br]) => br)
-      );
-      setSelectedBranches(branchesForCities);
-    } else {
-      setSelectedBranches(ALL_BRANCHES);
-    }
-  };
+    selectedGrowth && summary.length > 0
+      ? buildCombinedAverageData(summary).filter((item) =>
+          selectedBranches.includes(item.name)
+        )
+      : [];
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3
-        }}
-      >
-        <Typography variant="h4">HOLD UP REPORT (Branch-wise)</Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+        <Typography variant="h4">HOLD UP GRAPH (BranchWise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-           <Button
-            variant="contained"
-            onClick={() =>
-              navigate("/DashboardHome/hold_up_table", { state: { fromNavigation: true } })
-            }
-          >
-            HoldUp Summary
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate("/DashboardHome/hold_up_day_table", { state: { fromNavigation: true } })
-            }
-          >
-            HoldUp DayWise Summary
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate("/DashboardHome/hold_up", { state: { fromNavigation: true } })
-            }
-          >
-            Graph-CityWise
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate("/DashboardHome/hold_up_branches", { state: { fromNavigation: true } })
-            }
-          >
-            Graph-BranchWise
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate("/DashboardHome/hold_up-bar-chart", { state: { fromNavigation: true } })
-            }
-          >
-            Bar Chart-CityWise
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate("/DashboardHome/hold_up_branches-bar-chart", {
-                state: { fromNavigation: true }
-              })
-            }
-          >
-            Bar Chart-BranchWise
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_table")}>HoldUp Summary</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_day_table")}>HoldUp DayWise Summary</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Select Cities</InputLabel>
-          <Select
-            multiple
-            label="Select Cities"
-            value={selectedCities}
-            onChange={handleCityChange}
-            renderValue={(selected) => 
-              selected.length === 0 ? "All Cities" : 
-              selected.length === cityOptions.length ? "All Cities" : 
-              `${selected.length} Cities`
-            }
-          >
-            {cityOptions.map((city) => (
-              <MenuItem value={city} key={city}>
-                <Checkbox checked={selectedCities.includes(city)} />
-                <ListItemText primary={city} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      
-
-        <FormControl size="small" sx={{ minWidth: 260 }}>
-          <InputLabel>Select Branches</InputLabel>
-          <Select
-            multiple
-            label="Select Branches"
-            value={selectedBranches}
-            onChange={handleBranchChange}
-            displayEmpty
-            renderValue={() => selectedCities.length > 0 ? `${selectedBranches.length} Branches` : "Select Branches"}
-            MenuProps={{
-              PaperProps: {
-                style: { maxHeight: 300 },
-              },
-            }}
-          >
-            <ListItemText primary="Bangalore" sx={{ pl: 2, fontWeight: "bold" }} />
-            {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, c]) => c === "Bangalore")
-              .map(([br]) => (
-                <MenuItem value={br} key={br}>
-                  <Checkbox checked={selectedBranches.includes(br)} />
-                  <ListItemText primary={br} />
-                </MenuItem>
-              ))}
-           
-            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
-            {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, c]) => c === "Mysore")
-              .map(([br]) => (
-                <MenuItem value={br} key={br}>
-                  <Checkbox checked={selectedBranches.includes(br)} />
-                  <ListItemText primary={br} />
-                </MenuItem>
-              ))}
-           
-            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
-            {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, c]) => c === "Mangalore")
-              .map(([br]) => (
-                <MenuItem value={br} key={br}>
-                  <Checkbox checked={selectedBranches.includes(br)} />
-                  <ListItemText primary={br} />
-                </MenuItem>
-              ))}
-          </Select>
-        </FormControl>
-      </Box>
-
       <SlicerFilters
-        monthOptions={monthOptions}  months={months}
-        setMonths={(selected) => {
-          const lastSelected = selected[selected.length - 1];
-          setMonths(lastSelected ? [lastSelected] : []);
-        }}
-        cityOptions={cityOptions} cities={selectedCities} setCities={setSelectedCities}
-        dateOptions={days} dates={selectedDate}
-        setDates={(arr) => {
-          const last = arr[arr.length - 1];
-          setSelectedDate(last ? [last.padStart(2, "0")] : []);
-        }}
-        yearOptions={yearOtions} years={years} setYears={setYears}
+        monthOptions={monthOptions}
+        months={months}
+        setMonths={(selected) =>
+          setMonths([selected[selected.length - 1]])
+        }
+        cityOptions={cityOptions}
+        cities={selectedCities}
+        setCities={setSelectedCities}
+        dateOptions={days}
+        dates={selectedDate}
+        setDates={(arr) =>
+          setSelectedDate([arr[arr.length - 1]])
+        }
+        yearOptions={yearOtions}
+        years={years}
+        setYears={setYears}
+        channelOptions={channelOptions}   // ✅ added
+        channels={channels}               // ✅ added
+        setChannels={setChannels}         // ✅ added
       />
 
       <GrowthButtons
@@ -448,11 +266,9 @@ function HoldUpBranchesBarChartPage() {
       />
 
       {!selectedGrowth ? (
-        <Typography sx={{ mt: 2 }}>
-          👆 Select a growth type to view the chart below
-        </Typography>
+        <Typography>Select growth</Typography>
       ) : summary.length === 0 ? (
-        <Typography>No data available for the selected criteria.</Typography>
+        <Typography>No data</Typography>
       ) : (
         <BranchBarChart
           chartData={chartData}

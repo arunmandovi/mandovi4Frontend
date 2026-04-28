@@ -14,20 +14,23 @@ function HoldUpPage() {
   const [days, setDays] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState("ServiceBodyShop");
 
-  const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar" ];
-  const yearOptions = ["2025","2026"];
+  const monthOptions = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+  const yearOptions = ["2025", "2026"];
+  const channelOptions = ["ARENA", "NEXA"];
 
   const getCurrentFYMonth = () => {
-  const monthMapReverse = {
-      0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun", 6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
+    const monthMapReverse = {
+      0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun",
+      6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
     };
     const today = new Date();
-    const jsMonth = today.getMonth();
-    return monthMapReverse[jsMonth] || "Apr";
+    return monthMapReverse[today.getMonth()] || "Apr";
   };
 
   const [months, setMonths] = useState(getCurrentFYMonth());
   const [years, setYears] = useState("2026");
+  const [channels, setChannels] = useState([]);
+
   const allDayOptions = Array.from({ length: 31 }, (_, i) =>
     String(i + 1).padStart(2, "0")
   );
@@ -51,9 +54,24 @@ function HoldUpPage() {
   const readGrowthValue = (row, apiKey) => {
     const raw = row?.[apiKey];
     if (raw == null) return 0;
-    const cleaned = String(raw).replace("%", "").trim();
-    const parsed = parseFloat(cleaned);
+    const parsed = parseFloat(String(raw).replace("%", "").trim());
     return isNaN(parsed) ? 0 : parsed;
+  };
+
+  const buildQuery = (day) => {
+    let query = `?month=${months}&day=${day}`;
+
+    if (years) {
+      query += `&years=${years}`;
+    }
+
+    if (channels && channels.length > 0) {
+      channels.forEach((ch) => {
+        query += `&channels=${encodeURIComponent(ch)}`;
+      });
+    }
+
+    return query;
   };
 
   useEffect(() => {
@@ -65,8 +83,12 @@ function HoldUpPage() {
         const detectedDays = new Set();
 
         for (const d of allDayOptions) {
-          const query = `?month=${months}&day=${d}&years=${years}`;
-          const data = await fetchData(`/api/hold_up/hold_up_summary${query}`);
+          const query = buildQuery(d);
+
+          const data = await fetchData(
+            `/api/hold_up/hold_up_summary${query}`
+          );
+
           const safeData = Array.isArray(data) ? data : data?.result || [];
 
           if (safeData.length > 0) {
@@ -84,7 +106,7 @@ function HoldUpPage() {
     };
 
     fetchCitySummary();
-  }, [months, years]);
+  }, [months, years, channels]);
 
   const buildChartData = () => {
     if (!selectedGrowth) return { formatted: [], sortedCities: [] };
@@ -106,10 +128,12 @@ function HoldUpPage() {
     const formatted = filteredSummary.map(({ month, data }) => {
       const entry = { month };
       sortedCities.forEach((city) => (entry[city] = 0));
+
       data.forEach((row) => {
         const city = readCityName(row);
         entry[city] = readGrowthValue(row, apiKey);
       });
+
       return entry;
     });
 
@@ -120,7 +144,6 @@ function HoldUpPage() {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">HOLD UP GRAPH (CityWise)</Typography>
 
@@ -137,15 +160,17 @@ function HoldUpPage() {
       <SlicerFilters
         monthOptions={monthOptions}
         months={[months]}
-        setMonths={(value) => {
-          const selected = value[value.length - 1];
-          setMonths(selected);
-        }}
-        dateOptions={[]} 
-        dates={[]}       
-        setDates={() => {}} 
+        setMonths={(value) => setMonths(value[value.length - 1])}
+        dateOptions={[]}
+        dates={[]}
+        setDates={() => {}}
         singleMonthSelect={true}
-        yearOptions={yearOptions} years={years} setYears={setYears}
+        yearOptions={yearOptions}
+        years={years}
+        setYears={setYears}
+        channelOptions={channelOptions}
+        channels={channels}
+        setChannels={setChannels}
       />
 
       <GrowthButtons
@@ -158,13 +183,18 @@ function HoldUpPage() {
       />
 
       {!selectedGrowth ? (
-        <Typography>Select a growth type to view the chart</Typography>
+        <Typography>Select a growth type</Typography>
       ) : chartData.length === 0 ? (
-        <Typography>No data available for the selected criteria.</Typography>
+        <Typography>No data available</Typography>
       ) : (
         <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>{selectedGrowth}</Typography>
-          <GrowthLineChart chartData={chartData} cityKeys={cityKeys} decimalDigits={0} showPercent={false} />
+          <Typography variant="h6">{selectedGrowth}</Typography>
+          <GrowthLineChart
+            chartData={chartData}
+            cityKeys={cityKeys}
+            decimalDigits={0}
+            showPercent={false}
+          />
         </Box>
       )}
     </Box>

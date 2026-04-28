@@ -12,26 +12,27 @@ function HoldUpBarChartPage() {
   const location = useLocation();
 
   const [summary, setSummary] = useState([]);
+
   const getCurrentFYMonth = () => {
-  const monthMapReverse = {
-      0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun", 6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
+    const monthMapReverse = {
+      0: "Jan", 1: "Feb", 2: "Mar", 3: "Apr", 4: "May", 5: "Jun",
+      6: "Jul", 7: "Aug", 8: "Sep", 9: "Oct", 10: "Nov", 11: "Dec",
     };
-    const today = new Date();
-    const jsMonth = today.getMonth();
-    return monthMapReverse[jsMonth] || "Apr";
+    return monthMapReverse[new Date().getMonth()] || "Apr";
   };
 
   const [months, setMonths] = useState(getCurrentFYMonth());
   const [years, setYears] = useState("2026");
+  const [channels, setChannels] = useState([]);
   const [days, setDays] = useState([]);
   const [selectedDate, setSelectedDate] = useState([]);
-
   const [selectedGrowth, setSelectedGrowthState] = useState(null);
 
   const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const yearOptions = ["2025","2026"];
-  const growthOptions = ["Service", "BodyShop", "PMS", "ServiceBodyShop"];
+  const channelOptions = ["ARENA", "NEXA"];
 
+  const growthOptions = ["Service", "BodyShop", "PMS", "ServiceBodyShop"];
   const growthKeyMap = {
     Service: "countService",
     BodyShop: "countBodyShop",
@@ -76,6 +77,24 @@ function HoldUpBarChartPage() {
     setDays(validDays);
   }, [months]);
 
+  // ✅ Query builder (with channels)
+  const buildQuery = (day) => {
+    let query = `?month=${months}&day=${day}`;
+
+    if (years) {
+      query += `&years=${years}`;
+    }
+
+    if (channels && channels.length > 0) {
+      channels.forEach((ch) => {
+        query += `&channels=${encodeURIComponent(ch)}`;
+      });
+    }
+
+    return query;
+  };
+
+  // ✅ Auto select latest available date (with channels applied)
   useEffect(() => {
     const autoSelectLastAvailableDate = async () => {
       if (days.length === 0) return;
@@ -84,7 +103,7 @@ function HoldUpBarChartPage() {
 
       for (let i = days.length - 1; i >= 0; i--) {
         const day = days[i];
-        const query = `?month=${months}&day=${day}&years=${years}`;
+        const query = buildQuery(day);
 
         try {
           const res = await fetchData(`/api/hold_up/hold_up_summary${query}`);
@@ -92,30 +111,29 @@ function HoldUpBarChartPage() {
 
           if (safe.length > 0) {
             latestDateWithData = day;
-            break; // STOP when first (latest) valid day is found
+            break;
           }
         } catch (err) {
           console.error("Error checking date:", day, err);
         }
       }
 
-      if (latestDateWithData) {
-        setSelectedDate([latestDateWithData]);
-      } else {
-        setSelectedDate([days[days.length - 1]]);
-      }
+      setSelectedDate([
+        latestDateWithData || days[days.length - 1]
+      ]);
     };
 
     autoSelectLastAvailableDate();
-  }, [days, years]);
+  }, [days, years, channels]);
 
+  // ✅ Main data fetch (with channels)
   useEffect(() => {
     if (!months || selectedDate.length === 0) return;
 
     const fetchCitySummary = async () => {
       try {
         const day = selectedDate[0];
-        const query = `?month=${months}&day=${day}`;
+        const query = buildQuery(day);
 
         const data = await fetchData(`/api/hold_up/hold_up_summary${query}`);
         const safeData = Array.isArray(data) ? data : data?.result || [];
@@ -127,30 +145,16 @@ function HoldUpBarChartPage() {
     };
 
     fetchCitySummary();
-  }, [months, selectedDate]);
+  }, [months, selectedDate, years, channels]);
 
   const readCityName = (row) =>
     row?.city || row?.City || row?.cityName || row?.CityName || row?.name || row?.Name || "";
 
   const readGrowthValue = (row, apiKey) => {
-    const candidates = [
-      apiKey, apiKey?.toLowerCase(), apiKey?.toUpperCase(),
-      apiKey?.replace(/([A-Z])/g, "_$1").toLowerCase(),
-      "value", "growth", "val",
-    ];
-
-    for (const key of candidates) {
-      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] != null)
-        return row[key];
-    }
-
-    for (const key of Object.keys(row)) {
-      const v = row[key];
-      if (typeof v === "number") return v;
-      if (typeof v === "string" && v.trim().match(/^-?\d+(\.\d+)?%?$/)) return v;
-    }
-
-    return undefined;
+    const val = row?.[apiKey];
+    if (val == null) return 0;
+    const parsed = parseFloat(String(val).replace("%", "").trim());
+    return isNaN(parsed) ? 0 : parsed;
   };
 
   const buildCombinedAverageData = (dataArr) => {
@@ -160,8 +164,7 @@ function HoldUpBarChartPage() {
 
     (dataArr || []).forEach((row) => {
       const city = readCityName(row);
-      const val = readGrowthValue(row, apiKey);
-      const parsed = parseFloat(String(val).replace("%", "").trim());
+      const parsed = readGrowthValue(row, apiKey);
 
       if (!isNaN(parsed)) {
         totals[city] = (totals[city] || 0) + parsed;
@@ -169,28 +172,18 @@ function HoldUpBarChartPage() {
       }
     });
 
-    const preferredOrder = ["BANGALORE", "MYSORE", "MANGALORE"];
-    const allCities = Object.keys(totals);
-
-    const sortedCities = [
-      ...preferredOrder.filter((c) =>
-        allCities.some((x) => x.toLowerCase() === c.toLowerCase())
-      ),
-      ...allCities
-        .filter(
-          (c) => !preferredOrder.some((p) => p.toLowerCase() === c.toLowerCase())
-        )
-        .sort((a, b) => a.localeCompare(b)),
-    ];
-
-    return sortedCities.map((city) => ({
-      city,
-      value: parseFloat(((totals[city] || 0) / (counts[city] || 1)).toFixed(1)),
-    }));
+    return Object.keys(totals)
+      .sort((a, b) => a.localeCompare(b))
+      .map((city) => ({
+        city,
+        value: parseFloat((totals[city] / counts[city]).toFixed(1)),
+      }));
   };
 
   const chartData =
-    selectedGrowth && summary.length > 0 ? buildCombinedAverageData(summary) : [];
+    selectedGrowth && summary.length > 0
+      ? buildCombinedAverageData(summary)
+      : [];
 
   return (
     <Box sx={{ p: 3 }}>
@@ -198,69 +191,12 @@ function HoldUpBarChartPage() {
         <Typography variant="h4">HOLD UP REPORT (City-wise)</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate("/DashboardHome/hold_up_table", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            HoldUp Summary
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate("/DashboardHome/hold_up_day_table", { state: { fromNavigation: true } })
-            }
-          >
-            HoldUp DayWise Summary
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate("/DashboardHome/hold_up", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Graph-CityWise
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate("/DashboardHome/hold_up_branches", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Graph-BranchWise
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate("/DashboardHome/hold_up-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Bar Chart-CityWise
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate("/DashboardHome/hold_up_branches-bar-chart", {
-                state: { fromNavigation: true },
-              })
-            }
-          >
-            Bar Chart-BranchWise
-          </Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_table")}>HoldUp Summary</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_day_table")}>HoldUp DayWise Summary</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up")}>Graph-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches")}>Graph-BranchWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up-bar-chart")}>Bar Chart-CityWise</Button>
+          <Button variant="contained" onClick={() => navigate("/DashboardHome/hold_up_branches-bar-chart")}>Bar Chart-BranchWise</Button>
         </Box>
       </Box>
 
@@ -268,8 +204,8 @@ function HoldUpBarChartPage() {
         monthOptions={monthOptions}
         months={months}
         setMonths={(selected) => {
-          const lastSelected = selected[selected.length - 1];
-          setMonths(lastSelected ? [lastSelected] : []);
+          const last = selected[selected.length - 1];
+          setMonths(last ? [last] : []);
         }}
         dateOptions={days}
         dates={selectedDate}
@@ -277,7 +213,12 @@ function HoldUpBarChartPage() {
           const last = arr[arr.length - 1];
           setSelectedDate(last ? [last.padStart(2, "0")] : []);
         }}
-        yearOptions={yearOptions} years={years} setYears={setYears}
+        yearOptions={yearOptions}
+        years={years}
+        setYears={setYears}
+        channelOptions={channelOptions}     // ✅ added
+        channels={channels}                 // ✅ added
+        setChannels={setChannels}           // ✅ added
       />
 
       <GrowthButtons
@@ -290,9 +231,9 @@ function HoldUpBarChartPage() {
       />
 
       {!selectedGrowth ? (
-        <Typography>👆 Select a growth type to view the chart below</Typography>
+        <Typography>Select a growth type</Typography>
       ) : summary.length === 0 ? (
-        <Typography>No data available for the selected criteria.</Typography>
+        <Typography>No data available</Typography>
       ) : (
         <CityBarChart
           chartData={chartData}

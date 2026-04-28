@@ -44,44 +44,58 @@ function HoldUpBranchWisePage() {
   const [summary, setSummary] = useState([]);
 
   const getCurrentFYMonth = () => {
-  const jsMonthToName = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec",];
-
-  const today = new Date();
-  return jsMonthToName[today.getMonth()];
-};
+    const jsMonthToName = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return jsMonthToName[new Date().getMonth()];
+  };
 
   const [months, setMonths] = useState(getCurrentFYMonth());
   const [years, setYears] = useState("2026");
+  const [channels, setChannels] = useState([]); // ✅ NEW
   const [selectedCities, setSelectedCities] = useState([]);
   const [days, setDays] = useState([]);
   const [selectedDate, setSelectedDate] = useState([]);
   const [selectedGrowth, setSelectedGrowthState] = useState("ServiceBodyShop");
-  const [selectedBranches, setSelectedBranches] = useState(["Wilson Garden","Balmatta","KRS Road",]);
+  const [selectedBranches, setSelectedBranches] = useState([
+    "Wilson Garden","Balmatta","KRS Road"
+  ]);
 
-  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar",];
+  const monthOptions = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
   const yearOtions = ["2025","2026"];
   const cityOptions = ["Bangalore", "Mysore", "Mangalore"];
+  const channelOptions = ["ARENA","NEXA"]; // ✅ NEW
 
   const allDayOptions = Array.from({ length: 31 }, (_, i) =>
     String(i + 1).padStart(2, "0")
   );
-
-  const readBranchName = (row) =>
-    row?.branch || row?.Branch || row?.branchName || row?.BranchName || "";
-
-  const readGrowthValue = (row, key) => {
-    const raw = row?.[key];
-    if (raw == null) return 0;
-    const cleaned = String(raw).replace("%", "").trim();
-    const parsed = parseFloat(cleaned);
-    return isNaN(parsed) ? 0 : parsed;
-  };
 
   useEffect(() => {
     const saved = getSelectedGrowth("hold_up");
     if (saved) setSelectedGrowthState(saved);
   }, []);
 
+  const buildQuery = (day, citiesArr = []) => {
+    let query = `?month=${months}&day=${day}`;
+
+    if (years) {
+      query += `&years=${years}`;
+    }
+
+    if (citiesArr.length > 0) {
+      citiesArr.forEach((c) => {
+        query += `&cities=${encodeURIComponent(c)}`;
+      });
+    }
+
+    if (channels && channels.length > 0) {
+      channels.forEach((ch) => {
+        query += `&channels=${encodeURIComponent(ch)}`;
+      });
+    }
+
+    return query;
+  };
+
+  // ✅ Detect valid days (with channels)
   useEffect(() => {
     if (!months) return;
 
@@ -90,7 +104,7 @@ function HoldUpBranchWisePage() {
         const valid = [];
 
         for (const d of allDayOptions) {
-          const query = `?month=${months}&day=${d}&years=${years}`;
+          const query = buildQuery(d);
           const data = await fetchData(`/api/hold_up/hold_up_branch_summary${query}`);
 
           const safe = Array.isArray(data) ? data : data?.result || [];
@@ -104,65 +118,70 @@ function HoldUpBranchWisePage() {
     };
 
     fetchValidDays();
-  }, [months,years]);
+  }, [months, years, channels]);
 
   useEffect(() => {
-    if (days.length > 0 ) {
+    if (days.length > 0) {
       setSelectedDate(days);
     }
   }, [days]);
 
+  // ✅ Fetch summary (with channels)
   useEffect(() => {
     const fetchSummary = async () => {
       if (!months || selectedDate.length === 0) return;
-  
-      const selectedCities = [
+
+      const selectedCitiesFromBranches = [
         ...new Set(selectedBranches.map((br) => BRANCH_CITY_MAP[br])),
       ];
-  
-      const cityQuery = selectedCities.length
-        ? `&cities=${selectedCities.join(",")}`
-        : "";
-  
+
       let allData = [];
-  
+
       for (const day of selectedDate) {
-        const query = `?month=${months}&day=${day}${cityQuery}`;
+        const query = buildQuery(day, selectedCitiesFromBranches);
+
         const data = await fetchData(
           `/api/hold_up/hold_up_branch_summary${query}`
         );
-  
+
         const safe = Array.isArray(data) ? data : data?.result || [];
-  
+
         safe.forEach((row) =>
           allData.push({
             ...row,
-            __day: day, 
+            __day: day,
           })
         );
       }
-  
+
       setSummary(allData);
     };
-  
+
     fetchSummary();
-  }, [months, selectedDate, selectedBranches]);
+  }, [months, selectedDate, selectedBranches, channels, years]);
+
+  const readBranchName = (row) =>
+    row?.branch || row?.Branch || row?.branchName || row?.BranchName || "";
+
+  const readGrowthValue = (row, key) => {
+    const raw = row?.[key];
+    if (raw == null) return 0;
+    const parsed = parseFloat(String(raw).replace("%", "").trim());
+    return isNaN(parsed) ? 0 : parsed;
+  };
 
   const buildChartData = () => {
     if (!selectedGrowth || selectedBranches.length === 0)
       return { formatted: [], sortedBranches: [] };
-  
+
     const apiKey = growthKeyMap[selectedGrowth];
-  
     const chartRows = [];
-  
+
     selectedDate.forEach((day) => {
-      const entry = {
-        month: `${months}-${day}`,
-      };
-  
+      const entry = { month: `${months}-${day}` };
+
       selectedBranches.forEach((br) => (entry[br] = 0));
-  
+
       summary
         .filter((r) => r.__day === day)
         .forEach((row) => {
@@ -171,12 +190,12 @@ function HoldUpBranchWisePage() {
             entry[branch] = readGrowthValue(row, apiKey);
           }
         });
-  
+
       chartRows.push(entry);
     });
-  
+
     return {
-      formatted: chartRows, 
+      formatted: chartRows,
       sortedBranches: selectedBranches,
     };
   };
@@ -193,9 +212,9 @@ function HoldUpBranchWisePage() {
   const handleCityChange = (e) => {
     const newSelectedCities = e.target.value;
     setSelectedCities(newSelectedCities);
-    
+
     if (newSelectedCities.length > 0) {
-      const branchesForCities = newSelectedCities.flatMap(city => 
+      const branchesForCities = newSelectedCities.flatMap(city =>
         Object.entries(BRANCH_CITY_MAP)
           .filter(([_, c]) => c === city)
           .map(([br]) => br)
@@ -222,90 +241,22 @@ function HoldUpBranchWisePage() {
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Select Cities</InputLabel>
-          <Select
-            multiple
-            label="Select Cities"
-            value={selectedCities}
-            onChange={handleCityChange}
-            renderValue={(selected) => 
-              selected.length === 0 ? "All Cities" : 
-              selected.length === cityOptions.length ? "All Cities" : 
-              `${selected.length} Cities`
-            }
-          >
-            {cityOptions.map((city) => (
-              <MenuItem value={city} key={city}>
-                <Checkbox checked={selectedCities.includes(city)} />
-                <ListItemText primary={city} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      
-
-        <FormControl size="small" sx={{ minWidth: 260 }}>
-          <InputLabel>Select Branches</InputLabel>
-          <Select
-            multiple
-            label="Select Branches"
-            value={selectedBranches}
-            onChange={handleBranchChange}
-            displayEmpty
-            renderValue={() => selectedCities.length > 0 ? `${selectedBranches.length} Branches` : "Select Branches"}
-            MenuProps={{
-              PaperProps: {
-                style: { maxHeight: 300 },
-              },
-            }}
-          >
-            <ListItemText primary="Bangalore" sx={{ pl: 2, fontWeight: "bold" }} />
-            {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, c]) => c === "Bangalore")
-              .map(([br]) => (
-                <MenuItem value={br} key={br}>
-                  <Checkbox checked={selectedBranches.includes(br)} />
-                  <ListItemText primary={br} />
-                </MenuItem>
-              ))}
-           
-            <ListItemText primary="Mysore" sx={{ pl: 2, fontWeight: "bold" }} />
-            {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, c]) => c === "Mysore")
-              .map(([br]) => (
-                <MenuItem value={br} key={br}>
-                  <Checkbox checked={selectedBranches.includes(br)} />
-                  <ListItemText primary={br} />
-                </MenuItem>
-              ))}
-           
-            <ListItemText primary="Mangalore" sx={{ pl: 2, fontWeight: "bold" }} />
-            {Object.entries(BRANCH_CITY_MAP)
-              .filter(([_, c]) => c === "Mangalore")
-              .map(([br]) => (
-                <MenuItem value={br} key={br}>
-                  <Checkbox checked={selectedBranches.includes(br)} />
-                  <ListItemText primary={br} />
-                </MenuItem>
-              ))}
-          </Select>
-        </FormControl>
-      </Box>
-
       <SlicerFilters
-        monthOptions={monthOptions} months={months ? [months] : []}
-        setMonths={(selected) => {
-          const lastSelected = selected[selected.length - 1] || "";
-          setMonths(lastSelected);
-        }}
-        dateOptions={[]} dates={selectedDate}
+        monthOptions={monthOptions}
+        months={months ? [months] : []}
+        setMonths={(selected) => setMonths(selected[selected.length - 1] || "")}
+        dateOptions={[]}
+        dates={selectedDate}
         setDates={(arr) => {
           const last = arr[arr.length - 1];
-          setSelectedDate(last ? [last.padStart(2, "0")] : []);    
+          setSelectedDate(last ? [last.padStart(2, "0")] : []);
         }}
-        yearOptions={yearOtions} years={years} setYears={setYears}
+        yearOptions={yearOtions}
+        years={years}
+        setYears={setYears}
+        channelOptions={channelOptions}   // ✅ added
+        channels={channels}               // ✅ added
+        setChannels={setChannels}         // ✅ added
       />
 
       <GrowthButtons
@@ -324,16 +275,7 @@ function HoldUpBranchWisePage() {
       ) : chartData.length === 0 ? (
         <Typography>No data available.</Typography>
       ) : (
-        <Box
-          sx={{
-            mt: 2,
-            height: 520,
-            background: "#fff",
-            borderRadius: 2,
-            boxShadow: 3,
-            p: 2,
-          }}
-        >
+        <Box sx={{ mt: 2, height: 520, background: "#fff", borderRadius: 2, boxShadow: 3, p: 2 }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
             {selectedGrowth}
           </Typography>
