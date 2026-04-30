@@ -17,8 +17,10 @@ import MonthYearFilter from "../../components/common/MonthYearFilter";
 import DataTable from "../../components/common/DataTable";
 import LoadingAnimation from "../../components/LoadingAnimation";
 
+
 function GenericUploadPage({ moduleName, tableName }) {
   const config = apiModules.find((m) => m.name === moduleName);
+
 
   const [tableData, setTableData] = useState([]);
   const [months, setMonths] = useState([]);
@@ -27,7 +29,9 @@ function GenericUploadPage({ moduleName, tableName }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
+
   const navigate = useNavigate();
+
 
   const handleFetch = async () => {
     setLoading(true);
@@ -39,6 +43,7 @@ function GenericUploadPage({ moduleName, tableName }) {
     }
     setLoading(false);
   };
+
 
   const handleFilter = async () => {
     if (
@@ -69,6 +74,7 @@ function GenericUploadPage({ moduleName, tableName }) {
     setLoading(false);
   };
 
+
   const handleDownloadExcel = () => {
     if (tableData.length === 0) return;
 
@@ -76,7 +82,6 @@ function GenericUploadPage({ moduleName, tableName }) {
       const exportData = tableData.map((row) => {
         const rowKeys = Object.keys(row);
         const cleanRow = {};
-        // skip first key (PK)
         for (let i = 1; i < rowKeys.length; i++) {
           const key = rowKeys[i];
           cleanRow[key] = row[key];
@@ -98,6 +103,7 @@ function GenericUploadPage({ moduleName, tableName }) {
     }
   };
 
+
   const handleUpload = async () => {
     if (!file) return alert("⚠ Select a file first!");
 
@@ -116,6 +122,7 @@ function GenericUploadPage({ moduleName, tableName }) {
     setLoading(false);
   };
 
+
   const handleDeleteAll = async () => {
     if (!window.confirm(`⚠ Delete ALL ${moduleName} data?`)) return;
 
@@ -133,10 +140,27 @@ function GenericUploadPage({ moduleName, tableName }) {
     setLoading(false);
   };
 
+
   useEffect(() => {
-    handleFetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const loadInitialData = async () => {
+      setLoading(true);
+      try {
+        const data = await filterByMonthYear(
+          config.getByMonthYear,
+          [],
+          [],
+          ["2026-2027"]
+        );
+        setTableData(data || []);
+      } catch (err) {
+        console.error("Initial filter failed:", err);
+      }
+      setLoading(false);
+    };
+
+    loadInitialData();
   }, []);
+
 
   if (loading) return <LoadingAnimation />;
 
@@ -182,6 +206,7 @@ function GenericUploadPage({ moduleName, tableName }) {
           </Box>
         </Box>
 
+
         <Box sx={{ p: 3 }}>
           <UploadSection file={file} setFile={setFile} onUpload={handleUpload} />
 
@@ -202,5 +227,6 @@ function GenericUploadPage({ moduleName, tableName }) {
     </Box>
   );
 }
+
 
 export default GenericUploadPage;
