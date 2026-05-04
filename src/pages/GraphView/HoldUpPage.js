@@ -127,7 +127,6 @@ function HoldUpPage() {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
         <Typography variant="h4">HOLD UP GRAPH (CityWise)</Typography>
 
